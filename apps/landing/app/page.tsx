@@ -1,8 +1,574 @@
+"use client";
+
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import {
+  Cloud,
+  GitGraph,
+  MessageSquare,
+  Shield,
+  Search,
+  LayoutDashboard,
+  Github,
+  BookOpen,
+  ArrowRight,
+  Network,
+  ChevronRight,
+  ChevronDown,
+  ArrowUp,
+  Terminal,
+  Server,
+} from "lucide-react";
+
+/* ─── Utility ─────────────────────────────────────────────────────────── */
+
+function cn(...classes: (string | false | undefined)[]) {
+  return classes.filter(Boolean).join(" ");
+}
+
+/* ─── Scroll-reveal hook (IntersectionObserver) ───────────────────────── */
+
+function useReveal<T extends HTMLElement>(
+  threshold = 0.15,
+  rootMargin = "0px 0px -40px 0px"
+) {
+  const ref = useRef<T>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.unobserve(el);
+        }
+      },
+      { threshold, rootMargin }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [threshold, rootMargin]);
+
+  return { ref, visible };
+}
+
+/* ─── Smooth scroll helper ────────────────────────────────────────────── */
+
+function smoothScrollTo(id: string) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+/* ─── Hero ────────────────────────────────────────────────────────────── */
+
+const HeroSection: React.FC = () => (
+  <section
+    id="hero"
+    className="relative w-full min-h-[100vh] flex flex-col items-center justify-center text-center gap-8 px-4 py-20"
+  >
+    {/* Logo glow */}
+    <div className="relative mb-2 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+      <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-cyan-500 via-blue-500 to-violet-500 opacity-50 blur-2xl animate-glow" />
+      <div className="relative flex items-center justify-center size-28 rounded-full border-2 border-zinc-700/60 bg-zinc-900 shadow-2xl z-10">
+        <Network className="size-14 text-cyan-400" strokeWidth={1.5} />
+      </div>
+    </div>
+
+    <div
+      className="flex items-center gap-2 text-sm font-medium text-zinc-400 border border-zinc-800 rounded-full px-4 py-1.5 bg-zinc-900/60 animate-fade-in"
+      style={{ animationDelay: "0.25s" }}
+    >
+      <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+      Open Source &middot; Self-Hosted &middot; Cloud, On-Prem &amp; Local
+    </div>
+
+    <h1
+      className="text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-tight bg-gradient-to-b from-zinc-100 to-zinc-400 bg-clip-text text-transparent drop-shadow-lg animate-slide-up"
+      style={{ animationDelay: "0.35s" }}
+    >
+      Compute Intelligence
+      <br />
+      Graph
+    </h1>
+
+    <p
+      className="text-lg md:text-xl text-zinc-400 max-w-xl mx-auto font-normal leading-relaxed animate-fade-in"
+      style={{ animationDelay: "0.55s" }}
+    >
+      Automatically discover your infrastructure — cloud, on-premise, or
+      local — build a living dependency graph, and query everything through
+      a{" "}
+      <span className="text-zinc-200 font-medium">conversational interface</span>.
+    </p>
+
+    <div
+      className="flex flex-wrap justify-center gap-4 mt-2 animate-fade-in"
+      style={{ animationDelay: "0.7s" }}
+    >
+      <button
+        onClick={() => smoothScrollTo("get-started")}
+        className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-violet-500 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-blue-500/20 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/30 focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer"
+      >
+        Get Started <ArrowRight size={18} />
+      </button>
+      <a
+        href="https://github.com/edwardcalderon/ComputeIntelligenceGraph"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-900/80 px-8 py-3.5 text-base font-semibold text-zinc-200 shadow transition-all duration-300 hover:scale-105 hover:border-zinc-500 hover:bg-zinc-800/80 focus:outline-none focus:ring-2 focus:ring-zinc-500"
+      >
+        <Github size={18} /> View on GitHub
+      </a>
+    </div>
+
+    {/* Scroll down indicator */}
+    <button
+      onClick={() => smoothScrollTo("how-it-works")}
+      className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors duration-300 cursor-pointer animate-fade-in"
+      style={{ animationDelay: "1s" }}
+      aria-label="Scroll down"
+    >
+      <span className="text-xs font-medium tracking-widest uppercase">Scroll</span>
+      <ChevronDown size={20} className="animate-bounce-gentle" />
+    </button>
+  </section>
+);
+
+/* ─── How It Works ────────────────────────────────────────────────────── */
+
+interface Step {
+  num: string;
+  title: string;
+  desc: string;
+  icon: React.ReactNode;
+}
+
+const steps: Step[] = [
+  {
+    num: "01",
+    title: "Deploy",
+    desc: "Run the setup wizard and provide credentials. CIG deploys inside your own infrastructure — cloud, on-prem, or local.",
+    icon: <Terminal size={24} className="text-cyan-400" />,
+  },
+  {
+    num: "02",
+    title: "Discover",
+    desc: "CIG crawls your environments, mapping every resource, dependency, and relationship automatically.",
+    icon: <Search size={24} className="text-blue-400" />,
+  },
+  {
+    num: "03",
+    title: "Visualize",
+    desc: "Explore an interactive graph of your entire infrastructure with real-time topology views.",
+    icon: <GitGraph size={24} className="text-violet-400" />,
+  },
+  {
+    num: "04",
+    title: "Converse",
+    desc: 'Ask questions in plain English — "Which services depend on this DB?" — and get instant answers.',
+    icon: <MessageSquare size={24} className="text-emerald-400" />,
+  },
+];
+
+const HowItWorks: React.FC = () => {
+  const { ref, visible } = useReveal<HTMLElement>();
+  return (
+    <section
+      id="how-it-works"
+      ref={ref}
+      className={cn(
+        "w-full flex flex-col items-center gap-10 transition-all duration-700",
+        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+      )}
+    >
+      <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-center">
+        How It Works
+      </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
+        {steps.map((step, i) => (
+          <div
+            key={step.num}
+            className={cn(
+              "group relative rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-6 transition-all duration-500 hover:border-zinc-600 hover:bg-zinc-900/80 hover:-translate-y-1",
+              visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+            )}
+            style={{
+              transitionDelay: visible ? `${200 + i * 120}ms` : "0ms",
+            }}
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex-none flex items-center justify-center size-12 rounded-xl bg-zinc-800/80 border border-zinc-700/50 group-hover:border-zinc-600 transition-colors duration-300">
+                {step.icon}
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-mono text-zinc-500">
+                    {step.num}
+                  </span>
+                  <h3 className="text-lg font-semibold text-zinc-100">
+                    {step.title}
+                  </h3>
+                </div>
+                <p className="text-sm text-zinc-400 leading-relaxed">
+                  {step.desc}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+/* ─── Features ────────────────────────────────────────────────────────── */
+
+interface Feature {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+}
+
+const features: Feature[] = [
+  {
+    icon: <Cloud size={22} className="text-cyan-400" />,
+    title: "Universal Discovery",
+    desc: "Cloud (AWS, GCP, Azure), on-premise servers, and local environments — map all your compute resources in one unified graph.",
+  },
+  {
+    icon: <GitGraph size={22} className="text-blue-400" />,
+    title: "Infrastructure Graph",
+    desc: "Neo4j-backed graph model that captures every dependency, relationship, and metadata attribute.",
+  },
+  {
+    icon: <MessageSquare size={22} className="text-violet-400" />,
+    title: "Conversational Queries",
+    desc: "Natural language interface powered by LLMs — ask anything about your infrastructure in plain English.",
+  },
+  {
+    icon: <Shield size={22} className="text-emerald-400" />,
+    title: "Security Insights",
+    desc: "Identify misconfigurations, overly permissive IAM roles, and exposed resources instantly.",
+  },
+  {
+    icon: <LayoutDashboard size={22} className="text-amber-400" />,
+    title: "Real-Time Dashboard",
+    desc: "Interactive topology visualization with live updates, cost breakdowns, and resource health metrics.",
+  },
+  {
+    icon: <Server size={22} className="text-rose-400" />,
+    title: "Self-Hosted & Private",
+    desc: "Runs entirely inside your infrastructure — whether that's a cloud VPC, an on-prem data center, or a local workstation.",
+  },
+];
+
+const FeaturesSection: React.FC = () => {
+  const { ref, visible } = useReveal<HTMLElement>();
+  return (
+    <section
+      ref={ref}
+      className={cn(
+        "w-full flex flex-col items-center gap-10 transition-all duration-700",
+        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+      )}
+    >
+      <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-center">
+        Core Capabilities
+      </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full">
+        {features.map((f, i) => (
+          <div
+            key={f.title}
+            className={cn(
+              "rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-6 transition-all duration-500 hover:border-zinc-600 hover:bg-zinc-900/80 hover:-translate-y-1",
+              visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+            )}
+            style={{
+              transitionDelay: visible ? `${150 + i * 100}ms` : "0ms",
+            }}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center justify-center size-10 rounded-lg bg-zinc-800/80 border border-zinc-700/50">
+                {f.icon}
+              </div>
+              <h3 className="text-base font-semibold text-zinc-100">
+                {f.title}
+              </h3>
+            </div>
+            <p className="text-sm text-zinc-400 leading-relaxed">{f.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+/* ─── Architecture Snippet ────────────────────────────────────────────── */
+
+const ArchitectureBlock: React.FC = () => {
+  const { ref, visible } = useReveal<HTMLElement>();
+  return (
+    <section
+      ref={ref}
+      className={cn(
+        "w-full rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-8 text-center transition-all duration-700",
+        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+      )}
+    >
+      <h2 className="text-2xl font-bold mb-6">Architecture Overview</h2>
+      <div className="flex flex-wrap items-center justify-center gap-3 text-sm font-mono text-zinc-300">
+        {[
+          { label: "Setup Wizard", color: "border-cyan-500/40" },
+          { label: "→" },
+          { label: "Discovery Engine", color: "border-blue-500/40" },
+          { label: "→" },
+          { label: "Graph DB", color: "border-violet-500/40" },
+          { label: "→" },
+          { label: "Dashboard + Chatbot", color: "border-emerald-500/40" },
+        ].map((item, i) =>
+          item.color ? (
+            <span
+              key={i}
+              className={cn(
+                "rounded-lg border bg-zinc-800/60 px-4 py-2 transition-all duration-500 hover:bg-zinc-700/60",
+                item.color,
+                visible ? "opacity-100 scale-100" : "opacity-0 scale-95"
+              )}
+              style={{ transitionDelay: visible ? `${300 + i * 80}ms` : "0ms" }}
+            >
+              {item.label}
+            </span>
+          ) : (
+            <span
+              key={i}
+              className={cn(
+                "text-zinc-600 mx-1 transition-opacity duration-500",
+                visible ? "opacity-100" : "opacity-0"
+              )}
+              style={{ transitionDelay: visible ? `${300 + i * 80}ms` : "0ms" }}
+            >
+              {item.label}
+            </span>
+          )
+        )}
+      </div>
+      <p className="text-sm text-zinc-500 mt-6 max-w-md mx-auto">
+        All components deploy inside your own environment — cloud, on-prem, or local.
+        Zero external dependencies, full data sovereignty.
+      </p>
+    </section>
+  );
+};
+
+/* ─── Links / Resources ──────────────────────────────────────────────── */
+
+interface ResourceLink {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+}
+
+const resourceLinks: ResourceLink[] = [
+  {
+    href: "https://github.com/edwardcalderon/ComputeIntelligenceGraph",
+    label: "GitHub Repo",
+    icon: <Github size={22} />,
+  },
+  {
+    href: "#",
+    label: "Documentation",
+    icon: <BookOpen size={22} />,
+  },
+  {
+    href: "#",
+    label: "Live Demo",
+    icon: <LayoutDashboard size={22} />,
+  },
+];
+
+const ResourcesBlock: React.FC = () => {
+  const { ref, visible } = useReveal<HTMLDivElement>();
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "flex flex-wrap justify-center gap-4 w-full transition-all duration-700",
+        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+      )}
+    >
+      {resourceLinks.map((link, i) => (
+        <a
+          key={link.label}
+          href={link.href}
+          target={link.href.startsWith("http") ? "_blank" : undefined}
+          rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
+          className={cn(
+            "flex items-center gap-2.5 rounded-full border border-zinc-800 bg-zinc-900/80 px-7 py-3 text-sm font-semibold text-zinc-200 shadow transition-all duration-300 hover:scale-105 hover:border-zinc-500 hover:bg-zinc-800/80 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-cyan-400/50",
+            visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+          )}
+          style={{ transitionDelay: visible ? `${i * 100}ms` : "0ms" }}
+        >
+          {link.icon}
+          <span>{link.label}</span>
+          <ChevronRight size={14} className="text-zinc-500" />
+        </a>
+      ))}
+    </div>
+  );
+};
+
+/* ─── Get Started (CTA) ──────────────────────────────────────────────── */
+
+const GetStartedSection: React.FC = () => {
+  const [email, setEmail] = useState("");
+  const [showToast, setShowToast] = useState(false);
+  const [error, setError] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const { ref, visible } = useReveal<HTMLElement>();
+
+  const validate = (val: string) => {
+    if (!val.trim()) return "Please enter your email.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim()))
+      return "Enter a valid email address.";
+    return "";
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const err = validate(email);
+    if (err) {
+      setError(err);
+      return;
+    }
+    setShowToast(true);
+    setEmail("");
+    setError("");
+    inputRef.current?.blur();
+    setTimeout(() => setShowToast(false), 3000);
+  };
+
+  return (
+    <section
+      id="get-started"
+      ref={ref}
+      className={cn(
+        "w-full flex flex-col items-center text-center gap-5 mt-4 relative scroll-mt-24 transition-all duration-700",
+        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+      )}
+    >
+      {showToast && (
+        <div className="fixed top-6 right-6 z-50 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-lg font-semibold text-sm animate-fade-in-fast">
+          Thanks! We&apos;ll be in touch.
+        </div>
+      )}
+      <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+        Ready to map your infrastructure?
+      </h2>
+      <p className="text-base text-zinc-400 max-w-md mx-auto">
+        Get early access or jump straight into the self-hosted deployment.
+        Open-source, free forever.
+      </p>
+      <form
+        onSubmit={handleSubmit}
+        className="flex w-full max-w-md gap-2.5 items-center justify-center mt-2"
+      >
+        <input
+          ref={inputRef}
+          type="email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (error) setError("");
+          }}
+          placeholder="you@company.com"
+          className={cn(
+            "flex-1 rounded-full border px-5 py-3 text-sm text-zinc-100 placeholder-zinc-500 transition-all duration-300 focus:outline-none shadow bg-zinc-900",
+            error
+              ? "border-red-500 focus:border-red-400"
+              : "border-zinc-700 focus:border-cyan-400"
+          )}
+        />
+        <button
+          type="submit"
+          className={cn(
+            "inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-violet-500 px-7 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-cyan-400",
+            email.trim()
+              ? "hover:scale-105 hover:shadow-xl cursor-pointer opacity-100"
+              : "opacity-50 cursor-not-allowed"
+          )}
+          disabled={!email.trim()}
+        >
+          Notify Me
+        </button>
+      </form>
+      {error && (
+        <span className="text-red-400 text-xs font-medium mt-1 animate-fade-in-fast">
+          {error}
+        </span>
+      )}
+    </section>
+  );
+};
+
+/* ─── Footer ──────────────────────────────────────────────────────────── */
+
+const Footer: React.FC = () => (
+  <footer className="w-full text-center text-xs text-zinc-600 pt-8 pb-2 border-t border-zinc-800/50">
+    © {new Date().getFullYear()} CIG — Compute Intelligence Graph. Open-source
+    under MIT License.
+  </footer>
+);
+
+/* ─── Back to Top ─────────────────────────────────────────────────────── */
+
+const BackToTop: React.FC = () => {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShow(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return (
+    <button
+      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      aria-label="Back to top"
+      className={cn(
+        "fixed bottom-6 right-6 z-40 flex items-center justify-center size-11 rounded-full border border-zinc-700 bg-zinc-900/90 text-zinc-300 shadow-lg backdrop-blur transition-all duration-500 hover:bg-zinc-800 hover:text-white hover:scale-110 hover:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer",
+        show
+          ? "opacity-100 translate-y-0 pointer-events-auto"
+          : "opacity-0 translate-y-4 pointer-events-none"
+      )}
+    >
+      <ArrowUp size={18} />
+    </button>
+  );
+};
+
+/* ─── Page ────────────────────────────────────────────────────────────── */
+
 export default function HomePage() {
   return (
-    <main>
-      <h1>Compute Intelligence Graph</h1>
-      <p>Landing page — coming soon.</p>
-    </main>
+    <div className="min-h-screen w-full bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 text-zinc-50 relative overflow-x-hidden">
+      {/* Background blobs */}
+      <div className="pointer-events-none fixed -top-40 -left-40 w-[600px] h-[600px] bg-gradient-to-tr from-cyan-600 via-blue-600 to-violet-600 opacity-[0.07] rounded-full blur-3xl animate-pulse-slow z-0" />
+      <div className="pointer-events-none fixed -bottom-40 -right-40 w-[500px] h-[500px] bg-gradient-to-bl from-violet-600 via-blue-600 to-cyan-600 opacity-[0.05] rounded-full blur-3xl animate-pulse-slow z-0" />
+
+      <div className="relative w-full max-w-4xl mx-auto flex flex-col items-center gap-24 z-10">
+        <HeroSection />
+        <HowItWorks />
+        <FeaturesSection />
+        <ArchitectureBlock />
+        <ResourcesBlock />
+        <GetStartedSection />
+        <Footer />
+      </div>
+
+      <BackToTop />
+    </div>
   );
 }

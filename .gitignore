@@ -8,6 +8,7 @@ dist/
 build/
 .next/
 .turbo/
+out/
 *.tsbuildinfo
 
 # Environment variables

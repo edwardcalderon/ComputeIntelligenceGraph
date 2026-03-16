@@ -5,6 +5,7 @@ const graph_1 = require("@cig/graph");
 const discovery_1 = require("@cig/discovery");
 const auth_1 = require("./auth");
 const costs_1 = require("./costs");
+const security_1 = require("./security");
 // Shared instances
 const graphEngine = new graph_1.GraphEngine();
 const queryEngine = new graph_1.GraphQueryEngine();
@@ -84,9 +85,13 @@ async function registerRoutes(app) {
         }
         // Delegate to searchResources as a simple passthrough for now;
         // full custom Cypher execution is handled by the graph package's Neo4j session.
-        // For safety, only allow read queries (MATCH/RETURN).
+        // For safety, only allow read queries (MATCH/CALL/WITH) and block write keywords anywhere in the query.
         const q = body.query.trim().toUpperCase();
         if (!q.startsWith('MATCH') && !q.startsWith('CALL') && !q.startsWith('WITH')) {
+            return reply.status(400).send({ error: 'Only read queries (MATCH/CALL/WITH) are allowed', statusCode: 400 });
+        }
+        const WRITE_KEYWORDS = /\b(CREATE|MERGE|DELETE|DETACH|SET|REMOVE|DROP|FOREACH)\b/;
+        if (WRITE_KEYWORDS.test(q)) {
             return reply.status(400).send({ error: 'Only read queries (MATCH/CALL/WITH) are allowed', statusCode: 400 });
         }
         // Return stub — full Cypher passthrough requires direct Neo4j session exposure
@@ -104,22 +109,16 @@ async function registerRoutes(app) {
         return reply.send(breakdown);
     });
     // ─── Security (stub — implemented in later phases) ──────────────────────────
-    // GET /api/v1/security/findings — get security findings
-    app.get('/api/v1/security/findings', { preHandler: readResources }, async (_request, reply) => {
-        return reply.send({
-            items: [],
-            total: 0,
-            message: 'Security analysis not yet implemented',
-        });
+    // GET /api/v1/security/findings — get security findings (optionally filtered by resourceId)
+    app.get('/api/v1/security/findings', { preHandler: readResources }, async (request, reply) => {
+        const { resourceId } = request.query;
+        const findings = await security_1.securityScanner.getFindings(resourceId);
+        return reply.send({ items: findings, total: findings.length });
     });
     // GET /api/v1/security/score — get overall security score
     app.get('/api/v1/security/score', { preHandler: readResources }, async (_request, reply) => {
-        return reply.send({
-            score: 0,
-            maxScore: 100,
-            grade: 'N/A',
-            message: 'Security scoring not yet implemented',
-        });
+        const score = await security_1.securityScanner.getScore();
+        return reply.send(score);
     });
     // ─── Actions ────────────────────────────────────────────────────────────────
     // POST /api/v1/actions/execute — execute an infrastructure action

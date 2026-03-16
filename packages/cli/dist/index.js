@@ -2,15 +2,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const commander_1 = require("commander");
+const wizard_js_1 = require("./wizard.js");
 const program = new commander_1.Command();
 program
     .name('cig')
     .description('Compute Intelligence Graph CLI')
     .version('0.1.0');
-// --- Stub functions ---
-function runWizard() {
-    console.log('TODO: implement runWizard');
-}
 function connectAws(roleArn) {
     console.log(`TODO: implement connectAws with role ${roleArn}`);
 }
@@ -40,14 +37,10 @@ program
     .command('install')
     .description('Launch the CIG installation wizard')
     .action(() => {
-    try {
-        console.log('Launching CIG installation wizard...');
-        runWizard();
-    }
-    catch (err) {
+    (0, wizard_js_1.runWizard)().catch((err) => {
         console.error('Error during install:', err);
         process.exit(1);
-    }
+    });
 });
 const connect = program
     .command('connect')
