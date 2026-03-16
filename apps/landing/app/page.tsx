@@ -13,7 +13,6 @@ import {
   Github,
   BookOpen,
   ArrowRight,
-  Network,
   ChevronRight,
   ChevronDown,
   ArrowUp,
@@ -74,31 +73,83 @@ const HeroSection: React.FC = () => (
     {/* Logo glow */}
     <div className="relative mb-2 animate-fade-in" style={{ animationDelay: "0.1s" }}>
       <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-cyan-500 via-blue-500 to-violet-500 opacity-50 blur-2xl animate-glow" />
-      <div className="relative flex items-center justify-center size-28 rounded-full border-2 border-zinc-700/60 bg-zinc-900 shadow-2xl z-10">
-        <Network className="size-14 text-cyan-400" strokeWidth={1.5} />
+      <div className="relative flex items-center justify-center size-28 rounded-full border-2 border-zinc-700/60 bg-zinc-900 shadow-2xl z-10 overflow-hidden">
+        {/* CIG custom icon (inline SVG) */}
+        <svg width="96" height="96" viewBox="20 20 216 216" xmlns="http://www.w3.org/2000/svg" fill="none">
+          <defs>
+            <linearGradient id="graphGrad" x1="48" y1="40" x2="208" y2="208" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#2563EB"/>
+              <stop offset="100%" stopColor="#14B8A6"/>
+            </linearGradient>
+            <linearGradient id="clawGrad" x1="96" y1="44" x2="160" y2="184" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#2563EB"/>
+              <stop offset="55%" stopColor="#06B6D4"/>
+              <stop offset="100%" stopColor="#22C55E"/>
+            </linearGradient>
+            <radialGradient id="coreGlow" cx="50%" cy="50%" r="60%">
+              <stop offset="0%" stopColor="#ECFEFF"/>
+              <stop offset="55%" stopColor="#A5F3FC"/>
+              <stop offset="100%" stopColor="#22D3EE"/>
+            </radialGradient>
+            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="6" stdDeviation="8" floodColor="#0F172A" floodOpacity="0.12"/>
+            </filter>
+          </defs>
+          <g filter="url(#shadow)">
+            <g stroke="url(#graphGrad)" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" opacity="0.95">
+              <line x1="128" y1="52" x2="74" y2="174"/>
+              <line x1="128" y1="52" x2="182" y2="174"/>
+              <line x1="74" y1="174" x2="128" y2="146"/>
+              <line x1="128" y1="146" x2="182" y2="174"/>
+              <line x1="74" y1="174" x2="182" y2="174"/>
+            </g>
+            <g fill="white" stroke="url(#graphGrad)" strokeWidth="6">
+              <circle cx="128" cy="52" r="14"/>
+              <circle cx="74" cy="174" r="14"/>
+              <circle cx="182" cy="174" r="14"/>
+              <circle cx="128" cy="146" r="18"/>
+            </g>
+            <g fill="url(#coreGlow)">
+              <circle cx="128" cy="52" r="8"/>
+              <circle cx="74" cy="174" r="8"/>
+              <circle cx="182" cy="174" r="8"/>
+              <circle cx="128" cy="146" r="11"/>
+            </g>
+            <rect x="118" y="58" width="20" height="54" rx="10" fill="url(#clawGrad)"/>
+            <path d="M120 108 C101 118 90 140 94 164 C96 175 105 181 116 178 C110 165 111 139 120 108Z" fill="url(#clawGrad)" stroke="#0F3B8F" strokeOpacity="0.18" strokeWidth="2"/>
+            <path d="M136 108 C155 118 166 140 162 164 C160 175 151 181 140 178 C146 165 145 139 136 108Z" fill="url(#clawGrad)" stroke="#0F3B8F" strokeOpacity="0.18" strokeWidth="2"/>
+            <circle cx="128" cy="86" r="16" fill="white" stroke="url(#clawGrad)" strokeWidth="6"/>
+            <circle cx="128" cy="86" r="8" fill="url(#coreGlow)"/>
+          </g>
+        </svg>
       </div>
     </div>
     {/* Interactive graph-particle "CIG" text with space animation behind */}
-    <div className="relative w-full max-w-lg h-[160px] animate-fade-in" style={{ animationDelay: "0.18s" }}>
-      <SpaceBackground
-        particleCount={300}
-        particleColor="rgba(34,211,238,0.35)"
-        backgroundColor="transparent"
-        contained
-        className="rounded-2xl"
-      />
-      <GraphParticleTypography
-        text="CIG"
-        className="h-full text-cyan-400 relative z-10"
-        fontSize={110}
-        particleSize={1.8}
-        particleDensity={4}
-        connectionDistance={18}
-        connectionOpacity={0.4}
-        dispersionStrength={14}
-        returnSpeed={0.08}
-        color="#22d3ee"
-      />
+    <div className="relative w-full max-w-lg h-[160px] overflow-visible animate-fade-in" style={{ animationDelay: "0.18s" }}>
+      {/* Space canvas: stretched beyond container so particles don't clip */}
+      <div className="absolute -inset-x-12 -inset-y-16 pointer-events-none">
+        <SpaceBackground
+          particleCount={300}
+          particleColor="rgba(34,211,238,0.35)"
+          backgroundColor="transparent"
+          contained
+        />
+      </div>
+      {/* CIG graph-dot canvas: also stretched so edge particles aren't cut */}
+      <div className="absolute -inset-x-8 -inset-y-10 pointer-events-auto">
+        <GraphParticleTypography
+          text="CIG"
+          className="h-full w-full text-cyan-400"
+          fontSize={110}
+          particleSize={1.8}
+          particleDensity={4}
+          connectionDistance={18}
+          connectionOpacity={0.4}
+          dispersionStrength={14}
+          returnSpeed={0.08}
+          color="#22d3ee"
+        />
+      </div>
     </div>
     <div
       className="flex items-center gap-2 text-sm font-medium text-zinc-400 border border-zinc-800 rounded-full px-4 py-1.5 bg-zinc-900/60 animate-fade-in"
