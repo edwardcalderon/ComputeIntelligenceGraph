@@ -129,7 +129,6 @@ const PHASES = [
 
 const HeroSection: React.FC = () => {
   const [phase, setPhase] = useState(-1); // -1 = initial idle
-  const [looped, setLooped] = useState(false);
 
   useEffect(() => {
     // Start sequence after a short entrance delay
@@ -139,15 +138,13 @@ const HeroSection: React.FC = () => {
 
   useEffect(() => {
     if (phase < 0) return;
-    if (phase >= PHASES.length) {
-      setLooped(true);
-      return;
-    }
-    const timer = setTimeout(() => setPhase((p) => p + 1), PHASE_DURATION);
+    const next = phase >= PHASES.length ? 0 : phase + 1;
+    const delay = phase >= PHASES.length ? PHASE_DURATION : PHASE_DURATION;
+    const timer = setTimeout(() => setPhase(next), delay);
     return () => clearTimeout(timer);
   }, [phase]);
 
-  const activePhase = looped ? PHASES.length - 1 : phase;
+  const activePhase = phase >= PHASES.length ? PHASES.length - 1 : phase;
 
   // Icon to show in the circle
   const renderIcon = () => {
