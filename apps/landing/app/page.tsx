@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import { GraphParticleTypography } from "../components/GraphParticleTypography";
 import {
   Cloud,
   GitGraph,
@@ -76,7 +77,21 @@ const HeroSection: React.FC = () => (
         <Network className="size-14 text-cyan-400" strokeWidth={1.5} />
       </div>
     </div>
-
+    {/* Interactive graph-particle "CIG" text */}
+    <div className="w-full max-w-md h-[100px] animate-fade-in" style={{ animationDelay: "0.18s" }}>
+      <GraphParticleTypography
+        text="CIG"
+        className="h-full text-cyan-400"
+        fontSize={90}
+        particleSize={1.6}
+        particleDensity={4}
+        connectionDistance={16}
+        connectionOpacity={0.4}
+        dispersionStrength={14}
+        returnSpeed={0.08}
+        color="#22d3ee"
+      />
+    </div>
     <div
       className="flex items-center gap-2 text-sm font-medium text-zinc-400 border border-zinc-800 rounded-full px-4 py-1.5 bg-zinc-900/60 animate-fade-in"
       style={{ animationDelay: "0.25s" }}
