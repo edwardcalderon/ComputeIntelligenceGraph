@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { GraphParticleTypography } from "../components/GraphParticleTypography";
+import { SpaceBackground } from "../components/SpaceBackground";
 import {
   Cloud,
   GitGraph,
@@ -77,15 +78,22 @@ const HeroSection: React.FC = () => (
         <Network className="size-14 text-cyan-400" strokeWidth={1.5} />
       </div>
     </div>
-    {/* Interactive graph-particle "CIG" text */}
-    <div className="w-full max-w-md h-[100px] animate-fade-in" style={{ animationDelay: "0.18s" }}>
+    {/* Interactive graph-particle "CIG" text with space animation behind */}
+    <div className="relative w-full max-w-lg h-[160px] animate-fade-in" style={{ animationDelay: "0.18s" }}>
+      <SpaceBackground
+        particleCount={300}
+        particleColor="rgba(34,211,238,0.35)"
+        backgroundColor="transparent"
+        contained
+        className="rounded-2xl"
+      />
       <GraphParticleTypography
         text="CIG"
-        className="h-full text-cyan-400"
-        fontSize={90}
-        particleSize={1.6}
+        className="h-full text-cyan-400 relative z-10"
+        fontSize={110}
+        particleSize={1.8}
         particleDensity={4}
-        connectionDistance={16}
+        connectionDistance={18}
         connectionOpacity={0.4}
         dispersionStrength={14}
         returnSpeed={0.08}
