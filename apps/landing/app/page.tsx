@@ -18,6 +18,8 @@ import {
   ArrowUp,
   Terminal,
   Server,
+  Monitor,
+  BrainCircuit,
 } from "lucide-react";
 
 /* ─── Utility ─────────────────────────────────────────────────────────── */
@@ -63,110 +65,199 @@ function smoothScrollTo(id: string) {
   }
 }
 
-/* ─── Hero ────────────────────────────────────────────────────────────── */
+/* ─── CIG Icon (inline SVG) ───────────────────────────────────────────── */
 
-const HeroSection: React.FC = () => (
-  <section
-    id="hero"
-    className="relative w-full min-h-[100vh] flex flex-col items-center justify-center text-center gap-8 px-4 py-20"
-  >
-    {/* Logo glow */}
-    <div className="relative mb-2 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-      <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-cyan-500 via-blue-500 to-violet-500 opacity-50 blur-2xl animate-glow" />
-      <div className="relative flex items-center justify-center size-28 rounded-full border-2 border-zinc-700/60 bg-zinc-900 shadow-2xl z-10 overflow-hidden">
-        {/* CIG custom icon (inline SVG) */}
-        <svg width="96" height="96" viewBox="20 20 216 216" xmlns="http://www.w3.org/2000/svg" fill="none">
-          <defs>
-            <linearGradient id="graphGrad" x1="48" y1="40" x2="208" y2="208" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#2563EB"/>
-              <stop offset="100%" stopColor="#14B8A6"/>
-            </linearGradient>
-            <linearGradient id="clawGrad" x1="96" y1="44" x2="160" y2="184" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#2563EB"/>
-              <stop offset="55%" stopColor="#06B6D4"/>
-              <stop offset="100%" stopColor="#22C55E"/>
-            </linearGradient>
-            <radialGradient id="coreGlow" cx="50%" cy="50%" r="60%">
-              <stop offset="0%" stopColor="#ECFEFF"/>
-              <stop offset="55%" stopColor="#A5F3FC"/>
-              <stop offset="100%" stopColor="#22D3EE"/>
-            </radialGradient>
-            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="6" stdDeviation="8" floodColor="#0F172A" floodOpacity="0.12"/>
-            </filter>
-          </defs>
-          <g filter="url(#shadow)">
-            <g stroke="url(#graphGrad)" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" opacity="0.95">
-              <line x1="128" y1="52" x2="74" y2="174"/>
-              <line x1="128" y1="52" x2="182" y2="174"/>
-              <line x1="74" y1="174" x2="128" y2="146"/>
-              <line x1="128" y1="146" x2="182" y2="174"/>
-              <line x1="74" y1="174" x2="182" y2="174"/>
-            </g>
-            <g fill="white" stroke="url(#graphGrad)" strokeWidth="6">
-              <circle cx="128" cy="52" r="14"/>
-              <circle cx="74" cy="174" r="14"/>
-              <circle cx="182" cy="174" r="14"/>
-              <circle cx="128" cy="146" r="18"/>
-            </g>
-            <g fill="url(#coreGlow)">
-              <circle cx="128" cy="52" r="8"/>
-              <circle cx="74" cy="174" r="8"/>
-              <circle cx="182" cy="174" r="8"/>
-              <circle cx="128" cy="146" r="11"/>
-            </g>
-            <rect x="118" y="58" width="20" height="54" rx="10" fill="url(#clawGrad)"/>
-            <path d="M120 108 C101 118 90 140 94 164 C96 175 105 181 116 178 C110 165 111 139 120 108Z" fill="url(#clawGrad)" stroke="#0F3B8F" strokeOpacity="0.18" strokeWidth="2"/>
-            <path d="M136 108 C155 118 166 140 162 164 C160 175 151 181 140 178 C146 165 145 139 136 108Z" fill="url(#clawGrad)" stroke="#0F3B8F" strokeOpacity="0.18" strokeWidth="2"/>
-            <circle cx="128" cy="86" r="16" fill="white" stroke="url(#clawGrad)" strokeWidth="6"/>
-            <circle cx="128" cy="86" r="8" fill="url(#coreGlow)"/>
-          </g>
-        </svg>
-      </div>
-    </div>
-    {/* Interactive graph-particle "CIG" text with space animation behind */}
-    <div className="relative w-full max-w-lg h-[160px] overflow-visible animate-fade-in" style={{ animationDelay: "0.18s" }}>
-      {/* Space canvas: stretched beyond container so particles don't clip */}
-      <div className="absolute -inset-x-12 -inset-y-16 pointer-events-none">
-        <SpaceBackground
-          particleCount={300}
-          particleColor="rgba(34,211,238,0.35)"
-          backgroundColor="transparent"
-          contained
-        />
-      </div>
-      {/* CIG graph-dot canvas: also stretched so edge particles aren't cut */}
-      <div className="absolute -inset-x-8 -inset-y-10 pointer-events-auto">
-        <GraphParticleTypography
-          text="CIG"
-          className="h-full w-full text-cyan-400"
-          fontSize={110}
-          particleSize={1.8}
-          particleDensity={4}
-          connectionDistance={18}
-          connectionOpacity={0.4}
-          dispersionStrength={14}
-          returnSpeed={0.08}
-          color="#22d3ee"
-        />
-      </div>
-    </div>
-    <div
-      className="flex items-center gap-2 text-sm font-medium text-zinc-400 border border-zinc-800 rounded-full px-4 py-1.5 bg-zinc-900/60 animate-fade-in"
-      style={{ animationDelay: "0.25s" }}
-    >
-      <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-      Open Source &middot; Self-Hosted &middot; Cloud, On-Prem &amp; Local
-    </div>
+const CigIconSvg: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className} viewBox="20 20 216 216" xmlns="http://www.w3.org/2000/svg" fill="none">
+    <defs>
+      <linearGradient id="graphGrad" x1="48" y1="40" x2="208" y2="208" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#2563EB"/>
+        <stop offset="100%" stopColor="#14B8A6"/>
+      </linearGradient>
+      <linearGradient id="clawGrad" x1="96" y1="44" x2="160" y2="184" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#2563EB"/>
+        <stop offset="55%" stopColor="#06B6D4"/>
+        <stop offset="100%" stopColor="#22C55E"/>
+      </linearGradient>
+      <radialGradient id="coreGlow" cx="50%" cy="50%" r="60%">
+        <stop offset="0%" stopColor="#ECFEFF"/>
+        <stop offset="55%" stopColor="#A5F3FC"/>
+        <stop offset="100%" stopColor="#22D3EE"/>
+      </radialGradient>
+      <filter id="iconShadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="6" stdDeviation="8" floodColor="#0F172A" floodOpacity="0.12"/>
+      </filter>
+    </defs>
+    <g filter="url(#iconShadow)">
+      <g stroke="url(#graphGrad)" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" opacity="0.95">
+        <line x1="128" y1="52" x2="74" y2="174"/>
+        <line x1="128" y1="52" x2="182" y2="174"/>
+        <line x1="74" y1="174" x2="128" y2="146"/>
+        <line x1="128" y1="146" x2="182" y2="174"/>
+        <line x1="74" y1="174" x2="182" y2="174"/>
+      </g>
+      <g fill="white" stroke="url(#graphGrad)" strokeWidth="6">
+        <circle cx="128" cy="52" r="14"/>
+        <circle cx="74" cy="174" r="14"/>
+        <circle cx="182" cy="174" r="14"/>
+        <circle cx="128" cy="146" r="18"/>
+      </g>
+      <g fill="url(#coreGlow)">
+        <circle cx="128" cy="52" r="8"/>
+        <circle cx="74" cy="174" r="8"/>
+        <circle cx="182" cy="174" r="8"/>
+        <circle cx="128" cy="146" r="11"/>
+      </g>
+      <rect x="118" y="58" width="20" height="54" rx="10" fill="url(#clawGrad)"/>
+      <path d="M120 108 C101 118 90 140 94 164 C96 175 105 181 116 178 C110 165 111 139 120 108Z" fill="url(#clawGrad)" stroke="#0F3B8F" strokeOpacity="0.18" strokeWidth="2"/>
+      <path d="M136 108 C155 118 166 140 162 164 C160 175 151 181 140 178 C146 165 145 139 136 108Z" fill="url(#clawGrad)" stroke="#0F3B8F" strokeOpacity="0.18" strokeWidth="2"/>
+      <circle cx="128" cy="86" r="16" fill="white" stroke="url(#clawGrad)" strokeWidth="6"/>
+      <circle cx="128" cy="86" r="8" fill="url(#coreGlow)"/>
+    </g>
+  </svg>
+);
 
-    <h1
-      className="text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-tight bg-gradient-to-b from-zinc-100 to-zinc-400 bg-clip-text text-transparent drop-shadow-lg animate-slide-up"
-      style={{ animationDelay: "0.35s" }}
+/* ─── Hero (animated icon + title sequence) ───────────────────────────── */
+
+const PHASE_DURATION = 1600; // ms per phase
+const PHASES = [
+  { word: "Compute",      icon: "monitor" },
+  { word: "Intelligence",  icon: "brain" },
+  { word: "Graph",         icon: "graph" },
+  { word: "all",           icon: "cig" },
+] as const;
+
+const HeroSection: React.FC = () => {
+  const [phase, setPhase] = useState(-1); // -1 = initial idle
+  const [looped, setLooped] = useState(false);
+
+  useEffect(() => {
+    // Start sequence after a short entrance delay
+    const start = setTimeout(() => setPhase(0), 800);
+    return () => clearTimeout(start);
+  }, []);
+
+  useEffect(() => {
+    if (phase < 0) return;
+    if (phase >= PHASES.length) {
+      setLooped(true);
+      return;
+    }
+    const timer = setTimeout(() => setPhase((p) => p + 1), PHASE_DURATION);
+    return () => clearTimeout(timer);
+  }, [phase]);
+
+  const activePhase = looped ? PHASES.length - 1 : phase;
+
+  // Icon to show in the circle
+  const renderIcon = () => {
+    const cls = "size-14 transition-all duration-500";
+    switch (PHASES[Math.min(Math.max(activePhase, 0), PHASES.length - 1)]?.icon) {
+      case "monitor":
+        return <Monitor className={cn(cls, "text-cyan-400")} strokeWidth={1.5} />;
+      case "brain":
+        return <BrainCircuit className={cn(cls, "text-emerald-400")} strokeWidth={1.5} />;
+      case "graph":
+        return <GitGraph className={cn(cls, "text-blue-400")} strokeWidth={1.5} />;
+      case "cig":
+        return <CigIconSvg className="size-24" />;
+      default:
+        return <Monitor className={cn(cls, "text-zinc-500")} strokeWidth={1.5} />;
+    }
+  };
+
+  // Highlight color for each word
+  const wordColor = (word: string) => {
+    if (activePhase < 0) return undefined;
+    const current = PHASES[activePhase];
+    if (!current) return undefined;
+    if (current.word === "all") return "from-cyan-300 via-emerald-300 to-blue-400";
+    if (current.word === word) return "highlight";
+    return undefined;
+  };
+
+  const titleWords = ["Compute", "Intelligence", "Graph"] as const;
+
+  return (
+    <section
+      id="hero"
+      className="relative w-full min-h-[100vh] flex flex-col items-center justify-center text-center gap-8 px-4 py-20"
     >
-      Compute Intelligence
-      <br />
-      Graph
-    </h1>
+      {/* Animated icon circle */}
+      <div className="relative mb-2 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+        <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-cyan-500 via-blue-500 to-violet-500 opacity-50 blur-2xl animate-glow" />
+        <div className="relative flex items-center justify-center size-28 rounded-full border-2 border-zinc-700/60 bg-zinc-900 shadow-2xl z-10 overflow-hidden">
+          <div key={activePhase} className="animate-fade-in-fast">
+            {renderIcon()}
+          </div>
+        </div>
+      </div>
+
+      {/* Interactive graph-particle "CIG" text with space animation behind */}
+      <div className="relative w-full max-w-lg h-[160px] overflow-visible animate-fade-in" style={{ animationDelay: "0.18s" }}>
+        <div className="absolute -inset-x-12 -inset-y-16 pointer-events-none">
+          <SpaceBackground
+            particleCount={300}
+            particleColor="rgba(34,211,238,0.35)"
+            backgroundColor="transparent"
+            contained
+          />
+        </div>
+        <div className="absolute -inset-x-8 -inset-y-10 pointer-events-auto">
+          <GraphParticleTypography
+            text="CIG"
+            className="h-full w-full text-cyan-400"
+            fontSize={110}
+            particleSize={1.8}
+            particleDensity={4}
+            connectionDistance={18}
+            connectionOpacity={0.4}
+            dispersionStrength={14}
+            returnSpeed={0.08}
+            color="#22d3ee"
+          />
+        </div>
+      </div>
+
+      <div
+        className="flex items-center gap-2 text-sm font-medium text-zinc-400 border border-zinc-800 rounded-full px-4 py-1.5 bg-zinc-900/60 animate-fade-in"
+        style={{ animationDelay: "0.25s" }}
+      >
+        <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+        Open Source &middot; Self-Hosted &middot; Cloud, On-Prem &amp; Local
+      </div>
+
+      {/* Animated title */}
+      <h1
+        className="text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-tight drop-shadow-lg animate-slide-up"
+        style={{ animationDelay: "0.35s" }}
+      >
+        {titleWords.map((word, i) => {
+          const highlight = wordColor(word);
+          const isAll = highlight && highlight !== "highlight";
+          const isActive = highlight === "highlight";
+
+          return (
+            <React.Fragment key={word}>
+              <span
+                className={cn(
+                  "inline-block transition-all duration-500",
+                  isAll
+                    ? "bg-gradient-to-r from-cyan-300 via-emerald-300 to-blue-400 bg-clip-text text-transparent"
+                    : isActive
+                      ? "text-emerald-400 drop-shadow-[0_0_24px_rgba(52,211,153,0.5)]"
+                      : "bg-gradient-to-b from-zinc-100 to-zinc-400 bg-clip-text text-transparent"
+                )}
+              >
+                {word}
+              </span>
+              {i < titleWords.length - 1 && (
+                <>{word === "Intelligence" ? <br /> : " "}</>
+              )}
+            </React.Fragment>
+          );
+        })}
+      </h1>
 
     <p
       className="text-lg md:text-xl text-zinc-400 max-w-xl mx-auto font-normal leading-relaxed animate-fade-in"
@@ -209,7 +300,8 @@ const HeroSection: React.FC = () => (
       <ChevronDown size={20} className="animate-bounce-gentle" />
     </button>
   </section>
-);
+  );
+};
 
 /* ─── How It Works ────────────────────────────────────────────────────── */
 
