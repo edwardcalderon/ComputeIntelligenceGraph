@@ -591,8 +591,13 @@ const GetStartedSection: React.FC = () => {
 
 const Footer: React.FC = () => (
   <footer className="w-full text-center text-xs text-zinc-600 pt-8 pb-2 border-t border-zinc-800/50">
-    © {new Date().getFullYear()} CIG — Compute Intelligence Graph. Open-source
-    under MIT License.
+    <p>
+      © {new Date().getFullYear()} CIG — Compute Intelligence Graph. Open-source
+      under MIT License.
+    </p>
+    <p className="mt-1 text-zinc-700">
+      v{process.env.NEXT_PUBLIC_APP_VERSION}
+    </p>
   </footer>
 );
 
