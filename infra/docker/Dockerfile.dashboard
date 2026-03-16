@@ -1,0 +1,44 @@
+# ─── Builder Stage ────────────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+COPY apps/dashboard/package.json ./apps/dashboard/
+
+RUN pnpm install --frozen-lockfile
+
+COPY apps/dashboard ./apps/dashboard
+
+# Build Next.js app
+RUN pnpm --filter @cig/dashboard build
+
+# ─── Production Stage ─────────────────────────────────────────────────────────
+FROM node:20-alpine AS production
+
+RUN addgroup -g 1000 node_group || true \
+    && adduser -u 1000 -G node_group -s /bin/sh -D nodeuser 2>/dev/null || true
+
+WORKDIR /app
+
+# Next.js standalone output
+COPY --from=builder /app/apps/dashboard/.next/standalone ./
+COPY --from=builder /app/apps/dashboard/.next/static ./apps/dashboard/.next/static
+COPY --from=builder /app/apps/dashboard/public ./apps/dashboard/public 2>/dev/null || true
+
+RUN chown -R 1000:1000 /app
+
+USER 1000
+
+EXPOSE 3000
+
+ENV NODE_ENV=production \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+    CMD wget -qO- http://localhost:3000/api/health || wget -qO- http://localhost:3000 || exit 1
+
+CMD ["node", "apps/dashboard/server.js"]

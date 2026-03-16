@@ -1,0 +1,134 @@
+{
+  "rootPackageJson": "package.json",
+  "packages": [
+    "packages/*/package.json",
+    "apps/*/package.json"
+  ],
+  "changelogFile": "CHANGELOG.md",
+  "conventionalCommits": true,
+  "syncDependencies": true,
+  "ignorePackages": [
+    "@cig/iac"
+  ],
+  "extensions": [
+    "workspace-scripts"
+  ],
+  "extensionConfig": {
+    "workspace-scripts": {
+      "enabled": true,
+      "runner": "concurrently",
+      "apps": {
+        "apps/dashboard": {
+          "name": "dashboard",
+          "scripts": ["dev", "build", "test", "lint"]
+        },
+        "apps/landing": {
+          "name": "landing",
+          "scripts": ["dev", "build"]
+        },
+        "apps/wizard-ui": {
+          "name": "wizard",
+          "scripts": ["dev", "build"]
+        },
+        "packages/api": {
+          "name": "api",
+          "scripts": ["dev", "build", "test", "start"]
+        },
+        "packages/agents": {
+          "name": "agents",
+          "scripts": ["dev", "build", "test"]
+        },
+        "packages/chatbot": {
+          "name": "chatbot",
+          "scripts": ["dev", "build", "test"]
+        },
+        "packages/cli": {
+          "name": "cli",
+          "scripts": ["dev", "build", "test"]
+        },
+        "packages/config": {
+          "name": "config",
+          "scripts": ["dev", "build", "test"]
+        },
+        "packages/discovery": {
+          "name": "discovery",
+          "scripts": ["dev", "build", "test"]
+        },
+        "packages/graph": {
+          "name": "graph",
+          "scripts": ["dev", "build", "test"]
+        },
+        "packages/sdk": {
+          "name": "sdk",
+          "scripts": ["dev", "build", "test"]
+        }
+      },
+      "scripts": {
+        "dev": {
+          "enabled": true,
+          "prefix": "dev:",
+          "description": "Start development mode"
+        },
+        "build": {
+          "enabled": true,
+          "prefix": "build:",
+          "description": "Build for production"
+        },
+        "test": {
+          "enabled": true,
+          "prefix": "test:",
+          "description": "Run tests"
+        },
+        "lint": {
+          "enabled": true,
+          "prefix": "lint:",
+          "description": "Run linter"
+        },
+        "start": {
+          "enabled": true,
+          "prefix": "start:",
+          "description": "Start production server"
+        }
+      },
+      "autoDetect": true,
+      "postSyncHook": true
+    }
+  },
+  "cleanup": {
+    "enabled": true,
+    "patterns": [
+      "**/node_modules",
+      "**/dist",
+      "**/.next",
+      "**/.turbo",
+      "**/coverage",
+      "**/*.log",
+      "**/.DS_Store"
+    ],
+    "dryRun": false
+  },
+  "branchAwareness": {
+    "enabled": true,
+    "defaultBranch": "main",
+    "branches": {
+      "main": {
+        "versionFormat": "semantic",
+        "tagFormat": "v{version}",
+        "syncFiles": [
+          "package.json"
+        ],
+        "environment": "production",
+        "bumpStrategy": "semantic"
+      },
+      "develop": {
+        "versionFormat": "dev",
+        "tagFormat": "v{version}-dev",
+        "syncFiles": [
+          "package.json"
+        ],
+        "environment": "development",
+        "bumpStrategy": "dev-build"
+      }
+    }
+  }
+}

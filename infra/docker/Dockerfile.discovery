@@ -1,0 +1,54 @@
+# ─── Builder Stage ────────────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+COPY packages/discovery/package.json ./packages/discovery/
+COPY packages/config/package.json ./packages/config/
+COPY packages/graph/package.json ./packages/graph/
+
+RUN pnpm install --frozen-lockfile
+
+COPY packages/discovery/src ./packages/discovery/src
+COPY packages/discovery/tsconfig.json ./packages/discovery/
+COPY packages/config/src ./packages/config/src
+COPY packages/config/tsconfig.json ./packages/config/
+COPY packages/graph/src ./packages/graph/src
+COPY packages/graph/tsconfig.json ./packages/graph/
+
+RUN pnpm --filter @cig/config build
+RUN pnpm --filter @cig/graph build
+RUN pnpm --filter @cig/discovery build
+
+# ─── Production Stage ─────────────────────────────────────────────────────────
+FROM node:20-alpine AS production
+
+RUN addgroup -g 1000 node_group || true \
+    && adduser -u 1000 -G node_group -s /bin/sh -D nodeuser 2>/dev/null || true
+
+WORKDIR /app
+
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/discovery/package.json ./packages/discovery/
+COPY packages/config/package.json ./packages/config/
+COPY packages/graph/package.json ./packages/graph/
+
+RUN pnpm install --frozen-lockfile --prod
+
+COPY --from=builder /app/packages/discovery/dist ./packages/discovery/dist
+COPY --from=builder /app/packages/config/dist ./packages/config/dist
+COPY --from=builder /app/packages/graph/dist ./packages/graph/dist
+
+RUN chown -R 1000:1000 /app
+
+USER 1000
+
+HEALTHCHECK --interval=60s --timeout=15s --start-period=30s --retries=3 \
+    CMD node -e "require('./packages/discovery/dist/index.js')" || exit 1
+
+CMD ["node", "packages/discovery/dist/index.js"]

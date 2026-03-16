@@ -1,0 +1,21 @@
+{
+  "name": "@cig/discovery",
+  "version": "0.1.0",
+  "description": "CIG infrastructure discovery orchestrator",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "fast-check": "^3.23.2",
+    "typescript": "^5.4.0",
+    "vitest": "^1.4.0"
+  }
+}

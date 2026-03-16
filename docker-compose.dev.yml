@@ -1,0 +1,218 @@
+version: "3.9"
+
+# ─── Development Overrides ────────────────────────────────────────────────────
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# Overrides for local development:
+#   - Source code mounted for hot reload
+#   - Read-only filesystem disabled (needed for tsc --watch output)
+#   - Debug ports exposed
+#   - NODE_ENV set to development
+#   - Reduced memory limits for development
+#   - Total memory limit: 4GB across all services
+#
+# Profiles:
+#   - minimal: Run only essential services (api, neo4j, dashboard)
+#   - full: Run all services (default)
+#
+# Quick start:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile minimal up
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile full up
+
+services:
+
+  # ── API (hot reload with nodemon) ──────────────────────────────────────────
+  api:
+    build:
+      target: builder
+    environment:
+      NODE_ENV: development
+      DEBUG: cig:*
+      # Disable auth in dev for easier testing (Requirement 35.10)
+      DISABLE_AUTH: "true"
+    volumes:
+      # Mount source code for hot reload (Requirement 35.1)
+      - ./packages/api/src:/app/packages/api/src
+      - ./packages/config/src:/app/packages/config/src
+      - ./packages/graph/src:/app/packages/graph/src
+      # Exclude node_modules to avoid conflicts
+      - /app/packages/api/node_modules
+      - /app/packages/config/node_modules
+      - /app/packages/graph/node_modules
+    # Use nodemon for automatic restart on code changes (Requirement 35.3)
+    command: ["pnpm", "--filter", "@cig/api", "dev"]
+    read_only: false
+    tmpfs: []
+    ports:
+      - "8080:8080"
+      - "9229:9229"   # Node.js inspector for debugging (Requirement 35.7)
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
+    profiles:
+      - minimal
+      - full
+
+  # ── Discovery (hot reload with nodemon) ────────────────────────────────────
+  discovery:
+    build:
+      target: builder
+    environment:
+      NODE_ENV: development
+      DEBUG: cig:*
+      DISABLE_AUTH: "true"
+    volumes:
+      # Mount source code for hot reload (Requirement 35.1)
+      - ./packages/discovery/src:/app/packages/discovery/src
+      - ./packages/config/src:/app/packages/config/src
+      - ./packages/graph/src:/app/packages/graph/src
+      # Exclude node_modules to avoid conflicts
+      - /app/packages/discovery/node_modules
+      - /app/packages/config/node_modules
+      - /app/packages/graph/node_modules
+    # Use nodemon for automatic restart on code changes (Requirement 35.4)
+    command: ["pnpm", "--filter", "@cig/discovery", "dev"]
+    read_only: false
+    tmpfs: []
+    ports:
+      - "9230:9229"   # Node.js inspector for debugging (Requirement 35.7)
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
+    profiles:
+      - full
+
+  # ── Chatbot (hot reload with nodemon) ──────────────────────────────────────
+  chatbot:
+    build:
+      target: builder
+    environment:
+      NODE_ENV: development
+      DEBUG: cig:*
+      DISABLE_AUTH: "true"
+    volumes:
+      # Mount source code for hot reload (Requirement 35.1)
+      - ./packages/chatbot/src:/app/packages/chatbot/src
+      - ./packages/config/src:/app/packages/config/src
+      - ./packages/graph/src:/app/packages/graph/src
+      # Exclude node_modules to avoid conflicts
+      - /app/packages/chatbot/node_modules
+      - /app/packages/config/node_modules
+      - /app/packages/graph/node_modules
+    # Use nodemon for automatic restart on code changes (Requirement 35.4)
+    command: ["pnpm", "--filter", "@cig/chatbot", "dev"]
+    read_only: false
+    tmpfs: []
+    ports:
+      - "9231:9229"   # Node.js inspector for debugging (Requirement 35.7)
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
+    profiles:
+      - full
+
+  # ── Dashboard (Next.js dev server with HMR) ───────────────────────────────
+  dashboard:
+    build:
+      target: builder
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+      # Enable Next.js HMR (Requirement 35.2)
+      NEXT_PUBLIC_HOSTNAME: localhost
+      NEXT_PUBLIC_PORT: 3000
+      DISABLE_AUTH: "true"
+    volumes:
+      # Mount app directory for hot reload (Requirement 35.1)
+      - ./apps/dashboard:/app/apps/dashboard
+      # Exclude node_modules and .next from host mount for performance
+      - /app/apps/dashboard/node_modules
+      - /app/apps/dashboard/.next
+    # Next.js dev server with HMR (Requirement 35.2)
+    command: ["pnpm", "--filter", "@cig/dashboard", "dev"]
+    read_only: false
+    tmpfs: []
+    ports:
+      - "3000:3000"
+      - "3001:3001"   # Next.js HMR port
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
+    profiles:
+      - minimal
+      - full
+
+  # ── Neo4j (dev: relaxed memory) ───────────────────────────────────────────
+  neo4j:
+    environment:
+      # Development memory settings (Requirement 37.2)
+      NEO4J_dbms_memory_heap_initial__size: 256m
+      NEO4J_dbms_memory_heap_max__size: 512m
+      NEO4J_dbms_memory_pagecache_size: 256m
+    deploy:
+      resources:
+        # Total memory limit: 4GB across all services (Requirement 37.1)
+        # Neo4j: 1GB (largest consumer)
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    profiles:
+      - minimal
+      - full
+
+  # ── Chroma (dev: no changes needed) ───────────────────────────────────────
+  chroma:
+    environment:
+      ANONYMIZED_TELEMETRY: "FALSE"
+    deploy:
+      resources:
+        # Chroma: 512MB (Requirement 37.2)
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    profiles:
+      - minimal
+      - full
+
+  # ── Cartography (discovery service) ────────────────────────────────────────
+  cartography:
+    environment:
+      # Disable auth in dev for easier testing (Requirement 35.10)
+      DISABLE_AUTH: "true"
+    deploy:
+      resources:
+        # Cartography: 512MB (Requirement 37.2)
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    profiles:
+      - full

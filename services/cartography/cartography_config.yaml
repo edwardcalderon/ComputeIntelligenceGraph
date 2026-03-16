@@ -1,0 +1,130 @@
+# Cartography Discovery Configuration
+# Reference documentation for the CIG Cartography service.
+# Cartography uses CLI flags (not a YAML config) — this file documents
+# the expected environment variables and the resulting CLI invocation.
+
+# ─────────────────────────────────────────────
+# Environment Variables - Neo4j
+# ─────────────────────────────────────────────
+# NEO4J_URI          - Neo4j bolt URI            (default: bolt://neo4j:7687)
+# NEO4J_USER         - Neo4j username            (default: neo4j)
+# NEO4J_PASSWORD     - Neo4j password            (required)
+
+# ─────────────────────────────────────────────
+# Environment Variables - AWS
+# ─────────────────────────────────────────────
+# AWS_ROLE_ARN       - IAM role ARN to assume    (required for AWS discovery)
+# AWS_REGIONS        - Comma-separated regions   (default: us-east-1)
+#                      e.g. "us-east-1,us-west-2,eu-west-1"
+
+# ─────────────────────────────────────────────
+# Environment Variables - Kubernetes
+# ─────────────────────────────────────────────
+# KUBERNETES_ENABLED        - Enable Kubernetes discovery (default: false)
+# KUBECONFIG                - Path to kubeconfig file (e.g. /root/.kube/config)
+# KUBERNETES_CLUSTER_NAME   - Optional cluster name label for graph nodes
+#
+# Kubernetes Module Configuration:
+#   enabled: true/false (controlled by KUBERNETES_ENABLED env var)
+#   kubeconfig_path: from KUBECONFIG env var
+#   cluster_name: from KUBERNETES_CLUSTER_NAME env var (optional)
+#
+# Kubernetes Resource Types Discovered:
+#   pods                - Running workload pods
+#   services            - ClusterIP / NodePort / LoadBalancer services
+#   deployments         - Deployment controllers
+#   namespaces          - Cluster namespaces
+#   ingresses           - Ingress routing rules
+#   persistent_volumes  - PersistentVolume resources
+#
+# Required RBAC Permissions (read-only):
+#   The service account / kubeconfig user must have get, list, watch on:
+#   - pods
+#   - services
+#   - deployments (apps/v1)
+#   - namespaces
+#   - ingresses (networking.k8s.io/v1)
+#   - persistentvolumes
+#   A ClusterRole with these verbs on the above resources is sufficient.
+#   No write permissions are required.
+
+# ─────────────────────────────────────────────
+# Environment Variables - GCP
+# ─────────────────────────────────────────────
+# GCP_ENABLED                    - Enable GCP discovery (default: false)
+# GCP_PROJECT_ID                 - GCP project ID to discover
+# GOOGLE_APPLICATION_CREDENTIALS - Path to service account JSON key file
+#
+# GCP Module Configuration:
+#   enabled: true/false (controlled by GCP_ENABLED env var)
+#   project_id: from GCP_PROJECT_ID env var
+#   credentials_file: from GOOGLE_APPLICATION_CREDENTIALS env var
+#
+# GCP Resource Types Discovered:
+#   compute_instances  - Compute Engine VM instances
+#   cloud_sql          - Cloud SQL database instances
+#   gcs_buckets        - Cloud Storage buckets
+#   cloud_functions    - Cloud Functions
+#   iam                - IAM service accounts and policies
+#
+# GCP Service Account Requirements:
+#   The service account specified in GOOGLE_APPLICATION_CREDENTIALS must have:
+#   - compute.instances.list
+#   - compute.instances.get
+#   - cloudsql.instances.list
+#   - storage.buckets.list
+#   - cloudfunctions.functions.list
+#   - iam.serviceAccounts.list
+#   All are read-only permissions (no write access required).
+
+# ─────────────────────────────────────────────
+# AWS Modules Enabled
+# ─────────────────────────────────────────────
+# Cartography automatically discovers the following AWS resource types
+# when valid AWS credentials are present. No per-module flags are needed.
+#
+# EC2       - Instances, security groups, AMIs, key pairs, EBS volumes
+# RDS       - DB instances, clusters, snapshots, subnet groups
+# S3        - Buckets, bucket policies, ACLs
+# Lambda    - Functions, aliases, event source mappings
+# VPC       - VPCs, subnets, route tables, internet gateways, NAT gateways
+# IAM       - Users, roles, groups, policies, access keys
+
+# ─────────────────────────────────────────────
+# Resulting CLI Command (built by runner.py)
+# ─────────────────────────────────────────────
+# AWS only:
+# cartography \
+#   --neo4j-uri         $NEO4J_URI \
+#   --neo4j-user        $NEO4J_USER \
+#   --neo4j-password-env-var NEO4J_PASSWORD \
+#   --aws-role-arn      $AWS_ROLE_ARN \
+#   --aws-regions       $AWS_REGIONS
+#
+# With GCP (when GCP_ENABLED=true):
+# GOOGLE_APPLICATION_CREDENTIALS=/path/to/sa.json \
+# cartography \
+#   --neo4j-uri         $NEO4J_URI \
+#   --neo4j-user        $NEO4J_USER \
+#   --neo4j-password-env-var NEO4J_PASSWORD \
+#   --aws-role-arn      $AWS_ROLE_ARN \
+#   --aws-regions       $AWS_REGIONS \
+#   --gcp-project-id    $GCP_PROJECT_ID
+#
+# With Kubernetes (when KUBERNETES_ENABLED=true):
+# KUBECONFIG=/root/.kube/config \
+# cartography \
+#   --neo4j-uri              $NEO4J_URI \
+#   --neo4j-user             $NEO4J_USER \
+#   --neo4j-password-env-var NEO4J_PASSWORD \
+#   --k8s-kubeconfig-path    $KUBECONFIG
+
+# ─────────────────────────────────────────────
+# IAM Role Requirements (AWS)
+# ─────────────────────────────────────────────
+# The role specified in AWS_ROLE_ARN must have the read-only permissions
+# listed in iam-policy.json. The role's trust policy must allow the
+# CIG Control Node's instance profile (or the executing principal) to
+# assume it via sts:AssumeRole.
+#
+# See: services/cartography/iam-policy.json

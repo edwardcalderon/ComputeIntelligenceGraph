@@ -1,0 +1,54 @@
+# ─── Builder Stage ────────────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+COPY packages/chatbot/package.json ./packages/chatbot/
+COPY packages/config/package.json ./packages/config/
+COPY packages/graph/package.json ./packages/graph/
+
+RUN pnpm install --frozen-lockfile
+
+COPY packages/chatbot/src ./packages/chatbot/src
+COPY packages/chatbot/tsconfig.json ./packages/chatbot/
+COPY packages/config/src ./packages/config/src
+COPY packages/config/tsconfig.json ./packages/config/
+COPY packages/graph/src ./packages/graph/src
+COPY packages/graph/tsconfig.json ./packages/graph/
+
+RUN pnpm --filter @cig/config build
+RUN pnpm --filter @cig/graph build
+RUN pnpm --filter @cig/chatbot build
+
+# ─── Production Stage ─────────────────────────────────────────────────────────
+FROM node:20-alpine AS production
+
+RUN addgroup -g 1000 node_group || true \
+    && adduser -u 1000 -G node_group -s /bin/sh -D nodeuser 2>/dev/null || true
+
+WORKDIR /app
+
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/chatbot/package.json ./packages/chatbot/
+COPY packages/config/package.json ./packages/config/
+COPY packages/graph/package.json ./packages/graph/
+
+RUN pnpm install --frozen-lockfile --prod
+
+COPY --from=builder /app/packages/chatbot/dist ./packages/chatbot/dist
+COPY --from=builder /app/packages/config/dist ./packages/config/dist
+COPY --from=builder /app/packages/graph/dist ./packages/graph/dist
+
+RUN chown -R 1000:1000 /app
+
+USER 1000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+    CMD node -e "process.exit(0)" || exit 1
+
+CMD ["node", "packages/chatbot/dist/index.js"]

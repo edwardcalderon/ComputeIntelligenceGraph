@@ -1,0 +1,11 @@
+{
+  "name": "@cig/iac",
+  "version": "0.1.0",
+  "description": "CIG Infrastructure as Code - Terraform modules",
+  "private": true,
+  "scripts": {
+    "lint": "echo 'No linting for Terraform modules'",
+    "test": "echo 'No tests for Terraform modules'",
+    "clean": "echo 'No build artifacts to clean'"
+  }
+}

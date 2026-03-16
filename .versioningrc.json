@@ -1,0 +1,15 @@
+{
+  "packages": [
+    "packages/*",
+    "apps/*"
+  ],
+  "ignore": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.next/**"
+  ],
+  "syncVersion": true,
+  "preventPrivateLeaks": true,
+  "cleanBeforePublish": true,
+  "versionSource": "root"
+}

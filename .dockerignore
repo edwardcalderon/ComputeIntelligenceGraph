@@ -1,0 +1,32 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build outputs (copied selectively in Dockerfiles)
+**/dist
+**/.next
+**/build
+
+# Dev / test artifacts
+**/*.test.ts
+**/*.spec.ts
+**/coverage
+**/.turbo
+
+# Git & IDE
+.git
+.gitignore
+.vscode
+.kiro
+
+# Docker files themselves
+docker-compose*.yml
+infra/docker
+
+# Docs
+docs
+*.md
+
+# Env files (secrets must be passed via env vars at runtime)
+.env
+.env.*

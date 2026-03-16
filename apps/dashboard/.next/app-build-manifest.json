@@ -1,0 +1,51 @@
+{
+  "pages": {
+    "/_not-found/page": [
+      "static/chunks/webpack-a3c2f2aa55e3e895.js",
+      "static/chunks/909cc00b-d5fb7cb5d3f6b2b4.js",
+      "static/chunks/326-5836e4f17dbc50d0.js",
+      "static/chunks/main-app-f0e3d8004658a324.js",
+      "static/chunks/app/_not-found/page-d29b1b169f89993e.js"
+    ],
+    "/layout": [
+      "static/chunks/webpack-a3c2f2aa55e3e895.js",
+      "static/chunks/909cc00b-d5fb7cb5d3f6b2b4.js",
+      "static/chunks/326-5836e4f17dbc50d0.js",
+      "static/chunks/main-app-f0e3d8004658a324.js",
+      "static/css/453dddb1b2575386.css",
+      "static/chunks/784-a4eef7a5f5685fc9.js",
+      "static/chunks/58-2743f0449ac9e0d7.js",
+      "static/chunks/app/layout-7a1d4597da6a3f3d.js"
+    ],
+    "/page": [
+      "static/chunks/webpack-a3c2f2aa55e3e895.js",
+      "static/chunks/909cc00b-d5fb7cb5d3f6b2b4.js",
+      "static/chunks/326-5836e4f17dbc50d0.js",
+      "static/chunks/main-app-f0e3d8004658a324.js",
+      "static/chunks/784-a4eef7a5f5685fc9.js",
+      "static/chunks/697-e9c137f5ddb2dbeb.js",
+      "static/chunks/app/page-da6378de7c321747.js"
+    ],
+    "/graph/page": [
+      "static/chunks/webpack-a3c2f2aa55e3e895.js",
+      "static/chunks/909cc00b-d5fb7cb5d3f6b2b4.js",
+      "static/chunks/326-5836e4f17dbc50d0.js",
+      "static/chunks/main-app-f0e3d8004658a324.js",
+      "static/css/a275cc2b185e04f8.css",
+      "static/chunks/92ba8523-7675e0a57de03622.js",
+      "static/chunks/784-a4eef7a5f5685fc9.js",
+      "static/chunks/697-e9c137f5ddb2dbeb.js",
+      "static/chunks/520-33c6f3f9dce2a395.js",
+      "static/chunks/app/graph/page-9d7bfcbd094771b8.js"
+    ],
+    "/resources/page": [
+      "static/chunks/webpack-a3c2f2aa55e3e895.js",
+      "static/chunks/909cc00b-d5fb7cb5d3f6b2b4.js",
+      "static/chunks/326-5836e4f17dbc50d0.js",
+      "static/chunks/main-app-f0e3d8004658a324.js",
+      "static/chunks/784-a4eef7a5f5685fc9.js",
+      "static/chunks/697-e9c137f5ddb2dbeb.js",
+      "static/chunks/app/resources/page-cd15d513b75549f9.js"
+    ]
+  }
+}

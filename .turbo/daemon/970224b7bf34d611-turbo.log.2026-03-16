@@ -1,0 +1,21 @@
+2026-03-16T01:36:40.977498Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("_tmp_188640_3fbb23c1ccf248ed4425054c822b46a5")}
+2026-03-16T01:36:40.977511Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2026-03-16T01:36:41.277847Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".husky/_/.gitignore"), AnchoredSystemPathBuf(".husky/_/husky.sh")}
+2026-03-16T01:36:41.277859Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2026-03-16T01:41:10.477432Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("package.json")}
+2026-03-16T01:41:10.477443Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(All)
+2026-03-16T01:50:15.277748Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".husky/pre-commit"), AnchoredSystemPathBuf("package.json")}
+2026-03-16T01:50:15.277757Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(All)
+2026-03-16T01:50:15.377730Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".husky/commit-msg"), AnchoredSystemPathBuf(".gitignore"), AnchoredSystemPathBuf("README.md"), AnchoredSystemPathBuf(".turbo/daemon/970224b7bf34d611-turbo.log.2026-03-16")}
+2026-03-16T01:50:15.377744Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2026-03-16T01:50:15.478241Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/daemon/970224b7bf34d611-turbo.log.2026-03-16")}
+2026-03-16T01:50:15.478256Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2026-03-16T01:50:15.577573Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".prettierignore"), AnchoredSystemPathBuf("commitlint.config.js"), AnchoredSystemPathBuf(".turbo/daemon/970224b7bf34d611-turbo.log.2026-03-16")}
+2026-03-16T01:50:15.577588Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2026-03-16T01:50:15.677949Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/daemon/970224b7bf34d611-turbo.log.2026-03-16"), AnchoredSystemPathBuf(".prettierrc.json")}
+2026-03-16T01:50:15.677960Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2026-03-16T01:50:15.777854Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tsconfig.base.json"), AnchoredSystemPathBuf(".eslintrc.json"), AnchoredSystemPathBuf(".turbo/daemon/970224b7bf34d611-turbo.log.2026-03-16")}
+2026-03-16T01:50:15.777868Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2026-03-16T01:50:15.877685Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("pnpm-workspace.yaml"), AnchoredSystemPathBuf("package.json"), AnchoredSystemPathBuf(".turbo/daemon/970224b7bf34d611-turbo.log.2026-03-16")}
+2026-03-16T01:50:15.877696Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(All)
+2026-03-16T02:06:33.059425Z  WARN turborepo_filewatch: encountered error watching filesystem enumerating recursive watch: IO error for operation on /home/ed/Documents/MAESTRIA/SISTEMAS_INTELIGENTES/CIG/node_modules/.pnpm/undici-types@6.21.0/node_modules/undici-types_tmp_214290: No such file or directory (os error 2)
