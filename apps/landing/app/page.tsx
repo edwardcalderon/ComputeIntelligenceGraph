@@ -68,7 +68,7 @@ function smoothScrollTo(id: string) {
 /* ─── CIG Icon (inline SVG) ───────────────────────────────────────────── */
 
 const CigIconSvg: React.FC<{ className?: string }> = ({ className }) => (
-  <svg className={className} viewBox="20 20 216 216" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <svg className={className} viewBox="20 20 216 216" xmlns="http://www.w3.org/2000/svg" fill="none" style={{ transform: "rotate(90deg)" }}>
     <defs>
       <linearGradient id="graphGrad" x1="48" y1="40" x2="208" y2="208" gradientUnits="userSpaceOnUse">
         <stop offset="0%" stopColor="#2563EB"/>
