@@ -22,7 +22,7 @@
     </filter>
   </defs>
 
-  <g filter="url(#shadow)">
+  <g filter="url(#shadow)" transform="rotate(90 128 128)">
     <!-- Graph skeleton -->
     <g stroke="url(#graphGrad)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.95">
       <line x1="128" y1="52" x2="74" y2="174"/>
