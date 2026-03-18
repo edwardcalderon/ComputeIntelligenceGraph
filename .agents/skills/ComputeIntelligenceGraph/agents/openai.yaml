@@ -1,0 +1,6 @@
+interface:
+  display_name: "ComputeIntelligenceGraph"
+  short_description: "Repo-specific patterns and workflows for ComputeIntelligenceGraph"
+  default_prompt: "Use the ComputeIntelligenceGraph repo skill to follow existing architecture, testing, and workflow conventions."
+policy:
+  allow_implicit_invocation: true
