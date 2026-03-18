@@ -1,6 +1,6 @@
 # CIG
 
-[![Version](https://img.shields.io/badge/version-0.1.1-blue.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-0.1.2-blue.svg)](package.json)
 [![Node](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen.svg)](package.json)
 [![pnpm](https://img.shields.io/badge/pnpm-%3E%3D9.0.0-orange.svg)](package.json)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -22,6 +22,7 @@ The repository contains a working core platform plus a few scaffolded areas that
 - RAG/chatbot pipeline and agent packages for query reasoning and actions
 - CLI for install, connect, deploy, seed, reset, and status workflows
 - Docker Compose and Terraform infrastructure scaffolding
+- `@cig/infra` package wrapping `@lsts_tech/infra` for AWS deployments (Authentik + dashboard pipelines)
 
 ### Still Scaffolded or Partial
 
@@ -39,12 +40,14 @@ apps/
 packages/
   agents/        OpenClaw and OpenFang agent logic
   api/           Fastify REST, GraphQL, and WebSocket API
+  auth/          Authentication helpers and session management
   chatbot/       RAG and vector retrieval pipeline
   cli/           CLI commands and credential handling
   config/        YAML config loading and validation
   discovery/     Discovery orchestration and scheduler
   graph/         Neo4j graph engine
   iac/           Terraform modules
+  infra/         AWS deployment wrapper (@lsts_tech/infra)
   sdk/           SDK scaffold
 services/
   cartography/   Python FastAPI discovery service
@@ -122,6 +125,7 @@ pnpm dev:chatbot
 pnpm dev:cli
 pnpm dev:discovery
 pnpm dev:graph
+pnpm dev:infra
 pnpm dev:sdk
 pnpm dev:all
 ```

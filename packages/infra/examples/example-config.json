@@ -1,0 +1,27 @@
+{
+  "aws": {
+    "region": "us-east-1",
+    "accountId": "123456789012",
+    "profile": "default"
+  },
+  "authentik": {
+    "domain": "auth.example.com",
+    "adminEmail": "admin@example.com",
+    "vpcId": "vpc-12345678",
+    "subnetId": "subnet-12345678"
+  },
+  "dashboard": {
+    "buildPath": "./apps/dashboard/.next",
+    "domain": "dashboard.example.com",
+    "authentikIntegration": true
+  },
+  "iac": {
+    "modulesPath": "../iac",
+    "networkingModule": "networking",
+    "computeModule": "compute"
+  },
+  "logging": {
+    "level": "info",
+    "timestamps": true
+  }
+}
