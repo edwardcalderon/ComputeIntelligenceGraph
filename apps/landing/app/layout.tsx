@@ -1,14 +1,20 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://cig.lat";
+
 export const viewport: Viewport = {
   themeColor: "#22d3ee",
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "CIG — Compute Intelligence Graph",
   description:
     "Open-source platform that discovers your infrastructure — cloud, on-premise, or local — builds a dependency graph, and lets you query it conversationally.",
+  alternates: {
+    canonical: "/",
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "48x48" },

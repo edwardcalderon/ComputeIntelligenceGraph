@@ -8,6 +8,32 @@ import { getMetrics, recordHttpRequest } from './metrics';
 
 const VERSION = '0.1.0';
 
+function resolveCorsOrigins(): true | string[] {
+  const configuredOrigins = process.env.CORS_ORIGINS?.trim();
+
+  if (configuredOrigins === '*') {
+    return true;
+  }
+
+  if (configuredOrigins) {
+    return configuredOrigins
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean);
+  }
+
+  if (process.env.NODE_ENV !== 'production') {
+    return true;
+  }
+
+  // Default production fallback during domain migration.
+  return [
+    'https://cig.lat',
+    'https://www.cig.lat',
+    'https://edwardcalderon.github.io',
+  ];
+}
+
 export async function createServer(): Promise<FastifyInstance> {
   const app = Fastify({
     logger: {
@@ -16,9 +42,8 @@ export async function createServer(): Promise<FastifyInstance> {
   });
 
   // CORS
-  const corsOrigins = process.env.CORS_ORIGINS ?? '*';
   await app.register(cors, {
-    origin: corsOrigins === '*' ? true : corsOrigins.split(',').map((o) => o.trim()),
+    origin: resolveCorsOrigins(),
   });
 
   // Rate limiting (100 req/min per client, Requirement 16.9)

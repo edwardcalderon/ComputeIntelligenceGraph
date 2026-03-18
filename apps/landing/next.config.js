@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
-const isProd = process.env.NODE_ENV === 'production';
-const repoName = '/ComputeIntelligenceGraph';
+const legacyBasePath = '/ComputeIntelligenceGraph';
+const useLegacyBasePath = process.env.LEGACY_BASEPATH === 'true';
 
 const { version } = require('../../package.json');
 
@@ -10,11 +10,15 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // GitHub Pages deploys under /<repo-name>/
-  basePath: isProd ? repoName : '',
-  assetPrefix: isProd ? repoName : '',
+  // Primary domain deploys at root, while legacy GitHub Pages deploys under /ComputeIntelligenceGraph.
+  basePath: useLegacyBasePath ? legacyBasePath : '',
+  assetPrefix: useLegacyBasePath ? legacyBasePath : '',
   env: {
     NEXT_PUBLIC_APP_VERSION: version,
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'https://cig.lat',
+    NEXT_PUBLIC_LEGACY_SITE_URL:
+      process.env.NEXT_PUBLIC_LEGACY_SITE_URL ||
+      'https://edwardcalderon.github.io/ComputeIntelligenceGraph',
   },
 };
 
