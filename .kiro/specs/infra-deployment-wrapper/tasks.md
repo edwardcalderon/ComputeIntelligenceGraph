@@ -210,7 +210,7 @@ This plan implements the @cig/infra package, a TypeScript wrapper around @lsts_t
     - Test error handling for missing buildPath
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
 
-- [-] 10. Checkpoint - Ensure all tests pass
+- [x] 10. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 11. Implement CLI interface
