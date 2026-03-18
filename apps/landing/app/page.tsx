@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { GraphParticleTypography } from "../components/GraphParticleTypography";
 import { SpaceBackground } from "../components/SpaceBackground";
+import { AuthButton } from "../components/AuthButton";
 import {
   Cloud,
   GitGraph,
@@ -722,6 +723,11 @@ const BackToTop: React.FC = () => {
 export default function HomePage() {
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 text-zinc-50 relative overflow-x-hidden">
+      {/* Top auth bar */}
+      <div className="fixed top-4 right-4 z-50">
+        <AuthButton />
+      </div>
+
       {/* Background blobs */}
       <div className="pointer-events-none fixed -top-40 -left-40 w-[600px] h-[600px] bg-gradient-to-tr from-cyan-600 via-blue-600 to-violet-600 opacity-[0.07] rounded-full blur-3xl animate-pulse-slow z-0" />
       <div className="pointer-events-none fixed -bottom-40 -right-40 w-[500px] h-[500px] bg-gradient-to-bl from-violet-600 via-blue-600 to-cyan-600 opacity-[0.05] rounded-full blur-3xl animate-pulse-slow z-0" />

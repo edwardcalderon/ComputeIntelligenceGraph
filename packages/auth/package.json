@@ -1,0 +1,31 @@
+{
+  "name": "@cig/auth",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./provider": "./src/provider.tsx",
+    "./client": "./src/client.ts"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "lint": "tsc --noEmit",
+    "test": "echo 'No tests yet'"
+  },
+  "dependencies": {
+    "@edcalderon/auth": "^1.2.1",
+    "@supabase/supabase-js": "^2.49.4"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.4.0"
+  }
+}
