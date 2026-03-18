@@ -1,4 +1,4 @@
-import { ChromaClient, Collection } from 'chromadb';
+import { ChromaClient, Collection, type Metadata } from 'chromadb';
 
 export interface VectorDocument {
   id: string;
@@ -47,7 +47,7 @@ export class VectorStore {
     await col.upsert({
       ids: docs.map((d) => d.id),
       documents: docs.map((d) => d.content),
-      metadatas: docs.map((d) => d.metadata),
+      metadatas: docs.map((d) => d.metadata as Metadata),
     });
   }
 
@@ -59,7 +59,7 @@ export class VectorStore {
     await col.upsert({
       ids: docs.map((d) => d.id),
       documents: docs.map((d) => d.content),
-      metadatas: docs.map((d) => d.metadata),
+      metadatas: docs.map((d) => d.metadata as Metadata),
       embeddings,
     });
   }
