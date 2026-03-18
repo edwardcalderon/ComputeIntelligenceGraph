@@ -179,7 +179,7 @@ function MethodsView({
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-zinc-400 mb-1">
-        Choose how you'd like to sign in to access the Dashboard, Console, and
+        Choose how you&apos;d like to sign in to access the Dashboard, Console, and
         infrastructure tools.
       </p>
 
@@ -265,7 +265,7 @@ function EmailOtpView({ onSuccess }: { onSuccess: () => void }) {
     return (
       <form onSubmit={handleSendOtp} className="flex flex-col gap-4">
         <p className="text-sm text-zinc-400">
-          Enter your email and we'll send you a one-time code to sign in — no
+          Enter your email and we&apos;ll send you a one-time code to sign in — no
           password needed.
         </p>
         <input
@@ -325,7 +325,7 @@ function EmailOtpView({ onSuccess }: { onSuccess: () => void }) {
         }}
         className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
       >
-        Didn't receive it? Try again
+        Didn&apos;t receive it? Try again
       </button>
     </form>
   );
