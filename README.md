@@ -1,5 +1,10 @@
 # CIG
 
+[![Version](https://img.shields.io/badge/version-0.1.1-blue.svg)](package.json)
+[![Node](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen.svg)](package.json)
+[![pnpm](https://img.shields.io/badge/pnpm-%3E%3D9.0.0-orange.svg)](package.json)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 Compute Intelligence Graph is a self-hosted infrastructure intelligence platform for discovery, graph modeling, querying, cost analysis, and security review across cloud environments.
 
 Primary public domain: https://cig.lat/
