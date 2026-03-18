@@ -1,0 +1,335 @@
+# Instincts generated from https://github.com/edwardcalderon/ComputeIntelligenceGraph
+# Generated: 2026-03-18T03:51:38.071Z
+# Version: 2.0
+
+---
+id: ComputeIntelligenceGraph-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/edwardcalderon/ComputeIntelligenceGraph
+---
+
+# ComputeIntelligenceGraph Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: feat, fix, chore, style, docs
+
+## Evidence
+
+- 18 commits analyzed
+- Detected conventional commit pattern
+- Examples: fix: resolve lint failures across all workspace packages, feat(auth): add @cig/auth package with Supabase OAuth + multi-method sign-in modal
+
+---
+id: ComputeIntelligenceGraph-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/edwardcalderon/ComputeIntelligenceGraph
+---
+
+# ComputeIntelligenceGraph Commit Length
+
+## Action
+
+Write moderate-length commit messages (~50 characters)
+
+## Evidence
+
+- Average commit message length: 66 chars
+- Based on 18 commits
+
+---
+id: ComputeIntelligenceGraph-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/edwardcalderon/ComputeIntelligenceGraph
+---
+
+# ComputeIntelligenceGraph Naming Files
+
+## Action
+
+Use PascalCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: PascalCase
+
+---
+id: ComputeIntelligenceGraph-import-relative
+trigger: "when importing modules"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/edwardcalderon/ComputeIntelligenceGraph
+---
+
+# ComputeIntelligenceGraph Import Relative
+
+## Action
+
+Use relative imports for project files
+
+## Evidence
+
+- Import analysis shows relative import pattern
+- Example: import { x } from '../lib/x'
+
+---
+id: ComputeIntelligenceGraph-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/edwardcalderon/ComputeIntelligenceGraph
+---
+
+# ComputeIntelligenceGraph Export Style
+
+## Action
+
+Prefer mixed exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: mixed
+
+---
+id: ComputeIntelligenceGraph-test-framework
+trigger: "when writing tests"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/edwardcalderon/ComputeIntelligenceGraph
+---
+
+# ComputeIntelligenceGraph Test Framework
+
+## Action
+
+Use playwright as the test framework
+
+## Evidence
+
+- Test framework detected: playwright
+- File pattern: *.test.ts
+
+---
+id: ComputeIntelligenceGraph-test-naming
+trigger: "when creating a test file"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/edwardcalderon/ComputeIntelligenceGraph
+---
+
+# ComputeIntelligenceGraph Test Naming
+
+## Action
+
+Name test files using the pattern: *.test.ts
+
+## Evidence
+
+- File pattern: *.test.ts
+- Consistent across test files
+
+---
+id: ComputeIntelligenceGraph-test-mocking
+trigger: "when mocking dependencies in tests"
+confidence: 0.75
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/edwardcalderon/ComputeIntelligenceGraph
+---
+
+# ComputeIntelligenceGraph Test Mocking
+
+## Action
+
+Use vi.mock for mocking
+
+## Evidence
+
+- Mocking pattern detected: vi.mock
+- Consistent across test files
+
+---
+id: ComputeIntelligenceGraph-test-types
+trigger: "when planning tests for a feature"
+confidence: 0.7
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/edwardcalderon/ComputeIntelligenceGraph
+---
+
+# ComputeIntelligenceGraph Test Types
+
+## Action
+
+Write unit, integration, e2e tests to match project standards
+
+## Evidence
+
+- Test types detected: unit, integration, e2e
+- Coverage config: no
+
+---
+id: ComputeIntelligenceGraph-workflow-feature-development
+trigger: "when implementing a new feature"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/edwardcalderon/ComputeIntelligenceGraph
+---
+
+# ComputeIntelligenceGraph Workflow Feature Development
+
+## Action
+
+Follow the feature-development workflow:
+1. Add feature implementation
+2. Add tests for feature
+3. Update documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~22x per month
+- Files: apps/dashboard/.next/types/app/graph/*, apps/dashboard/.next/types/app/*, apps/dashboard/.next/types/app/resources/*
+
+---
+id: ComputeIntelligenceGraph-workflow-add-or-upgrade-app-feature-with-ui-and-config
+trigger: "when doing add or upgrade app feature with ui and config"
+confidence: 0.65
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/edwardcalderon/ComputeIntelligenceGraph
+---
+
+# ComputeIntelligenceGraph Workflow Add Or Upgrade App Feature With Ui And Config
+
+## Action
+
+Follow the add-or-upgrade-app-feature-with-ui-and-config workflow:
+1. Edit or create files in apps/<app>/app/page.tsx and/or layout.tsx
+2. Add or update supporting UI components in apps/<app>/components/
+3. Update Next.js config (apps/<app>/next.config.js) if needed
+4. Update package.json, tsconfig.json, and/or add new dependencies
+5. Update or add public assets if needed (apps/<app>/public/...)
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~3x per month
+- Files: apps/landing/app/page.tsx, apps/landing/app/layout.tsx, apps/landing/components/*.tsx
+
+---
+id: ComputeIntelligenceGraph-workflow-add-or-update-monorepo-package
+trigger: "when doing add or update monorepo package"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/edwardcalderon/ComputeIntelligenceGraph
+---
+
+# ComputeIntelligenceGraph Workflow Add Or Update Monorepo Package
+
+## Action
+
+Follow the add-or-update-monorepo-package workflow:
+1. Create or update packages/<pkg>/src/*.ts files
+2. Update or create packages/<pkg>/package.json
+3. Update or create packages/<pkg>/tsconfig.json
+4. Add or update index.ts and other entry points
+5. Update pnpm-lock.yaml to register new dependencies
+6. If new, add to workspace scripts/config
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: packages/*/src/*.ts, packages/*/package.json, packages/*/tsconfig.json
+
+---
+id: ComputeIntelligenceGraph-workflow-add-or-update-linting-and-typescript-config
+trigger: "when doing add or update linting and typescript config"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/edwardcalderon/ComputeIntelligenceGraph
+---
+
+# ComputeIntelligenceGraph Workflow Add Or Update Linting And Typescript Config
+
+## Action
+
+Follow the add-or-update-linting-and-typescript-config workflow:
+1. Add or update .eslintrc.json in app/package directory
+2. Update package.json to add or modify lint scripts and devDependencies
+3. Update tsconfig.json to include/exclude files as needed
+4. Update pnpm-lock.yaml if dependencies change
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: apps/*/.eslintrc.json, apps/*/package.json, apps/*/tsconfig.json
+
+---
+id: ComputeIntelligenceGraph-workflow-add-or-update-github-actions-workflow
+trigger: "when doing add or update github actions workflow"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/edwardcalderon/ComputeIntelligenceGraph
+---
+
+# ComputeIntelligenceGraph Workflow Add Or Update Github Actions Workflow
+
+## Action
+
+Follow the add-or-update-github-actions-workflow workflow:
+1. Create or update .github/workflows/*.yml
+2. Update related app/package config if needed (e.g., next.config.js for static export)
+3. Commit with a message referencing the workflow purpose
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: .github/workflows/*.yml, apps/*/next.config.js
+
+---
+id: ComputeIntelligenceGraph-workflow-docs-structure-update
+trigger: "when doing docs structure update"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/edwardcalderon/ComputeIntelligenceGraph
+---
+
+# ComputeIntelligenceGraph Workflow Docs Structure Update
+
+## Action
+
+Follow the docs-structure-update workflow:
+1. Edit or create docs/*.md and docs/*/*.md files
+2. Update README.md and other top-level documentation
+3. Add or reorganize files in docs/archive/, docs/deployment/, docs/development/, docs/testing/, etc.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: README.md, docs/*.md, docs/*/*.md
+
