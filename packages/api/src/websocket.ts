@@ -5,6 +5,7 @@
 
 import { FastifyInstance } from 'fastify';
 import websocketPlugin, { SocketStream } from '@fastify/websocket';
+import type { WebSocket as WsWebSocket } from 'ws';
 import { verifyJwt } from './auth.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -23,7 +24,7 @@ export interface WsMessage {
 
 // ─── Connected clients ────────────────────────────────────────────────────────
 
-const clients = new Set<WebSocket>();
+const clients = new Set<WsWebSocket>();
 
 // ─── Broadcast ────────────────────────────────────────────────────────────────
 

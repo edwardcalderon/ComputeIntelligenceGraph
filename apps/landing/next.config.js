@@ -5,7 +5,7 @@ const useLegacyBasePath = process.env.LEGACY_BASEPATH === 'true';
 const { version } = require('../../package.json');
 
 const nextConfig = {
-  transpilePackages: [],
+  transpilePackages: ['@cig/auth', '@edcalderon/auth'],
   output: 'export',
   images: {
     unoptimized: true,
