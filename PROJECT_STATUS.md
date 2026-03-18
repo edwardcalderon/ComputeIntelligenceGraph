@@ -1,7 +1,7 @@
 # CIG (Compute Intelligence Graph) - Project Status Report
 
-**Generated:** March 16, 2026  
-**Version:** 0.1.0  
+**Generated:** March 18, 2026  
+**Version:** 0.1.2  
 **Status:** 🟢 Development - Ready for Testing
 
 ---
@@ -10,7 +10,7 @@
 
 The CIG project is in an advanced development state with **substantial progress** across all major components. The monorepo is well-structured, versioning is synchronized, and core functionality is implemented and tested.
 
-### Overall Completion: ~75%
+### Overall Completion: ~80%
 
 - ✅ **Foundation & Infrastructure:** 100% Complete
 - ✅ **Core Graph Engine:** 100% Complete  
@@ -22,6 +22,8 @@ The CIG project is in an advanced development state with **substantial progress*
 - ✅ **CLI & Installation:** 100% Complete
 - ✅ **Multi-Cloud Support:** 100% Complete
 - ✅ **Cost & Security Features:** 100% Complete
+- ✅ **Auth Package:** 100% Complete
+- ✅ **Infra Deployment Wrapper (@cig/infra):** 100% Complete
 - 🟡 **Testing & Hardening:** 85% Complete
 - 🟡 **Documentation & Release:** 40% Complete
 
@@ -40,12 +42,14 @@ cig/
 ├── packages/               # Shared libraries
 │   ├── agents/            ✅ OpenClaw & OpenFang agents
 │   ├── api/               ✅ Fastify REST/GraphQL API
+│   ├── auth/              ✅ Auth helpers & session management
 │   ├── chatbot/           ✅ RAG pipeline & LLM integration
 │   ├── cli/               ✅ CLI tool (cig command)
 │   ├── config/            ✅ Configuration management
 │   ├── discovery/         ✅ Discovery orchestrator
 │   ├── graph/             ✅ Neo4j graph engine
 │   ├── iac/               ✅ Terraform modules
+│   ├── infra/             ✅ AWS deployment wrapper (@lsts_tech/infra)
 │   └── sdk/               🟡 TypeScript/Python SDKs (partial)
 ├── services/
 │   └── cartography/       ✅ Python discovery service
@@ -180,6 +184,26 @@ cig/
 - ✅ IAM unused keys detection
 - ✅ Security dashboard pages
 - ✅ Security score calculation
+
+### 11. Auth Package
+- ✅ Authentication helpers and session management
+- ✅ OTP support
+- ✅ Auth-ready React context and provider
+- ✅ Client utilities
+
+### 12. Infra Deployment Wrapper (packages/infra)
+- ✅ `@cig/infra` package wrapping `@lsts_tech/infra`
+- ✅ ConfigManager with env + file loading
+- ✅ Logger with structured output and level filtering
+- ✅ InfraWrapper with LSTS error wrapping
+- ✅ IACIntegration for Terraform module references
+- ✅ AuthentikDeployer — provisions Authentik to AWS
+- ✅ DashboardDeployer — deploys Next.js dashboard with Authentik integration
+- ✅ CLI entry point (`cig-infra` binary)
+- ✅ Full error class hierarchy
+- ✅ 37+ unit tests passing
+- ✅ JSDoc throughout
+- ✅ README and example configs
 
 ---
 
@@ -321,7 +345,7 @@ cig/
 - **packages/cli:** 28 tests ✅
 - **packages/config:** 18 tests ✅
 - **packages/discovery:** 24 tests ✅
-- **Total:** 316+ unit tests
+- **packages/infra:** 37+ tests ✅
 
 ### Integration Tests
 - API endpoints ✅
@@ -400,11 +424,11 @@ pnpm clean                 # Clean build artifacts + repo cleanup
 ## 📊 Metrics & Statistics
 
 ### Codebase
-- **Total Packages:** 9
+- **Total Packages:** 11
 - **Total Apps:** 3
-- **Total Lines of Code:** ~15,000+ (estimated)
-- **Test Files:** 50+
-- **Test Cases:** 350+
+- **Total Lines of Code:** ~18,000+ (estimated)
+- **Test Files:** 55+
+- **Test Cases:** 390+
 - **Test Coverage:** 80%+
 
 ### Infrastructure
@@ -520,6 +544,6 @@ The system is **ready for testing** and can be deployed locally for development 
 
 ---
 
-**Last Updated:** March 16, 2026  
-**Next Review:** March 23, 2026  
-**Version:** 0.1.0
+**Last Updated:** March 18, 2026  
+**Next Review:** March 25, 2026  
+**Version:** 0.1.2
