@@ -1,263 +1,171 @@
-# CIG - Compute Intelligence Graph
+# CIG
 
-> Open-source, self-hosted infrastructure intelligence platform for multi-cloud environments
+Compute Intelligence Graph is a self-hosted infrastructure intelligence platform for discovery, graph modeling, querying, cost analysis, and security review across cloud environments.
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](package.json)
-[![Node](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen.svg)](package.json)
-[![pnpm](https://img.shields.io/badge/pnpm-%3E%3D9.0.0-orange.svg)](package.json)
-[![License](https://img.shields.io/badge/license-TBD-lightgrey.svg)](LICENSE)
+Primary public domain: https://cig.lat/
 
----
+## Current State
 
-## 🚀 Quick Start
+The repository contains a working core platform plus a few scaffolded areas that are not finished yet.
+
+### Implemented
+
+- Dashboard application with resource views, graph visualization, costs, security, and Playwright E2E coverage
+- Fastify API with REST, GraphQL, WebSocket, auth, rate limiting, and metrics
+- Neo4j graph engine with traversal and circular dependency handling
+- Discovery orchestration plus Python Cartography service
+- RAG/chatbot pipeline and agent packages for query reasoning and actions
+- CLI for install, connect, deploy, seed, reset, and status workflows
+- Docker Compose and Terraform infrastructure scaffolding
+
+### Still Scaffolded or Partial
+
+- `apps/landing` is present but still minimal
+- `apps/wizard-ui` is mostly a bare Next.js scaffold
+- `packages/sdk` is scaffolded and not feature-complete
+
+## Repository Layout
+
+```text
+apps/
+  dashboard/     Main Next.js dashboard UI
+  landing/       Public landing site scaffold
+  wizard-ui/     Installation wizard scaffold
+packages/
+  agents/        OpenClaw and OpenFang agent logic
+  api/           Fastify REST, GraphQL, and WebSocket API
+  chatbot/       RAG and vector retrieval pipeline
+  cli/           CLI commands and credential handling
+  config/        YAML config loading and validation
+  discovery/     Discovery orchestration and scheduler
+  graph/         Neo4j graph engine
+  iac/           Terraform modules
+  sdk/           SDK scaffold
+services/
+  cartography/   Python FastAPI discovery service
+infra/
+  docker/        Container build definitions
+  terraform/     Infrastructure definitions
+docs/            Organized project documentation
+```
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 20+
+- pnpm 9+
+- Docker Engine or Docker Desktop
+- Docker Compose
+
+### Install
 
 ```bash
-# Install dependencies
 pnpm install
-
-# Start all services in development mode
-pnpm dev:all
-
-# Or start individual services
-pnpm dev:dashboard    # Dashboard UI
-pnpm dev:api          # REST/GraphQL API
-pnpm dev:agents       # AI agents
-
-# Build everything
-pnpm build:all
-
-# Run tests
-pnpm test
 ```
 
----
-
-## 📋 What is CIG?
-
-CIG (Compute Intelligence Graph) automatically discovers your cloud infrastructure, constructs a comprehensive dependency graph, and provides both visual and conversational interfaces for infrastructure exploration and management.
-
-### Key Features
-
-- 🔍 **Auto-Discovery**: AWS, GCP, Kubernetes, Docker
-- 📊 **Graph Visualization**: Interactive dependency mapping
-- 💬 **Conversational AI**: Natural language infrastructure queries
-- 💰 **Cost Analysis**: Track and optimize cloud spending
-- 🔒 **Security Scanning**: Detect misconfigurations
-- 🎯 **Infrastructure Actions**: Execute operations via chat
-- 🌐 **Multi-Cloud**: Unified view across providers
-
----
-
-## 🏗️ Architecture
-
-### Monorepo Structure
-
-```
-cig/
-├── apps/                    # Applications
-│   ├── dashboard/          # Next.js dashboard UI
-│   ├── landing/            # Marketing site
-│   └── wizard-ui/          # Installation wizard
-├── packages/               # Shared libraries
-│   ├── agents/            # OpenClaw & OpenFang AI agents
-│   ├── api/               # REST/GraphQL API server
-│   ├── chatbot/           # RAG pipeline & LLM
-│   ├── cli/               # CLI tool
-│   ├── config/            # Configuration management
-│   ├── discovery/         # Discovery orchestrator
-│   ├── graph/             # Neo4j graph engine
-│   ├── iac/               # Terraform modules
-│   └── sdk/               # TypeScript/Python SDKs
-└── services/
-    └── cartography/       # Python discovery service
-```
-
-### Tech Stack
-
-- **Frontend**: Next.js 14, React 18, TailwindCSS, React Flow
-- **Backend**: Node.js 20+, Fastify, GraphQL Yoga
-- **Database**: Neo4j 5.x (graph), Chroma (vector)
-- **AI/ML**: LangChain, OpenAI GPT-4
-- **Discovery**: Cartography (Python)
-- **Infrastructure**: Docker, Terraform, pnpm, TurboRepo
-
----
-
-## 📦 Available Scripts
-
-### Development
+### Start local infrastructure
 
 ```bash
-pnpm dev:all          # Start all apps in dev mode (parallel)
-pnpm dev:dashboard    # Start dashboard only
-pnpm dev:api          # Start API only
-pnpm dev:agents       # Start agents only
-# ... and 8 more dev:* scripts
+docker-compose -f docker-compose.dev.yml up -d
 ```
+
+This starts the local service dependencies used by the platform, including Neo4j and Chroma.
+
+### Start application code
+
+For focused development, start only what you need:
+
+```bash
+pnpm dev:dashboard
+pnpm dev:api
+pnpm dev:landing
+```
+
+You can also start the whole workspace:
+
+```bash
+pnpm dev:all
+```
+
+When multiple Next.js apps run together, they will use the next available local ports.
 
 ### Build
 
 ```bash
-pnpm build:all        # Build all packages
-pnpm build:dashboard  # Build dashboard only
-pnpm build:api        # Build API only
-# ... and 9 more build:* scripts
+pnpm build
 ```
 
-### Testing
+Or build a single workspace:
 
 ```bash
-pnpm test             # Run all tests
-pnpm test:e2e         # Run E2E tests (dashboard)
-pnpm lint             # Run linters
+pnpm build:dashboard
+pnpm build:api
 ```
 
-### Version Management
+## Common Scripts
+
+### Development
 
 ```bash
-pnpm version:status        # Check version sync status
-pnpm version:validate      # Validate versions
-pnpm version:bump:patch    # Bump patch version
-pnpm version:bump:minor    # Bump minor version
-pnpm version:bump:major    # Bump major version
-pnpm check:secrets         # Scan for secrets
+pnpm dev:dashboard
+pnpm dev:landing
+pnpm dev:wizard-ui
+pnpm dev:api
+pnpm dev:agents
+pnpm dev:chatbot
+pnpm dev:cli
+pnpm dev:discovery
+pnpm dev:graph
+pnpm dev:sdk
+pnpm dev:all
 ```
 
-### Workspace Scripts
+### Validation
 
 ```bash
-npx versioning scripts list     # List workspace config
-npx versioning scripts detect   # Detect new apps
-npx versioning scripts sync     # Regenerate scripts
+pnpm test
+pnpm lint
+pnpm version:validate
+pnpm version:status
 ```
 
----
+### Release
 
-## 🛠️ Development Setup
-
-### Prerequisites
-
-- Node.js >= 20.0.0
-- pnpm >= 9.0.0
-- Docker & Docker Compose
-- Git
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd cig
-   ```
-
-2. **Install dependencies**
-   ```bash
-   pnpm install
-   ```
-
-3. **Start infrastructure services**
-   ```bash
-   docker-compose -f docker-compose.dev.yml up -d
-   ```
-
-4. **Start development**
-   ```bash
-   pnpm dev:all
-   ```
-
-5. **Access the dashboard**
-   ```
-   http://localhost:3000
-   ```
-
----
-
-## 📚 Documentation
-
-- [Project Status](PROJECT_STATUS.md) - Current implementation status
-- [Versioning Guide](VERSIONING_GUIDE.md) - Version management
-- [Upgrade Summary](UPGRADE_SUMMARY.md) - Latest changes
-- [Requirements](.kiro/specs/compute-intelligence-graph/requirements.md) - Full requirements
-- [Design](.kiro/specs/compute-intelligence-graph/design.md) - Technical design
-- [Tasks](.kiro/specs/compute-intelligence-graph/tasks.md) - Implementation tasks
-
----
-
-## 🧪 Testing
-
-### Unit Tests
 ```bash
-pnpm test                    # Run all unit tests
-pnpm test --filter @cig/graph  # Test specific package
+pnpm release:dry
+pnpm release:patch
+pnpm release:minor
+pnpm release:major
 ```
 
-### E2E Tests
-```bash
-cd apps/dashboard
-pnpm test:e2e               # Run E2E tests
-pnpm test:e2e:ui            # Run in UI mode
-```
+## Testing
 
-### Test Coverage
-- **Unit Tests**: 316+ tests across 7 packages
-- **E2E Tests**: 37+ tests for dashboard
-- **Coverage**: 80%+ overall
+- Unit and integration tests run with `pnpm test`
+- Dashboard E2E tests run from `apps/dashboard` with `pnpm test:e2e`
+- Security testing notes: [docs/testing/security.md](docs/testing/security.md)
+- Performance testing notes: [docs/testing/performance.md](docs/testing/performance.md)
 
----
+## Documentation
 
-## 🚢 Deployment
+- Docs index: [docs/README.md](docs/README.md)
+- Architecture notes: [docs/architecture/README.md](docs/architecture/README.md)
+- Development notes: [docs/development/README.md](docs/development/README.md)
+- Deployment notes: [docs/deployment/README.md](docs/deployment/README.md)
+- Reference notes: [docs/reference/README.md](docs/reference/README.md)
+- Historical material: [docs/archive/README.md](docs/archive/README.md)
 
-### Local (Docker Compose)
-```bash
-docker-compose up -d
-```
+Additional root-level project records:
 
-### AWS
-```bash
-pnpm cig deploy --target aws
-```
+- Current status snapshot: [PROJECT_STATUS.md](PROJECT_STATUS.md)
+- Versioning workflow: [VERSIONING_GUIDE.md](VERSIONING_GUIDE.md)
+- Versioning upgrade notes: [UPGRADE_SUMMARY.md](UPGRADE_SUMMARY.md)
 
-### GCP
-```bash
-pnpm cig deploy --target gcp
-```
+## Notes
 
----
-
-## 🤝 Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-### Development Workflow
-
-1. Create a feature branch
-2. Make your changes
-3. Run tests: `pnpm test`
-4. Run linter: `pnpm lint`
-5. Submit a pull request
-
-### Adding a New Package
-
-1. Create the package in `packages/` or `apps/`
-2. Add package.json with proper configuration
-3. Run `npx versioning scripts detect`
-4. Update `versioning.config.json` if needed
-5. Run `npx versioning scripts sync`
-
----
-
-## 📊 Project Status
-
-**Version**: 0.1.0  
-**Status**: 🟢 Development - Ready for Testing  
-**Completion**: ~75%
-
-### ✅ Completed
-- Foundation & Infrastructure
-- Graph Engine (Neo4j)
-- Discovery Service (Cartography)
-- API Layer (REST/GraphQL/WebSocket)
-- Dashboard UI with E2E tests
+- The root README is intended to describe the current codebase conservatively.
+- Historical planning documents have been moved under `docs/archive/` to separate them from active documentation.
+- If you are trying to understand implementation status, treat the codebase and the docs index as the source of truth before older blueprint documents.
 - Conversational Interface (RAG)
 - Infrastructure Actions
 - CLI & Installation
