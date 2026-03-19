@@ -4,6 +4,7 @@ import { CartographyClient } from '@cig/discovery';
 import { authenticate, authorize, Permission } from './auth';
 import { costAnalyzer } from './costs';
 import { securityScanner } from './security';
+import { newsletterManager } from './newsletter';
 
 // Shared instances
 const graphEngine = new GraphEngine();
@@ -207,6 +208,45 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
         status: 'accepted',
         message: 'Action queued for execution',
       });
+    }
+  );
+
+  // ─── Newsletter ──────────────────────────────────────────────────────────────
+
+  // POST /api/v1/newsletter/subscribe — public endpoint, no auth required
+  app.post(
+    '/api/v1/newsletter/subscribe',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const body = request.body as { email?: string; source?: string };
+      if (!body?.email) {
+        return reply.status(400).send({ error: 'Missing required field: email', statusCode: 400 });
+      }
+      try {
+        const result = await newsletterManager.subscribe(body.email, body.source ?? 'landing');
+        if (!result.success) {
+          const status = result.duplicate ? 409 : 400;
+          return reply.status(status).send({ error: result.message, statusCode: status });
+        }
+        return reply.status(201).send({ subscription: result.subscription });
+      } catch (err) {
+        app.log.error({ err }, 'Newsletter subscription error');
+        return reply.status(500).send({ error: 'Internal server error', statusCode: 500 });
+      }
+    }
+  );
+
+  // GET /api/v1/newsletter/subscriptions — admin-only list of all subscriptions
+  app.get(
+    '/api/v1/newsletter/subscriptions',
+    { preHandler: [authenticate, authorize([Permission.ADMIN])] },
+    async (_request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const subscriptions = await newsletterManager.listSubscriptions();
+        return reply.send({ subscriptions, total: subscriptions.length });
+      } catch (err) {
+        app.log.error({ err }, 'Newsletter list error');
+        return reply.status(500).send({ error: 'Internal server error', statusCode: 500 });
+      }
     }
   );
 }

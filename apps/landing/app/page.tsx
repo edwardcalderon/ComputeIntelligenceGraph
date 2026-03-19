@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { GraphParticleTypography } from "../components/GraphParticleTypography";
 import { SpaceBackground } from "../components/SpaceBackground";
 import { AuthButton } from "../components/AuthButton";
@@ -586,10 +587,15 @@ const ResourcesBlock: React.FC = () => {
 
 /* ─── Get Started (CTA) ──────────────────────────────────────────────── */
 
+type SubmitState = "idle" | "loading" | "success" | "duplicate" | "error";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
 const GetStartedSection: React.FC = () => {
   const [email, setEmail] = useState("");
-  const [showToast, setShowToast] = useState(false);
   const [error, setError] = useState("");
+  const [state, setState] = useState<SubmitState>("idle");
   const inputRef = useRef<HTMLInputElement>(null);
   const { ref, visible } = useReveal<HTMLElement>();
 
@@ -600,18 +606,44 @@ const GetStartedSection: React.FC = () => {
     return "";
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const err = validate(email);
     if (err) {
       setError(err);
       return;
     }
-    setShowToast(true);
-    setEmail("");
+    setState("loading");
     setError("");
     inputRef.current?.blur();
-    setTimeout(() => setShowToast(false), 3000);
+
+    try {
+      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      const { error: sbError } = await supabase
+        .from("newsletter_subscriptions")
+        .insert({ email: email.trim().toLowerCase(), source: "landing" });
+
+      if (sbError) {
+        if (sbError.code === "23505") {
+          setState("duplicate");
+        } else {
+          setState("error");
+        }
+        return;
+      }
+
+      setState("success");
+      setEmail("");
+    } catch {
+      setState("error");
+    }
+  };
+
+  const handleReset = () => {
+    setState("idle");
+    setEmail("");
+    setError("");
+    setTimeout(() => inputRef.current?.focus(), 50);
   };
 
   return (
@@ -623,11 +655,6 @@ const GetStartedSection: React.FC = () => {
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
       )}
     >
-      {showToast && (
-        <div className="fixed top-6 right-6 z-50 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-lg font-semibold text-sm animate-fade-in-fast">
-          Thanks! We&apos;ll be in touch.
-        </div>
-      )}
       <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
         Ready to map your infrastructure?
       </h2>
@@ -635,43 +662,95 @@ const GetStartedSection: React.FC = () => {
         Get early access or jump straight into the self-hosted deployment.
         Open-source, free forever.
       </p>
-      <form
-        onSubmit={handleSubmit}
-        className="flex w-full max-w-md gap-2.5 items-center justify-center mt-2"
-      >
-        <input
-          ref={inputRef}
-          type="email"
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            if (error) setError("");
-          }}
-          placeholder="you@company.com"
-          className={cn(
-            "flex-1 rounded-full border px-5 py-3 text-sm text-zinc-100 placeholder-zinc-500 transition-all duration-300 focus:outline-none shadow bg-zinc-900",
-            error
-              ? "border-red-500 focus:border-red-400"
-              : "border-zinc-700 focus:border-cyan-400"
+
+      {state === "success" ? (
+        <div className="flex flex-col items-center gap-4 mt-2 animate-fade-in-fast">
+          <div className="flex items-center gap-2.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-6 py-4 rounded-2xl shadow">
+            <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="text-sm font-semibold">You&apos;re on the list! We&apos;ll be in touch soon.</span>
+          </div>
+          <button
+            onClick={handleReset}
+            className="text-xs text-zinc-500 hover:text-cyan-400 underline underline-offset-2 transition-colors duration-200 cursor-pointer"
+          >
+            Add another email
+          </button>
+        </div>
+      ) : state === "duplicate" ? (
+        <div className="flex flex-col items-center gap-4 mt-2 animate-fade-in-fast">
+          <div className="flex items-center gap-2.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 px-6 py-4 rounded-2xl shadow">
+            <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z" />
+            </svg>
+            <span className="text-sm font-semibold">This email is already subscribed.</span>
+          </div>
+          <button
+            onClick={handleReset}
+            className="text-xs text-zinc-500 hover:text-cyan-400 underline underline-offset-2 transition-colors duration-200 cursor-pointer"
+          >
+            Try a different email
+          </button>
+        </div>
+      ) : (
+        <>
+          <form
+            onSubmit={handleSubmit}
+            className="flex w-full max-w-md gap-2.5 items-center justify-center mt-2"
+          >
+            <input
+              ref={inputRef}
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (error) setError("");
+                if (state === "error") setState("idle");
+              }}
+              placeholder="you@company.com"
+              disabled={state === "loading"}
+              className={cn(
+                "flex-1 rounded-full border px-5 py-3 text-sm text-zinc-100 placeholder-zinc-500 transition-all duration-300 focus:outline-none shadow bg-zinc-900 disabled:opacity-50",
+                error || state === "error"
+                  ? "border-red-500 focus:border-red-400"
+                  : "border-zinc-700 focus:border-cyan-400"
+              )}
+            />
+            <button
+              type="submit"
+              disabled={!email.trim() || state === "loading"}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-violet-500 px-7 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-cyan-400",
+                email.trim() && state !== "loading"
+                  ? "hover:scale-105 hover:shadow-xl cursor-pointer opacity-100"
+                  : "opacity-50 cursor-not-allowed"
+              )}
+            >
+              {state === "loading" ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                  Subscribing…
+                </>
+              ) : (
+                "Notify Me"
+              )}
+            </button>
+          </form>
+          {error && (
+            <span className="text-red-400 text-xs font-medium mt-1 animate-fade-in-fast">
+              {error}
+            </span>
           )}
-        />
-        <button
-          type="submit"
-          className={cn(
-            "inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-violet-500 px-7 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-cyan-400",
-            email.trim()
-              ? "hover:scale-105 hover:shadow-xl cursor-pointer opacity-100"
-              : "opacity-50 cursor-not-allowed"
+          {state === "error" && !error && (
+            <span className="text-red-400 text-xs font-medium mt-1 animate-fade-in-fast">
+              Something went wrong. Please try again.
+            </span>
           )}
-          disabled={!email.trim()}
-        >
-          Notify Me
-        </button>
-      </form>
-      {error && (
-        <span className="text-red-400 text-xs font-medium mt-1 animate-fade-in-fast">
-          {error}
-        </span>
+        </>
       )}
     </section>
   );

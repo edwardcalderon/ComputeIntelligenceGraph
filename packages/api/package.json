@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-cost-explorer": "^3.1009.0",
+    "@supabase/supabase-js": "^2.0.0",
     "@cig/discovery": "workspace:*",
     "@cig/graph": "workspace:*",
     "@escape.tech/graphql-armor-cost-limit": "^2.0.0",
