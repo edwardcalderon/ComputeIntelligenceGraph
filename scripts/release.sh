@@ -29,14 +29,71 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 command -v git       >/dev/null 2>&1 || { error "git is not installed"; exit 1; }
+command -v node      >/dev/null 2>&1 || { error "node is not installed"; exit 1; }
 command -v pnpm      >/dev/null 2>&1 || { error "pnpm is not installed"; exit 1; }
-command -v npx       >/dev/null 2>&1 || { error "npx is not installed"; exit 1; }
 
 # ── Parse arguments ────────────────────────────────────────────────────────
 BUMP_TYPE=""
 DRY_RUN=false
 SKIP_PUSH=false
 SKIP_TESTS=false
+AUTO_CONFIRM=false
+
+RELEASE_EXCLUDE_PATTERNS=(
+  ".vscode/**"
+  "**/node_modules/**"
+  "**/.next/**"
+  "**/dist/**"
+  "**/.turbo/**"
+  "**/coverage/**"
+  "**/*.tsbuildinfo"
+)
+
+is_release_excluded_path() {
+  local path="$1"
+
+  case "$path" in
+    .vscode/*|*/node_modules/*|*/.next/*|*/dist/*|*/.turbo/*|*/coverage/*|*.tsbuildinfo)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+stage_release_changes() {
+  local pattern=""
+
+  git add -A
+  for pattern in "${RELEASE_EXCLUDE_PATTERNS[@]}"; do
+    git restore --staged -- ":(glob)${pattern}" 2>/dev/null || true
+  done
+}
+
+summarize_worktree() {
+  local included=0
+  local excluded=0
+  local line=""
+  local path=""
+
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    path="${line:3}"
+
+    if [[ "$path" == *" -> "* ]]; then
+      path="${path##* -> }"
+    fi
+
+    if is_release_excluded_path "$path"; then
+      ((excluded+=1))
+    else
+      ((included+=1))
+    fi
+  done < <(git status --porcelain=1)
+
+  echo "${included} ${excluded}"
+}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -44,6 +101,7 @@ while [[ $# -gt 0 ]]; do
     --dry-run)    DRY_RUN=true;    shift ;;
     --no-push)    SKIP_PUSH=true;  shift ;;
     --no-tests)   SKIP_TESTS=true; shift ;;
+    --yes|-y)     AUTO_CONFIRM=true; shift ;;
     -h|--help)    BUMP_TYPE="help"; shift ;;
     *)            error "Unknown option: $1"; exit 1 ;;
   esac
@@ -61,6 +119,7 @@ if [[ -z "$BUMP_TYPE" || "$BUMP_TYPE" == "help" ]]; then
   echo "  --dry-run     Show what would happen without making changes"
   echo "  --no-push     Commit and tag but don't push to remote"
   echo "  --no-tests    Skip test step (use with caution)"
+  echo "  --yes, -y     Skip confirmation prompt"
   echo "  -h, --help    Show this help message"
   echo ""
   echo -e "${BOLD}Examples:${NC}"
@@ -71,13 +130,13 @@ if [[ -z "$BUMP_TYPE" || "$BUMP_TYPE" == "help" ]]; then
   echo "  ./scripts/release.sh minor --no-push    # Release locally only"
   echo ""
   echo -e "${BOLD}What it does:${NC}"
-  echo "  1. Validates clean working tree (or stages all changes)"
-  echo "  2. Runs tests (unless --no-tests)"
-  echo "  3. Bumps version across all packages via @edcalderon/versioning"
-  echo "  4. Generates / updates CHANGELOG.md"
-  echo "  5. Updates README.md version badge"
-  echo "  6. Commits everything with a conventional release message"
-  echo "  7. Creates a git tag (v{version})"
+  echo "  1. Validates branch state and stages source changes for release"
+  echo "  2. Syncs workspace dependencies with pnpm install --frozen-lockfile"
+  echo "  3. Runs tests (unless --no-tests)"
+  echo "  4. Bumps version across all packages via @edcalderon/versioning"
+  echo "  5. Generates / updates CHANGELOG.md"
+  echo "  6. Updates README.md version badge"
+  echo "  7. Commits and tags the release"
   echo "  8. Pushes to remote (unless --no-push)"
   echo ""
   exit 0
@@ -108,29 +167,76 @@ esac
 NEXT_VERSION="${V_MAJOR}.${V_MINOR}.${V_PATCH}"
 info "Next version:    ${BOLD}v${NEXT_VERSION}${NC}"
 
-echo ""
-read -rp "$(echo -e "${YELLOW}Proceed with release v${NEXT_VERSION}? [y/N]${NC} ")" CONFIRM
-if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
-  info "Release cancelled."
-  exit 0
+if git rev-parse --verify --quiet "refs/tags/v${NEXT_VERSION}" >/dev/null; then
+  error "Tag v${NEXT_VERSION} already exists. Choose a higher version bump."
+  exit 1
 fi
 
-# ── Step 1: Check working tree ─────────────────────────────────────────────
-step "1/7 Checking working tree"
-DIRTY_FILES=$(git status --porcelain 2>/dev/null | grep -cv '^$' || true)
-if [[ "$DIRTY_FILES" -gt 0 ]]; then
-  warn "Working tree has ${DIRTY_FILES} uncommitted change(s)"
-  info "Staging all changes as part of this release..."
-  if ! $DRY_RUN; then
-    git add -A
+if ! $DRY_RUN && ! $AUTO_CONFIRM; then
+  echo ""
+  read -rp "$(echo -e "${YELLOW}Proceed with release v${NEXT_VERSION}? [y/N]${NC} ")" CONFIRM
+  if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
+    info "Release cancelled."
+    exit 0
   fi
-  success "Changes staged"
+else
+  info "Skipping confirmation prompt"
+fi
+
+# ── Step 1: Check branch state ─────────────────────────────────────────────
+step "1/8 Checking branch state"
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [[ "$BRANCH" == "HEAD" ]]; then
+  error "Detached HEAD is not supported for releases."
+  exit 1
+fi
+
+UPSTREAM_BRANCH=$(git rev-parse --abbrev-ref --symbolic-full-name "@{u}" 2>/dev/null || true)
+if [[ -n "$UPSTREAM_BRANCH" ]]; then
+  read -r AHEAD_COUNT BEHIND_COUNT <<< "$(git rev-list --left-right --count HEAD...@{u})"
+  if [[ "$BEHIND_COUNT" -gt 0 ]]; then
+    error "Branch ${BRANCH} is behind ${UPSTREAM_BRANCH} by ${BEHIND_COUNT} commit(s). Pull latest changes before releasing."
+    exit 1
+  fi
+  info "Branch ${BRANCH} is up to date with ${UPSTREAM_BRANCH} (ahead ${AHEAD_COUNT}, behind ${BEHIND_COUNT})"
+else
+  warn "No upstream tracking branch configured for ${BRANCH}"
+fi
+
+# ── Step 2: Check working tree ─────────────────────────────────────────────
+step "2/8 Checking working tree"
+read -r INCLUDED_DIRTY EXCLUDED_DIRTY <<< "$(summarize_worktree)"
+TOTAL_DIRTY=$((INCLUDED_DIRTY + EXCLUDED_DIRTY))
+
+if [[ "$TOTAL_DIRTY" -gt 0 ]]; then
+  warn "Working tree has ${TOTAL_DIRTY} uncommitted change(s)"
+  if [[ "$EXCLUDED_DIRTY" -gt 0 ]]; then
+    warn "Ignoring ${EXCLUDED_DIRTY} generated/local change(s) during release staging"
+  fi
+  if [[ "$INCLUDED_DIRTY" -gt 0 ]]; then
+    info "Staging ${INCLUDED_DIRTY} source change(s) as part of this release..."
+    if ! $DRY_RUN; then
+      stage_release_changes
+    fi
+    success "Release changes staged"
+  else
+    success "Only generated/local files are dirty; they will not be committed"
+  fi
 else
   success "Working tree is clean"
 fi
 
-# ── Step 2: Run tests ──────────────────────────────────────────────────────
-step "2/7 Running tests"
+# ── Step 3: Sync workspace dependencies ────────────────────────────────────
+step "3/8 Syncing workspace dependencies"
+if ! $DRY_RUN; then
+  pnpm install --frozen-lockfile 2>&1
+  success "Workspace dependencies are in sync"
+else
+  info "[dry-run] Would run: pnpm install --frozen-lockfile"
+fi
+
+# ── Step 4: Run tests ──────────────────────────────────────────────────────
+step "4/8 Running tests"
 if $SKIP_TESTS; then
   warn "Tests skipped (--no-tests)"
 else
@@ -142,27 +248,27 @@ else
   fi
 fi
 
-# ── Step 3: Bump version across all packages ───────────────────────────────
-step "3/7 Bumping version (${BUMP_TYPE})"
+# ── Step 5: Bump version across all packages ───────────────────────────────
+step "5/8 Bumping version (${BUMP_TYPE})"
 if ! $DRY_RUN; then
-  npx versioning "$BUMP_TYPE" --no-commit --no-tag \
-    --message "release: v${NEXT_VERSION}" 2>&1
+  pnpm exec versioning "$BUMP_TYPE" --no-commit --no-tag \
+    --message "chore(release): v${NEXT_VERSION}" 2>&1
   success "Version bumped to ${NEXT_VERSION} across all packages"
 else
-  info "[dry-run] Would run: npx versioning ${BUMP_TYPE} --no-commit --no-tag"
+  info "[dry-run] Would run: pnpm exec versioning ${BUMP_TYPE} --no-commit --no-tag"
 fi
 
-# ── Step 4: Generate changelog ──────────────────────────────────────────────
-step "4/7 Generating changelog"
+# ── Step 6: Generate changelog ──────────────────────────────────────────────
+step "6/8 Generating changelog"
 if ! $DRY_RUN; then
-  npx versioning changelog 2>&1
+  pnpm exec versioning changelog 2>&1
   success "CHANGELOG.md updated"
 else
-  info "[dry-run] Would run: npx versioning changelog"
+  info "[dry-run] Would run: pnpm exec versioning changelog"
 fi
 
-# ── Step 5: Update README ──────────────────────────────────────────────────
-step "5/7 Updating README"
+# ── Step 7: Update README ──────────────────────────────────────────────────
+step "7/8 Updating README"
 if ! $DRY_RUN; then
   # Update the version badge in README.md
   sed -i "s/version-[0-9]*\.[0-9]*\.[0-9]*/version-${NEXT_VERSION}/g" README.md
@@ -171,15 +277,15 @@ if ! $DRY_RUN; then
   # Update the "All packages maintain version" line
   sed -i "s/maintain version \*\*[0-9]*\.[0-9]*\.[0-9]*\*\*/maintain version \*\*${NEXT_VERSION}\*\*/g" README.md
   # Try the versioning update-readme command (may no-op if no CHANGELOG yet)
-  npx versioning update-readme 2>&1 || true
+  pnpm exec versioning update-readme 2>&1 || true
   success "README.md updated with v${NEXT_VERSION}"
 else
   info "[dry-run] Would update README.md version references to ${NEXT_VERSION}"
 fi
 
-# ── Step 6: Commit & tag ──────────────────────────────────────────────────
-step "6/7 Committing & tagging"
-COMMIT_MSG="release: v${NEXT_VERSION}
+# ── Step 8: Commit & tag ──────────────────────────────────────────────────
+step "8/8 Committing, tagging, and pushing"
+COMMIT_MSG="chore(release): v${NEXT_VERSION}
 
 - Bump version: ${CURRENT_VERSION} → ${NEXT_VERSION} (${BUMP_TYPE})
 - Update CHANGELOG.md
@@ -187,7 +293,7 @@ COMMIT_MSG="release: v${NEXT_VERSION}
 - Sync all package versions via @edcalderon/versioning"
 
 if ! $DRY_RUN; then
-  git add -A
+  stage_release_changes
   git commit -m "$COMMIT_MSG"
   git tag -a "v${NEXT_VERSION}" -m "Release v${NEXT_VERSION}"
   success "Committed and tagged v${NEXT_VERSION}"
@@ -197,13 +303,10 @@ else
   info "[dry-run] Would create tag: v${NEXT_VERSION}"
 fi
 
-# ── Step 7: Push ────────────────────────────────────────────────────────────
-step "7/7 Pushing to remote"
 if $SKIP_PUSH; then
   warn "Push skipped (--no-push). Run manually:"
   echo "  git push && git push --tags"
 elif ! $DRY_RUN; then
-  BRANCH=$(git rev-parse --abbrev-ref HEAD)
   git push origin "$BRANCH"
   git push origin "v${NEXT_VERSION}"
   success "Pushed ${BRANCH} + tag v${NEXT_VERSION}"
