@@ -6,10 +6,27 @@ const useLegacyBasePath = process.env.LEGACY_BASEPATH === 'true';
 
 const { version } = require('../../package.json');
 
+function loadReleaseMetadata() {
+  try {
+    return require('../../release-metadata.json');
+  } catch {
+    return null;
+  }
+}
+
 function resolveReleaseMetadata() {
   const fallbackTag = `v${version}`;
-  let releaseTag = process.env.NEXT_PUBLIC_RELEASE_TAG || fallbackTag;
-  let buildNumber = process.env.NEXT_PUBLIC_APP_BUILD || '';
+  const releaseMetadata = loadReleaseMetadata();
+  const metadataMatchesVersion = releaseMetadata?.version === version;
+  let releaseTag =
+    process.env.NEXT_PUBLIC_RELEASE_TAG ||
+    (metadataMatchesVersion ? releaseMetadata.releaseTag : '') ||
+    fallbackTag;
+  let buildNumber =
+    process.env.NEXT_PUBLIC_APP_BUILD ||
+    (metadataMatchesVersion && releaseMetadata?.buildNumber != null
+      ? String(releaseMetadata.buildNumber)
+      : '');
 
   try {
     const tags = execSync('git tag --points-at HEAD', {
@@ -25,10 +42,10 @@ function resolveReleaseMetadata() {
     const buildTagPattern = new RegExp(`^v${escapedVersion}\\+build\\.(\\d+)$`);
     const buildTag = tags.find((tag) => buildTagPattern.test(tag));
 
-    if (buildTag) {
+    if (!buildNumber && buildTag) {
       releaseTag = buildTag;
       buildNumber = buildTag.match(buildTagPattern)?.[1] || '';
-    } else if (tags.includes(fallbackTag)) {
+    } else if (releaseTag === fallbackTag && tags.includes(fallbackTag)) {
       releaseTag = fallbackTag;
     }
   } catch {

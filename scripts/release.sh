@@ -40,6 +40,7 @@ SKIP_TESTS=false
 AUTO_CONFIRM=false
 BUILD_RELEASE=false
 COMMIT_CREATED=false
+RELEASE_METADATA_FILE="release-metadata.json"
 
 RELEASE_EXCLUDE_PATTERNS=(
   ".vscode/**"
@@ -113,6 +114,37 @@ next_build_number() {
   done < <(git tag --list "v${version}+build.*")
 
   echo $((max_build + 1))
+}
+
+write_release_metadata() {
+  local version="$1"
+  local release_tag="$2"
+  local release_type="$3"
+  local build_number="${4:-}"
+
+  if ! $DRY_RUN; then
+    node -e '
+const fs = require("node:fs");
+const path = require("node:path");
+
+const [version, releaseTag, releaseType, buildNumber] = process.argv.slice(1);
+const metadata = {
+  version,
+  releaseTag,
+  releaseType,
+  buildNumber: buildNumber === "" ? null : Number(buildNumber),
+  releasedAt: new Date().toISOString(),
+};
+
+fs.writeFileSync(
+  path.join(process.cwd(), "release-metadata.json"),
+  `${JSON.stringify(metadata, null, 2)}\n`
+);
+' "$version" "$release_tag" "$release_type" "$build_number"
+    success "Updated ${RELEASE_METADATA_FILE}"
+  else
+    info "[dry-run] Would update ${RELEASE_METADATA_FILE} for ${release_tag}"
+  fi
 }
 
 while [[ $# -gt 0 ]]; do
@@ -293,6 +325,7 @@ if $BUILD_RELEASE; then
   else
     info "[dry-run] Would keep workspace version at ${CURRENT_VERSION} and create ${RELEASE_TAG}"
   fi
+  write_release_metadata "${CURRENT_VERSION}" "${RELEASE_TAG}" "build" "${NEXT_BUILD_NUMBER}"
 else
   step "5/8 Bumping version (${BUMP_TYPE})"
   if ! $DRY_RUN; then
@@ -302,6 +335,7 @@ else
   else
     info "[dry-run] Would run: pnpm exec versioning ${BUMP_TYPE} --no-commit --no-tag"
   fi
+  write_release_metadata "${NEXT_VERSION}" "${RELEASE_TAG}" "${BUMP_TYPE}"
 fi
 
 # ── Step 6: Generate changelog ──────────────────────────────────────────────
