@@ -295,12 +295,15 @@ else
   success "Working tree is clean"
 fi
 
-# ── Step 3: Sync workspace dependencies ────────────────────────────────────
-step "3/8 Syncing workspace dependencies"
+# ── Step 3: Sync env + workspace dependencies ──────────────────────────────
+step "3/8 Syncing env + workspace dependencies"
 if ! $DRY_RUN; then
+  pnpm exec versioning env sync 2>&1
+  success "Workspace env artifacts are in sync"
   pnpm install --frozen-lockfile 2>&1
   success "Workspace dependencies are in sync"
 else
+  info "[dry-run] Would run: pnpm exec versioning env sync"
   info "[dry-run] Would run: pnpm install --frozen-lockfile"
 fi
 
@@ -389,6 +392,8 @@ fi
 
 if ! $DRY_RUN; then
   stage_release_changes
+  pnpm exec versioning check-secrets 2>&1
+  success "Staged release changes passed secrets check"
   if git diff --cached --quiet --ignore-submodules --; then
     warn "No releasable source changes staged; tagging current HEAD"
   else

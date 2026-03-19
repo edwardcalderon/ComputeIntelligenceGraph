@@ -10,10 +10,14 @@
   "ignorePackages": [
     "@cig/iac"
   ],
-  "extensions": [
-    "workspace-scripts"
-  ],
   "extensionConfig": {
+    "secrets-check": {
+      "enabled": true
+    },
+    "workspace-env": {
+      "enabled": true,
+      "manifestPath": "config/env/manifest.cjs"
+    },
     "workspace-scripts": {
       "enabled": true,
       "runner": "concurrently",

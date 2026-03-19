@@ -1,0 +1,9 @@
+#!/bin/sh
+
+echo "🔒 Running versioning secrets check..."
+pnpm exec versioning check-secrets
+
+# === secrets-check: start ===
+echo "🔒 Running secrets check…"
+npx versioning check-secrets 2>/dev/null
+# === secrets-check: end ===
