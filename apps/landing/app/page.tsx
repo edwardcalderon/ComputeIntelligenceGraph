@@ -685,8 +685,14 @@ const Footer: React.FC = () => (
       © {new Date().getFullYear()} CIG — Compute Intelligence Graph. Open-source
       under MIT License.
     </p>
-    <p className="mt-1 text-zinc-700">
+    <p
+      className="mt-1 text-zinc-700"
+      title={process.env.NEXT_PUBLIC_RELEASE_TAG || `v${process.env.NEXT_PUBLIC_APP_VERSION}`}
+    >
       v{process.env.NEXT_PUBLIC_APP_VERSION}
+      {process.env.NEXT_PUBLIC_APP_BUILD
+        ? ` · build ${process.env.NEXT_PUBLIC_APP_BUILD}`
+        : ""}
     </p>
   </footer>
 );
