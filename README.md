@@ -142,6 +142,9 @@ pnpm version:status
 ### Release
 
 ```bash
+pnpm release
+pnpm release:build
+pnpm release:dry:build
 pnpm release:dry
 pnpm release:patch
 pnpm release:minor
