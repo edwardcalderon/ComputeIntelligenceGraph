@@ -1,6 +1,6 @@
 # CIG
 
-[![Version](https://img.shields.io/badge/version-0.1.5-blue.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-0.1.6-blue.svg)](package.json)
 [![Node](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen.svg)](package.json)
 [![pnpm](https://img.shields.io/badge/pnpm-%3E%3D9.0.0-orange.svg)](package.json)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -206,7 +206,7 @@ See [PROJECT_STATUS.md](PROJECT_STATUS.md) for detailed status.
 
 ## 🔧 Version Management
 
-This project uses [@edcalderon/versioning](https://www.npmjs.com/package/@edcalderon/versioning) v1.4.7 for:
+This project uses [@edcalderon/versioning](https://www.npmjs.com/package/@edcalderon/versioning) v1.5.1 for:
 
 - ✅ Version synchronization across all packages
 - ✅ Auto-generated workspace scripts (dev:all, build:all)
@@ -214,7 +214,7 @@ This project uses [@edcalderon/versioning](https://www.npmjs.com/package/@edcald
 - ✅ Cleanup utilities
 - ✅ Branch-aware versioning
 
-All packages maintain version **0.1.5** in sync.
+All packages maintain version **0.1.6** in sync.
 
 ---
 
