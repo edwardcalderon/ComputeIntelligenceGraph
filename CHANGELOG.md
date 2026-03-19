@@ -1,3 +1,27 @@
+## [0.1.7](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.6...v0.1.7) (2026-03-19)
+
+
+### Features
+
+* **newsletter:** add email subscription with Supabase persistence ([3c06872](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/3c06872922a98e1935e4493873f2ab3c92c3909f))
+* **ui:** add @cig/ui design system with glass morphism theme ([f67a887](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f67a887348c9fcc35d279c7b4430df1bad88c123))
+
+
+
+
+
+## [0.1.7](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.6...v0.1.7) (2026-03-19)
+
+
+### Features
+
+* **newsletter:** add email subscription with Supabase persistence ([3c06872](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/3c06872922a98e1935e4493873f2ab3c92c3909f))
+* **ui:** add @cig/ui design system with glass morphism theme ([f67a887](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f67a887348c9fcc35d279c7b4430df1bad88c123))
+
+
+
+
+
 ## [0.1.6](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.5...v0.1.6) (2026-03-19)
 
 

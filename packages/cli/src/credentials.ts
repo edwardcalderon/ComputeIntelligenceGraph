@@ -3,6 +3,26 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
+  refreshExpiresAt: number;
+}
+
+export interface TargetIdentity {
+  targetId: string;
+  publicKey: string;
+  privateKey: string;
+  enrolledAt: string;
+}
+
+export interface BootstrapToken {
+  token: string;
+  createdAt: string;
+  expiresAt: string;
+}
+
 export interface Credential {
   type: 'aws' | 'gcp';
   value: string;
@@ -17,6 +37,12 @@ export interface EncryptedCredential {
   createdAt: string;
   rotateAfterDays: number;
   type: 'aws' | 'gcp';
+}
+
+interface AuthFile {
+  tokens?: AuthTokens;
+  identity?: TargetIdentity;
+  bootstrapToken?: BootstrapToken;
 }
 
 interface ConfigFile {
@@ -122,5 +148,60 @@ export class CredentialManager {
       createdAt: entry.createdAt,
       rotationDue: this.isRotationDue(entry.type),
     }));
+  }
+
+  // ── Auth file helpers ────────────────────────────────────────────────────
+
+  private get authFile(): string {
+    return path.join(this.configDir, 'auth.json');
+  }
+
+  private readAuthFile(): AuthFile {
+    if (!fs.existsSync(this.authFile)) return {};
+    return JSON.parse(fs.readFileSync(this.authFile, 'utf8')) as AuthFile;
+  }
+
+  private writeAuthFile(data: AuthFile): void {
+    if (!fs.existsSync(this.configDir)) {
+      fs.mkdirSync(this.configDir, { mode: 0o700, recursive: true });
+    }
+    fs.writeFileSync(this.authFile, JSON.stringify(data, null, 2), { mode: 0o600 });
+  }
+
+  saveTokens(tokens: AuthTokens): void {
+    this.writeAuthFile({ ...this.readAuthFile(), tokens });
+  }
+
+  loadTokens(): AuthTokens | null {
+    return this.readAuthFile().tokens ?? null;
+  }
+
+  needsRefresh(tokens: AuthTokens): boolean {
+    return tokens.expiresAt < Date.now() + 5 * 60 * 1000;
+  }
+
+  isRefreshTokenValid(tokens: AuthTokens): boolean {
+    return tokens.refreshExpiresAt > Date.now();
+  }
+
+  saveIdentity(identity: TargetIdentity): void {
+    this.writeAuthFile({ ...this.readAuthFile(), identity });
+  }
+
+  loadIdentity(): TargetIdentity | null {
+    return this.readAuthFile().identity ?? null;
+  }
+
+  saveBootstrapToken(bootstrapToken: BootstrapToken): void {
+    this.writeAuthFile({ ...this.readAuthFile(), bootstrapToken });
+  }
+
+  loadBootstrapToken(): BootstrapToken | null {
+    return this.readAuthFile().bootstrapToken ?? null;
+  }
+
+  clearAll(): void {
+    if (fs.existsSync(this.authFile)) fs.unlinkSync(this.authFile);
+    if (fs.existsSync(this.configFile)) fs.unlinkSync(this.configFile);
   }
 }
