@@ -2,7 +2,7 @@
 const { version } = require('../../package.json');
 
 const nextConfig = {
-  transpilePackages: [],
+  transpilePackages: ['@cig/ui'],
   env: {
     NEXT_PUBLIC_APP_VERSION: version,
   },

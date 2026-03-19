@@ -61,7 +61,7 @@ function resolveReleaseMetadata() {
 const { releaseTag, buildNumber } = resolveReleaseMetadata();
 
 const nextConfig = {
-  transpilePackages: ['@cig/auth', '@edcalderon/auth'],
+  transpilePackages: ['@cig/auth', '@cig/ui', '@edcalderon/auth'],
   output: 'export',
   images: {
     unoptimized: true,
@@ -77,6 +77,7 @@ const nextConfig = {
     NEXT_PUBLIC_LEGACY_SITE_URL:
       process.env.NEXT_PUBLIC_LEGACY_SITE_URL ||
       'https://edwardcalderon.github.io/ComputeIntelligenceGraph',
+    NEXT_PUBLIC_DASHBOARD_URL: process.env.NEXT_PUBLIC_DASHBOARD_URL || 'http://localhost:3001',
   },
 };
 
