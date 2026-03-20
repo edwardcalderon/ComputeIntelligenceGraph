@@ -442,12 +442,12 @@ function AuthButtonReady() {
   }, [showMenu]);
 
   const handleGoogleSignIn = useCallback(() => {
-    signIn({ provider: "google", flow: "popup" });
+    signIn({ provider: "google", flow: "redirect", redirectUri: window.location.origin });
     setShowModal(false);
   }, [signIn]);
 
   const handleGitHubSignIn = useCallback(() => {
-    signIn({ provider: "github", flow: "popup" });
+    signIn({ provider: "github", flow: "redirect", redirectUri: window.location.origin });
     setShowModal(false);
   }, [signIn]);
 
@@ -538,7 +538,7 @@ function SignInButtonOnly() {
     if (!supabase) return;
     supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: window.location.href },
+      options: { redirectTo: window.location.origin },
     });
   }, []);
 
