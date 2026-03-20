@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
-import { useAuth, useAuthReady, useAuthAvailable, sendEmailOtp, verifyEmailOtp } from "@cig/auth";
+import { useAuth, useAuthReady, useAuthAvailable, getSupabaseClient, sendEmailOtp, verifyEmailOtp } from "@cig/auth";
 
 /* ─── Icons ───────────────────────────────────────────────────────────── */
 
@@ -531,6 +531,17 @@ function AuthButtonReady() {
 
 function SignInButtonOnly() {
   const [showModal, setShowModal] = useState(false);
+
+  const triggerOAuth = useCallback((provider: "google" | "github") => {
+    setShowModal(false);
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: window.location.href },
+    });
+  }, []);
+
   return (
     <>
       <button
@@ -542,8 +553,8 @@ function SignInButtonOnly() {
       {showModal && (
         <SignInModal
           onClose={() => setShowModal(false)}
-          onGoogleSignIn={() => setShowModal(false)}
-          onGitHubSignIn={() => setShowModal(false)}
+          onGoogleSignIn={() => triggerOAuth("google")}
+          onGitHubSignIn={() => triggerOAuth("github")}
         />
       )}
     </>
