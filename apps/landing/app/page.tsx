@@ -845,6 +845,16 @@ function HomePageInner() {
 
 export default function HomePage() {
   const ready = useAuthReady();
-  if (!ready) return null;
+  const [timedOut, setTimedOut] = useState(false);
+
+  useEffect(() => {
+    if (ready) return;
+    const t = setTimeout(() => setTimedOut(true), 2000);
+    return () => clearTimeout(t);
+  }, [ready]);
+
+  // If auth provider hasn't resolved in 2 s (missing env vars, network error),
+  // render the public landing anyway so the page is never a blank screen.
+  if (!ready && !timedOut) return null;
   return <HomePageInner />;
 }

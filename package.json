@@ -41,7 +41,7 @@
     "dev:discovery": "pnpm env:sync && pnpm --filter @cig/discovery dev",
     "dev:graph": "pnpm env:sync && pnpm --filter @cig/graph dev",
     "dev:sdk": "pnpm env:sync && pnpm --filter @cig/sdk dev",
-    "dev:all": "pnpm env:sync && node scripts/check-ports.js 3000 3001 3002 && concurrently \"PORT=3001 pnpm --filter @cig/dashboard dev\" \"PORT=3000 pnpm --filter @cig/landing dev\" \"PORT=3002 pnpm --filter @cig/wizard-ui dev\" \"pnpm --filter @cig/api dev\" \"pnpm --filter @cig/agents dev\" \"pnpm --filter @cig/chatbot dev\" \"pnpm --filter @cig/cli dev\" \"pnpm --filter @cig/config dev\" \"pnpm --filter @cig/discovery dev\" \"pnpm --filter @cig/graph dev\" \"pnpm --filter @cig/sdk dev\"",
+    "dev:all": "pnpm env:sync && node scripts/check-ports.js 3000 3001 3002 && concurrently --names \"dashboard,landing,wizard,api,agents,chatbot,cli,config,discovery,graph,sdk\" --prefix-colors \"cyan.bold,magenta.bold,yellow.bold,green.bold,blue.bold,red.bold,white.bold,gray.bold,greenBright.bold,blueBright.bold,yellowBright.bold\" \"PORT=3001 pnpm --filter @cig/dashboard dev\" \"PORT=3000 pnpm --filter @cig/landing dev\" \"PORT=3002 pnpm --filter @cig/wizard-ui dev\" \"pnpm --filter @cig/api dev\" \"pnpm --filter @cig/agents dev\" \"pnpm --filter @cig/chatbot dev\" \"pnpm --filter @cig/cli dev\" \"pnpm --filter @cig/config dev\" \"pnpm --filter @cig/discovery dev\" \"pnpm --filter @cig/graph dev\" \"pnpm --filter @cig/sdk dev\"",
     "build:dashboard": "pnpm env:sync && pnpm --filter @cig/dashboard build",
     "build:landing": "pnpm env:sync && pnpm --filter @cig/landing build",
     "build:wizard-ui": "pnpm env:sync && pnpm --filter @cig/wizard-ui build",

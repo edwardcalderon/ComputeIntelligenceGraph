@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - 'apps/landing/**'
+      - 'packages/auth/**'
+      - 'packages/ui/**'
       - 'release-metadata.json'
       - '.github/workflows/deploy-landing.yml'
   workflow_dispatch:
@@ -58,6 +60,9 @@ jobs:
         run: pnpm --filter @cig/landing build
         env:
           NODE_ENV: production
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_DASHBOARD_URL: ${{ secrets.NEXT_PUBLIC_DASHBOARD_URL }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
