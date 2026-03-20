@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { GraphParticleTypography } from "../components/GraphParticleTypography";
 import { SpaceBackground } from "../components/SpaceBackground";
 import { AuthButton } from "../components/AuthButton";
+import { AuthenticatedLanding } from "../components/AuthenticatedLanding";
+import { useAuth, useAuthReady } from "@cig/auth";
 import {
   Cloud,
   GitGraph,
@@ -805,7 +807,16 @@ const BackToTop: React.FC = () => {
 
 /* ─── Page ────────────────────────────────────────────────────────────── */
 
-export default function HomePage() {
+function HomePageInner() {
+  const { user, loading } = useAuth();
+
+  // While auth state is resolving, show nothing to avoid flash
+  if (loading) return null;
+
+  // Authenticated: show the dedicated authenticated landing
+  if (user) return <AuthenticatedLanding />;
+
+  // Unauthenticated: show public landing
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 text-zinc-50 relative overflow-x-hidden">
       {/* Top auth bar */}
@@ -830,4 +841,10 @@ export default function HomePage() {
       <BackToTop />
     </div>
   );
+}
+
+export default function HomePage() {
+  const ready = useAuthReady();
+  if (!ready) return null;
+  return <HomePageInner />;
 }

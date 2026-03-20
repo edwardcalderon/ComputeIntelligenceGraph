@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
+import Image from "next/image";
 import { useAuth, useAuthReady, sendEmailOtp, verifyEmailOtp } from "@cig/auth";
 
 /* ─── Icons ───────────────────────────────────────────────────────────── */
@@ -462,9 +463,11 @@ function AuthButtonReady() {
           className="flex items-center gap-2 rounded-full px-2 py-1 hover:bg-zinc-800/60 transition-colors"
         >
           {user.avatarUrl ? (
-            <img
+            <Image
               src={user.avatarUrl}
               alt=""
+              width={32}
+              height={32}
               className="size-8 rounded-full border border-zinc-700"
               referrerPolicy="no-referrer"
             />
