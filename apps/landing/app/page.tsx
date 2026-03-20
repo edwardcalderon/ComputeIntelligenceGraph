@@ -807,16 +807,8 @@ const BackToTop: React.FC = () => {
 
 /* ─── Page ────────────────────────────────────────────────────────────── */
 
-function HomePageInner() {
-  const { user, loading } = useAuth();
-
-  // While auth state is resolving, show nothing to avoid flash
-  if (loading) return null;
-
-  // Authenticated: show the dedicated authenticated landing
-  if (user) return <AuthenticatedLanding />;
-
-  // Unauthenticated: show public landing
+// Public landing — safe to render without AuthProvider in scope
+function PublicLanding() {
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 text-zinc-50 relative overflow-x-hidden">
       {/* Top auth bar */}
@@ -843,6 +835,14 @@ function HomePageInner() {
   );
 }
 
+// Auth-aware inner — only rendered when AuthProvider is confirmed in scope
+function HomePageInner() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (user) return <AuthenticatedLanding />;
+  return <PublicLanding />;
+}
+
 export default function HomePage() {
   const ready = useAuthReady();
   const [timedOut, setTimedOut] = useState(false);
@@ -853,8 +853,13 @@ export default function HomePage() {
     return () => clearTimeout(t);
   }, [ready]);
 
-  // If auth provider hasn't resolved in 2 s (missing env vars, network error),
-  // render the public landing anyway so the page is never a blank screen.
-  if (!ready && !timedOut) return null;
+  // Auth provider timed out (missing env vars / network error) —
+  // render public landing directly, never call useAuth() without AuthProvider.
+  if (timedOut && !ready) return <PublicLanding />;
+
+  // Still initializing
+  if (!ready) return null;
+
+  // AuthProvider is confirmed ready — safe to call useAuth() inside
   return <HomePageInner />;
 }

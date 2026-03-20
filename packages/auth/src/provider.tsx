@@ -25,9 +25,11 @@ export function CIGAuthProvider({ children }: { children: React.ReactNode }) {
     setReady(true);
   }, []);
 
+  // No Supabase client (missing env vars) — mark ready once the effect has
+  // run so consumers don't wait forever, but don't wrap with AuthProvider.
   if (!authClient) {
     return (
-      <AuthReadyProvider ready={false}>{children}</AuthReadyProvider>
+      <AuthReadyProvider ready={ready}>{children}</AuthReadyProvider>
     );
   }
 
