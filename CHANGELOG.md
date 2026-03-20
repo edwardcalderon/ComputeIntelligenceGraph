@@ -1,3 +1,25 @@
+## [0.1.10](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.9...v0.1.10) (2026-03-20)
+
+
+### Bug Fixes
+
+* **landing:** fix black screen on cig.lat, add concurrently colors ([0006cb1](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/0006cb17f506a11d538c2376d767aa1e835b45e5))
+
+
+
+
+
+## [0.1.10](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.9...v0.1.10) (2026-03-20)
+
+
+### Bug Fixes
+
+* **landing:** fix black screen on cig.lat, add concurrently colors ([0006cb1](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/0006cb17f506a11d538c2376d767aa1e835b45e5))
+
+
+
+
+
 ## [0.1.9](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.8...v0.1.9) (2026-03-20)
 
 
