@@ -1,3 +1,25 @@
+## [0.1.15](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.14...v0.1.15) (2026-03-20)
+
+
+### Bug Fixes
+
+* **auth:** always pass explicit redirectUri in OAuth handlers ([1129e2d](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/1129e2dd20d36bdc8cdf7c8920cbf755c89202ab))
+
+
+
+
+
+## [0.1.15](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.14...v0.1.15) (2026-03-20)
+
+
+### Bug Fixes
+
+* **auth:** always pass explicit redirectUri in OAuth handlers ([1129e2d](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/1129e2dd20d36bdc8cdf7c8920cbf755c89202ab))
+
+
+
+
+
 ## [0.1.14](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.13...v0.1.14) (2026-03-20)
 
 
