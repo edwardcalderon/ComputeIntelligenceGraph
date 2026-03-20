@@ -1,3 +1,25 @@
+## [0.1.8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.7...v0.1.8) (2026-03-20)
+
+
+### Bug Fixes
+
+* **landing:** show authenticated landing for logged-in users, fix build errors ([43089c4](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/43089c4f3b9c07dfab0d5fc3c0baadbcd2adde6d))
+
+
+
+
+
+## [0.1.8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.7...v0.1.8) (2026-03-20)
+
+
+### Bug Fixes
+
+* **landing:** show authenticated landing for logged-in users, fix build errors ([43089c4](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/43089c4f3b9c07dfab0d5fc3c0baadbcd2adde6d))
+
+
+
+
+
 ## [0.1.7](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.6...v0.1.7) (2026-03-19)
 
 
