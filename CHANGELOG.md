@@ -1,3 +1,25 @@
+## [0.1.13](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.12...v0.1.13) (2026-03-20)
+
+
+### Bug Fixes
+
+* **landing:** always show sign-in button even without Supabase client ([f78235a](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f78235ace651bf6c49ee6831f426d6bff73feb19))
+
+
+
+
+
+## [0.1.13](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.12...v0.1.13) (2026-03-20)
+
+
+### Bug Fixes
+
+* **landing:** always show sign-in button even without Supabase client ([f78235a](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f78235ace651bf6c49ee6831f426d6bff73feb19))
+
+
+
+
+
 ## [0.1.12](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.11...v0.1.12) (2026-03-20)
 
 
