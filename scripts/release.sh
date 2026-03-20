@@ -37,6 +37,7 @@ BUMP_TYPE=""
 DRY_RUN=false
 SKIP_PUSH=false
 SKIP_TESTS=false
+SKIP_BUILD=false
 AUTO_CONFIRM=false
 BUILD_RELEASE=false
 COMMIT_CREATED=false
@@ -153,6 +154,7 @@ while [[ $# -gt 0 ]]; do
     --dry-run)    DRY_RUN=true;    shift ;;
     --no-push)    SKIP_PUSH=true;  shift ;;
     --no-tests)   SKIP_TESTS=true; shift ;;
+    --no-build)   SKIP_BUILD=true; shift ;;
     --yes|-y)     AUTO_CONFIRM=true; shift ;;
     -h|--help)    BUMP_TYPE="help"; shift ;;
     *)            error "Unknown option: $1"; exit 1 ;;
@@ -171,6 +173,7 @@ if [[ -z "$BUMP_TYPE" || "$BUMP_TYPE" == "help" ]]; then
   echo "  --dry-run     Show what would happen without making changes"
   echo "  --no-push     Commit and tag but don't push to remote"
   echo "  --no-tests    Skip test step (use with caution)"
+  echo "  --no-build    Skip build verification step (use with caution)"
   echo "  --yes, -y     Skip confirmation prompt"
   echo "  -h, --help    Show this help message"
   echo ""
@@ -317,6 +320,25 @@ else
     success "All tests passed"
   else
     info "[dry-run] Would run: pnpm test"
+  fi
+fi
+
+# ── Step 4b: Verify production builds ─────────────────────────────────────
+if $SKIP_BUILD; then
+  warn "Build verification skipped (--no-build)"
+else
+  step "4b/8 Verifying production builds (landing, dashboard, wizard-ui)"
+  if ! $DRY_RUN; then
+    pnpm --filter @cig/landing build 2>&1 || { error "Landing build failed. Fix it before releasing."; exit 1; }
+    success "Landing build OK"
+    pnpm --filter @cig/dashboard build 2>&1 || { error "Dashboard build failed. Fix it before releasing."; exit 1; }
+    success "Dashboard build OK"
+    pnpm --filter @cig/wizard-ui build 2>&1 || { error "Wizard-UI build failed. Fix it before releasing."; exit 1; }
+    success "Wizard-UI build OK"
+  else
+    info "[dry-run] Would run: pnpm --filter @cig/landing build"
+    info "[dry-run] Would run: pnpm --filter @cig/dashboard build"
+    info "[dry-run] Would run: pnpm --filter @cig/wizard-ui build"
   fi
 fi
 
