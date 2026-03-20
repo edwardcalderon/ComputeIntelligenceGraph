@@ -1,3 +1,27 @@
+## [0.1.9](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.8...v0.1.9) (2026-03-20)
+
+
+### Bug Fixes
+
+* **deps:** add @cig/ui workspace dep to dashboard and wizard-ui; add tailwindcss to wizard-ui ([b8dc105](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/b8dc10531a5b6b0b8a2652825bcbf3d72e63a4a9))
+* **landing:** add @cig/ui dep, add build gate to release script ([5d68889](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/5d68889a6b26b7855a67193ee4d4dd76f1a0edb7))
+
+
+
+
+
+## [0.1.9](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.8...v0.1.9) (2026-03-20)
+
+
+### Bug Fixes
+
+* **deps:** add @cig/ui workspace dep to dashboard and wizard-ui; add tailwindcss to wizard-ui ([b8dc105](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/b8dc10531a5b6b0b8a2652825bcbf3d72e63a4a9))
+* **landing:** add @cig/ui dep, add build gate to release script ([5d68889](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/5d68889a6b26b7855a67193ee4d4dd76f1a0edb7))
+
+
+
+
+
 ## [0.1.8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.7...v0.1.8) (2026-03-20)
 
 
