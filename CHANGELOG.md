@@ -1,3 +1,25 @@
+## [0.1.12](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.11...v0.1.12) (2026-03-20)
+
+
+### Bug Fixes
+
+* **auth:** add useAuthAvailable to fully guard useAuth() calls ([8cef38f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/8cef38f0fa92a218d3855ae1aeb5b67a33a87c2b))
+
+
+
+
+
+## [0.1.12](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.11...v0.1.12) (2026-03-20)
+
+
+### Bug Fixes
+
+* **auth:** add useAuthAvailable to fully guard useAuth() calls ([8cef38f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/8cef38f0fa92a218d3855ae1aeb5b67a33a87c2b))
+
+
+
+
+
 ## [0.1.11](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.10...v0.1.11) (2026-03-20)
 
 
