@@ -529,9 +529,37 @@ function AuthButtonReady() {
   );
 }
 
+function SignInButtonOnly() {
+  const [showModal, setShowModal] = useState(false);
+  return (
+    <>
+      <button
+        onClick={() => setShowModal(true)}
+        className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all duration-200 hover:scale-105 hover:shadow-xl hover:shadow-cyan-500/30 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+      >
+        Sign In
+      </button>
+      {showModal && (
+        <SignInModal
+          onClose={() => setShowModal(false)}
+          onGoogleSignIn={() => setShowModal(false)}
+          onGitHubSignIn={() => setShowModal(false)}
+        />
+      )}
+    </>
+  );
+}
+
 export function AuthButton() {
   const ready = useAuthReady();
   const available = useAuthAvailable();
-  if (!ready || !available) return null;
+
+  // Not initialised yet — show nothing briefly
+  if (!ready) return null;
+
+  // Auth client not configured (missing env vars) — still show sign-in button
+  // so the page doesn't look broken; useAuth() is never called here
+  if (!available) return <SignInButtonOnly />;
+
   return <AuthButtonReady />;
 }
