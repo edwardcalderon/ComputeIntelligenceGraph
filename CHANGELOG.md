@@ -1,3 +1,25 @@
+## [0.1.11](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.10...v0.1.11) (2026-03-20)
+
+
+### Bug Fixes
+
+* **auth:** fix useAuth called outside AuthProvider on missing Supabase env vars ([6026724](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/6026724ab1c0c29c0f6546d220dfeb27bbfd2b79))
+
+
+
+
+
+## [0.1.11](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.10...v0.1.11) (2026-03-20)
+
+
+### Bug Fixes
+
+* **auth:** fix useAuth called outside AuthProvider on missing Supabase env vars ([6026724](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/6026724ab1c0c29c0f6546d220dfeb27bbfd2b79))
+
+
+
+
+
 ## [0.1.10](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.9...v0.1.10) (2026-03-20)
 
 
