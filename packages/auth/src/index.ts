@@ -15,5 +15,5 @@ export { SupabaseClient } from "@edcalderon/auth/supabase";
 // CIG-specific exports
 export { CIGAuthProvider } from "./provider";
 export { getSupabaseClient } from "./client";
-export { useAuthReady } from "./auth-ready-context";
+export { useAuthReady, useAuthAvailable } from "./auth-ready-context";
 export { sendEmailOtp, verifyEmailOtp } from "./otp";

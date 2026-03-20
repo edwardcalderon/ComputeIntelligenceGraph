@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
-import { useAuth, useAuthReady, sendEmailOtp, verifyEmailOtp } from "@cig/auth";
+import { useAuth, useAuthReady, useAuthAvailable, sendEmailOtp, verifyEmailOtp } from "@cig/auth";
 
 /* ─── Icons ───────────────────────────────────────────────────────────── */
 
@@ -531,6 +531,7 @@ function AuthButtonReady() {
 
 export function AuthButton() {
   const ready = useAuthReady();
-  if (!ready) return null;
+  const available = useAuthAvailable();
+  if (!ready || !available) return null;
   return <AuthButtonReady />;
 }

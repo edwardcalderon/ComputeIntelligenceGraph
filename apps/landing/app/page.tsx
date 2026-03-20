@@ -6,7 +6,7 @@ import { GraphParticleTypography } from "../components/GraphParticleTypography";
 import { SpaceBackground } from "../components/SpaceBackground";
 import { AuthButton } from "../components/AuthButton";
 import { AuthenticatedLanding } from "../components/AuthenticatedLanding";
-import { useAuth, useAuthReady } from "@cig/auth";
+import { useAuth, useAuthReady, useAuthAvailable } from "@cig/auth";
 import {
   Cloud,
   GitGraph,
@@ -845,6 +845,7 @@ function HomePageInner() {
 
 export default function HomePage() {
   const ready = useAuthReady();
+  const available = useAuthAvailable();
   const [timedOut, setTimedOut] = useState(false);
 
   useEffect(() => {
@@ -853,13 +854,13 @@ export default function HomePage() {
     return () => clearTimeout(t);
   }, [ready]);
 
-  // Auth provider timed out (missing env vars / network error) —
-  // render public landing directly, never call useAuth() without AuthProvider.
-  if (timedOut && !ready) return <PublicLanding />;
+  // Timed out or ready but no Supabase client — show public landing without
+  // ever calling useAuth() which would throw outside AuthProvider.
+  if ((timedOut && !ready) || (ready && !available)) return <PublicLanding />;
 
   // Still initializing
   if (!ready) return null;
 
-  // AuthProvider is confirmed ready — safe to call useAuth() inside
+  // AuthProvider is confirmed in scope — safe to call useAuth() inside
   return <HomePageInner />;
 }
