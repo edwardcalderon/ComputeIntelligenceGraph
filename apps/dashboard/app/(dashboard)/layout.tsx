@@ -16,7 +16,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           >
             cig.lat
           </a>
-          {" · "}CIG Dashboard · v{process.env.NEXT_PUBLIC_APP_VERSION}
+          {" · "}CIG Dashboard{" · "}
+          <span title={process.env.NEXT_PUBLIC_RELEASE_TAG || ""}>
+            v{process.env.NEXT_PUBLIC_APP_VERSION}
+            {process.env.NEXT_PUBLIC_APP_BUILD ? `+build.${process.env.NEXT_PUBLIC_APP_BUILD}` : ""}
+          </span>
         </footer>
       </div>
       <ChatWidget />

@@ -346,6 +346,9 @@ fi
 if $BUILD_RELEASE; then
   step "5/8 Preparing build release"
   if ! $DRY_RUN; then
+    # Sync all workspace package.json files to the current root version so
+    # apps/*/package.json never drift out of sync with the monorepo root.
+    pnpm exec versioning sync 2>&1 || true
     success "Keeping workspace version at ${CURRENT_VERSION} and using build number ${NEXT_BUILD_NUMBER}"
   else
     info "[dry-run] Would keep workspace version at ${CURRENT_VERSION} and create ${RELEASE_TAG}"
