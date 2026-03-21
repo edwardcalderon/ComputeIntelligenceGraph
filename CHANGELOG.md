@@ -1,3 +1,14 @@
+## [0.1.21](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.20...v0.1.21) (2026-03-21)
+
+
+### Bug Fixes
+
+* **landing:** move FallingPattern from public landing to authenticated landing ([64e6d36](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/64e6d3682b3a47881e5f11d705a126f42a83edd8))
+
+
+
+
+
 ## [0.1.20](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.19...v0.1.20) (2026-03-21)
 
 
