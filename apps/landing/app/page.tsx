@@ -10,6 +10,8 @@ import { ThemeToggle } from "../components/ThemeToggle";
 import { LocaleSwitcher } from "../components/LocaleSwitcher";
 import { useAuth, useAuthReady, useAuthAvailable } from "@cig/auth";
 import { useTranslation } from "@cig-technology/i18n/react";
+import { DitheringShader } from "../components/DitheringShader";
+import { useTheme } from "./providers";
 import {
   Cloud,
   GitGraph,
@@ -713,18 +715,35 @@ const GetStartedSection: React.FC = () => {
 
 const Footer: React.FC = () => {
   const t = useTranslation();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   return (
-    <footer className="w-full text-center text-xs text-zinc-500 dark:text-zinc-600 pt-8 pb-2 border-t border-zinc-200 dark:border-zinc-800/50">
-      <p>{t("footer.copyright", { year: new Date().getFullYear() })}</p>
-      <p
-        className="mt-1 text-zinc-700"
-        title={process.env.NEXT_PUBLIC_RELEASE_TAG || `v${process.env.NEXT_PUBLIC_APP_VERSION}`}
-      >
-        {t("common.version", { version: process.env.NEXT_PUBLIC_APP_VERSION || "" })}
-        {process.env.NEXT_PUBLIC_APP_BUILD
-          ? ` · ${t("common.build", { build: process.env.NEXT_PUBLIC_APP_BUILD })}`
-          : ""}
-      </p>
+    <footer className="relative w-full overflow-hidden border-t border-zinc-200 dark:border-zinc-800/50">
+      <div className="absolute inset-0 pointer-events-none" style={{ opacity: isDark ? 0.5 : 0.35 }}>
+        <DitheringShader
+          width={1920}
+          height={80}
+          colorBack={isDark ? "#09090b" : "#fafafa"}
+          colorFront={isDark ? "#22d3ee" : "#06b6d4"}
+          shape="warp"
+          type="8x8"
+          pxSize={3}
+          speed={0.3}
+          style={{ width: "100%", height: "100%" }}
+        />
+      </div>
+      <div className="relative z-10 text-center text-xs text-zinc-500 dark:text-zinc-600 pt-8 pb-2">
+        <p>{t("footer.copyright", { year: new Date().getFullYear() })}</p>
+        <p
+          className="mt-1 text-zinc-700"
+          title={process.env.NEXT_PUBLIC_RELEASE_TAG || `v${process.env.NEXT_PUBLIC_APP_VERSION}`}
+        >
+          {t("common.version", { version: process.env.NEXT_PUBLIC_APP_VERSION || "" })}
+          {process.env.NEXT_PUBLIC_APP_BUILD
+            ? ` · ${t("common.build", { build: process.env.NEXT_PUBLIC_APP_BUILD })}`
+            : ""}
+        </p>
+      </div>
     </footer>
   );
 };
