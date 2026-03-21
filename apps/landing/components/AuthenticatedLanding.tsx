@@ -516,7 +516,8 @@ function HoloCard({ feature, selected, onSelect, onKnowMore }: HoloCardProps) {
       onMouseLeave={() => setHovered(false)}
       className="relative flex-shrink-0 w-64 rounded-2xl cursor-pointer select-none overflow-hidden"
       style={{
-        height: 220,
+        height: revealed ? "auto" : 220,
+        minHeight: 220,
         border: `1px solid ${cardBorder}`,
         background: cardBackground,
         boxShadow: cardShadow,
@@ -551,7 +552,9 @@ function HoloCard({ feature, selected, onSelect, onKnowMore }: HoloCardProps) {
           opacity: revealed ? 0 : 1,
           transform: revealed ? "scale(0.8) translateY(-12px)" : "scale(1) translateY(0)",
           transition: "opacity 0.3s ease, transform 0.35s ease",
-          pointerEvents: revealed ? "none" : "auto",
+          pointerEvents: "none",
+          visibility: revealed ? "hidden" : "visible",
+          height: 220,
         }}
       >
         {/* Large glowing icon */}
@@ -593,16 +596,15 @@ function HoloCard({ feature, selected, onSelect, onKnowMore }: HoloCardProps) {
       </div>
 
       {/* ── REVEALED FACE – full info ──────────────────────── */}
+      {/* Use relative positioning when revealed so the card height grows to fit content */}
       <div
-        className="absolute inset-0 flex flex-col p-5 gap-2"
+        className={`${revealed ? "relative" : "absolute inset-0"} flex flex-col p-5 gap-2`}
         style={{
           opacity: revealed ? 1 : 0,
           transform: revealed ? "translateY(0)" : "translateY(18px)",
           transition: "opacity 0.35s ease 0.05s, transform 0.35s ease 0.05s",
           pointerEvents: revealed ? "auto" : "none",
-          overflowY: revealed ? "auto" : "hidden",
-          scrollbarWidth: "thin",
-          scrollbarColor: `${feature.color}40 transparent`,
+          overflow: "visible",
         }}
       >
         {/* Header row: icon + tag — slides in from top */}
@@ -647,8 +649,8 @@ function HoloCard({ feature, selected, onSelect, onKnowMore }: HoloCardProps) {
           )}
         </p>
 
-        {/* Preview + CTA anchored together at the bottom */}
-        <div className="mt-auto flex flex-col gap-2">
+        {/* Preview + CTA */}
+        <div className="flex flex-col gap-2 mt-1">
           {/* Preview viz */}
           <div
             className="pt-2 border-t"
@@ -701,14 +703,15 @@ function HoloCard({ feature, selected, onSelect, onKnowMore }: HoloCardProps) {
         </div>
       </div>
 
-      {/* Bottom glow bloom on reveal */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
-        style={{
-          background: `linear-gradient(to top, ${withAlpha(c, revealed ? (isDark ? 0.18 : 0.12) : 0)}, transparent)`,
-          transition: "background 0.5s ease",
-        }}
-      />
+      {/* Bottom glow bloom — only in collapsed state (absolute positioning works with fixed height) */}
+      {!revealed && (
+        <div
+          className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
+          style={{
+            background: `linear-gradient(to top, ${withAlpha(c, isDark ? 0.08 : 0.05)}, transparent)`,
+          }}
+        />
+      )}
     </article>
   );
 }

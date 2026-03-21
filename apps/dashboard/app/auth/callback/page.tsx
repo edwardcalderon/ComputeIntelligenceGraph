@@ -33,8 +33,13 @@ export default function AuthCallback() {
         if (refreshToken) sessionStorage.setItem("cig_refresh_token", refreshToken);
         if (expiresIn)    sessionStorage.setItem("cig_expires_in",    expiresIn);
         // Absolute expiry timestamp so the app can check token freshness.
-        const expiresAt = Date.now() + (parseInt(expiresIn ?? "3600", 10) * 1000);
-        sessionStorage.setItem("cig_expires_at", String(expiresAt));
+        const expiresAtMs = Date.now() + (parseInt(expiresIn ?? "3600", 10) * 1000);
+        sessionStorage.setItem("cig_expires_at", String(expiresAtMs));
+
+        // Write a cookie so Next.js middleware can gate access server-side.
+        // SameSite=Lax is safe — no sensitive data in this cookie, just presence.
+        const expiresAtDate = new Date(expiresAtMs).toUTCString();
+        document.cookie = `cig_has_session=1; path=/; expires=${expiresAtDate}; SameSite=Lax`;
       } catch {
         // sessionStorage blocked (e.g. private mode with strict settings) — continue anyway.
       }
