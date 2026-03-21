@@ -2,6 +2,9 @@
 const { version } = require('../../package.json');
 
 const nextConfig = {
+  // Standalone output bundles server.js + node_modules into .next/standalone/
+  // Required by infra/docker/Dockerfile.dashboard for production containers.
+  output: 'standalone',
   transpilePackages: ['@cig/ui'],
   env: {
     NEXT_PUBLIC_APP_VERSION: version,

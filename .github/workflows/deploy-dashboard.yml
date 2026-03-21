@@ -1,0 +1,214 @@
+name: Deploy Dashboard → app.cig.lat
+
+# ─── Triggers ────────────────────────────────────────────────────────────────
+on:
+  push:
+    branches: [main]
+    paths:
+      # Only run when dashboard or shared UI code changes
+      - "apps/dashboard/**"
+      - "packages/ui/**"
+      - "packages/auth/**"
+      - "packages/i18n/**"
+      - "infra/docker/Dockerfile.dashboard"
+      - ".github/workflows/deploy-dashboard.yml"
+    tags:
+      - "v*.*.*"
+
+  # Allow manual trigger with optional image tag override
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Docker image tag to deploy (leave blank to build fresh)"
+        required: false
+        default: ""
+      dry_run:
+        description: "Dry run — build & push but skip Cloud Run deploy"
+        type: boolean
+        default: false
+
+# ─── Concurrency ─────────────────────────────────────────────────────────────
+# Cancel in-flight deploys on the same branch when a newer push arrives.
+concurrency:
+  group: deploy-dashboard-${{ github.ref }}
+  cancel-in-progress: true
+
+# ─── Global env ──────────────────────────────────────────────────────────────
+env:
+  GCP_PROJECT:   cig-technology
+  GCP_REGION:    us-central1
+  SERVICE_NAME:  dashboard
+  REGISTRY:      us-central1-docker.pkg.dev
+  IMAGE:         us-central1-docker.pkg.dev/cig-technology/cig/dashboard
+
+jobs:
+  # ───────────────────────────────────────────────────────────────────────────
+  # JOB 1 — Resolve the image tag that will be deployed
+  # ───────────────────────────────────────────────────────────────────────────
+  resolve-tag:
+    name: Resolve image tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.value }}
+    steps:
+      - name: Determine tag
+        id: tag
+        run: |
+          if [[ -n "${{ github.event.inputs.image_tag }}" ]]; then
+            echo "value=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref_type }}" == "tag" ]]; then
+            # Strip leading 'v' → 0.1.24
+            echo "value=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+          else
+            # Short SHA for branch pushes
+            echo "value=sha-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          fi
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # JOB 2 — Build image and push to Artifact Registry
+  #          (skipped when a specific image_tag was provided)
+  # ───────────────────────────────────────────────────────────────────────────
+  build:
+    name: Build & push container
+    runs-on: ubuntu-latest
+    needs: resolve-tag
+    # Skip build when caller already specified an existing image tag
+    if: ${{ github.event.inputs.image_tag == '' || github.event.inputs.image_tag == null }}
+    permissions:
+      contents: read
+      id-token: write   # Needed for Workload Identity (preferred) or SA key
+
+    outputs:
+      image: ${{ env.IMAGE }}:${{ needs.resolve-tag.outputs.tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infra/docker/Dockerfile.dashboard
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ needs.resolve-tag.outputs.tag }}
+            ${{ env.IMAGE }}:latest
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL || 'https://cig.lat' }}
+            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            NEXT_PUBLIC_APP_VERSION=${{ github.ref_name }}
+          # Registry-based layer cache — dramatically speeds up repeat builds
+          cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
+          cache-to:   type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
+          provenance: false   # Avoid attestation manifest issues with older registries
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # JOB 3 — Deploy to Cloud Run
+  # ───────────────────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Cloud Run
+    runs-on: ubuntu-latest
+    needs: [resolve-tag, build]
+    # Allow deploy even if build was skipped (pre-existing image_tag)
+    if: |
+      always() &&
+      needs.resolve-tag.result == 'success' &&
+      (needs.build.result == 'success' || needs.build.result == 'skipped') &&
+      github.event.inputs.dry_run != 'true'
+    permissions:
+      contents: read
+      id-token: write
+
+    environment:
+      name: production
+      url: https://app.cig.lat
+
+    steps:
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT }}
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service:  ${{ env.SERVICE_NAME }}
+          region:   ${{ env.GCP_REGION }}
+          image:    ${{ env.IMAGE }}:${{ needs.resolve-tag.outputs.tag }}
+          flags: |
+            --allow-unauthenticated
+            --port=3000
+            --cpu=1
+            --memory=512Mi
+            --min-instances=0
+            --max-instances=5
+            --concurrency=80
+            --timeout=30s
+          env_vars: |
+            NODE_ENV=production
+            NEXT_TELEMETRY_DISABLED=1
+
+      - name: Print deployed URL
+        run: |
+          echo "### ✅ Deployed!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| URL | ${{ steps.deploy.outputs.url }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Custom domain | https://app.cig.lat |" >> $GITHUB_STEP_SUMMARY
+          echo "| Image | \`${{ env.IMAGE }}:${{ needs.resolve-tag.outputs.tag }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Revision | ${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # JOB 4 — Smoke test (runs after deploy, non-blocking on failure)
+  # ───────────────────────────────────────────────────────────────────────────
+  smoke-test:
+    name: Smoke test
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: needs.deploy.result == 'success'
+    continue-on-error: true   # Never block the workflow on a smoke-test failure
+
+    steps:
+      - name: Wait for Cloud Run to be ready
+        run: sleep 15
+
+      - name: Check HTTP 200 on app.cig.lat
+        run: |
+          STATUS=$(curl -o /dev/null -s -w "%{http_code}" --max-time 20 https://app.cig.lat)
+          echo "HTTP status: $STATUS"
+          if [[ "$STATUS" != "200" ]]; then
+            echo "⚠️  Smoke test returned $STATUS — investigate but deploy is already live."
+            exit 1
+          fi
+          echo "✅ app.cig.lat returned 200"
+
+      - name: Check /signed-out page
+        run: |
+          STATUS=$(curl -o /dev/null -s -w "%{http_code}" --max-time 20 https://app.cig.lat/signed-out)
+          echo "/signed-out HTTP status: $STATUS"

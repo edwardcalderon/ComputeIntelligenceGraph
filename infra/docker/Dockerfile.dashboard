@@ -5,14 +5,32 @@ WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 
+# Copy workspace manifests first (layer-cache friendly)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+COPY packages/ui/package.json ./packages/ui/
 COPY apps/dashboard/package.json ./apps/dashboard/
 
 RUN pnpm install --frozen-lockfile
 
+# Copy source
+COPY packages/ui ./packages/ui
 COPY apps/dashboard ./apps/dashboard
 
-# Build Next.js app
+# NEXT_PUBLIC_* vars are baked into the JS bundle at build time.
+# Pass them as build args from CI so the container never needs them at runtime.
+ARG NEXT_PUBLIC_API_URL=http://localhost:8080
+ARG NEXT_PUBLIC_SITE_URL=https://cig.lat
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ARG NEXT_PUBLIC_APP_VERSION
+
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+    NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
+    NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
+    NEXT_PUBLIC_APP_VERSION=$NEXT_PUBLIC_APP_VERSION \
+    NEXT_TELEMETRY_DISABLED=1
+
 RUN pnpm --filter @cig/dashboard build
 
 # ─── Production Stage ─────────────────────────────────────────────────────────
@@ -23,7 +41,7 @@ RUN addgroup -g 1000 node_group || true \
 
 WORKDIR /app
 
-# Next.js standalone output
+# Next.js standalone output — self-contained server.js + traced dependencies
 COPY --from=builder /app/apps/dashboard/.next/standalone ./
 COPY --from=builder /app/apps/dashboard/.next/static ./apps/dashboard/.next/static
 COPY --from=builder /app/apps/dashboard/public ./apps/dashboard/public 2>/dev/null || true
@@ -36,9 +54,10 @@ EXPOSE 3000
 
 ENV NODE_ENV=production \
     PORT=3000 \
-    HOSTNAME=0.0.0.0
+    HOSTNAME=0.0.0.0 \
+    NEXT_TELEMETRY_DISABLED=1
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
-    CMD wget -qO- http://localhost:3000/api/health || wget -qO- http://localhost:3000 || exit 1
+    CMD wget -qO- http://localhost:3000 || exit 1
 
 CMD ["node", "apps/dashboard/server.js"]
