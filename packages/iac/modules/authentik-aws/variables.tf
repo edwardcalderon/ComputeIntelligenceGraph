@@ -1,30 +1,12 @@
-variable "vpc_id" {
-  description = "Existing VPC ID to deploy into. If empty, a new VPC will be created."
-  type        = string
-  default     = ""
-}
-
 variable "domain" {
-  description = "Fully-qualified domain name for the Authentik instance (e.g. auth.example.com)"
+  description = "FQDN for the Authentik instance (e.g. auth.cig.technology)"
   type        = string
 }
 
 variable "region" {
-  description = "AWS region to deploy resources into"
+  description = "AWS region"
   type        = string
   default     = "us-east-1"
-}
-
-variable "db_instance_class" {
-  description = "RDS instance class for the Authentik PostgreSQL database"
-  type        = string
-  default     = "db.t3.micro"
-}
-
-variable "authentik_image_tag" {
-  description = "Authentik Docker image tag (e.g. 2024.2.2)"
-  type        = string
-  default     = "2024.2.2"
 }
 
 variable "route53_zone_id" {
@@ -32,34 +14,49 @@ variable "route53_zone_id" {
   type        = string
 }
 
-variable "db_name" {
-  description = "Name of the PostgreSQL database for Authentik"
+variable "authentik_image_tag" {
+  description = "Authentik Docker image tag"
   type        = string
-  default     = "authentik"
+  default     = "2024.12.3"
 }
 
-variable "db_username" {
-  description = "Master username for the RDS PostgreSQL instance"
+variable "ssh_public_key" {
+  description = "EC2 SSH public key (leave empty to disable SSH key pair)"
   type        = string
-  default     = "authentik"
+  default     = ""
+  sensitive   = true
 }
 
-variable "db_multi_az" {
-  description = "Enable Multi-AZ for the RDS instance"
-  type        = bool
-  default     = false
+variable "smtp_host" {
+  description = "SMTP host for Authentik email sending"
+  type        = string
+  default     = ""
 }
 
-variable "ecs_cpu" {
-  description = "CPU units for the Authentik ECS Fargate task (1024 = 1 vCPU)"
+variable "smtp_port" {
+  description = "SMTP port"
   type        = number
-  default     = 1024
+  default     = 587
 }
 
-variable "ecs_memory" {
-  description = "Memory (MiB) for the Authentik ECS Fargate task"
-  type        = number
-  default     = 2048
+variable "smtp_username" {
+  description = "SMTP username"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "smtp_password" {
+  description = "SMTP password"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "smtp_from" {
+  description = "From address for Authentik emails"
+  type        = string
+  default     = ""
 }
 
 variable "tags" {

@@ -1,0 +1,3 @@
+environments/prod/tfplan
+environments/prod/.terraform/
+environments/prod/.terraform.lock.hcl

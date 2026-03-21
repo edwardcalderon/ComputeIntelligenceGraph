@@ -1,23 +1,27 @@
 ################################################################################
-# Secrets Manager — Authentik admin password
+# Authentik secret key (cryptographic key for sessions/tokens)
 ################################################################################
 
-resource "aws_secretsmanager_secret" "authentik_admin_password" {
-  name                    = "authentik/${var.domain}/admin-password"
-  description             = "Authentik admin password for ${var.domain}"
+resource "random_password" "authentik_secret_key" {
+  length  = 50
+  special = false  # Authentik secret key must be alphanumeric
+}
+
+resource "aws_secretsmanager_secret" "authentik_secret_key" {
+  name                    = "authentik/${var.domain}/secret-key"
+  description             = "Authentik SECRET_KEY for ${var.domain}"
   recovery_window_in_days = 7
-
-  tags = merge(var.tags, {
-    Name        = "authentik-admin-password"
-    cig-managed = "true"
-  })
+  tags                    = merge(var.tags, { Name = "authentik-secret-key", cig-managed = "true" })
 }
 
-resource "aws_secretsmanager_secret_version" "authentik_admin_password" {
-  secret_id = aws_secretsmanager_secret.authentik_admin_password.id
-  # Generated at apply time via random_password; rotated externally if needed.
-  secret_string = random_password.authentik_admin.result
+resource "aws_secretsmanager_secret_version" "authentik_secret_key" {
+  secret_id     = aws_secretsmanager_secret.authentik_secret_key.id
+  secret_string = random_password.authentik_secret_key.result
 }
+
+################################################################################
+# Authentik admin bootstrap password
+################################################################################
 
 resource "random_password" "authentik_admin" {
   length           = 32
@@ -25,31 +29,21 @@ resource "random_password" "authentik_admin" {
   override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
-################################################################################
-# Secrets Manager — RDS database credentials
-################################################################################
-
-resource "aws_secretsmanager_secret" "db_credentials" {
-  name                    = "authentik/${var.domain}/db-credentials"
-  description             = "RDS PostgreSQL credentials for Authentik (${var.domain})"
+resource "aws_secretsmanager_secret" "authentik_admin_password" {
+  name                    = "authentik/${var.domain}/admin-password"
+  description             = "Authentik admin password for ${var.domain}"
   recovery_window_in_days = 7
-
-  tags = merge(var.tags, {
-    Name        = "authentik-db-credentials"
-    cig-managed = "true"
-  })
+  tags                    = merge(var.tags, { Name = "authentik-admin-password", cig-managed = "true" })
 }
 
-resource "aws_secretsmanager_secret_version" "db_credentials" {
-  secret_id = aws_secretsmanager_secret.db_credentials.id
-  secret_string = jsonencode({
-    username = var.db_username
-    password = random_password.db_password.result
-    host     = aws_db_instance.authentik.address
-    port     = 5432
-    dbname   = var.db_name
-  })
+resource "aws_secretsmanager_secret_version" "authentik_admin_password" {
+  secret_id     = aws_secretsmanager_secret.authentik_admin_password.id
+  secret_string = random_password.authentik_admin.result
 }
+
+################################################################################
+# PostgreSQL password (local on EC2)
+################################################################################
 
 resource "random_password" "db_password" {
   length           = 32
@@ -57,24 +51,31 @@ resource "random_password" "db_password" {
   override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
+resource "aws_secretsmanager_secret" "db_password" {
+  name                    = "authentik/${var.domain}/db-password"
+  description             = "PostgreSQL password for Authentik on ${var.domain}"
+  recovery_window_in_days = 7
+  tags                    = merge(var.tags, { Name = "authentik-db-password", cig-managed = "true" })
+}
+
+resource "aws_secretsmanager_secret_version" "db_password" {
+  secret_id     = aws_secretsmanager_secret.db_password.id
+  secret_string = random_password.db_password.result
+}
+
 ################################################################################
-# Secrets Manager — OIDC client credentials (populated post-bootstrap)
+# OIDC client credentials (populated post-bootstrap)
 ################################################################################
 
 resource "aws_secretsmanager_secret" "oidc_client" {
   name                    = "authentik/${var.domain}/oidc-client"
-  description             = "Authentik OIDC client ID and secret for ${var.domain}"
+  description             = "OIDC client ID and secret for ${var.domain}"
   recovery_window_in_days = 7
-
-  tags = merge(var.tags, {
-    Name        = "authentik-oidc-client"
-    cig-managed = "true"
-  })
+  tags                    = merge(var.tags, { Name = "authentik-oidc-client", cig-managed = "true" })
 }
 
 resource "aws_secretsmanager_secret_version" "oidc_client" {
   secret_id = aws_secretsmanager_secret.oidc_client.id
-  # Placeholder — the Infra deployer updates this after Authentik bootstraps the OIDC provider.
   secret_string = jsonencode({
     client_id     = "placeholder"
     client_secret = "placeholder"
