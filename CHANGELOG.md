@@ -1,3 +1,25 @@
+## [0.1.17](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.16...v0.1.17) (2026-03-21)
+
+
+### Bug Fixes
+
+* improve landing card contrast and infra path handling ([565f335](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/565f33535e1e2bfc65082990824cef406c85dc57))
+
+
+
+
+
+## [0.1.17](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.16...v0.1.17) (2026-03-21)
+
+
+### Bug Fixes
+
+* improve landing card contrast and infra path handling ([565f335](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/565f33535e1e2bfc65082990824cef406c85dc57))
+
+
+
+
+
 ## [0.1.16](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.15...v0.1.16) (2026-03-21)
 
 
