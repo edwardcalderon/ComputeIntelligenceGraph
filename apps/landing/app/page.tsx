@@ -8,6 +8,7 @@ import { AuthButton } from "../components/AuthButton";
 import { AuthenticatedLanding } from "../components/AuthenticatedLanding";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { LocaleSwitcher } from "../components/LocaleSwitcher";
+import { FallingPattern } from "../components/FallingPattern";
 import { useAuth, useAuthReady, useAuthAvailable } from "@cig/auth";
 import { useTranslation } from "@cig-technology/i18n/react";
 import {
@@ -769,9 +770,14 @@ function PublicLanding() {
         <AuthButton />
       </div>
 
-      {/* Background blobs */}
-      <div className="pointer-events-none fixed -top-40 -left-40 w-[600px] h-[600px] bg-gradient-to-tr from-cyan-600 via-blue-600 to-violet-600 opacity-[0.10] dark:opacity-[0.07] rounded-full blur-3xl animate-pulse-slow z-0" />
-      <div className="pointer-events-none fixed -bottom-40 -right-40 w-[500px] h-[500px] bg-gradient-to-bl from-violet-600 via-blue-600 to-cyan-600 opacity-[0.08] dark:opacity-[0.05] rounded-full blur-3xl animate-pulse-slow z-0" />
+      {/* Light mode — falling pattern */}
+      <div className="pointer-events-none fixed inset-0 z-0 dark:hidden">
+        <FallingPattern color="rgba(6,182,212,0.18)" backgroundColor="transparent" duration={150} blurIntensity="0.5em" density={1} />
+      </div>
+
+      {/* Dark mode — blob glows */}
+      <div className="pointer-events-none fixed -top-40 -left-40 w-[600px] h-[600px] bg-gradient-to-tr from-cyan-600 via-blue-600 to-violet-600 opacity-[0.07] rounded-full blur-3xl animate-pulse-slow z-0 hidden dark:block" />
+      <div className="pointer-events-none fixed -bottom-40 -right-40 w-[500px] h-[500px] bg-gradient-to-bl from-violet-600 via-blue-600 to-cyan-600 opacity-[0.05] rounded-full blur-3xl animate-pulse-slow z-0 hidden dark:block" />
 
       <div className="relative w-full max-w-4xl mx-auto flex flex-col items-center gap-24 z-10">
         <HeroSection />
