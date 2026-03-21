@@ -827,11 +827,10 @@ function ScrollingRow({
     if (Math.abs(totalDelta.current) >= 5) return; // was a drag
 
     if (selectedId === feature.id) {
-      // Second tap on the same card → navigate
-      goToDashboard(feature.path);
+      // Second tap on the already-selected card → collapse (deselect)
       setSelectedId(null);
     } else {
-      // First tap → select & pause this row
+      // First tap → lock card revealed so buttons are easy to click
       setSelectedId(feature.id);
     }
   };
