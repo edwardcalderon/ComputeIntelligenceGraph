@@ -18,14 +18,6 @@ export { getSupabaseClient } from "./client";
 export { useAuthReady, useAuthAvailable } from "./auth-ready-context";
 export { sendEmailOtp, verifyEmailOtp } from "./otp";
 
-// Server-only utilities (jose / node:crypto) are exported from subpaths
-// to avoid bundling Node.js built-ins into client-side static builds:
-//   @cig/auth/server  → OIDCAdapter, LocalJWTAdapter, createInternalToken, etc.
-// Type-only re-exports are safe — they're erased at compile time.
-export type {
-  OIDCAdapterConfig,
-  AuthAdapter,
-  VerifiedClaims,
-} from "./adapters/oidc-adapter";
-export type { LocalJWTAdapterConfig } from "./adapters/local-jwt-adapter";
-export type { InternalTokenPayload } from "./internal-jwt";
+// Server-only utilities (jose / node:crypto) are exported from @cig/auth/server.
+// Do NOT re-export types from those modules here — webpack resolves
+// the source files before TypeScript type erasure, pulling in node:crypto.
