@@ -1,3 +1,20 @@
+## [0.1.23](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.22...v0.1.23) (2026-03-21)
+
+
+### Bug Fixes
+
+* **dashboard/graph:** resolve infinite re-render loop + react-doctor improvements ([63d9510](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/63d951074cf0b72f0404185df4c5324f8ac3ebdc))
+
+
+### Features
+
+* **auth:** proper logout flow with shared SignedOut page ([9c1530a](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/9c1530a08efa6b26b3b2bb267d5c67f62296b09d))
+* **dashboard:** integrate Refine framework with profile, settings, notifications, and logout ([db78ed3](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/db78ed33515d68c3e4f9022b04ffdf79eaab2dce))
+
+
+
+
+
 ## [0.1.22](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.21...v0.1.22) (2026-03-21)
 
 
