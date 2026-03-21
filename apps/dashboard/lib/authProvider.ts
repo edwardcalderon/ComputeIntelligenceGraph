@@ -33,16 +33,21 @@ function decodeJwt(token: string): Record<string, unknown> | null {
 }
 
 /**
- * Where to send the user when they are not authenticated or have logged out.
+ * Where to send the user after explicit logout vs unauthenticated access:
  *
- * - On explicit logout → /signed-out (same origin, works local & prod)
- * - On failed auth check → /signed-out (same origin)
- *
- * The /signed-out page has a "Sign in" link that points to NEXT_PUBLIC_SITE_URL,
- * which is the landing page. This keeps environment-specific cross-domain
- * redirects in one place (next.config.js env), not scattered through code.
+ * - Explicit logout   → /signed-out  (in-app farewell page, then user clicks "Sign in")
+ * - Unauthenticated   → NEXT_PUBLIC_SITE_URL (landing sign-in, works local & prod)
+ * - 401/403 API error → NEXT_PUBLIC_SITE_URL (session invalid, go log in again)
  */
 const SIGNED_OUT_PATH = "/signed-out";
+
+function getLandingUrl(): string {
+  if (typeof window !== "undefined") {
+    // In the browser NEXT_PUBLIC_* vars are baked in at build time
+    return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  }
+  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+}
 
 export const authProvider: AuthProvider = {
   /** Login happens on the landing page — not used inside the dashboard. */
@@ -59,9 +64,10 @@ export const authProvider: AuthProvider = {
   check: async () => {
     const session = getSession();
     if (session) return { authenticated: true };
+    // No session → send straight to landing sign-in
     return {
       authenticated: false,
-      redirectTo: SIGNED_OUT_PATH,
+      redirectTo: getLandingUrl(),
       error: { name: "Unauthenticated", message: "No active session." },
     };
   },
@@ -70,7 +76,7 @@ export const authProvider: AuthProvider = {
     const status = (error as { status?: number }).status;
     if (status === 401 || status === 403) {
       clearSession();
-      return { logout: true, redirectTo: SIGNED_OUT_PATH };
+      return { logout: true, redirectTo: getLandingUrl() };
     }
     return { error };
   },
