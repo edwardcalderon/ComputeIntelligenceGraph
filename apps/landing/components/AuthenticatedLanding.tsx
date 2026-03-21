@@ -448,6 +448,7 @@ interface HoloCardProps {
   selected: boolean;
   onSelect: () => void;
   onKnowMore: () => void;
+  onRevealChange: (revealed: boolean) => void;
 }
 
 /** Typewriter hook — types `text` character by character when `active` is true. */
@@ -472,30 +473,23 @@ function useTypewriter(text: string, active: boolean, delay = 260, speed = 14) {
   return { typed, done: typed.length === text.length };
 }
 
-function HoloCard({ feature, selected, onSelect, onKnowMore }: HoloCardProps) {
+function HoloCard({ feature, selected, onSelect, onKnowMore, onRevealChange }: HoloCardProps) {
   const t = useTranslation();
   const { theme } = useTheme();
-  // Hover reveals the card for browsing; click LOCKS it (selected=true).
-  // Once locked, revealed stays true regardless of hover — user can freely
-  // move cursor to buttons without the card collapsing.
-  // When not locked, a 300ms grace period keeps the card revealed after
-  // the cursor leaves, giving users time to reach buttons.
   const [hovered, setHovered] = useState(false);
-  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const revealed = hovered || selected;
 
-  const handleMouseEnter = () => {
-    if (leaveTimer.current) { clearTimeout(leaveTimer.current); leaveTimer.current = null; }
-    setHovered(true);
-  };
-  const handleMouseLeave = () => {
-    // If card is locked (selected), don't collapse on hover leave.
-    // Otherwise use a 300ms grace window so the user can reach the buttons.
-    if (!selected) {
-      leaveTimer.current = setTimeout(() => setHovered(false), 300);
+  // Notify the parent row whenever our revealed state changes so it can
+  // pause/resume the scroll animation. This is the single source of truth
+  // for "should the row stop moving?"
+  const prevRevealed = useRef(false);
+  useEffect(() => {
+    if (revealed !== prevRevealed.current) {
+      prevRevealed.current = revealed;
+      onRevealChange(revealed);
     }
-  };
-  useEffect(() => () => { if (leaveTimer.current) clearTimeout(leaveTimer.current); }, []);
+  }, [revealed, onRevealChange]);
+
   const title = t(feature.titleKey);
   const tag = t(feature.tagKey);
   const { typed, done } = useTypewriter(t(feature.descKey), revealed);
@@ -532,8 +526,8 @@ function HoloCard({ feature, selected, onSelect, onKnowMore }: HoloCardProps) {
     <article
       onClick={onSelect}
       data-selected={selected ? "" : undefined}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => { if (!selected) setHovered(false); }}
       className="cig-holocard relative flex-shrink-0 w-64 rounded-2xl cursor-pointer select-none overflow-hidden"
       style={{
         height: revealed ? "auto" : 220,
@@ -752,11 +746,17 @@ function ScrollingRow({
   onKnowMore: (f: Feature) => void;
 }) {
   const trackRef  = useRef<HTMLDivElement>(null);
-  const rowRef    = useRef<HTMLDivElement>(null);
   // null = CSS animation running; number = manual override while dragging
   const [manualOffset, setManualOffset] = useState<number | null>(null);
-  const [hovered, setHovered]           = useState(false);
   const [selectedId, setSelectedId]     = useState<string | null>(null);
+  // Count of cards currently in "revealed" state (hovered or selected).
+  // When > 0 the scroll animation pauses so cards don't slide away.
+  const revealedCount = useRef(0);
+  const [anyRevealed, setAnyRevealed]   = useState(false);
+  const handleRevealChange = useCallback((revealed: boolean) => {
+    revealedCount.current += revealed ? 1 : -1;
+    setAnyRevealed(revealedCount.current > 0);
+  }, []);
 
   const dragging   = useRef(false);
   const startX     = useRef(0);
@@ -838,7 +838,7 @@ function ScrollingRow({
     }
   };
 
-  const isPaused = hovered || selectedId !== null;
+  const isPaused = anyRevealed || selectedId !== null;
 
   const trackStyle: React.CSSProperties =
     manualOffset !== null
@@ -855,26 +855,13 @@ function ScrollingRow({
     }
   };
 
-  // Use mouseenter/mouseleave on a ref'd element with relatedTarget check
-  // to avoid false leave-events when cursor moves into child elements.
-  const handleMouseEnterRow = () => setHovered(true);
-  const handleMouseLeaveRow = (e: React.MouseEvent) => {
-    // Only set hovered=false if the cursor truly left the row container,
-    // not just moved into a child element.
-    if (rowRef.current && rowRef.current.contains(e.relatedTarget as Node)) return;
-    setHovered(false);
-  };
-
   return (
     <div
-      ref={rowRef}
       className="overflow-x-clip w-full py-3 cursor-grab active:cursor-grabbing"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
-      onMouseEnter={handleMouseEnterRow}
-      onMouseLeave={handleMouseLeaveRow}
       onClick={handleRowClick}
     >
       <div ref={trackRef} className="flex gap-4 w-max px-4" style={trackStyle}>
@@ -885,6 +872,7 @@ function ScrollingRow({
             selected={selectedId === f.id}
             onSelect={() => handleCardClick(f)}
             onKnowMore={() => onKnowMore(f)}
+            onRevealChange={handleRevealChange}
           />
         ))}
       </div>
