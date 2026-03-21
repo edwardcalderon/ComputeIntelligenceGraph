@@ -1,3 +1,25 @@
+## [0.1.25](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.24...v0.1.25) (2026-03-21)
+
+
+### Features
+
+* **infra:** add Cloud Run CI/CD pipeline for app.cig.lat dashboard ([3106fa0](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/3106fa0b17ced44f6232882c4ceb4289db4ef9ae))
+
+
+
+
+
+## [0.1.25](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.24...v0.1.25) (2026-03-21)
+
+
+### Features
+
+* **infra:** add Cloud Run CI/CD pipeline for app.cig.lat dashboard ([3106fa0](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/3106fa0b17ced44f6232882c4ceb4289db4ef9ae))
+
+
+
+
+
 ## [0.1.24](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.23...v0.1.24) (2026-03-21)
 
 
