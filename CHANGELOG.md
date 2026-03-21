@@ -1,3 +1,39 @@
+## [0.1.27](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.26...v0.1.27) (2026-03-21)
+
+
+### Bug Fixes
+
+* **dashboard:** redirect unauthenticated users to landing sign-in ([4e66e7f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/4e66e7fb83f38a93bde02f7a1934a3e06874be0b))
+* **infra:** add apps/dashboard/public dir so Dockerfile COPY doesn't fail ([1dc12c5](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/1dc12c547e88ccfad8513a6a407413e862b8e7d3))
+* **infra:** use --ignore-not-found for optional public/ COPY in Dockerfile ([2cb2ea6](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/2cb2ea69bbf0653d9ff762047964cc677ec2a03e))
+
+
+### Features
+
+* **landing:** add 'Know more' CTA and feature detail modal to HoloCards ([1a33b8b](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/1a33b8b23b70af5d666c732b8b4ad86d1833f901))
+
+
+
+
+
+## [0.1.27](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.26...v0.1.27) (2026-03-21)
+
+
+### Bug Fixes
+
+* **dashboard:** redirect unauthenticated users to landing sign-in ([4e66e7f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/4e66e7fb83f38a93bde02f7a1934a3e06874be0b))
+* **infra:** add apps/dashboard/public dir so Dockerfile COPY doesn't fail ([1dc12c5](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/1dc12c547e88ccfad8513a6a407413e862b8e7d3))
+* **infra:** use --ignore-not-found for optional public/ COPY in Dockerfile ([2cb2ea6](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/2cb2ea69bbf0653d9ff762047964cc677ec2a03e))
+
+
+### Features
+
+* **landing:** add 'Know more' CTA and feature detail modal to HoloCards ([1a33b8b](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/1a33b8b23b70af5d666c732b8b4ad86d1833f901))
+
+
+
+
+
 ## [0.1.26](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.25...v0.1.26) (2026-03-21)
 
 
