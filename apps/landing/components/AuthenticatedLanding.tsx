@@ -751,7 +751,8 @@ function ScrollingRow({
   duration: string;
   onKnowMore: (f: Feature) => void;
 }) {
-  const trackRef = useRef<HTMLDivElement>(null);
+  const trackRef  = useRef<HTMLDivElement>(null);
+  const rowRef    = useRef<HTMLDivElement>(null);
   // null = CSS animation running; number = manual override while dragging
   const [manualOffset, setManualOffset] = useState<number | null>(null);
   const [hovered, setHovered]           = useState(false);
@@ -854,15 +855,26 @@ function ScrollingRow({
     }
   };
 
+  // Use mouseenter/mouseleave on a ref'd element with relatedTarget check
+  // to avoid false leave-events when cursor moves into child elements.
+  const handleMouseEnterRow = () => setHovered(true);
+  const handleMouseLeaveRow = (e: React.MouseEvent) => {
+    // Only set hovered=false if the cursor truly left the row container,
+    // not just moved into a child element.
+    if (rowRef.current && rowRef.current.contains(e.relatedTarget as Node)) return;
+    setHovered(false);
+  };
+
   return (
     <div
+      ref={rowRef}
       className="overflow-x-clip w-full py-3 cursor-grab active:cursor-grabbing"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={handleMouseEnterRow}
+      onMouseLeave={handleMouseLeaveRow}
       onClick={handleRowClick}
     >
       <div ref={trackRef} className="flex gap-4 w-max px-4" style={trackStyle}>
