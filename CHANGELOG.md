@@ -1,3 +1,25 @@
+## [0.1.29](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.28...v0.1.29) (2026-03-21)
+
+
+### Bug Fixes
+
+* **landing:** only scale card on selection, not on hover ([0ef70d1](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/0ef70d1afa7282fb54f2e2bd4cd0789d4a3d7653))
+
+
+
+
+
+## [0.1.29](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.28...v0.1.29) (2026-03-21)
+
+
+### Bug Fixes
+
+* **landing:** only scale card on selection, not on hover ([0ef70d1](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/0ef70d1afa7282fb54f2e2bd4cd0789d4a3d7653))
+
+
+
+
+
 ## [0.1.28](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.27...v0.1.28) (2026-03-21)
 
 
