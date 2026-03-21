@@ -93,6 +93,9 @@ importers:
 
   apps/landing:
     dependencies:
+      '@cig-technology/i18n':
+        specifier: 1.0.0
+        version: 1.0.0(react@18.3.1)
       '@cig/auth':
         specifier: workspace:*
         version: link:../../packages/auth
@@ -656,6 +659,16 @@ packages:
   '@babel/helper-validator-identifier@7.28.5':
     resolution: {integrity: sha512-qSs4ifwzKJSV39ucNjsvc6WVHs6b7S03sOh2OcHF9UHfVPqWWALUsNUVzhSBiItjRZoLHx7nIarVjqKVusUZ1Q==}
     engines: {node: '>=6.9.0'}
+
+  '@cig-technology/i18n@1.0.0':
+    resolution: {integrity: sha512-M559nYXTdsTWPNq1V1jzpOnZ9HtKAdVYS/VwT3ps+xJ/yKepN5vhO04IbSK5H5qAbfqd0CJQw5IX9b1g20KN3Q==}
+    engines: {node: '>=18'}
+    hasBin: true
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      react:
+        optional: true
 
   '@dimforge/rapier3d-compat@0.12.0':
     resolution: {integrity: sha512-uekIGetywIgopfD97oDL5PfeezkFpNhwlzlaEYNOA0N6ghdsOvh/HYjSMek5Q2O1PYvRSDFcqFVJl4r4ZBwOow==}
@@ -6352,6 +6365,10 @@ snapshots:
       picocolors: 1.1.1
 
   '@babel/helper-validator-identifier@7.28.5': {}
+
+  '@cig-technology/i18n@1.0.0(react@18.3.1)':
+    optionalDependencies:
+      react: 18.3.1
 
   '@dimforge/rapier3d-compat@0.12.0': {}
 

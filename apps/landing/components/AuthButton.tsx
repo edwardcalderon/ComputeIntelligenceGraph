@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useAuth, useAuthReady, useAuthAvailable, getSupabaseClient, sendEmailOtp, verifyEmailOtp } from "@cig/auth";
+import { useTranslation } from "@cig-technology/i18n/react";
 
 /* ─── Icons ───────────────────────────────────────────────────────────── */
 

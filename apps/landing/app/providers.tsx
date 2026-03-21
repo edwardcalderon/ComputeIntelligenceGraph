@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { CIGAuthProvider } from "@cig/auth";
+import { I18nProvider } from "@cig-technology/i18n/react";
+import { initI18n } from "./i18n";
 
 type Theme = "light" | "dark";
 
@@ -40,10 +42,15 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Initialize i18n catalogs once at module level
+initI18n();
+
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider>
-      <CIGAuthProvider>{children}</CIGAuthProvider>
-    </ThemeProvider>
+    <I18nProvider>
+      <ThemeProvider>
+        <CIGAuthProvider>{children}</CIGAuthProvider>
+      </ThemeProvider>
+    </I18nProvider>
   );
 }

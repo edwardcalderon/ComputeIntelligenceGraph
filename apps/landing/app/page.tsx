@@ -7,7 +7,9 @@ import { SpaceBackground } from "../components/SpaceBackground";
 import { AuthButton } from "../components/AuthButton";
 import { AuthenticatedLanding } from "../components/AuthenticatedLanding";
 import { ThemeToggle } from "../components/ThemeToggle";
+import { LocaleSwitcher } from "../components/LocaleSwitcher";
 import { useAuth, useAuthReady, useAuthAvailable } from "@cig/auth";
+import { useTranslation } from "@cig-technology/i18n/react";
 import {
   Cloud,
   GitGraph,
@@ -133,6 +135,7 @@ const PHASES = [
 ] as const;
 
 const HeroSection: React.FC = () => {
+  const t = useTranslation();
   const [phase, setPhase] = useState(-1); // -1 = initial idle
 
   useEffect(() => {
@@ -168,17 +171,17 @@ const HeroSection: React.FC = () => {
     }
   };
 
-  // Highlight color for each word
-  const wordColor = (word: string) => {
+  // Highlight color for each word (index-based for i18n)
+  const wordColor = (idx: number) => {
     if (activePhase < 0) return undefined;
     const current = PHASES[activePhase];
     if (!current) return undefined;
     if (current.word === "all") return "from-cyan-300 via-emerald-300 to-blue-400";
-    if (current.word === word) return "highlight";
+    if (activePhase === idx) return "highlight";
     return undefined;
   };
 
-  const titleWords = ["Compute", "Intelligence", "Graph"] as const;
+  const titleKeys = ["hero.title.compute", "hero.title.intelligence", "hero.title.graph"] as const;
 
   return (
     <section
@@ -226,7 +229,7 @@ const HeroSection: React.FC = () => {
         style={{ animationDelay: "0.25s" }}
       >
         <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-        Open Source &middot; Self-Hosted &middot; Cloud, On-Prem &amp; Local
+        {t("hero.badge")}
       </div>
 
       {/* Animated title */}
@@ -234,13 +237,13 @@ const HeroSection: React.FC = () => {
         className="text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-tight drop-shadow-lg animate-slide-up"
         style={{ animationDelay: "0.35s" }}
       >
-        {titleWords.map((word, i) => {
-          const highlight = wordColor(word);
+        {titleKeys.map((key, i) => {
+          const highlight = wordColor(i);
           const isAll = highlight && highlight !== "highlight";
           const isActive = highlight === "highlight";
 
           return (
-            <React.Fragment key={word}>
+            <React.Fragment key={key}>
               <span
                 className={cn(
                   "inline-block transition-all duration-500",
@@ -251,10 +254,10 @@ const HeroSection: React.FC = () => {
                       : "bg-gradient-to-b from-zinc-800 to-zinc-500 dark:from-zinc-100 dark:to-zinc-400 bg-clip-text text-transparent"
                 )}
               >
-                {word}
+                {t(key)}
               </span>
-              {i < titleWords.length - 1 && (
-                <>{word === "Intelligence" ? <br /> : " "}</>
+              {i < titleKeys.length - 1 && (
+                <>{i === 1 ? <br /> : " "}</>
               )}
             </React.Fragment>
           );
@@ -265,10 +268,10 @@ const HeroSection: React.FC = () => {
       className="text-lg md:text-xl text-zinc-600 dark:text-zinc-400 max-w-xl mx-auto font-normal leading-relaxed animate-fade-in"
       style={{ animationDelay: "0.55s" }}
     >
-      Automatically discover your infrastructure — cloud, on-premise, or
-      local — build a living dependency graph, and query everything through
-      a{" "}
-      <span className="text-zinc-800 dark:text-zinc-200 font-medium">conversational interface</span>.
+      {(() => {
+        const parts = t("hero.description", { highlight: "\x00" }).split("\x00");
+        return <>{parts[0]}<span className="text-zinc-800 dark:text-zinc-200 font-medium">{t("hero.descHighlight")}</span>{parts[1]}</>;
+      })()}
     </p>
 
     <div
@@ -279,7 +282,7 @@ const HeroSection: React.FC = () => {
         onClick={() => smoothScrollTo("get-started")}
         className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-violet-500 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-blue-500/20 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/30 focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer"
       >
-        Get Started <ArrowRight size={18} />
+        {t("hero.getStarted")} <ArrowRight size={18} />
       </button>
       <a
         href="https://github.com/edwardcalderon/ComputeIntelligenceGraph"
@@ -287,7 +290,7 @@ const HeroSection: React.FC = () => {
         rel="noopener noreferrer"
         className="inline-flex items-center gap-2 rounded-full border border-zinc-300 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 px-8 py-3.5 text-base font-semibold text-zinc-800 dark:text-zinc-200 shadow transition-all duration-300 hover:scale-105 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 focus:outline-none focus:ring-2 focus:ring-zinc-500"
       >
-        <Github size={18} /> View on GitHub
+        <Github size={18} /> {t("hero.viewOnGithub")}
       </a>
     </div>
 
@@ -298,7 +301,7 @@ const HeroSection: React.FC = () => {
       style={{ animationDelay: "1s" }}
       aria-label="Scroll down"
     >
-      <span className="text-xs font-medium tracking-widest uppercase">Scroll</span>
+      <span className="text-xs font-medium tracking-widest uppercase">{t("hero.scroll")}</span>
       <ChevronDown size={20} className="animate-bounce-gentle" />
     </button>
   </section>
@@ -309,39 +312,20 @@ const HeroSection: React.FC = () => {
 
 interface Step {
   num: string;
-  title: string;
-  desc: string;
+  titleKey: string;
+  descKey: string;
   icon: React.ReactNode;
 }
 
 const steps: Step[] = [
-  {
-    num: "01",
-    title: "Deploy",
-    desc: "Run the setup wizard and provide credentials. CIG deploys inside your own infrastructure — cloud, on-prem, or local.",
-    icon: <Terminal size={24} className="text-cyan-400" />,
-  },
-  {
-    num: "02",
-    title: "Discover",
-    desc: "CIG crawls your environments, mapping every resource, dependency, and relationship automatically.",
-    icon: <Search size={24} className="text-blue-400" />,
-  },
-  {
-    num: "03",
-    title: "Visualize",
-    desc: "Explore an interactive graph of your entire infrastructure with real-time topology views.",
-    icon: <GitGraph size={24} className="text-violet-400" />,
-  },
-  {
-    num: "04",
-    title: "Converse",
-    desc: 'Ask questions in plain English — "Which services depend on this DB?" — and get instant answers.',
-    icon: <MessageSquare size={24} className="text-emerald-400" />,
-  },
+  { num: "01", titleKey: "howItWorks.step1.title", descKey: "howItWorks.step1.desc", icon: <Terminal size={24} className="text-cyan-400" /> },
+  { num: "02", titleKey: "howItWorks.step2.title", descKey: "howItWorks.step2.desc", icon: <Search size={24} className="text-blue-400" /> },
+  { num: "03", titleKey: "howItWorks.step3.title", descKey: "howItWorks.step3.desc", icon: <GitGraph size={24} className="text-violet-400" /> },
+  { num: "04", titleKey: "howItWorks.step4.title", descKey: "howItWorks.step4.desc", icon: <MessageSquare size={24} className="text-emerald-400" /> },
 ];
 
 const HowItWorks: React.FC = () => {
+  const t = useTranslation();
   const { ref, visible } = useReveal<HTMLElement>();
   return (
     <section
@@ -353,7 +337,7 @@ const HowItWorks: React.FC = () => {
       )}
     >
       <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-center">
-        How It Works
+        {t("howItWorks.title")}
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
         {steps.map((step, i) => (
@@ -377,11 +361,11 @@ const HowItWorks: React.FC = () => {
                     {step.num}
                   </span>
                   <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                    {step.title}
+                    {t(step.titleKey)}
                   </h3>
                 </div>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                  {step.desc}
+                  {t(step.descKey)}
                 </p>
               </div>
             </div>
@@ -396,44 +380,21 @@ const HowItWorks: React.FC = () => {
 
 interface Feature {
   icon: React.ReactNode;
-  title: string;
-  desc: string;
+  titleKey: string;
+  descKey: string;
 }
 
 const features: Feature[] = [
-  {
-    icon: <Cloud size={22} className="text-cyan-400" />,
-    title: "Universal Discovery",
-    desc: "Cloud (AWS, GCP, Azure), on-premise servers, and local environments — map all your compute resources in one unified graph.",
-  },
-  {
-    icon: <GitGraph size={22} className="text-blue-400" />,
-    title: "Infrastructure Graph",
-    desc: "Neo4j-backed graph model that captures every dependency, relationship, and metadata attribute.",
-  },
-  {
-    icon: <MessageSquare size={22} className="text-violet-400" />,
-    title: "Conversational Queries",
-    desc: "Natural language interface powered by LLMs — ask anything about your infrastructure in plain English.",
-  },
-  {
-    icon: <Shield size={22} className="text-emerald-400" />,
-    title: "Security Insights",
-    desc: "Identify misconfigurations, overly permissive IAM roles, and exposed resources instantly.",
-  },
-  {
-    icon: <LayoutDashboard size={22} className="text-amber-400" />,
-    title: "Real-Time Dashboard",
-    desc: "Interactive topology visualization with live updates, cost breakdowns, and resource health metrics.",
-  },
-  {
-    icon: <Server size={22} className="text-rose-400" />,
-    title: "Self-Hosted & Private",
-    desc: "Runs entirely inside your infrastructure — whether that's a cloud VPC, an on-prem data center, or a local workstation.",
-  },
+  { icon: <Cloud size={22} className="text-cyan-400" />, titleKey: "features.discovery.title", descKey: "features.discovery.desc" },
+  { icon: <GitGraph size={22} className="text-blue-400" />, titleKey: "features.graph.title", descKey: "features.graph.desc" },
+  { icon: <MessageSquare size={22} className="text-violet-400" />, titleKey: "features.chat.title", descKey: "features.chat.desc" },
+  { icon: <Shield size={22} className="text-emerald-400" />, titleKey: "features.security.title", descKey: "features.security.desc" },
+  { icon: <LayoutDashboard size={22} className="text-amber-400" />, titleKey: "features.dashboard.title", descKey: "features.dashboard.desc" },
+  { icon: <Server size={22} className="text-rose-400" />, titleKey: "features.selfHosted.title", descKey: "features.selfHosted.desc" },
 ];
 
 const FeaturesSection: React.FC = () => {
+  const t = useTranslation();
   const { ref, visible } = useReveal<HTMLElement>();
   return (
     <section
@@ -444,12 +405,12 @@ const FeaturesSection: React.FC = () => {
       )}
     >
       <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-center">
-        Core Capabilities
+        {t("features.title")}
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full">
         {features.map((f, i) => (
           <div
-            key={f.title}
+            key={f.titleKey}
             className={cn(
               "rounded-2xl border border-zinc-200 dark:border-zinc-800/80 bg-white/50 dark:bg-zinc-900/50 p-6 transition-all duration-500 hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-white/80 dark:hover:bg-zinc-900/80 hover:-translate-y-1 shadow-sm dark:shadow-none",
               visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
@@ -463,10 +424,10 @@ const FeaturesSection: React.FC = () => {
                 {f.icon}
               </div>
               <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-                {f.title}
+                {t(f.titleKey)}
               </h3>
             </div>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{f.desc}</p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{t(f.descKey)}</p>
           </div>
         ))}
       </div>
@@ -477,6 +438,7 @@ const FeaturesSection: React.FC = () => {
 /* ─── Architecture Snippet ────────────────────────────────────────────── */
 
 const ArchitectureBlock: React.FC = () => {
+  const t = useTranslation();
   const { ref, visible } = useReveal<HTMLElement>();
   return (
     <section
@@ -486,16 +448,16 @@ const ArchitectureBlock: React.FC = () => {
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
       )}
     >
-      <h2 className="text-2xl font-bold mb-6">Architecture Overview</h2>
+      <h2 className="text-2xl font-bold mb-6">{t("architecture.title")}</h2>
       <div className="flex flex-wrap items-center justify-center gap-3 text-sm font-mono text-zinc-700 dark:text-zinc-300">
         {[
-          { label: "Setup Wizard", color: "border-cyan-500/40" },
+          { label: t("architecture.setupWizard"), color: "border-cyan-500/40" },
           { label: "→" },
-          { label: "Discovery Engine", color: "border-blue-500/40" },
+          { label: t("architecture.discoveryEngine"), color: "border-blue-500/40" },
           { label: "→" },
-          { label: "Graph DB", color: "border-violet-500/40" },
+          { label: t("architecture.graphDB"), color: "border-violet-500/40" },
           { label: "→" },
-          { label: "Dashboard + Chatbot", color: "border-emerald-500/40" },
+          { label: t("architecture.dashboardChatbot"), color: "border-emerald-500/40" },
         ].map((item, i) =>
           item.color ? (
             <span
@@ -524,8 +486,7 @@ const ArchitectureBlock: React.FC = () => {
         )}
       </div>
       <p className="text-sm text-zinc-500 dark:text-zinc-500 mt-6 max-w-md mx-auto">
-        All components deploy inside your own environment — cloud, on-prem, or local.
-        Zero external dependencies, full data sovereignty.
+        {t("architecture.footer")}
       </p>
     </section>
   );
@@ -535,29 +496,18 @@ const ArchitectureBlock: React.FC = () => {
 
 interface ResourceLink {
   href: string;
-  label: string;
+  labelKey: string;
   icon: React.ReactNode;
 }
 
 const resourceLinks: ResourceLink[] = [
-  {
-    href: "https://github.com/edwardcalderon/ComputeIntelligenceGraph",
-    label: "GitHub Repo",
-    icon: <Github size={22} />,
-  },
-  {
-    href: "#",
-    label: "Documentation",
-    icon: <BookOpen size={22} />,
-  },
-  {
-    href: "#",
-    label: "Live Demo",
-    icon: <LayoutDashboard size={22} />,
-  },
+  { href: "https://github.com/edwardcalderon/ComputeIntelligenceGraph", labelKey: "resources.github", icon: <Github size={22} /> },
+  { href: "#", labelKey: "resources.docs", icon: <BookOpen size={22} /> },
+  { href: "#", labelKey: "resources.demo", icon: <LayoutDashboard size={22} /> },
 ];
 
 const ResourcesBlock: React.FC = () => {
+  const t = useTranslation();
   const { ref, visible } = useReveal<HTMLDivElement>();
   return (
     <div
@@ -569,7 +519,7 @@ const ResourcesBlock: React.FC = () => {
     >
       {resourceLinks.map((link, i) => (
         <a
-          key={link.label}
+          key={link.labelKey}
           href={link.href}
           target={link.href.startsWith("http") ? "_blank" : undefined}
           rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
@@ -580,7 +530,7 @@ const ResourcesBlock: React.FC = () => {
           style={{ transitionDelay: visible ? `${i * 100}ms` : "0ms" }}
         >
           {link.icon}
-          <span>{link.label}</span>
+          <span>{t(link.labelKey)}</span>
           <ChevronRight size={14} className="text-zinc-500" />
         </a>
       ))}
@@ -596,6 +546,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 const GetStartedSection: React.FC = () => {
+  const t = useTranslation();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [state, setState] = useState<SubmitState>("idle");
@@ -659,11 +610,10 @@ const GetStartedSection: React.FC = () => {
       )}
     >
       <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-        Ready to map your infrastructure?
+        {t("cta.title")}
       </h2>
       <p className="text-base text-zinc-600 dark:text-zinc-400 max-w-md mx-auto">
-        Get early access or jump straight into the self-hosted deployment.
-        Open-source, free forever.
+        {t("cta.desc")}
       </p>
 
       {state === "success" ? (
@@ -672,13 +622,13 @@ const GetStartedSection: React.FC = () => {
             <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
-            <span className="text-sm font-semibold">You&apos;re on the list! We&apos;ll be in touch soon.</span>
+            <span className="text-sm font-semibold">{t("auth.onTheList")}</span>
           </div>
           <button
             onClick={handleReset}
             className="text-xs text-zinc-500 hover:text-cyan-400 underline underline-offset-2 transition-colors duration-200 cursor-pointer"
           >
-            Add another email
+            {t("cta.addAnother")}
           </button>
         </div>
       ) : state === "duplicate" ? (
@@ -687,13 +637,13 @@ const GetStartedSection: React.FC = () => {
             <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z" />
             </svg>
-            <span className="text-sm font-semibold">This email is already subscribed.</span>
+            <span className="text-sm font-semibold">{t("auth.alreadySubscribed")}</span>
           </div>
           <button
             onClick={handleReset}
             className="text-xs text-zinc-500 hover:text-cyan-400 underline underline-offset-2 transition-colors duration-200 cursor-pointer"
           >
-            Try a different email
+            {t("cta.tryDifferent")}
           </button>
         </div>
       ) : (
@@ -711,7 +661,7 @@ const GetStartedSection: React.FC = () => {
                 if (error) setError("");
                 if (state === "error") setState("idle");
               }}
-              placeholder="you@company.com"
+              placeholder={t("cta.placeholder")}
               disabled={state === "loading"}
               className={cn(
                 "flex-1 rounded-full border px-5 py-3 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 transition-all duration-300 focus:outline-none shadow bg-white dark:bg-zinc-900 disabled:opacity-50",
@@ -736,10 +686,10 @@ const GetStartedSection: React.FC = () => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                   </svg>
-                  Subscribing…
+                  {t("cta.subscribing")}
                 </>
               ) : (
-                "Notify Me"
+                t("cta.notifyMe")
               )}
             </button>
           </form>
@@ -750,7 +700,7 @@ const GetStartedSection: React.FC = () => {
           )}
           {state === "error" && !error && (
             <span className="text-red-400 text-xs font-medium mt-1 animate-fade-in-fast">
-              Something went wrong. Please try again.
+              {t("common.error")}
             </span>
           )}
         </>
@@ -761,23 +711,23 @@ const GetStartedSection: React.FC = () => {
 
 /* ─── Footer ──────────────────────────────────────────────────────────── */
 
-const Footer: React.FC = () => (
-  <footer className="w-full text-center text-xs text-zinc-500 dark:text-zinc-600 pt-8 pb-2 border-t border-zinc-200 dark:border-zinc-800/50">
-    <p>
-      © {new Date().getFullYear()} CIG — Compute Intelligence Graph. Open-source
-      under MIT License.
-    </p>
-    <p
-      className="mt-1 text-zinc-700"
-      title={process.env.NEXT_PUBLIC_RELEASE_TAG || `v${process.env.NEXT_PUBLIC_APP_VERSION}`}
-    >
-      v{process.env.NEXT_PUBLIC_APP_VERSION}
-      {process.env.NEXT_PUBLIC_APP_BUILD
-        ? ` · build ${process.env.NEXT_PUBLIC_APP_BUILD}`
-        : ""}
-    </p>
-  </footer>
-);
+const Footer: React.FC = () => {
+  const t = useTranslation();
+  return (
+    <footer className="w-full text-center text-xs text-zinc-500 dark:text-zinc-600 pt-8 pb-2 border-t border-zinc-200 dark:border-zinc-800/50">
+      <p>{t("footer.copyright", { year: new Date().getFullYear() })}</p>
+      <p
+        className="mt-1 text-zinc-700"
+        title={process.env.NEXT_PUBLIC_RELEASE_TAG || `v${process.env.NEXT_PUBLIC_APP_VERSION}`}
+      >
+        {t("common.version", { version: process.env.NEXT_PUBLIC_APP_VERSION || "" })}
+        {process.env.NEXT_PUBLIC_APP_BUILD
+          ? ` · ${t("common.build", { build: process.env.NEXT_PUBLIC_APP_BUILD })}`
+          : ""}
+      </p>
+    </footer>
+  );
+};
 
 /* ─── Back to Top ─────────────────────────────────────────────────────── */
 
@@ -814,6 +764,7 @@ function PublicLanding() {
     <div className="min-h-screen w-full bg-gradient-to-br from-zinc-50 via-white to-zinc-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 text-zinc-900 dark:text-zinc-50 relative overflow-x-hidden">
       {/* Top auth bar */}
       <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <LocaleSwitcher />
         <ThemeToggle />
         <AuthButton />
       </div>

@@ -1,3 +1,39 @@
+## [0.1.16](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.15...v0.1.16) (2026-03-21)
+
+
+### Bug Fixes
+
+* **ci:** remove explicit pnpm version to avoid conflict with packageManager ([c8d1c0c](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/c8d1c0c9e73647dea67277a03d53bb32befa6fa3))
+* **i18n:** correct repository URL for npm provenance verification ([2704b3e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/2704b3e328ba364e593a13ccaf1f6a96ef7cd1e4))
+
+
+### Features
+
+* **i18n:** add @cig-technology/i18n v1.0.0 standalone i18n package ([c4b980a](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/c4b980ad9a66a7f5fe1e3b4be00b5d4d198c2123))
+* **landing:** add full light/dark mode support with ThemeToggle ([805089e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/805089ecba62d6a5b2488f5706326d50c69553aa))
+
+
+
+
+
+## [0.1.16](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.15...v0.1.16) (2026-03-21)
+
+
+### Bug Fixes
+
+* **ci:** remove explicit pnpm version to avoid conflict with packageManager ([c8d1c0c](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/c8d1c0c9e73647dea67277a03d53bb32befa6fa3))
+* **i18n:** correct repository URL for npm provenance verification ([2704b3e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/2704b3e328ba364e593a13ccaf1f6a96ef7cd1e4))
+
+
+### Features
+
+* **i18n:** add @cig-technology/i18n v1.0.0 standalone i18n package ([c4b980a](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/c4b980ad9a66a7f5fe1e3b4be00b5d4d198c2123))
+* **landing:** add full light/dark mode support with ThemeToggle ([805089e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/805089ecba62d6a5b2488f5706326d50c69553aa))
+
+
+
+
+
 ## [0.1.15](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.14...v0.1.15) (2026-03-20)
 
 

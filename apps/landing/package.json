@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@cig-technology/i18n": "1.0.0",
     "@cig/auth": "workspace:*",
     "@cig/ui": "workspace:^",
     "@supabase/supabase-js": "^2.0.0",
