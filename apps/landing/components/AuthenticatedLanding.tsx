@@ -521,7 +521,7 @@ function HoloCard({ feature, selected, onSelect, onKnowMore }: HoloCardProps) {
         border: `1px solid ${cardBorder}`,
         background: cardBackground,
         boxShadow: cardShadow,
-        transform: revealed ? "scale(1.04)" : "scale(1)",
+        transform: selected ? "scale(1.03)" : "scale(1)",
         transition: "transform 0.35s cubic-bezier(.34,1.56,.64,1), box-shadow 0.35s ease, border-color 0.35s ease, background 0.35s ease",
         backdropFilter: "blur(18px) saturate(145%)",
       }}
