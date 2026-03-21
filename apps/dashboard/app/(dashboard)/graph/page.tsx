@@ -206,8 +206,8 @@ function GraphContent() {
     },
   });
 
-  const resources = resourceData?.items ?? [];
-  const relationships = relData?.items ?? [];
+  const resources = useMemo(() => resourceData?.items ?? [], [resourceData]);
+  const relationships = useMemo(() => relData?.items ?? [], [relData]);
 
   // Build adjacency for highlighting
   const adjacency = useMemo(() => {

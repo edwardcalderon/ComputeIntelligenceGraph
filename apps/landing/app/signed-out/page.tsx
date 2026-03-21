@@ -1,13 +1,11 @@
-"use client";
+import type { Metadata } from "next";
+import SignedOutClient from "./SignedOutClient";
 
-import { SignedOut } from "@cig/ui/components";
+export const metadata: Metadata = {
+  title: "Signed out · CIG",
+  description: "You have been signed out of Compute Intelligence Graph.",
+};
 
-/**
- * Landing-side signed-out page.
- * Shown when the user is redirected here from the dashboard after logout,
- * or navigates to /signed-out manually.
- * The "Sign in" button points back to the landing root ("/").
- */
 export default function SignedOutPage() {
-  return <SignedOut signInUrl="/" appName="CIG" />;
+  return <SignedOutClient />;
 }
