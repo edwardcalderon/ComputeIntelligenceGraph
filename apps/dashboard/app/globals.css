@@ -3,12 +3,42 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Light theme */
+    --cig-bg-base: 250 251 252;       /* #fafbfc */
+    --cig-bg-card: 255 255 255;       /* #ffffff */
+    --cig-bg-elevated: 241 245 249;   /* #f1f5f9 */
+    --cig-bg-sidebar: 248 250 252;    /* #f8fafc */
+    --cig-text-primary: 15 23 42;     /* #0f172a */
+    --cig-text-secondary: 71 85 105;  /* #475569 */
+    --cig-text-muted: 148 163 184;    /* #94a3b8 */
+    --cig-border: 226 232 240;        /* #e2e8f0 */
+    --cig-border-accent: 203 213 225; /* #cbd5e1 */
+    --cig-hover: 241 245 249;         /* #f1f5f9 */
+  }
+
+  .dark {
+    /* Dark theme */
+    --cig-bg-base: 5 11 20;           /* #050b14 */
+    --cig-bg-card: 10 22 40;          /* #0a1628 */
+    --cig-bg-elevated: 14 26 48;      /* #0e1a30 */
+    --cig-bg-sidebar: 5 11 20;        /* #050b14 */
+    --cig-text-primary: 237 242 247;  /* #edf2f7 */
+    --cig-text-secondary: 148 163 184;/* #94a3b8 */
+    --cig-text-muted: 71 85 105;      /* #475569 */
+    --cig-border: 255 255 255 / 0.06;
+    --cig-border-accent: 255 255 255 / 0.1;
+    --cig-hover: 255 255 255 / 0.04;
+  }
+
   body {
-    @apply bg-[#050b14] text-white antialiased;
+    @apply antialiased;
+    background-color: rgb(var(--cig-bg-base));
+    color: rgb(var(--cig-text-primary));
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
-  /* Scrollbar styling for dark theme */
+  /* Scrollbar styling */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -16,11 +46,33 @@
   ::-webkit-scrollbar-track {
     background: transparent;
   }
-  ::-webkit-scrollbar-thumb {
+  .dark ::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.08);
     border-radius: 3px;
   }
-  ::-webkit-scrollbar-thumb:hover {
+  .dark ::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.14);
   }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.18);
+  }
+}
+
+/* Utility classes using CSS variables */
+@layer utilities {
+  .bg-cig-base { background-color: rgb(var(--cig-bg-base)); }
+  .bg-cig-card { background-color: rgb(var(--cig-bg-card)); }
+  .bg-cig-elevated { background-color: rgb(var(--cig-bg-elevated)); }
+  .bg-cig-sidebar { background-color: rgb(var(--cig-bg-sidebar)); }
+  .text-cig-primary { color: rgb(var(--cig-text-primary)); }
+  .text-cig-secondary { color: rgb(var(--cig-text-secondary)); }
+  .text-cig-muted { color: rgb(var(--cig-text-muted)); }
+  .border-cig { border-color: rgb(var(--cig-border)); }
+  .border-cig-accent { border-color: rgb(var(--cig-border-accent)); }
+  .hover\:bg-cig-hover:hover { background-color: rgb(var(--cig-hover)); }
+  .divide-cig > :not([hidden]) ~ :not([hidden]) { border-color: rgb(var(--cig-border)); }
 }

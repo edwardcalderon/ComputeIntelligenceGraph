@@ -1,7 +1,7 @@
 {
-  "version": "0.1.29",
-  "releaseTag": "v0.1.29+build.8",
-  "releaseType": "build",
-  "buildNumber": 8,
-  "releasedAt": "2026-03-21T10:45:23.575Z"
+  "version": "0.1.30",
+  "releaseTag": "v0.1.30",
+  "releaseType": "patch",
+  "buildNumber": null,
+  "releasedAt": "2026-03-21T11:43:53.873Z"
 }

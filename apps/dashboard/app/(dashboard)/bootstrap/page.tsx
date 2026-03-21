@@ -108,18 +108,20 @@ export default function BootstrapPage() {
     completeMutation.mutate();
   }
 
+  const inputClasses = "w-full rounded-xl border border-cig bg-cig-base px-4 py-2.5 text-sm text-cig-primary placeholder-cig-muted focus:outline-none focus:ring-1 focus:ring-cyan-500/40 focus:border-cyan-500/30 transition-colors";
+
   return (
     <div className="flex items-start justify-center pt-12">
       <div className="w-full max-w-lg space-y-6">
         {/* Header */}
         <div className="text-center">
-          <div className="inline-flex items-center justify-center size-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 mb-4">
-            <svg className="size-7 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <div className="inline-flex items-center justify-center size-14 rounded-2xl bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200 dark:border-cyan-500/20 mb-4">
+            <svg className="size-7 text-cyan-600 dark:text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-white/95">Bootstrap</h1>
-          <p className="mt-1 text-sm text-white/40">
+          <h1 className="text-2xl font-bold text-cig-primary">Bootstrap</h1>
+          <p className="mt-1 text-sm text-cig-muted">
             Set up your self-hosted CIG instance
           </p>
         </div>
@@ -133,14 +135,14 @@ export default function BootstrapPage() {
               (s === "admin" && step === "complete");
             return (
               <div key={s} className="flex items-center gap-2">
-                {i > 0 && <div className={`w-8 h-px ${done || active ? "bg-cyan-500/40" : "bg-white/[0.06]"}`} />}
+                {i > 0 && <div className={`w-8 h-px ${done || active ? "bg-cyan-500/40" : "bg-cig-border"}`} />}
                 <div
                   className={`size-7 rounded-full flex items-center justify-center text-[11px] font-semibold border transition-colors ${
                     active
-                      ? "bg-cyan-500/15 border-cyan-500/30 text-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.2)]"
+                      ? "bg-cyan-50 dark:bg-cyan-500/15 border-cyan-200 dark:border-cyan-500/30 text-cyan-700 dark:text-cyan-400 dark:shadow-[0_0_10px_rgba(6,182,212,0.2)]"
                       : done
-                      ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
-                      : "bg-white/[0.03] border-white/[0.08] text-white/25"
+                      ? "bg-emerald-50 dark:bg-emerald-500/15 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
+                      : "bg-cig-elevated border-cig text-cig-muted"
                   }`}
                 >
                   {done ? (
@@ -158,7 +160,7 @@ export default function BootstrapPage() {
 
         {/* Error */}
         {error && (
-          <div className="rounded-xl border border-red-500/20 bg-red-500/[0.06] px-4 py-3 text-sm text-red-400">
+          <div className="rounded-xl border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/[0.06] px-4 py-3 text-sm text-red-700 dark:text-red-400">
             {error}
           </div>
         )}
@@ -167,20 +169,20 @@ export default function BootstrapPage() {
         {step === "check" && checkLoading && (
           <div className="text-center py-12">
             <div className="inline-flex size-8 border-2 border-cyan-500/40 border-t-transparent rounded-full animate-spin mb-3" />
-            <p className="text-sm text-white/40">Checking bootstrap status...</p>
+            <p className="text-sm text-cig-muted">Checking bootstrap status...</p>
           </div>
         )}
 
         {/* Already bootstrapped */}
         {alreadyBootstrapped && (
-          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-8 text-center space-y-3">
-            <div className="inline-flex items-center justify-center size-12 rounded-full bg-emerald-500/15 border border-emerald-500/20">
-              <svg className="size-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="rounded-2xl border border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/[0.06] p-8 text-center space-y-3">
+            <div className="inline-flex items-center justify-center size-12 rounded-full bg-emerald-100 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/20">
+              <svg className="size-6 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
               </svg>
             </div>
-            <h2 className="text-lg font-semibold text-white/90">Already Bootstrapped</h2>
-            <p className="text-sm text-white/40">
+            <h2 className="text-lg font-semibold text-cig-primary">Already Bootstrapped</h2>
+            <p className="text-sm text-cig-secondary">
               This CIG instance has already been configured. An admin account exists.
             </p>
           </div>
@@ -188,9 +190,9 @@ export default function BootstrapPage() {
 
         {/* Step 1: Token */}
         {step === "token" && (
-          <form onSubmit={handleValidate} className="rounded-2xl border border-white/[0.06] bg-[#0a1628]/80 p-6 space-y-5">
+          <form onSubmit={handleValidate} className="rounded-2xl border border-cig bg-cig-card p-6 space-y-5">
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-white/30 mb-2">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-cig-muted mb-2">
                 Bootstrap Token
               </label>
               <input
@@ -198,17 +200,17 @@ export default function BootstrapPage() {
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
                 placeholder="Enter the token from your CLI setup"
-                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm text-white/90 placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-cyan-500/40 focus:border-cyan-500/30 transition-colors font-mono"
+                className={`${inputClasses} font-mono`}
                 autoFocus
               />
-              <p className="mt-2 text-[11px] text-white/25">
-                The bootstrap token was generated when you first ran <code className="text-cyan-400/60">cig init</code>.
+              <p className="mt-2 text-[11px] text-cig-muted">
+                The bootstrap token was generated when you first ran <code className="text-cyan-600 dark:text-cyan-400/60">cig init</code>.
               </p>
             </div>
             <button
               type="submit"
               disabled={validateMutation.isPending}
-              className="w-full py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-br from-cyan-500/20 to-blue-600/20 border border-cyan-500/20 hover:border-cyan-500/40 hover:shadow-[0_0_16px_rgba(6,182,212,0.15)] transition-all disabled:opacity-50"
+              className="w-full py-2.5 rounded-xl text-sm font-medium text-cyan-700 dark:text-white bg-cyan-50 dark:bg-gradient-to-br dark:from-cyan-500/20 dark:to-blue-600/20 border border-cyan-200 dark:border-cyan-500/20 hover:bg-cyan-100 dark:hover:border-cyan-500/40 dark:hover:shadow-[0_0_16px_rgba(6,182,212,0.15)] transition-all disabled:opacity-50"
             >
               {validateMutation.isPending ? "Validating..." : "Validate Token"}
             </button>
@@ -217,12 +219,12 @@ export default function BootstrapPage() {
 
         {/* Step 2: Admin account */}
         {step === "admin" && (
-          <form onSubmit={handleComplete} className="rounded-2xl border border-white/[0.06] bg-[#0a1628]/80 p-6 space-y-4">
-            <p className="text-sm text-white/50 mb-2">
+          <form onSubmit={handleComplete} className="rounded-2xl border border-cig bg-cig-card p-6 space-y-4">
+            <p className="text-sm text-cig-secondary mb-2">
               Create the first admin account for your CIG instance.
             </p>
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-white/30 mb-1.5">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-cig-muted mb-1.5">
                 Username
               </label>
               <input
@@ -230,12 +232,12 @@ export default function BootstrapPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="admin"
-                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm text-white/90 placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-cyan-500/40 focus:border-cyan-500/30 transition-colors"
+                className={inputClasses}
                 autoFocus
               />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-white/30 mb-1.5">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-cig-muted mb-1.5">
                 Email
               </label>
               <input
@@ -243,11 +245,11 @@ export default function BootstrapPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@example.com"
-                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm text-white/90 placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-cyan-500/40 focus:border-cyan-500/30 transition-colors"
+                className={inputClasses}
               />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-white/30 mb-1.5">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-cig-muted mb-1.5">
                 Password
               </label>
               <input
@@ -255,11 +257,11 @@ export default function BootstrapPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Min. 12 characters"
-                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm text-white/90 placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-cyan-500/40 focus:border-cyan-500/30 transition-colors"
+                className={inputClasses}
               />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-white/30 mb-1.5">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-cig-muted mb-1.5">
                 Confirm Password
               </label>
               <input
@@ -267,21 +269,21 @@ export default function BootstrapPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Repeat password"
-                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm text-white/90 placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-cyan-500/40 focus:border-cyan-500/30 transition-colors"
+                className={inputClasses}
               />
             </div>
             <div className="flex gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => setStep("token")}
-                className="px-4 py-2.5 rounded-xl text-sm text-white/40 hover:text-white/60 hover:bg-white/[0.04] transition-colors"
+                className="px-4 py-2.5 rounded-xl text-sm text-cig-muted hover:text-cig-secondary hover:bg-cig-hover transition-colors"
               >
                 Back
               </button>
               <button
                 type="submit"
                 disabled={completeMutation.isPending}
-                className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-br from-cyan-500/20 to-blue-600/20 border border-cyan-500/20 hover:border-cyan-500/40 hover:shadow-[0_0_16px_rgba(6,182,212,0.15)] transition-all disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium text-cyan-700 dark:text-white bg-cyan-50 dark:bg-gradient-to-br dark:from-cyan-500/20 dark:to-blue-600/20 border border-cyan-200 dark:border-cyan-500/20 hover:bg-cyan-100 dark:hover:border-cyan-500/40 dark:hover:shadow-[0_0_16px_rgba(6,182,212,0.15)] transition-all disabled:opacity-50"
               >
                 {completeMutation.isPending ? "Creating account..." : "Create Admin Account"}
               </button>
@@ -291,19 +293,19 @@ export default function BootstrapPage() {
 
         {/* Step 3: Complete */}
         {step === "complete" && (
-          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-8 text-center space-y-4">
-            <div className="inline-flex items-center justify-center size-14 rounded-full bg-emerald-500/15 border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
-              <svg className="size-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="rounded-2xl border border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/[0.06] p-8 text-center space-y-4">
+            <div className="inline-flex items-center justify-center size-14 rounded-full bg-emerald-100 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/20 dark:shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+              <svg className="size-7 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
               </svg>
             </div>
-            <h2 className="text-lg font-semibold text-white/90">Bootstrap Complete</h2>
-            <p className="text-sm text-white/40">
+            <h2 className="text-lg font-semibold text-cig-primary">Bootstrap Complete</h2>
+            <p className="text-sm text-cig-secondary">
               Your admin account has been created. You can now sign in and start configuring CIG.
             </p>
             <a
               href="/"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-gradient-to-br from-cyan-500/20 to-blue-600/20 border border-cyan-500/20 hover:border-cyan-500/40 transition-all"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-cyan-700 dark:text-white bg-cyan-50 dark:bg-gradient-to-br dark:from-cyan-500/20 dark:to-blue-600/20 border border-cyan-200 dark:border-cyan-500/20 hover:bg-cyan-100 dark:hover:border-cyan-500/40 transition-all"
             >
               Go to Dashboard
               <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

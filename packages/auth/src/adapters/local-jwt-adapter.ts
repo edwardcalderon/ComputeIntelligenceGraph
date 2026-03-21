@@ -1,14 +1,11 @@
 import { jwtVerify } from "jose";
 import { createSecretKey } from "node:crypto";
-import type { AuthAdapter, VerifiedClaims } from "./oidc-adapter";
+import type { AuthAdapter, SelfHostedVerifiedClaims } from "./oidc-adapter";
 
 /**
  * Claims returned after successful local JWT verification.
- * Extends VerifiedClaims with mode: "self-hosted".
  */
-export type LocalVerifiedClaims = Omit<VerifiedClaims, "mode"> & {
-  mode: "self-hosted";
-};
+export type LocalVerifiedClaims = SelfHostedVerifiedClaims;
 
 /**
  * Configuration for the local JWT adapter.

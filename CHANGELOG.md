@@ -1,3 +1,39 @@
+## [0.1.30](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.29+build.8...v0.1.30) (2026-03-21)
+
+
+### Bug Fixes
+
+* **ci:** sanitize Docker tag by replacing '+' with '-' in release tags ([bd246f3](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/bd246f3cd3b6559972f79f844fb2117753e23c38))
+* **landing:** defer pointer capture until drag threshold crossed ([bd81fb8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/bd81fb8b51bee9e571a11a18d20e36530db239be))
+
+
+### Features
+
+* **dashboard:** redesign UI with CIG dark theme, add Targets & Bootstrap pages ([4aeaa0f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/4aeaa0f840dd059745d8947d281a1c3f75ad0483)), closes [#050b14](https://github.com/edwardcalderon/ComputeIntelligenceGraph/issues/050b14)
+* **landing:** simplify HoloCard to click-opens-modal, hover reveals content ([4eb9a4a](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/4eb9a4a8682e5e52a436eb9f035d01390738c12e))
+
+
+
+
+
+## [0.1.30](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.29+build.8...v0.1.30) (2026-03-21)
+
+
+### Bug Fixes
+
+* **ci:** sanitize Docker tag by replacing '+' with '-' in release tags ([bd246f3](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/bd246f3cd3b6559972f79f844fb2117753e23c38))
+* **landing:** defer pointer capture until drag threshold crossed ([bd81fb8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/bd81fb8b51bee9e571a11a18d20e36530db239be))
+
+
+### Features
+
+* **dashboard:** redesign UI with CIG dark theme, add Targets & Bootstrap pages ([4aeaa0f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/4aeaa0f840dd059745d8947d281a1c3f75ad0483)), closes [#050b14](https://github.com/edwardcalderon/ComputeIntelligenceGraph/issues/050b14)
+* **landing:** simplify HoloCard to click-opens-modal, hover reveals content ([4eb9a4a](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/4eb9a4a8682e5e52a436eb9f035d01390738c12e))
+
+
+
+
+
 ## [0.1.29](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.28...v0.1.29) (2026-03-21)
 
 

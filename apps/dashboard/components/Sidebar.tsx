@@ -9,7 +9,7 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ReactNode;
-  color: string; // CIG accent color for active state glow
+  color: string;
 }
 
 const navItems: NavItem[] = [
@@ -28,6 +28,44 @@ const secondaryItems: NavItem[] = [
   { label: "Settings", href: "/settings", icon: <SettingsIcon />, color: "#8b5cf6" },
 ];
 
+function NavLink({ item, isActive, onClick }: { item: NavItem; isActive: boolean; onClick: () => void }) {
+  return (
+    <li>
+      <Link
+        href={item.href}
+        onClick={onClick}
+        className={[
+          "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
+          isActive
+            ? "text-cig-primary bg-slate-100 dark:bg-white/[0.07]"
+            : "text-cig-secondary hover:text-cig-primary hover:bg-slate-50 dark:hover:bg-white/[0.04]",
+        ].join(" ")}
+      >
+        {/* Active indicator bar */}
+        {isActive && (
+          <div
+            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
+            style={{ backgroundColor: item.color, boxShadow: `0 0 8px ${item.color}60` }}
+          />
+        )}
+        <span
+          className="flex items-center justify-center size-5 transition-colors"
+          style={{ color: isActive ? item.color : undefined }}
+        >
+          {item.icon}
+        </span>
+        {item.label}
+        {isActive && (
+          <div
+            className="absolute inset-0 rounded-lg pointer-events-none dark:block hidden"
+            style={{ background: `radial-gradient(ellipse at left, ${item.color}10 0%, transparent 70%)` }}
+          />
+        )}
+      </Link>
+    </li>
+  );
+}
+
 export function Sidebar() {
   const pathname = usePathname();
   const { sidebarOpen, setSidebarOpen } = useAppStore();
@@ -42,7 +80,7 @@ export function Sidebar() {
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-20 bg-black/40 dark:bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -50,138 +88,103 @@ export function Sidebar() {
       <aside
         className={[
           "fixed inset-y-0 left-0 z-30 flex w-60 flex-col transition-transform duration-200",
-          "bg-[#050b14] border-r border-white/[0.06]",
+          "bg-cig-sidebar border-r border-cig",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
           "lg:static lg:translate-x-0",
         ].join(" ")}
       >
-        {/* Logo — links back to landing */}
+        {/* Logo */}
         <a
           href={process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}
-          className="group flex h-14 items-center gap-3 px-5 border-b border-white/[0.06] transition-colors hover:bg-white/[0.03]"
+          className="group flex h-14 items-center gap-3 px-5 border-b border-cig transition-colors hover:bg-cig-hover"
         >
-          {/* Glow dot */}
-          <div className="relative flex items-center justify-center size-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
-            <div className="size-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.6)]" />
-            <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_12px_rgba(6,182,212,0.3)]" />
+          <div className="relative flex items-center justify-center size-8 rounded-lg bg-cyan-500/10 dark:bg-cyan-500/10 border border-cyan-500/20">
+            <div className="size-2 rounded-full bg-cyan-500 dark:bg-cyan-400 dark:shadow-[0_0_8px_rgba(6,182,212,0.6)]" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-base font-bold tracking-tight text-white">
-              CIG
-            </span>
-            <span className="text-[10px] font-mono text-white/30">
-              v{process.env.NEXT_PUBLIC_APP_VERSION}
-            </span>
+            <span className="text-base font-bold tracking-tight text-cig-primary">CIG</span>
+            <span className="text-[10px] font-mono text-cig-muted">v{process.env.NEXT_PUBLIC_APP_VERSION}</span>
           </div>
         </a>
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-3 px-2.5">
-          {/* Section label */}
-          <p className="px-3 mb-2 text-[10px] uppercase tracking-[0.15em] font-semibold text-white/25">
-            Platform
-          </p>
+          <p className="px-3 mb-2 text-[10px] uppercase tracking-[0.15em] font-semibold text-cig-muted">Platform</p>
           <ul className="space-y-0.5">
-            {navItems.map(({ label, href, icon, color }) => {
-              const active = isActive(href);
-              return (
-                <li key={href}>
+            {navItems.map((item) => (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={[
+                    "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
+                    isActive(item.href)
+                      ? "text-cig-primary bg-slate-100 dark:bg-white/[0.07]"
+                      : "text-cig-secondary hover:text-cig-primary hover:bg-slate-50 dark:hover:bg-white/[0.04]",
+                  ].join(" ")}
+                >
+                  {isActive(item.href) && (
+                    <div
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
+                      style={{ backgroundColor: item.color, boxShadow: `0 0 8px ${item.color}60` }}
+                    />
+                  )}
+                  <span
+                    className="flex items-center justify-center size-5 transition-colors"
+                    style={{ color: isActive(item.href) ? item.color : undefined }}
+                  >
+                    {item.icon}
+                  </span>
+                  {item.label}
+                  {isActive(item.href) && (
+                    <div
+                      className="absolute inset-0 rounded-lg pointer-events-none hidden dark:block"
+                      style={{ background: `radial-gradient(ellipse at left, ${item.color}10 0%, transparent 70%)` }}
+                    />
+                  )}
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          {/* Secondary */}
+          <div className="mt-6">
+            <p className="px-3 mb-2 text-[10px] uppercase tracking-[0.15em] font-semibold text-cig-muted">Account</p>
+            <ul className="space-y-0.5">
+              {secondaryItems.map((item) => (
+                <li key={item.href}>
                   <Link
-                    href={href}
+                    href={item.href}
                     onClick={() => setSidebarOpen(false)}
                     className={[
                       "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
-                      active
-                        ? "text-white bg-white/[0.07]"
-                        : "text-white/50 hover:text-white/80 hover:bg-white/[0.04]",
+                      isActive(item.href)
+                        ? "text-cig-primary bg-slate-100 dark:bg-white/[0.07]"
+                        : "text-cig-secondary hover:text-cig-primary hover:bg-slate-50 dark:hover:bg-white/[0.04]",
                     ].join(" ")}
                   >
-                    {/* Active indicator bar */}
-                    {active && (
+                    {isActive(item.href) && (
                       <div
                         className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
-                        style={{
-                          backgroundColor: color,
-                          boxShadow: `0 0 8px ${color}80`,
-                        }}
+                        style={{ backgroundColor: item.color, boxShadow: `0 0 8px ${item.color}60` }}
                       />
                     )}
                     <span
                       className="flex items-center justify-center size-5 transition-colors"
-                      style={{ color: active ? color : undefined }}
+                      style={{ color: isActive(item.href) ? item.color : undefined }}
                     >
-                      {icon}
+                      {item.icon}
                     </span>
-                    {label}
-                    {/* Subtle glow on active */}
-                    {active && (
-                      <div
-                        className="absolute inset-0 rounded-lg pointer-events-none"
-                        style={{
-                          background: `radial-gradient(ellipse at left, ${color}12 0%, transparent 70%)`,
-                        }}
-                      />
-                    )}
+                    {item.label}
                   </Link>
                 </li>
-              );
-            })}
-          </ul>
-
-          {/* Secondary section */}
-          <div className="mt-6">
-            <p className="px-3 mb-2 text-[10px] uppercase tracking-[0.15em] font-semibold text-white/25">
-              Account
-            </p>
-            <ul className="space-y-0.5">
-              {secondaryItems.map(({ label, href, icon, color }) => {
-                const active = isActive(href);
-                return (
-                  <li key={href}>
-                    <Link
-                      href={href}
-                      onClick={() => setSidebarOpen(false)}
-                      className={[
-                        "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
-                        active
-                          ? "text-white bg-white/[0.07]"
-                          : "text-white/50 hover:text-white/80 hover:bg-white/[0.04]",
-                      ].join(" ")}
-                    >
-                      {active && (
-                        <div
-                          className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
-                          style={{
-                            backgroundColor: color,
-                            boxShadow: `0 0 8px ${color}80`,
-                          }}
-                        />
-                      )}
-                      <span
-                        className="flex items-center justify-center size-5 transition-colors"
-                        style={{ color: active ? color : undefined }}
-                      >
-                        {icon}
-                      </span>
-                      {label}
-                      {active && (
-                        <div
-                          className="absolute inset-0 rounded-lg pointer-events-none"
-                          style={{
-                            background: `radial-gradient(ellipse at left, ${color}12 0%, transparent 70%)`,
-                          }}
-                        />
-                      )}
-                    </Link>
-                  </li>
-                );
-              })}
+              ))}
             </ul>
           </div>
         </nav>
 
-        {/* User menu at bottom */}
-        <div className="border-t border-white/[0.06]">
+        {/* User menu */}
+        <div className="border-t border-cig">
           <UserMenu />
         </div>
       </aside>

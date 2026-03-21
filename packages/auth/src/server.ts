@@ -12,13 +12,19 @@ export type { AuthMode } from "./create-auth-adapter";
 
 export { OIDCAdapter } from "./adapters/oidc-adapter";
 export type {
+  BaseVerifiedClaims,
   OIDCAdapterConfig,
   AuthAdapter,
+  ManagedVerifiedClaims,
+  SelfHostedVerifiedClaims,
   VerifiedClaims,
 } from "./adapters/oidc-adapter";
 
 export { LocalJWTAdapter } from "./adapters/local-jwt-adapter";
-export type { LocalJWTAdapterConfig } from "./adapters/local-jwt-adapter";
+export type {
+  LocalJWTAdapterConfig,
+  LocalVerifiedClaims,
+} from "./adapters/local-jwt-adapter";
 
 export { createInternalToken, verifyInternalToken } from "./internal-jwt";
 export type { InternalTokenPayload } from "./internal-jwt";

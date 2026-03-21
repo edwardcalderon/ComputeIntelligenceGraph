@@ -1,15 +1,35 @@
 import { createRemoteJWKSet, jwtVerify } from "jose";
 
 /**
- * Claims returned after successful token verification.
+ * Claims shared by all successful token verification flows.
  */
-export interface VerifiedClaims {
+export interface BaseVerifiedClaims {
   sub: string;
   email: string;
   groups: string[];
   tenant: string;
+}
+
+/**
+ * Claims returned after successful managed token verification.
+ */
+export interface ManagedVerifiedClaims extends BaseVerifiedClaims {
   mode: "managed";
 }
+
+/**
+ * Claims returned after successful self-hosted token verification.
+ */
+export interface SelfHostedVerifiedClaims extends BaseVerifiedClaims {
+  mode: "self-hosted";
+}
+
+/**
+ * Claims returned after successful token verification.
+ */
+export type VerifiedClaims =
+  | ManagedVerifiedClaims
+  | SelfHostedVerifiedClaims;
 
 /**
  * Configuration for the OIDC adapter.
@@ -43,7 +63,7 @@ export class OIDCAdapter implements AuthAdapter {
     this.jwks = createRemoteJWKSet(new URL(config.jwksUri));
   }
 
-  async verifyToken(token: string): Promise<VerifiedClaims> {
+  async verifyToken(token: string): Promise<ManagedVerifiedClaims> {
     try {
       const { payload } = await jwtVerify(token, this.jwks, {
         issuer: this.config.issuerUrl,

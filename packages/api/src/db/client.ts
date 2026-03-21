@@ -8,13 +8,15 @@
  * Exports a single `query(sql, params?)` function that works for both.
  */
 
+import type { QueryResultRow } from "pg";
+
 const DATABASE_URL = process.env['DATABASE_URL'] ?? '';
 
 // ---------------------------------------------------------------------------
 // Shared query result type
 // ---------------------------------------------------------------------------
 
-export interface QueryResult<T = Record<string, unknown>> {
+export interface QueryResult<T extends QueryResultRow = QueryResultRow> {
   rows: T[];
   rowCount: number;
 }
@@ -23,7 +25,7 @@ export interface QueryResult<T = Record<string, unknown>> {
 // Driver implementations (loaded lazily to avoid importing unused drivers)
 // ---------------------------------------------------------------------------
 
-type QueryFn = <T = Record<string, unknown>>(
+type QueryFn = <T extends QueryResultRow = QueryResultRow>(
   sql: string,
   params?: unknown[]
 ) => Promise<QueryResult<T>>;
@@ -35,7 +37,7 @@ function buildPostgresQuery(): QueryFn {
   const { Pool } = require('pg') as typeof import('pg');
   const pool = new Pool({ connectionString: DATABASE_URL });
 
-  return async <T = Record<string, unknown>>(
+  return async <T extends QueryResultRow = QueryResultRow>(
     sql: string,
     params?: unknown[]
   ): Promise<QueryResult<T>> => {
@@ -53,7 +55,7 @@ function buildSqliteQuery(): QueryFn {
   // Enable WAL mode for better concurrent read performance
   db.pragma('journal_mode = WAL');
 
-  return async <T = Record<string, unknown>>(
+  return async <T extends QueryResultRow = QueryResultRow>(
     sql: string,
     params?: unknown[]
   ): Promise<QueryResult<T>> => {
@@ -82,7 +84,7 @@ function getQuery(): QueryFn {
  * @param sql    Parameterised SQL string (use $1/$2/... for pg, ? for sqlite)
  * @param params Positional parameter values
  */
-export async function query<T = Record<string, unknown>>(
+export async function query<T extends QueryResultRow = QueryResultRow>(
   sql: string,
   params?: unknown[]
 ): Promise<QueryResult<T>> {
