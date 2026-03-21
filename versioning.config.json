@@ -1,8 +1,17 @@
 {
   "rootPackageJson": "package.json",
   "packages": [
-    "packages/*/package.json",
-    "apps/*/package.json"
+    "apps/dashboard",
+    "apps/landing",
+    "apps/wizard-ui",
+    "packages/agents",
+    "packages/api",
+    "packages/chatbot",
+    "packages/cli",
+    "packages/config",
+    "packages/discovery",
+    "packages/graph",
+    "packages/sdk"
   ],
   "changelogFile": "CHANGELOG.md",
   "conventionalCommits": true,
