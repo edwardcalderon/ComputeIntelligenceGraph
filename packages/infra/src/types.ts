@@ -149,7 +149,7 @@ export interface ResourceInfo {
  *     authentikIntegration: true
  *   },
  *   iac: {
- *     modulesPath: '../iac',
+ *     modulesPath: 'packages/iac',
  *     networkingModule: 'networking',
  *     computeModule: 'compute'
  *   },
@@ -259,7 +259,7 @@ export interface DashboardConfig {
  * @example
  * ```typescript
  * const iacConfig: IACConfig = {
- *   modulesPath: '../iac',
+ *   modulesPath: 'packages/iac',
  *   networkingModule: 'networking',
  *   computeModule: 'compute'
  * };
@@ -331,6 +331,8 @@ export interface AuthentikDeploymentConfig {
   adminEmail: string;
   /** AWS region */
   region: string;
+  /** Optional override for the Terraform modules root directory */
+  iacModulesPath?: string;
   /** VPC ID (optional) */
   vpcId?: string;
   /** Subnet ID (optional) */
@@ -370,6 +372,8 @@ export interface DashboardDeploymentConfig {
   domain?: string;
   /** AWS region */
   region: string;
+  /** Optional override for the Terraform modules root directory */
+  iacModulesPath?: string;
   /** Authentik URL for integration */
   authentikUrl: string;
   /** Authentik OAuth client ID */
@@ -398,7 +402,7 @@ export interface DashboardDeploymentResult extends DeploymentResult {
  * @example
  * ```typescript
  * const moduleRef: TerraformModuleReference = {
- *   modulePath: '../iac/networking',
+ *   modulePath: 'packages/iac/modules/networking',
  *   variables: {
  *     vpc_cidr: '10.0.0.0/16',
  *     availability_zones: ['us-east-1a', 'us-east-1b']

@@ -2,6 +2,12 @@
 
 Infrastructure deployment wrapper for the CIG monorepo. Wraps [@lsts_tech/infra](https://www.npmjs.com/package/@lsts_tech/infra) to provide CIG-specific AWS deployment capabilities including Authentik authentication and dashboard pipelines.
 
+In this repository the infrastructure assets are split intentionally:
+
+- `packages/infra` contains the TypeScript deployment wrapper and config loading.
+- `packages/iac` contains the Terraform module sources consumed by that wrapper.
+- `infra/docker` contains container build definitions used by local and deployment workflows.
+
 ## Installation
 
 ```bash
@@ -67,7 +73,7 @@ Configuration is loaded from environment variables and/or a JSON config file.
 | `DASHBOARD_BUILD_PATH` | ✅ | Path to built dashboard files |
 | `DASHBOARD_DOMAIN` | | Custom domain for dashboard |
 | `DASHBOARD_AUTHENTIK_INTEGRATION` | | Enable Authentik auth (`true`/`false`) |
-| `IAC_MODULES_PATH` | ✅ | Path to `@cig/iac` modules |
+| `IAC_MODULES_PATH` | ✅ | Path to the Terraform modules directory |
 | `IAC_NETWORKING_MODULE` | ✅ | Networking module name |
 | `IAC_COMPUTE_MODULE` | ✅ | Compute module name |
 | `LOG_LEVEL` | | Log level: `debug`, `info`, `warn`, `error` |
@@ -89,7 +95,7 @@ Place a `config/<environment>.json` file in your working directory:
     "authentikIntegration": true
   },
   "iac": {
-    "modulesPath": "../iac",
+    "modulesPath": "packages/iac",
     "networkingModule": "networking",
     "computeModule": "compute"
   },
@@ -104,7 +110,7 @@ This package integrates with `@cig/iac` Terraform modules:
 - `modules/networking` — VPC, subnets, security groups
 - `modules/compute` — EC2 / container compute resources
 
-Set `IAC_MODULES_PATH` to point to your `packages/iac` directory.
+Set `IAC_MODULES_PATH` to `packages/iac` when you run this package from the monorepo root.
 
 ## Troubleshooting
 

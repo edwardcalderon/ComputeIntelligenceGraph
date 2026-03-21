@@ -6,6 +6,7 @@
 import { InfraWrapper } from '../InfraWrapper';
 import { ConfigManager } from '../config/ConfigManager';
 import { IACIntegration } from '../iac/IACIntegration';
+import { resolveIacModulesPath } from '../iac/resolveIacModulesPath';
 import { Logger } from '../logging/Logger';
 import {
   AuthentikDeploymentConfig,
@@ -48,7 +49,6 @@ export class AuthentikDeployer {
   private wrapper: InfraWrapper;
   private config: ConfigManager;
   private logger: Logger;
-  private iacIntegration: IACIntegration;
 
   /**
    * Create a new AuthentikDeployer instance
@@ -71,10 +71,6 @@ export class AuthentikDeployer {
       level: 'info',
       timestamps: true
     });
-
-    // Initialize IAC integration
-    // Note: We'll get the actual path from config when deploying
-    this.iacIntegration = new IACIntegration('../iac');
   }
 
   /**
@@ -331,6 +327,10 @@ export class AuthentikDeployer {
     config: AuthentikDeploymentConfig
   ): Promise<TerraformModuleReference> {
     try {
+      const iacIntegration = new IACIntegration(
+        resolveIacModulesPath({ providedPath: config.iacModulesPath })
+      );
+
       // Get networking module reference from IAC integration
       const networkingConfig: Record<string, any> = {
         region: config.region
@@ -346,10 +346,10 @@ export class AuthentikDeployer {
         networkingConfig.subnet_id = config.subnetId;
       }
 
-      const networkingModule = this.iacIntegration.getNetworkingModule(networkingConfig);
+      const networkingModule = iacIntegration.getNetworkingModule(networkingConfig);
 
       // Validate the module exists
-      await this.iacIntegration.validateModule(networkingModule.modulePath);
+      await iacIntegration.validateModule(networkingModule.modulePath);
 
       this.logger.info('Networking module provisioned', {
         modulePath: networkingModule.modulePath,

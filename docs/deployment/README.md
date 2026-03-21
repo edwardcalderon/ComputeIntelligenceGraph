@@ -5,7 +5,7 @@
 - `docker-compose.yml` for the full local or single-host stack
 - `docker-compose.dev.yml` for development overrides
 - `infra/docker/` for container build definitions
-- `infra/terraform/` and `packages/iac/` for infrastructure scaffolding
+- `packages/iac/` for Terraform module scaffolding used by `packages/infra`
 
 ## Primary Services in Compose
 

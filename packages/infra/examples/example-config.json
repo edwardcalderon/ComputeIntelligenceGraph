@@ -16,7 +16,7 @@
     "authentikIntegration": true
   },
   "iac": {
-    "modulesPath": "../iac",
+    "modulesPath": "packages/iac",
     "networkingModule": "networking",
     "computeModule": "compute"
   },

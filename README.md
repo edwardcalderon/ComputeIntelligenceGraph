@@ -21,7 +21,7 @@ The repository contains a working core platform plus a few scaffolded areas that
 - Discovery orchestration plus Python Cartography service
 - RAG/chatbot pipeline and agent packages for query reasoning and actions
 - CLI for install, connect, deploy, seed, reset, and status workflows
-- Docker Compose and Terraform infrastructure scaffolding
+- Docker Compose plus separate Docker and Terraform infrastructure assets
 - `@cig/infra` package wrapping `@lsts_tech/infra` for AWS deployments (Authentik + dashboard pipelines)
 
 ### Still Scaffolded or Partial
@@ -46,14 +46,13 @@ packages/
   config/        YAML config loading and validation
   discovery/     Discovery orchestration and scheduler
   graph/         Neo4j graph engine
-  iac/           Terraform modules
-  infra/         AWS deployment wrapper (@lsts_tech/infra)
+  iac/           Terraform modules consumed by the deployment wrapper
+  infra/         TypeScript AWS deployment wrapper (@lsts_tech/infra)
   sdk/           SDK scaffold
 services/
   cartography/   Python FastAPI discovery service
 infra/
   docker/        Container build definitions
-  terraform/     Infrastructure definitions
 docs/            Organized project documentation
 ```
 
@@ -135,7 +134,6 @@ pnpm dev:chatbot
 pnpm dev:cli
 pnpm dev:discovery
 pnpm dev:graph
-pnpm dev:infra
 pnpm dev:sdk
 pnpm dev:all
 ```

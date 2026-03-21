@@ -6,6 +6,7 @@
 import { InfraWrapper } from '../InfraWrapper';
 import { ConfigManager } from '../config/ConfigManager';
 import { IACIntegration } from '../iac/IACIntegration';
+import { resolveIacModulesPath } from '../iac/resolveIacModulesPath';
 import { Logger } from '../logging/Logger';
 import {
   DashboardDeploymentConfig,
@@ -49,7 +50,6 @@ export class DashboardDeployer {
   private wrapper: InfraWrapper;
   private config: ConfigManager;
   private logger: Logger;
-  private iacIntegration: IACIntegration;
 
   /**
    * Create a new DashboardDeployer instance
@@ -72,10 +72,6 @@ export class DashboardDeployer {
       level: 'info',
       timestamps: true
     });
-
-    // Initialize IAC integration
-    // Note: We'll get the actual path from config when deploying
-    this.iacIntegration = new IACIntegration('../iac');
   }
 
   /**
@@ -292,6 +288,10 @@ export class DashboardDeployer {
     config: DashboardDeploymentConfig
   ): Promise<TerraformModuleReference> {
     try {
+      const iacIntegration = new IACIntegration(
+        resolveIacModulesPath({ providedPath: config.iacModulesPath })
+      );
+
       // Get compute module reference from IAC integration
       const computeConfig: Record<string, any> = {
         region: config.region,
@@ -303,10 +303,10 @@ export class DashboardDeployer {
         computeConfig.domain = config.domain;
       }
 
-      const computeModule = this.iacIntegration.getComputeModule(computeConfig);
+      const computeModule = iacIntegration.getComputeModule(computeConfig);
 
       // Validate the module exists
-      await this.iacIntegration.validateModule(computeModule.modulePath);
+      await iacIntegration.validateModule(computeModule.modulePath);
 
       this.logger.info('Compute module provisioned', {
         modulePath: computeModule.modulePath,

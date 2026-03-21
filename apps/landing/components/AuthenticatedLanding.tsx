@@ -6,6 +6,7 @@ import { SpaceBackground } from "./SpaceBackground";
 import { ElectricWavesBackground } from "./ElectricWavesBackground";
 import { AuthButton } from "./AuthButton";
 import { ThemeToggle } from "./ThemeToggle";
+import { useTheme } from "../app/providers";
 
 const DASHBOARD_URL =
   process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3002";
@@ -188,6 +189,23 @@ const FEATURES: Feature[] = [
   { id: "discovery", title: "Discovery",             description: "Auto-discover cloud, on-premise, and container infrastructure in minutes",               path: "/resources", icon: <DiscoveryIcon />, color: "#ef4444", tag: "Automation",   preview: <RadarViz color="#ef4444" /> },
 ];
 
+function withAlpha(color: string, alpha: number) {
+  const normalized = color.replace("#", "");
+  const hex =
+    normalized.length === 3
+      ? normalized
+          .split("")
+          .map((value) => value + value)
+          .join("")
+      : normalized;
+
+  const r = Number.parseInt(hex.slice(0, 2), 16);
+  const g = Number.parseInt(hex.slice(2, 4), 16);
+  const b = Number.parseInt(hex.slice(4, 6), 16);
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 /* ─── Holographic card ────────────────────────────────────────────────── */
 
 interface HoloCardProps {
@@ -219,11 +237,38 @@ function useTypewriter(text: string, active: boolean, delay = 260, speed = 14) {
 }
 
 function HoloCard({ feature, selected, onSelect }: HoloCardProps) {
+  const { theme } = useTheme();
   const [hovered, setHovered] = useState(false);
   const revealed = hovered || selected;
   const { typed, done } = useTypewriter(feature.description, revealed);
+  const isDark = theme === "dark";
 
   const c = feature.color;
+  const cardBackground = isDark
+    ? `radial-gradient(circle at top right, ${withAlpha(c, revealed ? 0.24 : 0.14)} 0%, transparent 40%), linear-gradient(180deg, ${withAlpha(c, revealed ? 0.14 : 0.07)} 0%, rgba(14, 20, 35, 0.96) 42%, rgba(3, 7, 18, 0.98) 100%)`
+    : `radial-gradient(circle at top right, ${withAlpha(c, revealed ? 0.2 : 0.12)} 0%, transparent 42%), linear-gradient(180deg, ${withAlpha(c, revealed ? 0.12 : 0.05)} 0%, rgba(255, 255, 255, 0.98) 38%, rgba(241, 245, 249, 0.96) 100%)`;
+  const cardBorder = isDark
+    ? withAlpha(c, revealed ? 0.34 : 0.16)
+    : withAlpha(c, revealed ? 0.28 : 0.14);
+  const cardShadow = isDark
+    ? revealed
+      ? `0 0 0 1px ${withAlpha(c, 0.2)}, 0 22px 52px rgba(2, 6, 23, 0.72), 0 0 38px ${withAlpha(c, 0.18)}`
+      : `0 14px 34px rgba(2, 6, 23, 0.52), inset 0 1px 0 rgba(255, 255, 255, 0.03)`
+    : revealed
+      ? `0 0 0 1px ${withAlpha(c, 0.14)}, 0 24px 48px rgba(15, 23, 42, 0.16), 0 0 28px ${withAlpha(c, 0.1)}`
+      : `0 14px 34px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.72)`;
+  const tagBackground = isDark ? withAlpha(c, 0.18) : withAlpha(c, 0.14);
+  const tagBorder = isDark ? withAlpha(c, 0.18) : withAlpha(c, 0.16);
+  const iconBackground = isDark ? withAlpha(c, 0.12) : withAlpha(c, 0.08);
+  const iconShadow = isDark
+    ? `0 0 0 1px ${withAlpha(c, 0.24)}, 0 0 32px ${withAlpha(c, 0.2)}, inset 0 0 20px ${withAlpha(c, 0.08)}`
+    : `0 0 0 1px ${withAlpha(c, 0.18)}, 0 10px 28px ${withAlpha(c, 0.12)}, inset 0 1px 10px rgba(255, 255, 255, 0.78)`;
+  const titleClassName = isDark ? "text-zinc-50" : "text-slate-900";
+  const descriptionClassName = isDark ? "text-zinc-300" : "text-slate-700";
+  const ctaBackground = isDark
+    ? `linear-gradient(135deg, ${withAlpha(c, 0.3)}, ${withAlpha(c, 0.18)})`
+    : `linear-gradient(135deg, ${withAlpha(c, 0.18)}, ${withAlpha(c, 0.08)})`;
+  const ctaColor = isDark ? "#f8fafc" : "#0f172a";
 
   return (
     <article
@@ -233,13 +278,12 @@ function HoloCard({ feature, selected, onSelect }: HoloCardProps) {
       className="relative flex-shrink-0 w-64 rounded-2xl cursor-pointer select-none overflow-hidden"
       style={{
         height: 220,
-        border: `1px solid ${c}${revealed ? "55" : "25"}`,
-        background: `linear-gradient(145deg, ${c}${revealed ? "22" : "10"} 0%, #070d1a 70%)`,
-        boxShadow: revealed
-          ? `0 0 0 1px ${c}30, 0 0 40px ${c}35, 0 20px 50px rgba(0,0,0,0.7)`
-          : `0 4px 24px rgba(0,0,0,0.5)`,
+        border: `1px solid ${cardBorder}`,
+        background: cardBackground,
+        boxShadow: cardShadow,
         transform: revealed ? "scale(1.04)" : "scale(1)",
         transition: "transform 0.35s cubic-bezier(.34,1.56,.64,1), box-shadow 0.35s ease, border-color 0.35s ease, background 0.35s ease",
+        backdropFilter: "blur(18px) saturate(145%)",
       }}
     >
       {/* Animated scan line — always present, speeds up on hover */}
@@ -276,10 +320,11 @@ function HoloCard({ feature, selected, onSelect }: HoloCardProps) {
           className="flex items-center justify-center rounded-2xl"
           style={{
             width: 72, height: 72,
-            backgroundColor: `${c}14`,
+            backgroundColor: iconBackground,
             color: c,
-            boxShadow: `0 0 0 1px ${c}30, 0 0 32px ${c}35, inset 0 0 20px ${c}10`,
+            boxShadow: iconShadow,
             animation: "cig-glow-pulse 2.5s ease-in-out infinite",
+            backdropFilter: "blur(12px)",
           }}
         >
           {/* Scale the icon SVG up */}
@@ -289,20 +334,21 @@ function HoloCard({ feature, selected, onSelect }: HoloCardProps) {
         </div>
 
         <div className="text-center">
-          <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{feature.title}</h3>
+          <h3 className={`text-sm font-bold ${titleClassName}`}>{feature.title}</h3>
           <span
-            className="text-[10px] font-semibold px-2 py-0.5 rounded-full mt-1.5 inline-block tracking-wide"
-            style={{ backgroundColor: `${c}18`, color: c }}
+            className="text-[10px] font-semibold px-2 py-0.5 rounded-full mt-1.5 inline-block tracking-wide border"
+            style={{ backgroundColor: tagBackground, borderColor: tagBorder, color: c }}
           >
             {feature.tag}
           </span>
         </div>
 
         {/* Subtle dot grid decoration */}
-        <div className="absolute inset-0 opacity-5 pointer-events-none"
+        <div className="absolute inset-0 pointer-events-none"
           style={{
             backgroundImage: `radial-gradient(circle, ${c} 1px, transparent 1px)`,
             backgroundSize: "20px 20px",
+            opacity: isDark ? 0.05 : 0.08,
           }}
         />
       </div>
@@ -330,18 +376,18 @@ function HoloCard({ feature, selected, onSelect }: HoloCardProps) {
           }}
         >
           <div className="flex items-center justify-center size-8 rounded-xl"
-            style={{ backgroundColor: `${c}18`, color: c }}>
+            style={{ backgroundColor: tagBackground, color: c, border: `1px solid ${tagBorder}` }}>
             {feature.icon}
           </div>
           <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full tracking-wide"
-            style={{ backgroundColor: `${c}20`, color: c }}>
+            style={{ backgroundColor: tagBackground, color: c, border: `1px solid ${tagBorder}` }}>
             {feature.tag}
           </span>
         </div>
 
         {/* Title — fades up */}
         <h3
-          className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-snug"
+          className={`text-sm font-bold leading-snug ${titleClassName}`}
           style={{
             opacity: revealed ? 1 : 0,
             transform: revealed ? "translateY(0)" : "translateY(6px)",
@@ -352,7 +398,7 @@ function HoloCard({ feature, selected, onSelect }: HoloCardProps) {
         </h3>
 
         {/* Description — typed out */}
-        <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed" style={{ minHeight: 40 }}>
+        <p className={`text-[11px] leading-relaxed ${descriptionClassName}`} style={{ minHeight: 40 }}>
           {typed}
           {revealed && !done && (
             <span
@@ -368,7 +414,7 @@ function HoloCard({ feature, selected, onSelect }: HoloCardProps) {
           <div
             className="pt-2 border-t"
             style={{
-              borderColor: `${c}20`,
+              borderColor: withAlpha(c, isDark ? 0.2 : 0.16),
               opacity: revealed ? 1 : 0,
               transform: revealed ? "translateY(0)" : "translateY(10px)",
               transition: "opacity 0.4s ease 0.22s, transform 0.4s ease 0.22s",
@@ -379,14 +425,15 @@ function HoloCard({ feature, selected, onSelect }: HoloCardProps) {
 
           {/* CTA */}
           <div
-            className="text-[11px] font-semibold text-center py-1.5 rounded-xl"
+            className="text-[11px] font-semibold text-center py-1.5 rounded-xl border"
             style={{
-              backgroundColor: `${c}18`,
-              color: c,
+              background: ctaBackground,
+              borderColor: withAlpha(c, isDark ? 0.22 : 0.16),
+              color: ctaColor,
               opacity: revealed ? 1 : 0,
               transform: revealed ? "translateY(0)" : "translateY(8px)",
               transition: "opacity 0.35s ease 0.32s, transform 0.35s ease 0.32s",
-              boxShadow: `0 0 12px ${c}20`,
+              boxShadow: isDark ? `0 10px 24px ${withAlpha(c, 0.16)}` : `0 10px 20px ${withAlpha(c, 0.08)}`,
             }}
           >
             Open {feature.title} →
@@ -398,7 +445,7 @@ function HoloCard({ feature, selected, onSelect }: HoloCardProps) {
       <div
         className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
         style={{
-          background: `linear-gradient(to top, ${c}${revealed ? "20" : "00"}, transparent)`,
+          background: `linear-gradient(to top, ${withAlpha(c, revealed ? (isDark ? 0.18 : 0.12) : 0)}, transparent)`,
           transition: "background 0.5s ease",
         }}
       />
@@ -549,8 +596,10 @@ const STATUS_BADGES = [
 /* ─── Main exported component ─────────────────────────────────────────── */
 
 export function AuthenticatedLanding() {
+  const { theme } = useTheme();
   useAuth(); // keeps session alive; user data used in AuthButton
   const handleEnterDashboard = useCallback(() => goToDashboard("/"), []);
+  const isDark = theme === "dark";
 
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden text-zinc-900 dark:text-white flex flex-col bg-gradient-to-br from-zinc-50 via-white to-zinc-100 dark:from-transparent dark:via-transparent dark:to-transparent">
@@ -614,16 +663,30 @@ export function AuthenticatedLanding() {
 
       {/* ── Feature carousels ────────────────────────────────── */}
       <div className="relative pb-12 flex flex-col gap-5 mt-4">
-        <div className="pointer-events-none absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-[#050b14] to-transparent z-10" />
+        <div
+          className="pointer-events-none absolute top-0 left-0 right-0 h-6 z-10"
+          style={{
+            background: isDark
+              ? "linear-gradient(to bottom, rgba(5, 11, 20, 0.92), transparent)"
+              : "linear-gradient(to bottom, rgba(255, 255, 255, 0.96), transparent)",
+          }}
+        />
 
-        <p className="text-center text-xs text-zinc-400 dark:text-zinc-600 mb-1 select-none">
+        <p className="text-center text-xs text-zinc-500 dark:text-zinc-500 mb-1 select-none">
           Drag to explore · tap once to preview · tap again to open
         </p>
 
         <ScrollingRow features={FEATURES}                        direction="left"  duration="42s" />
         <ScrollingRow features={[...FEATURES].reverse()} direction="right" duration="36s" />
 
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#050b14] to-transparent z-10" />
+        <div
+          className="pointer-events-none absolute bottom-0 left-0 right-0 h-16 z-10"
+          style={{
+            background: isDark
+              ? "linear-gradient(to top, rgba(5, 11, 20, 0.94), transparent)"
+              : "linear-gradient(to top, rgba(255, 255, 255, 0.98), transparent)",
+          }}
+        />
       </div>
 
       {/* ── Footer ──────────────────────────────────────────────── */}
