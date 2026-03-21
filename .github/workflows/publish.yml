@@ -26,8 +26,6 @@ jobs:
             dockerfile: infra/docker/Dockerfile.discovery
           - name: chatbot
             dockerfile: infra/docker/Dockerfile.chatbot
-          - name: dashboard
-            dockerfile: infra/docker/Dockerfile.dashboard
 
     steps:
       - name: Checkout

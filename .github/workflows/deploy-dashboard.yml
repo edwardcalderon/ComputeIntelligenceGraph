@@ -3,15 +3,6 @@ name: Deploy Dashboard → app.cig.lat
 # ─── Triggers ────────────────────────────────────────────────────────────────
 on:
   push:
-    branches: [main]
-    paths:
-      # Only run when dashboard or shared UI code changes
-      - "apps/dashboard/**"
-      - "packages/ui/**"
-      - "packages/auth/**"
-      - "packages/i18n/**"
-      - "infra/docker/Dockerfile.dashboard"
-      - ".github/workflows/deploy-dashboard.yml"
     tags:
       - "v*.*.*"
 

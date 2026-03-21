@@ -1,3 +1,15 @@
+## [0.1.36](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.35...v0.1.36) (2026-03-21)
+
+
+
+
+
+## [0.1.36](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.35...v0.1.36) (2026-03-21)
+
+
+
+
+
 ## [0.1.35](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.34...v0.1.35) (2026-03-21)
 
 
