@@ -32,18 +32,27 @@ function decodeJwt(token: string): Record<string, unknown> | null {
   }
 }
 
-const LANDING_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://cig.lat";
+/**
+ * Where to send the user when they are not authenticated or have logged out.
+ *
+ * - On explicit logout → /signed-out (same origin, works local & prod)
+ * - On failed auth check → /signed-out (same origin)
+ *
+ * The /signed-out page has a "Sign in" link that points to NEXT_PUBLIC_SITE_URL,
+ * which is the landing page. This keeps environment-specific cross-domain
+ * redirects in one place (next.config.js env), not scattered through code.
+ */
+const SIGNED_OUT_PATH = "/signed-out";
 
 export const authProvider: AuthProvider = {
-  /** Not used — auth happens on the landing page. */
+  /** Login happens on the landing page — not used inside the dashboard. */
   login: async () => ({ success: true }),
 
   logout: async () => {
     clearSession();
     return {
       success: true,
-      redirectTo: LANDING_URL,
+      redirectTo: SIGNED_OUT_PATH,
     };
   },
 
@@ -52,7 +61,7 @@ export const authProvider: AuthProvider = {
     if (session) return { authenticated: true };
     return {
       authenticated: false,
-      redirectTo: LANDING_URL,
+      redirectTo: SIGNED_OUT_PATH,
       error: { name: "Unauthenticated", message: "No active session." },
     };
   },
@@ -61,7 +70,7 @@ export const authProvider: AuthProvider = {
     const status = (error as { status?: number }).status;
     if (status === 401 || status === 403) {
       clearSession();
-      return { logout: true, redirectTo: LANDING_URL };
+      return { logout: true, redirectTo: SIGNED_OUT_PATH };
     }
     return { error };
   },
@@ -73,19 +82,14 @@ export const authProvider: AuthProvider = {
     const payload = decodeJwt(session.token);
     if (!payload) return null;
 
-    const email = (payload.email as string) ?? "";
-    const name  = (payload.user_metadata as Record<string, string>)?.full_name
-               ?? (payload.user_metadata as Record<string, string>)?.name
-               ?? email.split("@")[0]
-               ?? "User";
+    const email  = (payload.email as string) ?? "";
+    const name   = (payload.user_metadata as Record<string, string>)?.full_name
+                ?? (payload.user_metadata as Record<string, string>)?.name
+                ?? email.split("@")[0]
+                ?? "User";
     const avatar = (payload.user_metadata as Record<string, string>)?.avatar_url ?? null;
 
-    return {
-      id:     payload.sub as string,
-      name,
-      email,
-      avatar,
-    };
+    return { id: payload.sub as string, name, email, avatar };
   },
 
   getPermissions: async () => null,

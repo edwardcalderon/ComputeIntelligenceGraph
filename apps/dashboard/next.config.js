@@ -5,6 +5,8 @@ const nextConfig = {
   transpilePackages: ['@cig/ui'],
   env: {
     NEXT_PUBLIC_APP_VERSION: version,
+    // Fallback to localhost landing so logout works in local dev even without .env.local
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
   },
 };
 
