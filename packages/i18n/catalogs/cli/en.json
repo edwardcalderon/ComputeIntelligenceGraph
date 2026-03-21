@@ -1,0 +1,14 @@
+{
+  "cli.welcome": "CIG — Compute Intelligence Graph CLI",
+  "cli.connecting": "Connecting to {provider}…",
+  "cli.discoveryStarted": "Discovery started for {target}",
+  "cli.discoveryComplete": "Discovery complete: {count, plural, one {# resource} other {# resources}} found",
+  "cli.authSuccess": "Authenticated successfully as {email}",
+  "cli.authFailed": "Authentication failed: {reason}",
+  "cli.configSaved": "Configuration saved to {path}",
+  "cli.error.missingArg": "Missing required argument: {arg}",
+  "cli.error.invalidProvider": "Invalid provider: {provider}. Supported: {supported}",
+  "cli.help.usage": "Usage: cig <command> [options]",
+  "cli.help.commands": "Available commands:",
+  "cli.help.options": "Global options:"
+}

@@ -1,0 +1,6 @@
+{
+  "dashboard.welcome": "Bienvenido al panel de CIG",
+  "dashboard.noResources": "Aún no se han descubierto recursos. Ejecuta un escaneo de descubrimiento para comenzar.",
+  "dashboard.runDiscovery": "Ejecutar descubrimiento",
+  "dashboard.resourceCount": "{count, plural, one {# recurso} other {# recursos}} descubiertos"
+}

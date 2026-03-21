@@ -409,6 +409,28 @@ importers:
         specifier: ^1.4.0
         version: 1.6.1(@types/node@20.19.37)
 
+  packages/i18n:
+    dependencies:
+      react:
+        specifier: ^18.0.0 || ^19.0.0
+        version: 18.3.1
+    devDependencies:
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.37
+      '@types/react':
+        specifier: ^18.3.0
+        version: 18.3.28
+      glob:
+        specifier: ^10.3.0
+        version: 10.3.10
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^1.4.0
+        version: 1.6.1(@types/node@20.19.37)
+
   packages/iac: {}
 
   packages/infra:

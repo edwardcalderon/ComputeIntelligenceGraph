@@ -1,0 +1,6 @@
+{
+  "dashboard.welcome": "欢迎使用 CIG 仪表盘",
+  "dashboard.noResources": "尚未发现资源。运行发现扫描以开始。",
+  "dashboard.runDiscovery": "运行发现",
+  "dashboard.resourceCount": "已发现 {count} 个资源"
+}

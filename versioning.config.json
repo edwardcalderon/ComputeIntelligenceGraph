@@ -8,7 +8,8 @@
   "conventionalCommits": true,
   "syncDependencies": true,
   "ignorePackages": [
-    "@cig/iac"
+    "@cig/iac",
+    "@cig-technology/i18n"
   ],
   "extensionConfig": {
     "secrets-check": {

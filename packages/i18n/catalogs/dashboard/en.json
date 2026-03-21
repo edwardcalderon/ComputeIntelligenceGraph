@@ -1,0 +1,6 @@
+{
+  "dashboard.welcome": "Welcome to CIG Dashboard",
+  "dashboard.noResources": "No resources discovered yet. Run a discovery scan to get started.",
+  "dashboard.runDiscovery": "Run Discovery",
+  "dashboard.resourceCount": "{count, plural, one {# resource} other {# resources}} discovered"
+}

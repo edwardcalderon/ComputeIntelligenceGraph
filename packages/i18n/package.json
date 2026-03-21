@@ -1,0 +1,97 @@
+{
+  "name": "@cig-technology/i18n",
+  "version": "1.0.0",
+  "description": "Zero-dependency, type-safe internationalization engine — ICU MessageFormat, React bindings, Node/CLI/Mobile support",
+  "keywords": [
+    "i18n",
+    "internationalization",
+    "translation",
+    "intl",
+    "icu",
+    "messageformat",
+    "react",
+    "react-native",
+    "expo",
+    "node",
+    "cli",
+    "type-safe",
+    "zero-dependency"
+  ],
+  "license": "MIT",
+  "author": "Edward Calderon <edward@cig.lat>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/edwardcalderon/cig-i18n.git"
+  },
+  "homepage": "https://github.com/edwardcalderon/cig-i18n#readme",
+  "bugs": {
+    "url": "https://github.com/edwardcalderon/cig-i18n/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/core.d.ts",
+      "default": "./dist/core.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "default": "./dist/react.js"
+    },
+    "./detection": {
+      "types": "./dist/detection.d.ts",
+      "default": "./dist/detection.js"
+    }
+  },
+  "files": [
+    "dist",
+    "scripts/compile-catalogs.mjs",
+    "scripts/check-translations.mjs",
+    "scripts/extract.mjs",
+    "examples",
+    "README.md",
+    "LICENSE"
+  ],
+  "bin": {
+    "i18n-check": "./scripts/check-translations.mjs",
+    "i18n-extract": "./scripts/extract.mjs",
+    "i18n-compile": "./scripts/compile-catalogs.mjs"
+  },
+  "scripts": {
+    "build": "node scripts/compile-catalogs.mjs && tsc",
+    "dev": "tsc --watch",
+    "extract": "node scripts/extract.mjs",
+    "check:i18n": "node scripts/check-translations.mjs",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build && npm run test"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.3.0",
+    "glob": "^10.3.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.4.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

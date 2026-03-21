@@ -1,0 +1,14 @@
+{
+  "common.welcome": "欢迎",
+  "common.signIn": "登录",
+  "common.signOut": "退出登录",
+  "common.loading": "加载中…",
+  "common.error": "出了点问题。请再试一次。",
+  "common.save": "保存",
+  "common.cancel": "取消",
+  "common.delete": "删除",
+  "common.search": "搜索",
+  "common.items": "{count, plural, =0 {没有项目} other {# 个项目}}",
+  "common.greeting": "你好 {name}！",
+  "common.role": "{role, select, admin {管理员} editor {编辑者} other {查看者}}"
+}

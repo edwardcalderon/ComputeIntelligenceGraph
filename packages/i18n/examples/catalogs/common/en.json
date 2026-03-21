@@ -1,0 +1,14 @@
+{
+  "common.welcome": "Welcome",
+  "common.signIn": "Sign In",
+  "common.signOut": "Sign Out",
+  "common.loading": "Loading…",
+  "common.error": "Something went wrong. Please try again.",
+  "common.save": "Save",
+  "common.cancel": "Cancel",
+  "common.delete": "Delete",
+  "common.search": "Search",
+  "common.items": "{count, plural, =0 {No items} one {# item} other {# items}}",
+  "common.greeting": "Hello {name}!",
+  "common.role": "{role, select, admin {Administrator} editor {Editor} other {Viewer}}"
+}

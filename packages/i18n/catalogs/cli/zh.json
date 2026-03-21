@@ -1,0 +1,14 @@
+{
+  "cli.welcome": "CIG — Compute Intelligence Graph 命令行工具",
+  "cli.connecting": "正在连接 {provider}…",
+  "cli.discoveryStarted": "已开始发现 {target}",
+  "cli.discoveryComplete": "发现完成：找到 {count} 个资源",
+  "cli.authSuccess": "已成功以 {email} 身份认证",
+  "cli.authFailed": "认证失败：{reason}",
+  "cli.configSaved": "配置已保存到 {path}",
+  "cli.error.missingArg": "缺少必需参数：{arg}",
+  "cli.error.invalidProvider": "无效提供商：{provider}。支持的有：{supported}",
+  "cli.help.usage": "用法：cig <命令> [选项]",
+  "cli.help.commands": "可用命令：",
+  "cli.help.options": "全局选项："
+}

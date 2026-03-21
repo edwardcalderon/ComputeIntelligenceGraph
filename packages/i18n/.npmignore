@@ -1,0 +1,18 @@
+# Source (dist is published instead)
+src/
+tsconfig.json
+
+# CIG-specific catalogs (not published — use examples/ instead)
+catalogs/
+
+# Tests
+__tests__/
+**/*.test.ts
+**/*.spec.ts
+vitest.config.*
+
+# Dev files
+.turbo/
+coverage/
+*.log
+.DS_Store
