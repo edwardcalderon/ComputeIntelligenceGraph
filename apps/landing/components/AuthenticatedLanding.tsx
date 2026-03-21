@@ -475,12 +475,30 @@ function useTypewriter(text: string, active: boolean, delay = 260, speed = 14) {
 function HoloCard({ feature, selected, onSelect, onKnowMore }: HoloCardProps) {
   const t = useTranslation();
   const { theme } = useTheme();
+  // hovered tracks whether the pointer is inside the card boundary.
+  // We use a leaveTimer so that moving from card → child button doesn't
+  // briefly collapse the card (mouseleave fires on article before mouseenter
+  // fires on child in some browsers / scroll contexts).
   const [hovered, setHovered] = useState(false);
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const revealed = hovered || selected;
   const title = t(feature.titleKey);
   const tag = t(feature.tagKey);
   const { typed, done } = useTypewriter(t(feature.descKey), revealed);
   const isDark = theme === "dark";
+
+  const handleMouseEnter = () => {
+    if (leaveTimer.current) { clearTimeout(leaveTimer.current); leaveTimer.current = null; }
+    setHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    // Small grace period — if the pointer re-enters within 80 ms (e.g. moving
+    // to a button child) we cancel the collapse.
+    leaveTimer.current = setTimeout(() => setHovered(false), 80);
+  };
+
+  useEffect(() => () => { if (leaveTimer.current) clearTimeout(leaveTimer.current); }, []);
 
   const c = feature.color;
   const cardBackground = isDark
@@ -512,8 +530,8 @@ function HoloCard({ feature, selected, onSelect, onKnowMore }: HoloCardProps) {
   return (
     <article
       onClick={onSelect}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       className="relative flex-shrink-0 w-64 rounded-2xl cursor-pointer select-none overflow-hidden"
       style={{
         height: revealed ? "auto" : 220,
@@ -675,6 +693,7 @@ function HoloCard({ feature, selected, onSelect, onKnowMore }: HoloCardProps) {
           >
             {/* Know more — stops propagation so card doesn't also fire onSelect */}
             <button
+              onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => { e.stopPropagation(); onKnowMore(); }}
               className="flex-1 text-[11px] font-semibold text-center py-1.5 rounded-xl border transition-all active:scale-95"
               style={{
@@ -689,6 +708,7 @@ function HoloCard({ feature, selected, onSelect, onKnowMore }: HoloCardProps) {
 
             {/* Open feature */}
             <button
+              onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => { e.stopPropagation(); goToDashboard(feature.path); }}
               className="flex-shrink-0 text-[11px] font-semibold text-center py-1.5 px-3 rounded-xl transition-all active:scale-95"
               style={{
@@ -770,6 +790,8 @@ function ScrollingRow({
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
+    // Don't intercept clicks on interactive children (buttons, links).
+    if ((e.target as HTMLElement).closest("button, a")) return;
     dragging.current   = true;
     totalDelta.current = 0;
     startX.current     = e.clientX;
