@@ -1,7 +1,7 @@
 {
   "name": "@cig/infra",
   "version": "0.1.2",
-  "description": "CIG Infrastructure Deployment Wrapper - wraps @lsts_tech/infra for AWS deployments",
+  "description": "CIG Infrastructure Deployment Wrapper - provider-agnostic layer for AWS and GCP deployments",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
@@ -12,6 +12,16 @@
       "import": "./dist/index.js",
       "require": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./gcp": {
+      "import": "./dist/gcp/index.js",
+      "require": "./dist/gcp/index.js",
+      "types": "./dist/gcp/index.d.ts"
+    },
+    "./providers": {
+      "import": "./dist/providers/index.js",
+      "require": "./dist/providers/index.js",
+      "types": "./dist/providers/index.d.ts"
     }
   },
   "scripts": {

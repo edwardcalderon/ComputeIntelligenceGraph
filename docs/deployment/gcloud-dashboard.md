@@ -124,18 +124,33 @@ gcloud run domain-mappings create \
 
 ---
 
-## GitHub Actions Secrets Required
+## GitHub Actions Authentication — Workload Identity Federation
 
-Add these in **GitHub → Settings → Secrets and variables → Actions**:
+The workflow uses **Workload Identity Federation** (no JSON key stored in GitHub).
+Short-lived OIDC tokens are exchanged for GCP access tokens automatically.
 
-| Secret | Value |
-|---|---|
-| `GCP_SA_KEY` | Full JSON content of `config/env/private-gcloud.json` |
-| `GCP_PROJECT_ID` | `cig-technology` |
-| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
-| `NEXT_PUBLIC_API_URL` | Production API URL (e.g. `https://api.cig.lat`) |
-| `NEXT_PUBLIC_SITE_URL` | `https://cig.lat` |
+### One-time setup
+
+```bash
+# Enable IAM API first (requires owner/editor account)
+gcloud services enable iam.googleapis.com --project=cig-technology
+
+# Then run the setup script
+npx ts-node packages/infra/scripts/setup-workload-identity.ts
+```
+
+The script outputs two values. Add them as **GitHub Actions secrets**:
+
+| Secret | Description | Sensitive? |
+|---|---|---|
+| `GCP_WORKLOAD_IDENTITY_PROVIDER` | Full provider resource name (output of setup script) | No — but kept as secret for portability |
+| `GCP_SERVICE_ACCOUNT` | `cig-lat@cig-technology.iam.gserviceaccount.com` | No |
+| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL | Yes |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key | Yes |
+| `NEXT_PUBLIC_API_URL` | Production API URL (e.g. `https://api.cig.lat`) | No |
+| `NEXT_PUBLIC_SITE_URL` | `https://cig.lat` | No |
+
+> **Do not add `GCP_SA_KEY`** — the workflow no longer uses it.
 
 ---
 
