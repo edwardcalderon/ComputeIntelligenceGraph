@@ -475,30 +475,14 @@ function useTypewriter(text: string, active: boolean, delay = 260, speed = 14) {
 function HoloCard({ feature, selected, onSelect, onKnowMore }: HoloCardProps) {
   const t = useTranslation();
   const { theme } = useTheme();
-  // hovered tracks whether the pointer is inside the card boundary.
-  // We use a leaveTimer so that moving from card → child button doesn't
-  // briefly collapse the card (mouseleave fires on article before mouseenter
-  // fires on child in some browsers / scroll contexts).
-  const [hovered, setHovered] = useState(false);
-  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const revealed = hovered || selected;
+  // revealed is driven solely by the selected prop coming from ScrollingRow.
+  // No hover state here — hover causes subtle CSS ring only (no JS).
+  // This eliminates all mouseleave/timer race conditions with child buttons.
+  const revealed = selected;
   const title = t(feature.titleKey);
   const tag = t(feature.tagKey);
   const { typed, done } = useTypewriter(t(feature.descKey), revealed);
   const isDark = theme === "dark";
-
-  const handleMouseEnter = () => {
-    if (leaveTimer.current) { clearTimeout(leaveTimer.current); leaveTimer.current = null; }
-    setHovered(true);
-  };
-
-  const handleMouseLeave = () => {
-    // Small grace period — if the pointer re-enters within 80 ms (e.g. moving
-    // to a button child) we cancel the collapse.
-    leaveTimer.current = setTimeout(() => setHovered(false), 80);
-  };
-
-  useEffect(() => () => { if (leaveTimer.current) clearTimeout(leaveTimer.current); }, []);
 
   const c = feature.color;
   const cardBackground = isDark
@@ -530,9 +514,8 @@ function HoloCard({ feature, selected, onSelect, onKnowMore }: HoloCardProps) {
   return (
     <article
       onClick={onSelect}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className="relative flex-shrink-0 w-64 rounded-2xl cursor-pointer select-none overflow-hidden"
+      data-selected={selected ? "" : undefined}
+      className="cig-holocard relative flex-shrink-0 w-64 rounded-2xl cursor-pointer select-none overflow-hidden"
       style={{
         height: revealed ? "auto" : 220,
         minHeight: 220,
@@ -845,6 +828,13 @@ function ScrollingRow({
           animationPlayState: isPaused ? "paused" : "running",
         };
 
+  /** Click directly on the row wrapper (not on a card or button) → deselect. */
+  const handleRowClick = (e: React.MouseEvent) => {
+    if (!(e.target as HTMLElement).closest("article")) {
+      setSelectedId(null);
+    }
+  };
+
   return (
     <div
       className="overflow-x-clip w-full py-3 cursor-grab active:cursor-grabbing"
@@ -854,6 +844,7 @@ function ScrollingRow({
       onPointerCancel={onPointerUp}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={handleRowClick}
     >
       <div ref={trackRef} className="flex gap-4 w-max px-4" style={trackStyle}>
         {doubled.map((f, i) => (
@@ -899,6 +890,8 @@ export function AuthenticatedLanding() {
         @keyframes cig-float        { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
         @keyframes cig-glow-pulse   { 0%,100% { opacity: 0.35; } 50% { opacity: 0.75; } }
         @keyframes cig-scan         { 0% { top: 0%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+        .cig-holocard:not([data-selected]) { transition: outline 0.15s ease; outline: 2px solid transparent; outline-offset: 2px; }
+        .cig-holocard:hover:not([data-selected]) { outline: 2px solid rgba(255,255,255,0.12); }
       `}</style>
 
       {/* Auth button + theme toggle */}
