@@ -56,5 +56,31 @@
   "authed.title.line2": "Centro de control",
   "authed.desc": "Selecciona un módulo a continuación para ir directamente a tu panel de inteligencia de infraestructura.",
   "authed.enterDashboard": "Entrar al panel",
-  "authed.carouselHint": "Arrastra para explorar · toca una vez para previsualizar · toca de nuevo para abrir"
+  "authed.carouselHint": "Arrastra para explorar · toca una vez para previsualizar · toca de nuevo para abrir",
+  "authed.openFeature": "Abrir {title} →",
+
+  "authed.graph.title": "Grafo de infraestructura",
+  "authed.graph.desc": "Visualiza dependencias en toda tu infraestructura como un grafo de nodos interactivo",
+  "authed.graph.tag": "Visualización",
+  "authed.resources.title": "Recursos",
+  "authed.resources.desc": "Navega, busca y filtra todos los recursos cloud y on-premise descubiertos",
+  "authed.resources.tag": "Gestión",
+  "authed.costs.title": "Análisis de costos",
+  "authed.costs.desc": "Rastrea tendencias de gasto e identifica oportunidades de ahorro entre proveedores",
+  "authed.costs.tag": "FinOps",
+  "authed.security.title": "Seguridad",
+  "authed.security.desc": "Detecta configuraciones incorrectas y violaciones de cumplimiento con puntuación automática",
+  "authed.security.tag": "Cumplimiento",
+  "authed.console.title": "Consola IA",
+  "authed.console.desc": "Consulta tu infraestructura en lenguaje natural — pregunta lo que quieras sobre tus recursos",
+  "authed.console.tag": "IA",
+  "authed.discovery.title": "Descubrimiento",
+  "authed.discovery.desc": "Descubre automáticamente infraestructura cloud, on-premise y de contenedores en minutos",
+  "authed.discovery.tag": "Automatización",
+
+  "authed.badge.graph": "Grafo",
+  "authed.badge.resources": "Recursos",
+  "authed.badge.costs": "Costos",
+  "authed.badge.security": "Seguridad",
+  "authed.badge.ai": "IA"
 }

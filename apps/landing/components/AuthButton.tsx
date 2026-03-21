@@ -96,6 +96,7 @@ function SignInModal({
   onGoogleSignIn: () => void;
   onGitHubSignIn: () => void;
 }) {
+  const t = useTranslation();
   const [view, setView] = useState<ModalView>("methods");
   const backdropRef = useRef<HTMLDivElement>(null);
 
@@ -135,10 +136,10 @@ function SignInModal({
               </button>
             )}
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              {view === "methods" && "Sign in to CIG"}
-              {view === "email-otp" && "Email OTP"}
-              {view === "cli-code" && "CLI Authentication"}
-              {view === "ssh-info" && "SSH Key Auth"}
+              {view === "methods" && t("auth.signInTitle")}
+              {view === "email-otp" && t("auth.emailOtpViewTitle")}
+              {view === "cli-code" && t("auth.cliAuthTitle")}
+              {view === "ssh-info" && t("auth.sshAuthTitle")}
             </h2>
           </div>
           <button
@@ -178,28 +179,28 @@ function MethodsView({
   onGitHubSignIn: () => void;
   goTo: (v: ModalView) => void;
 }) {
+  const t = useTranslation();
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-1">
-        Choose how you&apos;d like to sign in to access the Dashboard, Console, and
-        infrastructure tools.
+        {t("auth.signInDesc")}
       </p>
 
       {/* ── OAuth providers ─── */}
       <div className="flex flex-col gap-2">
         <button onClick={onGoogleSignIn} className={methodBtnClass}>
           <GoogleIcon />
-          Continue with Google
+          {t("auth.continueWithGoogle")}
         </button>
         <button onClick={onGitHubSignIn} className={methodBtnClass}>
           <GitHubIcon />
-          Continue with GitHub
+          {t("auth.continueWithGitHub")}
         </button>
       </div>
 
       <div className="flex items-center gap-3 my-1">
         <div className="flex-1 border-t border-zinc-200 dark:border-zinc-800" />
-        <span className="text-xs text-zinc-500 font-medium">OR</span>
+        <span className="text-xs text-zinc-500 font-medium">{t("auth.or")}</span>
         <div className="flex-1 border-t border-zinc-200 dark:border-zinc-800" />
       </div>
 
@@ -207,18 +208,18 @@ function MethodsView({
       <div className="flex flex-col gap-2">
         <button onClick={() => goTo("email-otp")} className={methodBtnClass}>
           <MailIcon />
-          Email OTP Code
-          <span className="ml-auto text-xs text-zinc-500">Passwordless</span>
+          {t("auth.emailOtp")}
+          <span className="ml-auto text-xs text-zinc-500">{t("auth.passwordless")}</span>
         </button>
         <button onClick={() => goTo("cli-code")} className={methodBtnClass}>
           <TerminalIcon />
-          CLI Device Code
-          <span className="ml-auto text-xs text-zinc-500">Terminal</span>
+          {t("auth.cliCode")}
+          <span className="ml-auto text-xs text-zinc-500">{t("auth.terminal")}</span>
         </button>
         <button onClick={() => goTo("ssh-info")} className={methodBtnClass}>
           <KeyIcon />
-          SSH Key
-          <span className="ml-auto text-xs text-zinc-500">Local</span>
+          {t("auth.sshKey")}
+          <span className="ml-auto text-xs text-zinc-500">{t("auth.local")}</span>
         </button>
       </div>
     </div>
@@ -228,6 +229,7 @@ function MethodsView({
 /* ─── Email OTP flow ──────────────────────────────────────────────────── */
 
 function EmailOtpView({ onSuccess }: { onSuccess: () => void }) {
+  const t = useTranslation();
   const [email, setEmail] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [step, setStep] = useState<"email" | "verify">("email");
@@ -267,8 +269,7 @@ function EmailOtpView({ onSuccess }: { onSuccess: () => void }) {
     return (
       <form onSubmit={handleSendOtp} className="flex flex-col gap-4">
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Enter your email and we&apos;ll send you a one-time code to sign in — no
-          password needed.
+          {t("auth.emailOtpDesc")}
         </p>
         <input
           type="email"
@@ -276,7 +277,7 @@ function EmailOtpView({ onSuccess }: { onSuccess: () => void }) {
           autoFocus
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
+          placeholder={t("auth.emailPlaceholder")}
           className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 transition-colors"
         />
         {error && <p className="text-xs text-red-400">{error}</p>}
@@ -285,7 +286,7 @@ function EmailOtpView({ onSuccess }: { onSuccess: () => void }) {
           disabled={sending || !email}
           className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:shadow-xl hover:shadow-cyan-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {sending ? "Sending…" : "Send OTP Code"}
+          {sending ? t("auth.sending") : t("auth.sendOtp")}
         </button>
       </form>
     );
@@ -294,9 +295,7 @@ function EmailOtpView({ onSuccess }: { onSuccess: () => void }) {
   return (
     <form onSubmit={handleVerify} className="flex flex-col gap-4">
       <p className="text-sm text-zinc-600 dark:text-zinc-400">
-        We sent a 6-digit code to{" "}
-        <span className="text-zinc-800 dark:text-zinc-200 font-medium">{email}</span>. Enter it
-        below.
+        {t("auth.otpSentTo", { email })}
       </p>
       <input
         type="text"
@@ -316,7 +315,7 @@ function EmailOtpView({ onSuccess }: { onSuccess: () => void }) {
         disabled={verifying || otpCode.length < 6}
         className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:shadow-xl hover:shadow-cyan-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {verifying ? "Verifying…" : "Verify & Sign In"}
+        {verifying ? t("auth.verifying") : t("auth.verifySignIn")}
       </button>
       <button
         type="button"
@@ -327,7 +326,7 @@ function EmailOtpView({ onSuccess }: { onSuccess: () => void }) {
         }}
         className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
       >
-        Didn&apos;t receive it? Try again
+        {t("auth.didntReceive")}
       </button>
     </form>
   );
@@ -336,6 +335,7 @@ function EmailOtpView({ onSuccess }: { onSuccess: () => void }) {
 /* ─── CLI Device Code flow ────────────────────────────────────────────── */
 
 function CliCodeView() {
+  const t = useTranslation();
   const [copied, setCopied] = useState(false);
   const loginCommand = "npx @cig/cli auth login";
 
@@ -348,8 +348,7 @@ function CliCodeView() {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-zinc-600 dark:text-zinc-400">
-        Authenticate from your terminal. Run this command and follow the prompts
-        to link your local machine.
+        {t("auth.cliDesc")}
       </p>
       <div className="relative group">
         <pre className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 px-4 py-3 text-sm font-mono text-cyan-600 dark:text-cyan-400 overflow-x-auto">
@@ -360,16 +359,16 @@ function CliCodeView() {
           onClick={handleCopy}
           className="absolute top-2 right-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 text-xs text-zinc-500 dark:text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity hover:text-zinc-800 dark:hover:text-zinc-200"
         >
-          {copied ? <CheckIcon /> : "Copy"}
+          {copied ? <CheckIcon /> : t("common.copy")}
         </button>
       </div>
       <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/30 px-4 py-3 text-xs text-zinc-600 dark:text-zinc-400 space-y-1.5">
-        <p className="font-medium text-zinc-800 dark:text-zinc-300">How it works</p>
+        <p className="font-medium text-zinc-800 dark:text-zinc-300">{t("auth.cliHowItWorks")}</p>
         <ol className="list-decimal list-inside space-y-1">
-          <li>Run the command — it generates a one-time device code</li>
-          <li>A browser window opens to confirm the code</li>
-          <li>Sign in with any method (Google, email, etc.)</li>
-          <li>Your CLI session is authenticated & token is cached locally</li>
+          <li>{t("auth.cliStep1")}</li>
+          <li>{t("auth.cliStep2")}</li>
+          <li>{t("auth.cliStep3")}</li>
+          <li>{t("auth.cliStep4")}</li>
         </ol>
       </div>
     </div>
@@ -379,6 +378,7 @@ function CliCodeView() {
 /* ─── SSH Key info ────────────────────────────────────────────────────── */
 
 function SshInfoView() {
+  const t = useTranslation();
   const [copied, setCopied] = useState(false);
   const sshCommand = "cig auth add-key ~/.ssh/id_ed25519.pub";
 
@@ -391,8 +391,7 @@ function SshInfoView() {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-zinc-600 dark:text-zinc-400">
-        Register your SSH public key to authenticate with CIG infrastructure
-        services — ideal for automated pipelines and local development.
+        {t("auth.sshDesc")}
       </p>
       <div className="relative group">
         <pre className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 px-4 py-3 text-sm font-mono text-cyan-600 dark:text-cyan-400 overflow-x-auto">
@@ -403,19 +402,18 @@ function SshInfoView() {
           onClick={handleCopy}
           className="absolute top-2 right-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 text-xs text-zinc-500 dark:text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity hover:text-zinc-800 dark:hover:text-zinc-200"
         >
-          {copied ? <CheckIcon /> : "Copy"}
+          {copied ? <CheckIcon /> : t("common.copy")}
         </button>
       </div>
       <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/30 px-4 py-3 text-xs text-zinc-600 dark:text-zinc-400 space-y-1.5">
-        <p className="font-medium text-zinc-800 dark:text-zinc-300">Supported key types</p>
+        <p className="font-medium text-zinc-800 dark:text-zinc-300">{t("auth.sshKeyTypes")}</p>
         <ul className="list-disc list-inside space-y-1">
-          <li>Ed25519 (recommended)</li>
-          <li>RSA (2048-bit minimum)</li>
-          <li>ECDSA</li>
+          <li>{t("auth.sshEd25519")}</li>
+          <li>{t("auth.sshRsa")}</li>
+          <li>{t("auth.sshEcdsa")}</li>
         </ul>
         <p className="pt-1 text-zinc-500">
-          After registering, you can push configs and access CIG services
-          without a browser session.
+          {t("auth.sshAfter")}
         </p>
       </div>
     </div>
@@ -425,6 +423,7 @@ function SshInfoView() {
 /* ─── Main AuthButton ─────────────────────────────────────────────────── */
 
 function AuthButtonReady() {
+  const t = useTranslation();
   const { user, loading, signIn, signOutUser } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -489,7 +488,7 @@ function AuthButtonReady() {
               <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{user.email}</p>
               {user.provider && (
                 <p className="text-xs text-zinc-500 mt-0.5 capitalize">
-                  via {user.provider}
+                  {t("auth.via", { provider: user.provider })}
                 </p>
               )}
             </div>
@@ -501,7 +500,7 @@ function AuthButtonReady() {
                 }}
                 className="w-full text-left px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-red-500 dark:hover:text-red-400 transition-colors"
               >
-                Sign Out
+                {t("common.signOut")}
               </button>
             </div>
           </div>
@@ -516,7 +515,7 @@ function AuthButtonReady() {
         onClick={() => setShowModal(true)}
         className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all duration-200 hover:scale-105 hover:shadow-xl hover:shadow-cyan-500/30 focus:outline-none focus:ring-2 focus:ring-cyan-400"
       >
-        Sign In
+        {t("common.signIn")}
       </button>
 
       {showModal && (
@@ -531,6 +530,7 @@ function AuthButtonReady() {
 }
 
 function SignInButtonOnly() {
+  const t = useTranslation();
   const [showModal, setShowModal] = useState(false);
 
   const triggerOAuth = useCallback((provider: "google" | "github") => {
@@ -549,7 +549,7 @@ function SignInButtonOnly() {
         onClick={() => setShowModal(true)}
         className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all duration-200 hover:scale-105 hover:shadow-xl hover:shadow-cyan-500/30 focus:outline-none focus:ring-2 focus:ring-cyan-400"
       >
-        Sign In
+        {t("common.signIn")}
       </button>
       {showModal && (
         <SignInModal

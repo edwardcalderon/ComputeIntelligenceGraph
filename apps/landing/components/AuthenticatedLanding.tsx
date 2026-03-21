@@ -2,10 +2,12 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth, getSupabaseClient } from "@cig/auth";
+import { useTranslation } from "@cig-technology/i18n/react";
 import { SpaceBackground } from "./SpaceBackground";
 import { ElectricWavesBackground } from "./ElectricWavesBackground";
 import { AuthButton } from "./AuthButton";
 import { ThemeToggle } from "./ThemeToggle";
+import { LocaleSwitcher } from "./LocaleSwitcher";
 import { useTheme } from "../app/providers";
 
 const DASHBOARD_URL =
@@ -171,22 +173,22 @@ function RadarViz({ color }: { color: string }) {
 
 interface Feature {
   id: string;
-  title: string;
-  description: string;
+  titleKey: string;
+  descKey: string;
+  tagKey: string;
   path: string;
   icon: React.ReactNode;
   color: string;
-  tag: string;
   preview: React.ReactNode;
 }
 
 const FEATURES: Feature[] = [
-  { id: "graph",     title: "Infrastructure Graph", description: "Visualize dependencies across your entire infrastructure as an interactive node graph", path: "/graph",     icon: <GraphIcon />,     color: "#06b6d4", tag: "Visualization", preview: <NodeGraph color="#06b6d4" /> },
-  { id: "resources", title: "Resources",             description: "Browse, search, and filter all discovered cloud and on-premise resources",               path: "/resources", icon: <ResourcesIcon />, color: "#3b82f6", tag: "Management",    preview: <BarViz color="#3b82f6" /> },
-  { id: "costs",     title: "Cost Analysis",         description: "Track spending trends and identify savings opportunities across providers",               path: "/costs",     icon: <CostIcon />,      color: "#a855f7", tag: "FinOps",       preview: <CostViz color="#a855f7" /> },
-  { id: "security",  title: "Security",              description: "Detect misconfigurations and compliance violations with automated scoring",               path: "/security",  icon: <SecurityIcon />,  color: "#10b981", tag: "Compliance",   preview: <ShieldViz color="#10b981" /> },
-  { id: "console",   title: "AI Console",            description: "Query your infrastructure in natural language — ask anything about your resources",       path: "/",          icon: <ConsoleIcon />,   color: "#f59e0b", tag: "AI",           preview: <ConsoleLine color="#f59e0b" /> },
-  { id: "discovery", title: "Discovery",             description: "Auto-discover cloud, on-premise, and container infrastructure in minutes",               path: "/resources", icon: <DiscoveryIcon />, color: "#ef4444", tag: "Automation",   preview: <RadarViz color="#ef4444" /> },
+  { id: "graph",     titleKey: "authed.graph.title",     descKey: "authed.graph.desc",     tagKey: "authed.graph.tag",     path: "/graph",     icon: <GraphIcon />,     color: "#06b6d4", preview: <NodeGraph color="#06b6d4" /> },
+  { id: "resources", titleKey: "authed.resources.title", descKey: "authed.resources.desc", tagKey: "authed.resources.tag", path: "/resources", icon: <ResourcesIcon />, color: "#3b82f6", preview: <BarViz color="#3b82f6" /> },
+  { id: "costs",     titleKey: "authed.costs.title",     descKey: "authed.costs.desc",     tagKey: "authed.costs.tag",     path: "/costs",     icon: <CostIcon />,      color: "#a855f7", preview: <CostViz color="#a855f7" /> },
+  { id: "security",  titleKey: "authed.security.title",  descKey: "authed.security.desc",  tagKey: "authed.security.tag",  path: "/security",  icon: <SecurityIcon />,  color: "#10b981", preview: <ShieldViz color="#10b981" /> },
+  { id: "console",   titleKey: "authed.console.title",   descKey: "authed.console.desc",   tagKey: "authed.console.tag",   path: "/",          icon: <ConsoleIcon />,   color: "#f59e0b", preview: <ConsoleLine color="#f59e0b" /> },
+  { id: "discovery", titleKey: "authed.discovery.title", descKey: "authed.discovery.desc", tagKey: "authed.discovery.tag", path: "/resources", icon: <DiscoveryIcon />, color: "#ef4444", preview: <RadarViz color="#ef4444" /> },
 ];
 
 function withAlpha(color: string, alpha: number) {
@@ -237,10 +239,13 @@ function useTypewriter(text: string, active: boolean, delay = 260, speed = 14) {
 }
 
 function HoloCard({ feature, selected, onSelect }: HoloCardProps) {
+  const t = useTranslation();
   const { theme } = useTheme();
   const [hovered, setHovered] = useState(false);
   const revealed = hovered || selected;
-  const { typed, done } = useTypewriter(feature.description, revealed);
+  const title = t(feature.titleKey);
+  const tag = t(feature.tagKey);
+  const { typed, done } = useTypewriter(t(feature.descKey), revealed);
   const isDark = theme === "dark";
 
   const c = feature.color;
@@ -334,12 +339,12 @@ function HoloCard({ feature, selected, onSelect }: HoloCardProps) {
         </div>
 
         <div className="text-center">
-          <h3 className={`text-sm font-bold ${titleClassName}`}>{feature.title}</h3>
+          <h3 className={`text-sm font-bold ${titleClassName}`}>{title}</h3>
           <span
             className="text-[10px] font-semibold px-2 py-0.5 rounded-full mt-1.5 inline-block tracking-wide border"
             style={{ backgroundColor: tagBackground, borderColor: tagBorder, color: c }}
           >
-            {feature.tag}
+            {tag}
           </span>
         </div>
 
@@ -381,7 +386,7 @@ function HoloCard({ feature, selected, onSelect }: HoloCardProps) {
           </div>
           <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full tracking-wide"
             style={{ backgroundColor: tagBackground, color: c, border: `1px solid ${tagBorder}` }}>
-            {feature.tag}
+            {tag}
           </span>
         </div>
 
@@ -394,7 +399,7 @@ function HoloCard({ feature, selected, onSelect }: HoloCardProps) {
             transition: "opacity 0.3s ease 0.15s, transform 0.3s ease 0.15s",
           }}
         >
-          {feature.title}
+          {title}
         </h3>
 
         {/* Description — typed out */}
@@ -436,7 +441,7 @@ function HoloCard({ feature, selected, onSelect }: HoloCardProps) {
               boxShadow: isDark ? `0 10px 24px ${withAlpha(c, 0.16)}` : `0 10px 20px ${withAlpha(c, 0.08)}`,
             }}
           >
-            Open {feature.title} →
+            {t("authed.openFeature", { title })}
           </div>
         </div>
       </div>
@@ -585,17 +590,18 @@ function ScrollingRow({
 
 /* ─── Module status badges ────────────────────────────────────────────── */
 
-const STATUS_BADGES = [
-  { label: "Graph",     color: "#06b6d4" },
-  { label: "Resources", color: "#3b82f6" },
-  { label: "Costs",     color: "#a855f7" },
-  { label: "Security",  color: "#10b981" },
-  { label: "AI",        color: "#f59e0b" },
+const STATUS_BADGE_DEFS = [
+  { key: "authed.badge.graph",     color: "#06b6d4" },
+  { key: "authed.badge.resources", color: "#3b82f6" },
+  { key: "authed.badge.costs",     color: "#a855f7" },
+  { key: "authed.badge.security",  color: "#10b981" },
+  { key: "authed.badge.ai",        color: "#f59e0b" },
 ];
 
 /* ─── Main exported component ─────────────────────────────────────────── */
 
 export function AuthenticatedLanding() {
+  const t = useTranslation();
   const { theme } = useTheme();
   useAuth(); // keeps session alive; user data used in AuthButton
   const handleEnterDashboard = useCallback(() => goToDashboard("/"), []);
@@ -614,6 +620,7 @@ export function AuthenticatedLanding() {
 
       {/* Auth button + theme toggle */}
       <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <LocaleSwitcher />
         <ThemeToggle />
         <AuthButton />
       </div>
@@ -629,23 +636,23 @@ export function AuthenticatedLanding() {
         {/* Headline */}
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3">
           <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-violet-400 bg-clip-text text-transparent">
-            Your Infrastructure
+            {t("authed.title.line1")}
           </span>
           <br />
-          <span className="text-zinc-900 dark:text-zinc-100">Command Center</span>
+          <span className="text-zinc-900 dark:text-zinc-100">{t("authed.title.line2")}</span>
         </h1>
         <p className="text-zinc-600 dark:text-zinc-400 text-base max-w-md mb-8 leading-relaxed">
-          Select a module below to jump directly into your infrastructure intelligence dashboard.
+          {t("authed.desc")}
         </p>
 
         {/* Status pills */}
         <div className="flex flex-wrap items-center justify-center gap-2.5 mb-10">
-          {STATUS_BADGES.map(({ label, color }, idx) => (
-            <div key={label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border"
+          {STATUS_BADGE_DEFS.map(({ key, color }, idx) => (
+            <div key={key} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border"
               style={{ borderColor: `${color}35`, backgroundColor: `${color}0e`, color }}>
               <div className="size-1.5 rounded-full"
                 style={{ backgroundColor: color, animation: "cig-glow-pulse 2s ease-in-out infinite", animationDelay: `${idx * 0.3}s` }} />
-              {label}
+              {t(key)}
             </div>
           ))}
         </div>
@@ -657,7 +664,7 @@ export function AuthenticatedLanding() {
           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 40px rgba(6,182,212,0.5), 0 8px 32px rgba(0,0,0,0.5)"; }}
           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 24px rgba(6,182,212,0.3), 0 4px 20px rgba(0,0,0,0.4)"; }}
         >
-          <DashboardIcon /> Enter Dashboard
+          <DashboardIcon /> {t("authed.enterDashboard")}
         </button>
       </div>
 
@@ -673,7 +680,7 @@ export function AuthenticatedLanding() {
         />
 
         <p className="text-center text-xs text-zinc-500 dark:text-zinc-500 mb-1 select-none">
-          Drag to explore · tap once to preview · tap again to open
+          {t("authed.carouselHint")}
         </p>
 
         <ScrollingRow features={FEATURES}                        direction="left"  duration="42s" />
@@ -691,11 +698,11 @@ export function AuthenticatedLanding() {
 
       {/* ── Footer ──────────────────────────────────────────────── */}
       <footer className="relative z-10 mt-auto w-full text-center text-xs text-zinc-500 dark:text-zinc-600 pt-6 pb-4 border-t border-zinc-200 dark:border-zinc-800/40">
-        <p>© {new Date().getFullYear()} CIG — Compute Intelligence Graph. Open-source under MIT License.</p>
+        <p>{t("footer.copyright", { year: new Date().getFullYear() })}</p>
         <p className="mt-1 text-zinc-700"
           title={process.env.NEXT_PUBLIC_RELEASE_TAG || `v${process.env.NEXT_PUBLIC_APP_VERSION}`}>
-          v{process.env.NEXT_PUBLIC_APP_VERSION}
-          {process.env.NEXT_PUBLIC_APP_BUILD ? ` · build ${process.env.NEXT_PUBLIC_APP_BUILD}` : ""}
+          {t("common.version", { version: process.env.NEXT_PUBLIC_APP_VERSION || "" })}
+          {process.env.NEXT_PUBLIC_APP_BUILD ? ` · ${t("common.build", { build: process.env.NEXT_PUBLIC_APP_BUILD })}` : ""}
         </p>
       </footer>
     </div>

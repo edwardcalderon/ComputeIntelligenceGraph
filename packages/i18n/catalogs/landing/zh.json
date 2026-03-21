@@ -56,5 +56,31 @@
   "authed.title.line2": "指挥中心",
   "authed.desc": "选择下方模块，直接进入基础设施智能仪表盘。",
   "authed.enterDashboard": "进入仪表盘",
-  "authed.carouselHint": "拖动浏览 · 点击预览 · 再次点击打开"
+  "authed.carouselHint": "拖动浏览 · 点击预览 · 再次点击打开",
+  "authed.openFeature": "打开 {title} →",
+
+  "authed.graph.title": "基础设施图谱",
+  "authed.graph.desc": "以交互式节点图谱可视化整个基础设施的依赖关系",
+  "authed.graph.tag": "可视化",
+  "authed.resources.title": "资源",
+  "authed.resources.desc": "浏览、搜索和筛选所有已发现的云端和本地资源",
+  "authed.resources.tag": "管理",
+  "authed.costs.title": "成本分析",
+  "authed.costs.desc": "追踪各供应商的支出趋势并识别节省机会",
+  "authed.costs.tag": "成本优化",
+  "authed.security.title": "安全",
+  "authed.security.desc": "通过自动评分检测配置错误和合规性违规",
+  "authed.security.tag": "合规",
+  "authed.console.title": "AI 控制台",
+  "authed.console.desc": "用自然语言查询基础设施 — 询问有关资源的任何问题",
+  "authed.console.tag": "人工智能",
+  "authed.discovery.title": "自动发现",
+  "authed.discovery.desc": "在几分钟内自动发现云端、本地和容器基础设施",
+  "authed.discovery.tag": "自动化",
+
+  "authed.badge.graph": "图谱",
+  "authed.badge.resources": "资源",
+  "authed.badge.costs": "成本",
+  "authed.badge.security": "安全",
+  "authed.badge.ai": "AI"
 }

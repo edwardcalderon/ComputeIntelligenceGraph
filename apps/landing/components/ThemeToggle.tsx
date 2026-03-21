@@ -2,14 +2,16 @@
 
 import React from "react";
 import { useTheme } from "../app/providers";
+import { useTranslation } from "@cig-technology/i18n/react";
 
 export function ThemeToggle({ className = "" }: { className?: string }) {
+  const t = useTranslation();
   const { theme, toggleTheme } = useTheme();
 
   return (
     <button
       onClick={toggleTheme}
-      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+      aria-label={theme === "dark" ? t("theme.switchToLight") : t("theme.switchToDark")}
       className={`rounded-full p-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 ${className}`}
     >
       {theme === "dark" ? (

@@ -56,5 +56,31 @@
   "authed.title.line2": "Command Center",
   "authed.desc": "Select a module below to jump directly into your infrastructure intelligence dashboard.",
   "authed.enterDashboard": "Enter Dashboard",
-  "authed.carouselHint": "Drag to explore · tap once to preview · tap again to open"
+  "authed.carouselHint": "Drag to explore · tap once to preview · tap again to open",
+  "authed.openFeature": "Open {title} →",
+
+  "authed.graph.title": "Infrastructure Graph",
+  "authed.graph.desc": "Visualize dependencies across your entire infrastructure as an interactive node graph",
+  "authed.graph.tag": "Visualization",
+  "authed.resources.title": "Resources",
+  "authed.resources.desc": "Browse, search, and filter all discovered cloud and on-premise resources",
+  "authed.resources.tag": "Management",
+  "authed.costs.title": "Cost Analysis",
+  "authed.costs.desc": "Track spending trends and identify savings opportunities across providers",
+  "authed.costs.tag": "FinOps",
+  "authed.security.title": "Security",
+  "authed.security.desc": "Detect misconfigurations and compliance violations with automated scoring",
+  "authed.security.tag": "Compliance",
+  "authed.console.title": "AI Console",
+  "authed.console.desc": "Query your infrastructure in natural language — ask anything about your resources",
+  "authed.console.tag": "AI",
+  "authed.discovery.title": "Discovery",
+  "authed.discovery.desc": "Auto-discover cloud, on-premise, and container infrastructure in minutes",
+  "authed.discovery.tag": "Automation",
+
+  "authed.badge.graph": "Graph",
+  "authed.badge.resources": "Resources",
+  "authed.badge.costs": "Costs",
+  "authed.badge.security": "Security",
+  "authed.badge.ai": "AI"
 }
