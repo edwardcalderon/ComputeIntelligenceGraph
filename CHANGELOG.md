@@ -1,13 +1,9 @@
 ## [0.1.33](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.32...v0.1.33) (2026-03-21)
 
 
+### Bug Fixes
 
-
-
-## [0.1.33](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.32...v0.1.33) (2026-03-21)
-
-
-
+* **docs:** remove duplicate changelog entries; sync all workspace package versions to 0.1.33
 
 
 
