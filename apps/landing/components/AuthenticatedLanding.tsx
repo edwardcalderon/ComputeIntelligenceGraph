@@ -757,33 +757,39 @@ function ScrollingRow({
     trackRef.current.style.animationDelay = `${negativeDelay}s`;
   };
 
+  const pointerIdRef = useRef<number | null>(null);
+
   const onPointerDown = (e: React.PointerEvent) => {
     // Don't intercept clicks on interactive children (buttons, links).
     if ((e.target as HTMLElement).closest("button, a")) return;
-    dragging.current   = true;
+    dragging.current   = false; // not yet dragging — wait for movement
     totalDelta.current = 0;
     startX.current     = e.clientX;
     startOff.current   = readTranslateX();
-    setManualOffset(startOff.current);
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    pointerIdRef.current = e.pointerId;
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
-    if (!dragging.current) return;
-    const delta        = e.clientX - startX.current;
+    if (pointerIdRef.current === null) return;
+    const delta = e.clientX - startX.current;
     totalDelta.current = delta;
-    setManualOffset(startOff.current + delta);
+
+    if (!dragging.current && Math.abs(delta) >= 5) {
+      // Threshold crossed — commit to drag mode and capture
+      dragging.current = true;
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      setManualOffset(startOff.current);
+    }
+
+    if (dragging.current) {
+      setManualOffset(startOff.current + delta);
+    }
   };
 
-  const onPointerUp = () => {
-    if (!dragging.current) return;
+  const onPointerUp = (e: React.PointerEvent) => {
+    pointerIdRef.current = null;
+    if (!dragging.current) return; // was a tap — let native click bubble
     dragging.current = false;
-
-    if (Math.abs(totalDelta.current) < 5) {
-      // Genuine tap — let the card's onClick fire naturally
-      setManualOffset(null);
-      return;
-    }
 
     // Resume CSS animation from the drag-end position
     resumeFrom(startOff.current + totalDelta.current);
@@ -804,7 +810,7 @@ function ScrollingRow({
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
+      onPointerCancel={(e) => { pointerIdRef.current = null; dragging.current = false; setManualOffset(null); }}
     >
       <div ref={trackRef} className="flex gap-4 w-max px-4" style={trackStyle}>
         {doubled.map((f, i) => (
