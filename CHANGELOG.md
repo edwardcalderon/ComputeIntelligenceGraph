@@ -1,3 +1,14 @@
+## [0.1.20](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.19...v0.1.20) (2026-03-21)
+
+
+### Bug Fixes
+
+* **landing:** FallingPattern light mode only, blob glows both modes ([a98d402](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/a98d402621fdea52f9030520ec5e49e906c20b7d))
+
+
+
+
+
 ## [0.1.19](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.18...v0.1.19) (2026-03-21)
 
 
