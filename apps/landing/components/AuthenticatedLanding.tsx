@@ -445,9 +445,7 @@ function FeatureModal({ feature, onClose, onOpen }: FeatureModalProps) {
 
 interface HoloCardProps {
   feature: Feature;
-  selected: boolean;
-  onSelect: () => void;
-  onKnowMore: () => void;
+  onOpen: () => void;
   onRevealChange: (revealed: boolean) => void;
 }
 
@@ -473,15 +471,14 @@ function useTypewriter(text: string, active: boolean, delay = 260, speed = 14) {
   return { typed, done: typed.length === text.length };
 }
 
-function HoloCard({ feature, selected, onSelect, onKnowMore, onRevealChange }: HoloCardProps) {
+function HoloCard({ feature, onOpen, onRevealChange }: HoloCardProps) {
   const t = useTranslation();
   const { theme } = useTheme();
   const [hovered, setHovered] = useState(false);
-  const revealed = hovered || selected;
+  const revealed = hovered;
 
-  // Notify the parent row whenever our revealed state changes so it can
-  // pause/resume the scroll animation. This is the single source of truth
-  // for "should the row stop moving?"
+  // Notify the parent row whenever revealed state changes so it can pause
+  // the scroll animation while the card is being hovered.
   const prevRevealed = useRef(false);
   useEffect(() => {
     if (revealed !== prevRevealed.current) {
@@ -517,17 +514,12 @@ function HoloCard({ feature, selected, onSelect, onKnowMore, onRevealChange }: H
     : `0 0 0 1px ${withAlpha(c, 0.18)}, 0 10px 28px ${withAlpha(c, 0.12)}, inset 0 1px 10px rgba(255, 255, 255, 0.78)`;
   const titleClassName = isDark ? "text-zinc-50" : "text-slate-900";
   const descriptionClassName = isDark ? "text-zinc-300" : "text-slate-700";
-  const ctaBackground = isDark
-    ? `linear-gradient(135deg, ${withAlpha(c, 0.3)}, ${withAlpha(c, 0.18)})`
-    : `linear-gradient(135deg, ${withAlpha(c, 0.18)}, ${withAlpha(c, 0.08)})`;
-  const ctaColor = isDark ? "#f8fafc" : "#0f172a";
 
   return (
     <article
-      onClick={onSelect}
-      data-selected={selected ? "" : undefined}
+      onClick={onOpen}
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => { if (!selected) setHovered(false); }}
+      onMouseLeave={() => setHovered(false)}
       className="cig-holocard relative flex-shrink-0 w-64 rounded-2xl cursor-pointer select-none overflow-hidden"
       style={{
         height: revealed ? "auto" : 220,
@@ -535,8 +527,7 @@ function HoloCard({ feature, selected, onSelect, onKnowMore, onRevealChange }: H
         border: `1px solid ${cardBorder}`,
         background: cardBackground,
         boxShadow: cardShadow,
-        transform: selected ? "scale(1.03)" : "scale(1)",
-        transition: "transform 0.35s cubic-bezier(.34,1.56,.64,1), box-shadow 0.35s ease, border-color 0.35s ease, background 0.35s ease",
+        transition: "box-shadow 0.35s ease, border-color 0.35s ease, background 0.35s ease",
         backdropFilter: "blur(18px) saturate(145%)",
       }}
     >
@@ -663,9 +654,8 @@ function HoloCard({ feature, selected, onSelect, onKnowMore, onRevealChange }: H
           )}
         </p>
 
-        {/* Preview + CTA */}
+        {/* Preview viz + tap hint */}
         <div className="flex flex-col gap-2 mt-1">
-          {/* Preview viz */}
           <div
             className="pt-2 border-t"
             style={{
@@ -678,43 +668,20 @@ function HoloCard({ feature, selected, onSelect, onKnowMore, onRevealChange }: H
             {feature.preview}
           </div>
 
-          {/* CTAs */}
+          {/* Tap-to-open hint */}
           <div
-            className="flex gap-1.5"
+            className="flex items-center justify-center gap-1 pt-1"
             style={{
-              opacity: revealed ? 1 : 0,
-              transform: revealed ? "translateY(0)" : "translateY(8px)",
-              transition: "opacity 0.35s ease 0.32s, transform 0.35s ease 0.32s",
+              opacity: revealed ? 0.55 : 0,
+              transition: "opacity 0.35s ease 0.32s",
             }}
           >
-            {/* Know more — stops propagation so card doesn't also fire onSelect */}
-            <button
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => { e.stopPropagation(); onKnowMore(); }}
-              className="flex-1 text-[11px] font-semibold text-center py-1.5 rounded-xl border transition-all active:scale-95"
-              style={{
-                background: ctaBackground,
-                borderColor: withAlpha(c, isDark ? 0.22 : 0.16),
-                color: ctaColor,
-                boxShadow: isDark ? `0 10px 24px ${withAlpha(c, 0.16)}` : `0 10px 20px ${withAlpha(c, 0.08)}`,
-              }}
-            >
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l6 6m-11-4a7 7 0 110-14 7 7 0 010 14z" />
+            </svg>
+            <span className="text-[10px] font-medium tracking-wide" style={{ color: c }}>
               {t("authed.knowMore")}
-            </button>
-
-            {/* Open feature */}
-            <button
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => { e.stopPropagation(); goToDashboard(feature.path); }}
-              className="flex-shrink-0 text-[11px] font-semibold text-center py-1.5 px-3 rounded-xl transition-all active:scale-95"
-              style={{
-                background: `linear-gradient(135deg, ${c}, ${withAlpha(c, 0.7)})`,
-                color: "#030712",
-                boxShadow: `0 6px 18px ${withAlpha(c, 0.35)}`,
-              }}
-            >
-              {t("authed.openFeatureShort")}
-            </button>
+            </span>
           </div>
         </div>
       </div>
@@ -748,13 +715,11 @@ function ScrollingRow({
   const trackRef  = useRef<HTMLDivElement>(null);
   // null = CSS animation running; number = manual override while dragging
   const [manualOffset, setManualOffset] = useState<number | null>(null);
-  const [selectedId, setSelectedId]     = useState<string | null>(null);
-  // Count of cards currently in "revealed" state (hovered or selected).
-  // When > 0 the scroll animation pauses so cards don't slide away.
+  // Count of cards currently hovered. When > 0 the animation pauses.
   const revealedCount = useRef(0);
   const [anyRevealed, setAnyRevealed]   = useState(false);
   const handleRevealChange = useCallback((revealed: boolean) => {
-    revealedCount.current += revealed ? 1 : -1;
+    revealedCount.current = Math.max(0, revealedCount.current + (revealed ? 1 : -1));
     setAnyRevealed(revealedCount.current > 0);
   }, []);
 
@@ -815,7 +780,7 @@ function ScrollingRow({
     dragging.current = false;
 
     if (Math.abs(totalDelta.current) < 5) {
-      // Tap — reset to animated state; onClick on the card handles navigation
+      // Genuine tap — let the card's onClick fire naturally
       setManualOffset(null);
       return;
     }
@@ -825,35 +790,13 @@ function ScrollingRow({
     setManualOffset(null);
   };
 
-  /** Card click handler — only fires for genuine taps (not drags). */
-  const handleCardClick = (feature: Feature) => {
-    if (Math.abs(totalDelta.current) >= 5) return; // was a drag
-
-    if (selectedId === feature.id) {
-      // Second tap on the already-selected card → collapse (deselect)
-      setSelectedId(null);
-    } else {
-      // First tap → lock card revealed so buttons are easy to click
-      setSelectedId(feature.id);
-    }
-  };
-
-  const isPaused = anyRevealed || selectedId !== null;
-
   const trackStyle: React.CSSProperties =
     manualOffset !== null
       ? { transform: `translateX(${manualOffset}px)`, willChange: "transform" }
       : {
           animation: `cig-scroll-${direction} ${duration} linear infinite`,
-          animationPlayState: isPaused ? "paused" : "running",
+          animationPlayState: anyRevealed ? "paused" : "running",
         };
-
-  /** Click directly on the row wrapper (not on a card or button) → deselect. */
-  const handleRowClick = (e: React.MouseEvent) => {
-    if (!(e.target as HTMLElement).closest("article")) {
-      setSelectedId(null);
-    }
-  };
 
   return (
     <div
@@ -862,16 +805,13 @@ function ScrollingRow({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
-      onClick={handleRowClick}
     >
       <div ref={trackRef} className="flex gap-4 w-max px-4" style={trackStyle}>
         {doubled.map((f, i) => (
           <HoloCard
             key={`${f.id}-${i}`}
             feature={f}
-            selected={selectedId === f.id}
-            onSelect={() => handleCardClick(f)}
-            onKnowMore={() => onKnowMore(f)}
+            onOpen={() => onKnowMore(f)}
             onRevealChange={handleRevealChange}
           />
         ))}
