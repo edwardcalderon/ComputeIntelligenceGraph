@@ -5,7 +5,7 @@ const LANDING_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 /** Routes that are always public — no session required. */
-const PUBLIC_PATHS = ["/signed-out", "/auth/callback", "/_next", "/favicon"];
+const PUBLIC_PATHS = ["/auth/callback", "/_next", "/favicon"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

@@ -809,7 +809,19 @@ function PublicLanding() {
 
 // Auth-aware inner — only rendered when AuthProvider is confirmed in scope
 function HomePageInner() {
-  const { user, loading } = useAuth();
+  const { user, loading, signOutUser } = useAuth();
+
+  // When the dashboard redirects here with ?signout=1, sign out of Supabase
+  // and clean the URL so a refresh shows the normal unauthenticated landing.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("signout") === "1") {
+      signOutUser();
+      const clean = window.location.pathname;
+      window.history.replaceState({}, "", clean);
+    }
+  }, [signOutUser]);
+
   if (loading) return null;
   if (user) return <AuthenticatedLanding />;
   return <PublicLanding />;

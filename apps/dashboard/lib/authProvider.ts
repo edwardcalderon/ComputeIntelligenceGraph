@@ -34,20 +34,7 @@ function decodeJwt(token: string): Record<string, unknown> | null {
   }
 }
 
-/**
- * Where to send the user after explicit logout vs unauthenticated access:
- *
- * - Explicit logout   → /signed-out  (in-app farewell page, then user clicks "Sign in")
- * - Unauthenticated   → NEXT_PUBLIC_SITE_URL (landing sign-in, works local & prod)
- * - 401/403 API error → NEXT_PUBLIC_SITE_URL (session invalid, go log in again)
- */
-const SIGNED_OUT_PATH = "/signed-out";
-
 function getLandingUrl(): string {
-  if (typeof window !== "undefined") {
-    // In the browser NEXT_PUBLIC_* vars are baked in at build time
-    return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  }
   return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 }
 
@@ -57,9 +44,11 @@ export const authProvider: AuthProvider = {
 
   logout: async () => {
     clearSession();
+    // Redirect to landing with ?signout=1 so it can call supabase.signOut()
+    // and reset to the unauthenticated view cleanly.
     return {
       success: true,
-      redirectTo: SIGNED_OUT_PATH,
+      redirectTo: `${getLandingUrl()}?signout=1`,
     };
   },
 
