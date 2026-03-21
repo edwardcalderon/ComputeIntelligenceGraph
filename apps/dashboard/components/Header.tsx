@@ -1,18 +1,54 @@
 "use client";
 
 import { useAppStore } from "../lib/store";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { NotificationBell } from "./NotificationBell";
+
+interface DeviceAuthResponse {
+  items: Array<{ expires_at: string }>;
+  total: number;
+}
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+
+async function getPendingDeviceRequests(): Promise<DeviceAuthResponse> {
+  const res = await fetch(`${API_URL}/api/v1/auth/device/pending`, {
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new Error(`API error ${res.status}: ${res.statusText}`);
+  }
+  return res.json();
+}
 
 export function Header() {
   const { toggleSidebar, theme, setTheme } = useAppStore();
+  const [mounted, setMounted] = useState(false);
 
-  // Apply dark class to <html> whenever theme changes
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "dark") root.classList.add("dark");
     else root.classList.remove("dark");
   }, [theme]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const { data } = useQuery<DeviceAuthResponse>({
+    queryKey: ["device-auth", "pending"],
+    queryFn: getPendingDeviceRequests,
+    refetchInterval: 5_000,
+    enabled: mounted,
+  });
+
+  const activeRequests = (data?.items ?? []).filter(
+    (req) => new Date(req.expires_at).getTime() > Date.now()
+  );
+  const pendingCount = activeRequests.length;
 
   return (
     <header className="flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4 dark:border-gray-700 dark:bg-gray-900">
@@ -31,6 +67,23 @@ export function Header() {
 
       {/* Right actions */}
       <div className="flex items-center gap-1">
+        {/* Device approval badge */}
+        {pendingCount > 0 && (
+          <Link
+            href="/device-approval"
+            className="relative rounded-md p-2 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
+            title="Pending device approvals"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+              {pendingCount}
+            </span>
+          </Link>
+        )}
+
         <NotificationBell />
 
         {/* Dark mode toggle */}

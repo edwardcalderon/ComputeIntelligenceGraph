@@ -14,7 +14,10 @@
   },
   "dependencies": {
     "@aws-sdk/client-cost-explorer": "^3.1009.0",
+    "better-sqlite3": "^9.4.3",
+    "pg": "^8.11.3",
     "@supabase/supabase-js": "^2.0.0",
+    "@cig/auth": "workspace:*",
     "@cig/discovery": "workspace:*",
     "@cig/graph": "workspace:*",
     "@escape.tech/graphql-armor-cost-limit": "^2.0.0",
@@ -31,8 +34,11 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
+    "@types/better-sqlite3": "^7.6.8",
     "@types/jsonwebtoken": "^9.0.0",
+    "@types/pg": "^8.11.6",
     "@types/ws": "^8.18.1",
+    "fast-check": "^3.23.2",
     "typescript": "^5.4.0",
     "vitest": "^1.4.0"
   }

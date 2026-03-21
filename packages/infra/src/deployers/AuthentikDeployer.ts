@@ -10,7 +10,7 @@ import { resolveIacModulesPath } from '../iac/resolveIacModulesPath';
 import { Logger } from '../logging/Logger';
 import {
   AuthentikDeploymentConfig,
-  AuthentikDeploymentResult,
+  AuthentikBlueprintResult,
   TerraformModuleReference,
 } from '../types';
 import { DeploymentError, LSTSInfraError } from '../errors';
@@ -110,65 +110,95 @@ export class AuthentikDeployer {
    * }
    * ```
    */
-  async deploy(config: AuthentikDeploymentConfig): Promise<AuthentikDeploymentResult> {
+  async deploy(config: AuthentikDeploymentConfig): Promise<AuthentikBlueprintResult> {
     this.logger.info('Starting Authentik deployment', {
       domain: config.domain,
       region: config.region,
       adminEmail: config.adminEmail
     });
 
+    // Validate configuration before touching any infrastructure
+    this.validateDeploymentConfig(config);
+
+    const iacModulesPath = resolveIacModulesPath({ providedPath: config.iacModulesPath });
+    const iacIntegration = new IACIntegration(iacModulesPath, this.logger);
+
+    const variables: Record<string, any> = {
+      domain: config.domain,
+      region: config.region,
+    };
+    if (config.vpcId) variables['vpc_id'] = config.vpcId;
+
+    let outputs: Record<string, string> = {};
+
     try {
-      // Phase 1: Validate configuration
-      this.logger.info('Validating deployment configuration', { phase: 'validation' });
-      this.validateDeploymentConfig(config);
-
-      // Phase 2: Provision networking infrastructure
-      this.logger.info('Provisioning networking infrastructure', { phase: 'networking' });
-      const networkingModule = await this.provisionNetworking(config);
-      
-      // Phase 3: Deploy Authentik container
-      this.logger.info('Deploying Authentik container', { phase: 'deployment' });
-      const deploymentId = await this.deployContainer(config, networkingModule);
-
-      // Phase 4: Configure Authentik
-      this.logger.info('Configuring Authentik', { phase: 'configuration' });
-      await this.configure(deploymentId);
-
-      // Phase 5: Get connection details
-      this.logger.info('Retrieving connection details', { phase: 'finalization' });
-      const connectionDetails = await this.getConnectionDetails(deploymentId);
-
-      const result: AuthentikDeploymentResult = {
-        success: true,
-        resourceId: deploymentId,
-        url: connectionDetails.url,
-        connectionDetails
-      };
-
-      this.logger.info('Authentik deployment completed successfully', {
-        resourceId: deploymentId,
-        url: connectionDetails.url
-      });
-
-      return result;
+      this.logger.info('Applying authentik-aws Terraform module', { phase: 'apply' });
+      outputs = await iacIntegration.applyModule('authentik-aws', variables);
     } catch (error) {
-      this.logger.error('Authentik deployment failed', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+      this.logger.error('Terraform apply failed — initiating rollback', {
+        error: error instanceof Error ? error.message : String(error)
       });
 
-      // Re-throw deployment errors as-is
-      if (error instanceof DeploymentError || error instanceof LSTSInfraError) {
-        throw error;
+      try {
+        await iacIntegration.destroyModule('authentik-aws', variables);
+      } catch (rollbackError) {
+        this.logger.error('Rollback (destroyModule) also failed', {
+          error: rollbackError instanceof Error ? rollbackError.message : String(rollbackError)
+        });
+        // Log but re-throw the original error
       }
 
-      // Wrap other errors in DeploymentError
       throw new DeploymentError(
         `Authentik deployment failed: ${error instanceof Error ? error.message : String(error)}`,
         'authentik',
-        'unknown'
+        'apply'
       );
     }
+
+    // Validate that the required outputs are present
+    const issuerUrl = outputs['issuer_url'] ?? '';
+    const oidcClientId = outputs['oidc_client_id'] ?? '';
+    const oidcClientSecret = outputs['oidc_client_secret'] ?? '';
+
+    if (!issuerUrl || !oidcClientId || !oidcClientSecret) {
+      // Outputs are missing — roll back and surface a clear error
+      this.logger.error('Terraform outputs incomplete — initiating rollback', { outputs });
+
+      try {
+        await iacIntegration.destroyModule('authentik-aws', variables);
+      } catch (rollbackError) {
+        this.logger.error('Rollback after incomplete outputs failed', {
+          error: rollbackError instanceof Error ? rollbackError.message : String(rollbackError)
+        });
+      }
+
+      throw new DeploymentError(
+        'Authentik deployment produced incomplete outputs: issuer_url, oidc_client_id, and oidc_client_secret are required',
+        'authentik',
+        'finalization'
+      );
+    }
+
+    const result: AuthentikBlueprintResult = {
+      success: true,
+      resourceId: `authentik-${config.domain}`,
+      url: issuerUrl,
+      issuerUrl,
+      oidcClientId,
+      oidcClientSecret,
+      connectionDetails: {
+        url: issuerUrl,
+        adminUrl: `${issuerUrl}/if/admin/`,
+        clientId: oidcClientId,
+      },
+    };
+
+    this.logger.info('Authentik deployment completed successfully', {
+      issuerUrl,
+      oidcClientId
+    });
+
+    return result;
   }
 
   /**

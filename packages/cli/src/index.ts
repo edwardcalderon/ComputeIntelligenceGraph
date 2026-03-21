@@ -1,6 +1,11 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { runWizard } from './wizard.js';
+import { login } from './commands/login.js';
+import { logout } from './commands/logout.js';
+import { doctor } from './commands/doctor.js';
+import { install } from './commands/install.js';
+import { bootstrapReset } from './commands/bootstrap-reset.js';
 
 const program = new Command();
 
@@ -44,11 +49,56 @@ function reset(): void {
 // --- Commands ---
 
 program
-  .command('install')
-  .description('Launch the CIG installation wizard')
+  .command('login')
+  .description('Authenticate via device authorization flow')
+  .option('--api-url <url>', 'API URL (default: http://localhost:8000)', 'http://localhost:8000')
+  .action((opts) => {
+    login(opts.apiUrl).catch((err) => {
+      console.error('Error during login:', err);
+      process.exit(1);
+    });
+  });
+
+program
+  .command('logout')
+  .description('Clear stored credentials and logout')
+  .option('--api-url <url>', 'API URL (default: http://localhost:8000)', 'http://localhost:8000')
+  .action((opts) => {
+    logout(opts.apiUrl).catch((err) => {
+      console.error('Error during logout:', err);
+      process.exit(1);
+    });
+  });
+
+program
+  .command('doctor')
+  .description('Run prerequisite checks and display system readiness')
   .action(() => {
-    runWizard().catch((err) => {
+    doctor().catch((err) => {
+      console.error('Error during doctor check:', err);
+      process.exit(1);
+    });
+  });
+
+program
+  .command('install')
+  .description('Install CIG with optional mode and profile selection')
+  .option('--mode <mode>', 'Installation mode: managed or self-hosted')
+  .option('--profile <profile>', 'Installation profile: core or full')
+  .option('--api-url <url>', 'API URL (default: http://localhost:8000)', 'http://localhost:8000')
+  .action((opts) => {
+    install(opts.apiUrl, opts.mode, opts.profile).catch((err) => {
       console.error('Error during install:', err);
+      process.exit(1);
+    });
+  });
+
+program
+  .command('bootstrap-reset')
+  .description('Generate and display a new bootstrap token (self-hosted mode)')
+  .action(() => {
+    bootstrapReset().catch((err) => {
+      console.error('Error during bootstrap reset:', err);
       process.exit(1);
     });
   });

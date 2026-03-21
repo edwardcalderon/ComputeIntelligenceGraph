@@ -26,19 +26,17 @@ export class IACIntegration {
   private readonly iacModulesPath: string;
   private readonly networkingModuleName = 'networking';
   private readonly computeModuleName = 'compute';
+  private readonly logger?: { info?: (msg: string, ctx?: any) => void };
 
   /**
    * Create an IAC integration instance
-   * 
+   *
    * @param iacModulesPath - Path to the @cig/iac modules directory
-   * 
-   * @example
-   * ```typescript
-   * const iacIntegration = new IACIntegration('../iac');
-   * ```
+   * @param logger - Optional logger instance
    */
-  constructor(iacModulesPath: string) {
+  constructor(iacModulesPath: string, logger?: { info?: (msg: string, ctx?: any) => void }) {
     this.iacModulesPath = iacModulesPath;
+    this.logger = logger;
   }
 
   /**
@@ -104,6 +102,47 @@ export class IACIntegration {
       modulePath,
       variables: config
     };
+  }
+
+  /**
+   * Apply a Terraform module (terraform init + apply)
+   *
+   * @param moduleName - Name of the module under `modules/` (e.g. 'authentik-aws')
+   * @param variables - Input variables to pass to the module
+   * @returns Terraform outputs as a key-value map
+   *
+   * @throws {InfraError} If the module is not found or apply fails
+   */
+  async applyModule(
+    moduleName: string,
+    variables: Record<string, any>
+  ): Promise<Record<string, string>> {
+    const modulePath = this.resolveModulePath(moduleName);
+    await this.validateModule(modulePath);
+
+    // In a real implementation this would shell out to `terraform apply`.
+    // The stub returns an empty map; callers should replace this with a real
+    // Terraform runner or a test double.
+    this.logger?.info?.(`Applying Terraform module: ${moduleName}`, { variables });
+    return {};
+  }
+
+  /**
+   * Destroy resources provisioned by a Terraform module (terraform destroy)
+   *
+   * @param moduleName - Name of the module under `modules/` (e.g. 'authentik-aws')
+   * @param variables - Input variables that were used during apply
+   *
+   * @throws {InfraError} If destroy fails
+   */
+  async destroyModule(
+    moduleName: string,
+    variables: Record<string, any>
+  ): Promise<void> {
+    const modulePath = this.resolveModulePath(moduleName);
+
+    // In a real implementation this would shell out to `terraform destroy`.
+    this.logger?.info?.(`Destroying Terraform module: ${moduleName}`, { variables });
   }
 
   /**

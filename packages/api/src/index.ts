@@ -5,6 +5,7 @@ import { registerRoutes } from './routes';
 import { registerGraphQL } from './graphql';
 import { registerWebSocket } from './websocket';
 import { getMetrics, recordHttpRequest } from './metrics';
+import { startHeartbeatMonitor } from './jobs/heartbeat-monitor';
 
 const VERSION = '0.1.0';
 
@@ -102,6 +103,8 @@ export async function start(): Promise<void> {
   try {
     await app.listen({ port, host });
     app.log.info(`Server listening on ${host}:${port}`);
+    // Start background job for heartbeat status monitoring (Requirement 14.7)
+    startHeartbeatMonitor();
   } catch (err) {
     app.log.error(err);
     process.exit(1);

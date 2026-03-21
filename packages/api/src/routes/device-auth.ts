@@ -1,0 +1,338 @@
+/**
+ * Device Authorization Grant endpoints (RFC 8628).
+ *
+ * Routes:
+ *   POST /api/v1/auth/device/authorize  — generate device_code + user_code
+ *   GET  /api/v1/auth/device/pending    — list pending device auth requests for authenticated user
+ *   POST /api/v1/auth/device/poll       — poll for approval status
+ *   POST /api/v1/auth/device/approve    — approve a pending device (Dashboard session required)
+ *   POST /api/v1/auth/device/deny       — deny a pending device (Dashboard session required)
+ *   POST /api/v1/auth/logout            — invalidate session token
+ *
+ * Requirement 12: API — Device Authorization Endpoints
+ */
+
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import crypto from 'crypto';
+import { query } from '../db/client';
+import { authenticate } from '../auth';
+import { writeAuditEvent } from '../audit';
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const DEVICE_CODE_EXPIRY_SECONDS = 900; // 15 minutes
+const POLL_RATE_LIMIT_MS = 5_000; // 1 request per 5 seconds per device_code
+const VERIFICATION_URI = process.env['VERIFICATION_URI'] ?? 'https://cig.lat/device';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Generate a 32-character lowercase hex device_code. */
+function generateDeviceCode(): string {
+  return crypto.randomBytes(16).toString('hex'); // 16 bytes → 32 hex chars
+}
+
+/**
+ * Generate an 8-character alphanumeric user_code.
+ * Uses uppercase letters + digits for readability.
+ */
+function generateUserCode(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const bytes = crypto.randomBytes(8);
+  return Array.from(bytes)
+    .map((b) => chars[b % chars.length])
+    .join('');
+}
+
+/** Return the client IP from the Fastify request. */
+function getClientIp(request: FastifyRequest): string {
+  const forwarded = request.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string') {
+    return forwarded.split(',')[0]?.trim() ?? request.ip;
+  }
+  return request.ip;
+}
+
+// ---------------------------------------------------------------------------
+// Route plugin
+// ---------------------------------------------------------------------------
+
+export async function deviceAuthRoutes(app: FastifyInstance): Promise<void> {
+  // ── POST /api/v1/auth/device/authorize ─────────────────────────────────────
+  // Requirement 12.1, 12.2
+  app.post(
+    '/api/v1/auth/device/authorize',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const deviceCode = generateDeviceCode();
+      const userCode = generateUserCode();
+      const ipAddress = getClientIp(request);
+      const expiresAt = new Date(Date.now() + DEVICE_CODE_EXPIRY_SECONDS * 1000);
+
+      try {
+        await query(
+          `INSERT INTO device_auth_records
+             (device_code, user_code, ip_address, expires_at)
+           VALUES (?, ?, ?, ?)`,
+          [deviceCode, userCode, ipAddress, expiresAt.toISOString()]
+        );
+      } catch {
+        // Retry with a fresh code on the (astronomically unlikely) collision
+        const dc2 = generateDeviceCode();
+        const uc2 = generateUserCode();
+        await query(
+          `INSERT INTO device_auth_records
+             (device_code, user_code, ip_address, expires_at)
+           VALUES (?, ?, ?, ?)`,
+          [dc2, uc2, ipAddress, expiresAt.toISOString()]
+        );
+        writeAuditEvent(app, 'device_authorize_initiated', 'unknown', ipAddress, 'success', { user_code: uc2 });
+        return reply.status(201).send({
+          device_code: dc2,
+          user_code: uc2,
+          verification_uri: VERIFICATION_URI,
+          expires_in: DEVICE_CODE_EXPIRY_SECONDS,
+        });
+      }
+
+      writeAuditEvent(app, 'device_authorize_initiated', 'unknown', ipAddress, 'success', { user_code: userCode });
+      return reply.status(201).send({
+        device_code: deviceCode,
+        user_code: userCode,
+        verification_uri: VERIFICATION_URI,
+        expires_in: DEVICE_CODE_EXPIRY_SECONDS,
+      });
+    }
+  );
+
+  // ── GET /api/v1/auth/device/pending ────────────────────────────────────────
+  // List pending device auth requests for authenticated user
+  app.get(
+    '/api/v1/auth/device/pending',
+    { preHandler: [authenticate] },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const user = (request as any).user as { sub: string } | undefined;
+      const userId = user?.sub ?? 'unknown';
+
+      const result = await query<{
+        device_code: string;
+        user_code: string;
+        ip_address: string;
+        created_at: string;
+        expires_at: string;
+      }>(
+        `SELECT device_code, user_code, ip_address, created_at, expires_at
+           FROM device_auth_records
+          WHERE user_id = ?
+            AND status = 'pending'
+            AND expires_at > ?
+          ORDER BY created_at DESC`,
+        [userId, new Date().toISOString()]
+      );
+
+      return reply.send({ items: result.rows, total: result.rowCount });
+    }
+  );
+
+  // ── POST /api/v1/auth/device/poll ──────────────────────────────────────────
+  // Requirement 12.3, 12.4, 12.7, 12.8
+  app.post(
+    '/api/v1/auth/device/poll',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const body = request.body as { device_code?: string };
+      const deviceCode = body?.device_code;
+
+      if (!deviceCode) {
+        return reply.status(400).send({
+          error: 'Missing required field: device_code',
+          code: 'missing_device_code',
+          statusCode: 400,
+        });
+      }
+
+      // Look up the record
+      const result = await query<{
+        device_code: string;
+        status: string;
+        expires_at: string;
+        last_polled_at: string | null;
+        access_token: string | null;
+        refresh_token: string | null;
+      }>(
+        `SELECT device_code, status, expires_at, last_polled_at, access_token, refresh_token
+           FROM device_auth_records
+          WHERE device_code = ?`,
+        [deviceCode]
+      );
+
+      const record = result.rows[0];
+
+      // Unknown or expired device_code
+      if (!record) {
+        return reply.send({ status: 'expired' });
+      }
+
+      const now = Date.now();
+      const expiresAt = new Date(record.expires_at).getTime();
+
+      // Check expiry
+      if (now > expiresAt) {
+        // Mark as expired in DB (best-effort)
+        query(
+          `UPDATE device_auth_records SET status = 'expired' WHERE device_code = ?`,
+          [deviceCode]
+        ).catch(() => {/* ignore */});
+        return reply.send({ status: 'expired' });
+      }
+
+      // Rate-limit: 1 req / 5s per device_code
+      if (record.last_polled_at) {
+        const lastPolled = new Date(record.last_polled_at).getTime();
+        if (now - lastPolled < POLL_RATE_LIMIT_MS) {
+          return reply.send({ status: 'slow_down' });
+        }
+      }
+
+      // Update last_polled_at
+      await query(
+        `UPDATE device_auth_records SET last_polled_at = ? WHERE device_code = ?`,
+        [new Date(now).toISOString(), deviceCode]
+      );
+
+      const status = record.status as 'pending' | 'approved' | 'denied' | 'expired';
+
+      if (status === 'approved') {
+        return reply.send({
+          status: 'approved',
+          access_token: record.access_token,
+          refresh_token: record.refresh_token,
+          token_type: 'Bearer',
+        });
+      }
+
+      return reply.send({ status });
+    }
+  );
+
+  // ── POST /api/v1/auth/device/approve ───────────────────────────────────────
+  // Requirement 12.5 — requires authenticated Dashboard session
+  app.post(
+    '/api/v1/auth/device/approve',
+    { preHandler: [authenticate] },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const body = request.body as { user_code?: string };
+      const userCode = body?.user_code;
+      const ipAddress = getClientIp(request);
+
+      if (!userCode) {
+        return reply.status(400).send({
+          error: 'Missing required field: user_code',
+          code: 'missing_user_code',
+          statusCode: 400,
+        });
+      }
+
+      const user = (request as any).user as { sub: string } | undefined;
+      const userId = user?.sub ?? 'unknown';
+
+      // Generate tokens for the approved device
+      const accessToken = crypto.randomBytes(32).toString('hex');
+      const refreshToken = crypto.randomBytes(32).toString('hex');
+
+      const result = await query(
+        `UPDATE device_auth_records
+            SET status = 'approved',
+                user_id = ?,
+                access_token = ?,
+                refresh_token = ?
+          WHERE user_code = ?
+            AND status = 'pending'
+            AND expires_at > ?`,
+        [userId, accessToken, refreshToken, userCode, new Date().toISOString()]
+      );
+
+      if (result.rowCount === 0) {
+        writeAuditEvent(app, 'device_approved', userId, ipAddress, 'failure', { user_code: userCode });
+        return reply.status(404).send({
+          error: 'Device not found, already processed, or expired',
+          code: 'device_not_found',
+          statusCode: 404,
+        });
+      }
+
+      writeAuditEvent(app, 'device_approved', userId, ipAddress, 'success', { user_code: userCode });
+      return reply.send({ success: true });
+    }
+  );
+
+  // ── POST /api/v1/auth/device/deny ──────────────────────────────────────────
+  // Requirement 12.6 — requires authenticated Dashboard session
+  app.post(
+    '/api/v1/auth/device/deny',
+    { preHandler: [authenticate] },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const body = request.body as { user_code?: string };
+      const userCode = body?.user_code;
+      const ipAddress = getClientIp(request);
+
+      if (!userCode) {
+        return reply.status(400).send({
+          error: 'Missing required field: user_code',
+          code: 'missing_user_code',
+          statusCode: 400,
+        });
+      }
+
+      const user = (request as any).user as { sub: string } | undefined;
+      const userId = user?.sub ?? 'unknown';
+
+      const result = await query(
+        `UPDATE device_auth_records
+            SET status = 'denied'
+          WHERE user_code = ?
+            AND status = 'pending'
+            AND expires_at > ?`,
+        [userCode, new Date().toISOString()]
+      );
+
+      if (result.rowCount === 0) {
+        writeAuditEvent(app, 'device_denied', userId, ipAddress, 'failure', { user_code: userCode });
+        return reply.status(404).send({
+          error: 'Device not found, already processed, or expired',
+          code: 'device_not_found',
+          statusCode: 404,
+        });
+      }
+
+      writeAuditEvent(app, 'device_denied', userId, ipAddress, 'success', { user_code: userCode });
+      return reply.send({ success: true });
+    }
+  );
+
+  // ── POST /api/v1/auth/logout ───────────────────────────────────────────────
+  // Requirement 12.9 — invalidate session token
+  app.post(
+    '/api/v1/auth/logout',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const authHeader = request.headers['authorization'];
+      const ipAddress = getClientIp(request);
+      let userId = 'unknown';
+
+      if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.slice(7);
+        // Mark any device_auth_record whose access_token matches as expired
+        await query(
+          `UPDATE device_auth_records
+              SET status = 'expired'
+            WHERE access_token = ?`,
+          [token]
+        ).catch(() => {/* ignore — best effort */});
+      }
+
+      writeAuditEvent(app, 'logout', userId, ipAddress, 'success');
+      return reply.send({ success: true });
+    }
+  );
+}

@@ -359,6 +359,24 @@ export interface AuthentikDeploymentResult extends DeploymentResult {
 }
 
 /**
+ * Blueprint result for Authentik deployments
+ *
+ * @remarks
+ * Extends `AuthentikDeploymentResult` with the OIDC outputs produced by the
+ * `authentik-aws` Terraform module: the issuer URL, OIDC client ID, and OIDC
+ * client secret.  These values are required by the auth package to configure
+ * the OIDC adapter in managed mode.
+ */
+export interface AuthentikBlueprintResult extends AuthentikDeploymentResult {
+  /** Authentik OIDC issuer URL (e.g. https://auth.example.com/application/o/cig/) */
+  issuerUrl: string;
+  /** OIDC client ID registered in Authentik */
+  oidcClientId: string;
+  /** OIDC client secret registered in Authentik */
+  oidcClientSecret: string;
+}
+
+/**
  * Dashboard-specific deployment configuration
  * 
  * @remarks

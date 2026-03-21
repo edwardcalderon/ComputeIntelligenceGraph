@@ -5,6 +5,12 @@ import { authenticate, authorize, Permission } from './auth';
 import { costAnalyzer } from './costs';
 import { securityScanner } from './security';
 import { newsletterManager } from './newsletter';
+import { deviceAuthRoutes } from './routes/device-auth';
+import { enrollmentRoutes } from './routes/enrollment';
+import { heartbeatRoutes } from './routes/heartbeat';
+import { bootstrapRoutes } from './routes/bootstrap';
+import { oidcRoutes } from './routes/oidc';
+import { auditRoutes } from './routes/audit';
 
 // Shared instances
 const graphEngine = new GraphEngine();
@@ -16,6 +22,24 @@ const manageDiscovery = [authenticate, authorize([Permission.MANAGE_DISCOVERY])]
 const executeActions = [authenticate, authorize([Permission.EXECUTE_ACTIONS])];
 
 export async function registerRoutes(app: FastifyInstance): Promise<void> {
+  // ─── Device Authorization (RFC 8628) ────────────────────────────────────────
+  await app.register(deviceAuthRoutes);
+
+  // ─── Target Enrollment (Requirement 13) ─────────────────────────────────────
+  await app.register(enrollmentRoutes);
+
+  // ─── Heartbeat (Requirement 14) ──────────────────────────────────────────────
+  await app.register(heartbeatRoutes);
+
+  // ─── Bootstrap (Requirement 15) ──────────────────────────────────────────────
+  await app.register(bootstrapRoutes);
+
+  // ─── OIDC Callback (Requirement 16) ──────────────────────────────────────────
+  await app.register(oidcRoutes);
+
+  // ─── Audit (Requirement 18) ──────────────────────────────────────────────────
+  await app.register(auditRoutes);
+
   // ─── Resources ──────────────────────────────────────────────────────────────
 
   // GET /api/v1/resources — list all resources with optional filtering

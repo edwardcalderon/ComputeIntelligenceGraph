@@ -14,7 +14,8 @@ export type WsEventType =
   | 'resource_updated'
   | 'discovery_complete'
   | 'discovery_failed'
-  | 'discovery_progress';
+  | 'discovery_progress'
+  | 'target:heartbeat';
 
 export interface WsMessage {
   type: WsEventType | 'ping' | 'pong';
@@ -44,6 +45,13 @@ export function broadcastEvent(type: WsEventType, data: unknown): void {
       client.send(payload);
     }
   }
+}
+
+/**
+ * Broadcast a `target:heartbeat` event to all connected Dashboard clients.
+ */
+export function broadcastHeartbeat(targetId: string, data: unknown): void {
+  broadcastEvent('target:heartbeat', { target_id: targetId, ...((data as Record<string, unknown>) ?? {}) });
 }
 
 // ─── Plugin registration ──────────────────────────────────────────────────────
