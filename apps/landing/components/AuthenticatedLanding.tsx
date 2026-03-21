@@ -5,6 +5,7 @@ import { useAuth, getSupabaseClient } from "@cig/auth";
 import { SpaceBackground } from "./SpaceBackground";
 import { ElectricWavesBackground } from "./ElectricWavesBackground";
 import { AuthButton } from "./AuthButton";
+import { ThemeToggle } from "./ThemeToggle";
 
 const DASHBOARD_URL =
   process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3002";
@@ -288,7 +289,7 @@ function HoloCard({ feature, selected, onSelect }: HoloCardProps) {
         </div>
 
         <div className="text-center">
-          <h3 className="text-sm font-bold text-zinc-100">{feature.title}</h3>
+          <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{feature.title}</h3>
           <span
             className="text-[10px] font-semibold px-2 py-0.5 rounded-full mt-1.5 inline-block tracking-wide"
             style={{ backgroundColor: `${c}18`, color: c }}
@@ -340,7 +341,7 @@ function HoloCard({ feature, selected, onSelect }: HoloCardProps) {
 
         {/* Title — fades up */}
         <h3
-          className="text-sm font-bold text-zinc-100 leading-snug"
+          className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-snug"
           style={{
             opacity: revealed ? 1 : 0,
             transform: revealed ? "translateY(0)" : "translateY(6px)",
@@ -351,7 +352,7 @@ function HoloCard({ feature, selected, onSelect }: HoloCardProps) {
         </h3>
 
         {/* Description — typed out */}
-        <p className="text-[11px] text-zinc-400 leading-relaxed" style={{ minHeight: 40 }}>
+        <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed" style={{ minHeight: 40 }}>
           {typed}
           {revealed && !done && (
             <span
@@ -552,7 +553,7 @@ export function AuthenticatedLanding() {
   const handleEnterDashboard = useCallback(() => goToDashboard("/"), []);
 
   return (
-    <div className="relative min-h-screen w-full overflow-x-hidden text-white flex flex-col" style={{ background: "transparent" }}>
+    <div className="relative min-h-screen w-full overflow-x-hidden text-zinc-900 dark:text-white flex flex-col bg-gradient-to-br from-zinc-50 via-white to-zinc-100 dark:from-transparent dark:via-transparent dark:to-transparent">
       {/* ── Keyframes ──────────────────────────────────────── */}
       <style>{`
         @keyframes cig-scroll-left  { from { transform: translateX(0); }    to { transform: translateX(-50%); } }
@@ -562,8 +563,11 @@ export function AuthenticatedLanding() {
         @keyframes cig-scan         { 0% { top: 0%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
       `}</style>
 
-      {/* Auth button */}
-      <div className="fixed top-4 right-4 z-50"><AuthButton /></div>
+      {/* Auth button + theme toggle */}
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <ThemeToggle />
+        <AuthButton />
+      </div>
 
       {/* WebGL electric waves — fullscreen behind everything */}
       <ElectricWavesBackground />
@@ -579,9 +583,9 @@ export function AuthenticatedLanding() {
             Your Infrastructure
           </span>
           <br />
-          <span className="text-zinc-100">Command Center</span>
+          <span className="text-zinc-900 dark:text-zinc-100">Command Center</span>
         </h1>
-        <p className="text-zinc-400 text-base max-w-md mb-8 leading-relaxed">
+        <p className="text-zinc-600 dark:text-zinc-400 text-base max-w-md mb-8 leading-relaxed">
           Select a module below to jump directly into your infrastructure intelligence dashboard.
         </p>
 
@@ -612,7 +616,7 @@ export function AuthenticatedLanding() {
       <div className="relative pb-12 flex flex-col gap-5 mt-4">
         <div className="pointer-events-none absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-[#050b14] to-transparent z-10" />
 
-        <p className="text-center text-xs text-zinc-600 mb-1 select-none">
+        <p className="text-center text-xs text-zinc-400 dark:text-zinc-600 mb-1 select-none">
           Drag to explore · tap once to preview · tap again to open
         </p>
 
@@ -623,7 +627,7 @@ export function AuthenticatedLanding() {
       </div>
 
       {/* ── Footer ──────────────────────────────────────────────── */}
-      <footer className="relative z-10 mt-auto w-full text-center text-xs text-zinc-600 pt-6 pb-4 border-t border-zinc-800/40">
+      <footer className="relative z-10 mt-auto w-full text-center text-xs text-zinc-500 dark:text-zinc-600 pt-6 pb-4 border-t border-zinc-200 dark:border-zinc-800/40">
         <p>© {new Date().getFullYear()} CIG — Compute Intelligence Graph. Open-source under MIT License.</p>
         <p className="mt-1 text-zinc-700"
           title={process.env.NEXT_PUBLIC_RELEASE_TAG || `v${process.env.NEXT_PUBLIC_APP_VERSION}`}>

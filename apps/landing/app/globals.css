@@ -11,3 +11,17 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Smooth theme transitions on key surfaces */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color;
+  transition-duration: 0s;
+}
+html.transitioning *,
+html.transitioning *::before,
+html.transitioning *::after {
+  transition-duration: 200ms;
+  transition-timing-function: ease-in-out;
+}

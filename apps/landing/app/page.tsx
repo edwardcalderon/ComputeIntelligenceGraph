@@ -6,6 +6,7 @@ import { GraphParticleTypography } from "../components/GraphParticleTypography";
 import { SpaceBackground } from "../components/SpaceBackground";
 import { AuthButton } from "../components/AuthButton";
 import { AuthenticatedLanding } from "../components/AuthenticatedLanding";
+import { ThemeToggle } from "../components/ThemeToggle";
 import { useAuth, useAuthReady, useAuthAvailable } from "@cig/auth";
 import {
   Cloud,
@@ -187,7 +188,7 @@ const HeroSection: React.FC = () => {
       {/* Animated icon circle */}
       <div className="relative mb-2 animate-fade-in" style={{ animationDelay: "0.1s" }}>
         <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-cyan-500 via-blue-500 to-violet-500 opacity-50 blur-2xl animate-glow" />
-        <div className="relative flex items-center justify-center size-28 rounded-full border-2 border-zinc-700/60 bg-zinc-900 shadow-2xl z-10 overflow-hidden">
+        <div className="relative flex items-center justify-center size-28 rounded-full border-2 border-zinc-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-900 shadow-2xl z-10 overflow-hidden">
           <div key={activePhase} className="animate-fade-in-fast">
             {renderIcon()}
           </div>
@@ -221,7 +222,7 @@ const HeroSection: React.FC = () => {
       </div>
 
       <div
-        className="flex items-center gap-2 text-sm font-medium text-zinc-400 border border-zinc-800 rounded-full px-4 py-1.5 bg-zinc-900/60 animate-fade-in"
+        className="flex items-center gap-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 rounded-full px-4 py-1.5 bg-zinc-100/60 dark:bg-zinc-900/60 animate-fade-in"
         style={{ animationDelay: "0.25s" }}
       >
         <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -247,7 +248,7 @@ const HeroSection: React.FC = () => {
                     ? "bg-gradient-to-r from-cyan-300 via-emerald-300 to-blue-400 bg-clip-text text-transparent"
                     : isActive
                       ? "text-emerald-400 drop-shadow-[0_0_24px_rgba(52,211,153,0.5)]"
-                      : "bg-gradient-to-b from-zinc-100 to-zinc-400 bg-clip-text text-transparent"
+                      : "bg-gradient-to-b from-zinc-800 to-zinc-500 dark:from-zinc-100 dark:to-zinc-400 bg-clip-text text-transparent"
                 )}
               >
                 {word}
@@ -261,13 +262,13 @@ const HeroSection: React.FC = () => {
       </h1>
 
     <p
-      className="text-lg md:text-xl text-zinc-400 max-w-xl mx-auto font-normal leading-relaxed animate-fade-in"
+      className="text-lg md:text-xl text-zinc-600 dark:text-zinc-400 max-w-xl mx-auto font-normal leading-relaxed animate-fade-in"
       style={{ animationDelay: "0.55s" }}
     >
       Automatically discover your infrastructure — cloud, on-premise, or
       local — build a living dependency graph, and query everything through
       a{" "}
-      <span className="text-zinc-200 font-medium">conversational interface</span>.
+      <span className="text-zinc-800 dark:text-zinc-200 font-medium">conversational interface</span>.
     </p>
 
     <div
@@ -284,7 +285,7 @@ const HeroSection: React.FC = () => {
         href="https://github.com/edwardcalderon/ComputeIntelligenceGraph"
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-900/80 px-8 py-3.5 text-base font-semibold text-zinc-200 shadow transition-all duration-300 hover:scale-105 hover:border-zinc-500 hover:bg-zinc-800/80 focus:outline-none focus:ring-2 focus:ring-zinc-500"
+        className="inline-flex items-center gap-2 rounded-full border border-zinc-300 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 px-8 py-3.5 text-base font-semibold text-zinc-800 dark:text-zinc-200 shadow transition-all duration-300 hover:scale-105 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 focus:outline-none focus:ring-2 focus:ring-zinc-500"
       >
         <Github size={18} /> View on GitHub
       </a>
@@ -293,7 +294,7 @@ const HeroSection: React.FC = () => {
     {/* Scroll down indicator */}
     <button
       onClick={() => smoothScrollTo("how-it-works")}
-      className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-zinc-500 hover:text-zinc-300 transition-colors duration-300 cursor-pointer animate-fade-in"
+      className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors duration-300 cursor-pointer animate-fade-in"
       style={{ animationDelay: "1s" }}
       aria-label="Scroll down"
     >
@@ -359,7 +360,7 @@ const HowItWorks: React.FC = () => {
           <div
             key={step.num}
             className={cn(
-              "group relative rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-6 transition-all duration-500 hover:border-zinc-600 hover:bg-zinc-900/80 hover:-translate-y-1",
+              "group relative rounded-2xl border border-zinc-200 dark:border-zinc-800/80 bg-white/50 dark:bg-zinc-900/50 p-6 transition-all duration-500 hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-white/80 dark:hover:bg-zinc-900/80 hover:-translate-y-1 shadow-sm dark:shadow-none",
               visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             )}
             style={{
@@ -367,7 +368,7 @@ const HowItWorks: React.FC = () => {
             }}
           >
             <div className="flex items-start gap-4">
-              <div className="flex-none flex items-center justify-center size-12 rounded-xl bg-zinc-800/80 border border-zinc-700/50 group-hover:border-zinc-600 transition-colors duration-300">
+              <div className="flex-none flex items-center justify-center size-12 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/50 group-hover:border-zinc-300 dark:group-hover:border-zinc-600 transition-colors duration-300">
                 {step.icon}
               </div>
               <div className="flex-1">
@@ -375,11 +376,11 @@ const HowItWorks: React.FC = () => {
                   <span className="text-xs font-mono text-zinc-500">
                     {step.num}
                   </span>
-                  <h3 className="text-lg font-semibold text-zinc-100">
+                  <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                     {step.title}
                   </h3>
                 </div>
-                <p className="text-sm text-zinc-400 leading-relaxed">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
                   {step.desc}
                 </p>
               </div>
@@ -450,7 +451,7 @@ const FeaturesSection: React.FC = () => {
           <div
             key={f.title}
             className={cn(
-              "rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-6 transition-all duration-500 hover:border-zinc-600 hover:bg-zinc-900/80 hover:-translate-y-1",
+              "rounded-2xl border border-zinc-200 dark:border-zinc-800/80 bg-white/50 dark:bg-zinc-900/50 p-6 transition-all duration-500 hover:border-zinc-300 dark:hover:border-zinc-600 hover:bg-white/80 dark:hover:bg-zinc-900/80 hover:-translate-y-1 shadow-sm dark:shadow-none",
               visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             )}
             style={{
@@ -458,14 +459,14 @@ const FeaturesSection: React.FC = () => {
             }}
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="flex items-center justify-center size-10 rounded-lg bg-zinc-800/80 border border-zinc-700/50">
+              <div className="flex items-center justify-center size-10 rounded-lg bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/50">
                 {f.icon}
               </div>
-              <h3 className="text-base font-semibold text-zinc-100">
+              <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
                 {f.title}
               </h3>
             </div>
-            <p className="text-sm text-zinc-400 leading-relaxed">{f.desc}</p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{f.desc}</p>
           </div>
         ))}
       </div>
@@ -481,12 +482,12 @@ const ArchitectureBlock: React.FC = () => {
     <section
       ref={ref}
       className={cn(
-        "w-full rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-8 text-center transition-all duration-700",
+        "w-full rounded-2xl border border-zinc-200 dark:border-zinc-800/80 bg-white/50 dark:bg-zinc-900/50 p-8 text-center transition-all duration-700 shadow-sm dark:shadow-none",
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
       )}
     >
       <h2 className="text-2xl font-bold mb-6">Architecture Overview</h2>
-      <div className="flex flex-wrap items-center justify-center gap-3 text-sm font-mono text-zinc-300">
+      <div className="flex flex-wrap items-center justify-center gap-3 text-sm font-mono text-zinc-700 dark:text-zinc-300">
         {[
           { label: "Setup Wizard", color: "border-cyan-500/40" },
           { label: "→" },
@@ -500,7 +501,7 @@ const ArchitectureBlock: React.FC = () => {
             <span
               key={i}
               className={cn(
-                "rounded-lg border bg-zinc-800/60 px-4 py-2 transition-all duration-500 hover:bg-zinc-700/60",
+                "rounded-lg border bg-zinc-100/60 dark:bg-zinc-800/60 px-4 py-2 transition-all duration-500 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/60",
                 item.color,
                 visible ? "opacity-100 scale-100" : "opacity-0 scale-95"
               )}
@@ -512,7 +513,7 @@ const ArchitectureBlock: React.FC = () => {
             <span
               key={i}
               className={cn(
-                "text-zinc-600 mx-1 transition-opacity duration-500",
+                "text-zinc-400 dark:text-zinc-600 mx-1 transition-opacity duration-500",
                 visible ? "opacity-100" : "opacity-0"
               )}
               style={{ transitionDelay: visible ? `${300 + i * 80}ms` : "0ms" }}
@@ -522,7 +523,7 @@ const ArchitectureBlock: React.FC = () => {
           )
         )}
       </div>
-      <p className="text-sm text-zinc-500 mt-6 max-w-md mx-auto">
+      <p className="text-sm text-zinc-500 dark:text-zinc-500 mt-6 max-w-md mx-auto">
         All components deploy inside your own environment — cloud, on-prem, or local.
         Zero external dependencies, full data sovereignty.
       </p>
@@ -573,7 +574,7 @@ const ResourcesBlock: React.FC = () => {
           target={link.href.startsWith("http") ? "_blank" : undefined}
           rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
           className={cn(
-            "flex items-center gap-2.5 rounded-full border border-zinc-800 bg-zinc-900/80 px-7 py-3 text-sm font-semibold text-zinc-200 shadow transition-all duration-300 hover:scale-105 hover:border-zinc-500 hover:bg-zinc-800/80 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-cyan-400/50",
+            "flex items-center gap-2.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 px-7 py-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200 shadow transition-all duration-300 hover:scale-105 hover:border-zinc-300 dark:hover:border-zinc-500 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-cyan-400/50",
             visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           )}
           style={{ transitionDelay: visible ? `${i * 100}ms` : "0ms" }}
@@ -660,7 +661,7 @@ const GetStartedSection: React.FC = () => {
       <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
         Ready to map your infrastructure?
       </h2>
-      <p className="text-base text-zinc-400 max-w-md mx-auto">
+      <p className="text-base text-zinc-600 dark:text-zinc-400 max-w-md mx-auto">
         Get early access or jump straight into the self-hosted deployment.
         Open-source, free forever.
       </p>
@@ -713,10 +714,10 @@ const GetStartedSection: React.FC = () => {
               placeholder="you@company.com"
               disabled={state === "loading"}
               className={cn(
-                "flex-1 rounded-full border px-5 py-3 text-sm text-zinc-100 placeholder-zinc-500 transition-all duration-300 focus:outline-none shadow bg-zinc-900 disabled:opacity-50",
+                "flex-1 rounded-full border px-5 py-3 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 transition-all duration-300 focus:outline-none shadow bg-white dark:bg-zinc-900 disabled:opacity-50",
                 error || state === "error"
                   ? "border-red-500 focus:border-red-400"
-                  : "border-zinc-700 focus:border-cyan-400"
+                  : "border-zinc-300 dark:border-zinc-700 focus:border-cyan-400"
               )}
             />
             <button
@@ -761,7 +762,7 @@ const GetStartedSection: React.FC = () => {
 /* ─── Footer ──────────────────────────────────────────────────────────── */
 
 const Footer: React.FC = () => (
-  <footer className="w-full text-center text-xs text-zinc-600 pt-8 pb-2 border-t border-zinc-800/50">
+  <footer className="w-full text-center text-xs text-zinc-500 dark:text-zinc-600 pt-8 pb-2 border-t border-zinc-200 dark:border-zinc-800/50">
     <p>
       © {new Date().getFullYear()} CIG — Compute Intelligence Graph. Open-source
       under MIT License.
@@ -794,7 +795,7 @@ const BackToTop: React.FC = () => {
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       aria-label="Back to top"
       className={cn(
-        "fixed bottom-6 right-6 z-40 flex items-center justify-center size-11 rounded-full border border-zinc-700 bg-zinc-900/90 text-zinc-300 shadow-lg backdrop-blur transition-all duration-500 hover:bg-zinc-800 hover:text-white hover:scale-110 hover:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer",
+        "fixed bottom-6 right-6 z-40 flex items-center justify-center size-11 rounded-full border border-zinc-300 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/90 text-zinc-600 dark:text-zinc-300 shadow-lg backdrop-blur transition-all duration-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white hover:scale-110 hover:border-zinc-400 dark:hover:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer",
         show
           ? "opacity-100 translate-y-0 pointer-events-auto"
           : "opacity-0 translate-y-4 pointer-events-none"
@@ -810,15 +811,16 @@ const BackToTop: React.FC = () => {
 // Public landing — safe to render without AuthProvider in scope
 function PublicLanding() {
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 text-zinc-50 relative overflow-x-hidden">
+    <div className="min-h-screen w-full bg-gradient-to-br from-zinc-50 via-white to-zinc-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 text-zinc-900 dark:text-zinc-50 relative overflow-x-hidden">
       {/* Top auth bar */}
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <ThemeToggle />
         <AuthButton />
       </div>
 
       {/* Background blobs */}
-      <div className="pointer-events-none fixed -top-40 -left-40 w-[600px] h-[600px] bg-gradient-to-tr from-cyan-600 via-blue-600 to-violet-600 opacity-[0.07] rounded-full blur-3xl animate-pulse-slow z-0" />
-      <div className="pointer-events-none fixed -bottom-40 -right-40 w-[500px] h-[500px] bg-gradient-to-bl from-violet-600 via-blue-600 to-cyan-600 opacity-[0.05] rounded-full blur-3xl animate-pulse-slow z-0" />
+      <div className="pointer-events-none fixed -top-40 -left-40 w-[600px] h-[600px] bg-gradient-to-tr from-cyan-600 via-blue-600 to-violet-600 opacity-[0.10] dark:opacity-[0.07] rounded-full blur-3xl animate-pulse-slow z-0" />
+      <div className="pointer-events-none fixed -bottom-40 -right-40 w-[500px] h-[500px] bg-gradient-to-bl from-violet-600 via-blue-600 to-cyan-600 opacity-[0.08] dark:opacity-[0.05] rounded-full blur-3xl animate-pulse-slow z-0" />
 
       <div className="relative w-full max-w-4xl mx-auto flex flex-col items-center gap-24 z-10">
         <HeroSection />

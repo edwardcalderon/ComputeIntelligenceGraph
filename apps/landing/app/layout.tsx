@@ -37,8 +37,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem("cig-theme")!=="light")document.documentElement.classList.add("dark")}catch(e){document.documentElement.classList.add("dark")}`,
+          }}
+        />
         <link
           rel="preconnect"
           href="https://fonts.googleapis.com"
@@ -53,7 +58,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="bg-zinc-950 text-zinc-50 antialiased">
+      <body className="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>

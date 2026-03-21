@@ -79,7 +79,7 @@ function CheckIcon() {
 /* ─── Shared button style ─────────────────────────────────────────────── */
 
 const methodBtnClass =
-  "w-full flex items-center gap-3 rounded-xl border border-zinc-700/60 bg-zinc-800/50 px-4 py-3 text-sm font-medium text-zinc-200 transition-all hover:border-zinc-500 hover:bg-zinc-700/50 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 disabled:opacity-40 disabled:pointer-events-none";
+  "w-full flex items-center gap-3 rounded-xl border border-zinc-200 dark:border-zinc-700/60 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-3 text-sm font-medium text-zinc-800 dark:text-zinc-200 transition-all hover:border-zinc-300 dark:hover:border-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 disabled:opacity-40 disabled:pointer-events-none";
 
 /* ─── Modal views ─────────────────────────────────────────────────────── */
 type ModalView = "methods" | "email-otp" | "cli-code" | "ssh-info";
@@ -119,21 +119,21 @@ function SignInModal({
     <div
       ref={backdropRef}
       onClick={handleBackdrop}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in-fast p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm animate-fade-in-fast p-4"
     >
-      <div className="relative w-full max-w-md rounded-2xl border border-zinc-700/50 bg-zinc-900 shadow-2xl shadow-black/40 overflow-hidden">
+      <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900 shadow-2xl shadow-black/10 dark:shadow-black/40 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-800 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-6 py-4">
           <div className="flex items-center gap-2">
             {view !== "methods" && (
               <button
                 onClick={() => setView("methods")}
-                className="mr-1 rounded-lg p-1 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+                className="mr-1 rounded-lg p-1 text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               >
                 <ArrowLeftIcon />
               </button>
             )}
-            <h2 className="text-lg font-semibold text-zinc-100">
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               {view === "methods" && "Sign in to CIG"}
               {view === "email-otp" && "Email OTP"}
               {view === "cli-code" && "CLI Authentication"}
@@ -142,7 +142,7 @@ function SignInModal({
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+            className="rounded-lg p-1.5 text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           >
             <XIcon />
           </button>
@@ -179,7 +179,7 @@ function MethodsView({
 }) {
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm text-zinc-400 mb-1">
+      <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-1">
         Choose how you&apos;d like to sign in to access the Dashboard, Console, and
         infrastructure tools.
       </p>
@@ -197,9 +197,9 @@ function MethodsView({
       </div>
 
       <div className="flex items-center gap-3 my-1">
-        <div className="flex-1 border-t border-zinc-800" />
+        <div className="flex-1 border-t border-zinc-200 dark:border-zinc-800" />
         <span className="text-xs text-zinc-500 font-medium">OR</span>
-        <div className="flex-1 border-t border-zinc-800" />
+        <div className="flex-1 border-t border-zinc-200 dark:border-zinc-800" />
       </div>
 
       {/* ── Other methods ─── */}
@@ -265,7 +265,7 @@ function EmailOtpView({ onSuccess }: { onSuccess: () => void }) {
   if (step === "email") {
     return (
       <form onSubmit={handleSendOtp} className="flex flex-col gap-4">
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
           Enter your email and we&apos;ll send you a one-time code to sign in — no
           password needed.
         </p>
@@ -276,7 +276,7 @@ function EmailOtpView({ onSuccess }: { onSuccess: () => void }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
-          className="w-full rounded-xl border border-zinc-700 bg-zinc-800/50 px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-500 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 transition-colors"
+          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 transition-colors"
         />
         {error && <p className="text-xs text-red-400">{error}</p>}
         <button
@@ -292,9 +292,9 @@ function EmailOtpView({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <form onSubmit={handleVerify} className="flex flex-col gap-4">
-      <p className="text-sm text-zinc-400">
+      <p className="text-sm text-zinc-600 dark:text-zinc-400">
         We sent a 6-digit code to{" "}
-        <span className="text-zinc-200 font-medium">{email}</span>. Enter it
+        <span className="text-zinc-800 dark:text-zinc-200 font-medium">{email}</span>. Enter it
         below.
       </p>
       <input
@@ -307,7 +307,7 @@ function EmailOtpView({ onSuccess }: { onSuccess: () => void }) {
         value={otpCode}
         onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
         placeholder="000000"
-        className="w-full rounded-xl border border-zinc-700 bg-zinc-800/50 px-4 py-3 text-center text-2xl font-mono tracking-[0.3em] text-zinc-100 placeholder:text-zinc-600 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 transition-colors"
+        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-3 text-center text-2xl font-mono tracking-[0.3em] text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 transition-colors"
       />
       {error && <p className="text-xs text-red-400">{error}</p>}
       <button
@@ -346,24 +346,24 @@ function CliCodeView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-zinc-400">
+      <p className="text-sm text-zinc-600 dark:text-zinc-400">
         Authenticate from your terminal. Run this command and follow the prompts
         to link your local machine.
       </p>
       <div className="relative group">
-        <pre className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm font-mono text-cyan-400 overflow-x-auto">
-          <span className="text-zinc-500 select-none">$ </span>
+        <pre className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 px-4 py-3 text-sm font-mono text-cyan-600 dark:text-cyan-400 overflow-x-auto">
+          <span className="text-zinc-400 dark:text-zinc-500 select-none">$ </span>
           {loginCommand}
         </pre>
         <button
           onClick={handleCopy}
-          className="absolute top-2 right-2 rounded-lg border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity hover:text-zinc-200"
+          className="absolute top-2 right-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 text-xs text-zinc-500 dark:text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity hover:text-zinc-800 dark:hover:text-zinc-200"
         >
           {copied ? <CheckIcon /> : "Copy"}
         </button>
       </div>
-      <div className="rounded-xl border border-zinc-800 bg-zinc-800/30 px-4 py-3 text-xs text-zinc-400 space-y-1.5">
-        <p className="font-medium text-zinc-300">How it works</p>
+      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/30 px-4 py-3 text-xs text-zinc-600 dark:text-zinc-400 space-y-1.5">
+        <p className="font-medium text-zinc-800 dark:text-zinc-300">How it works</p>
         <ol className="list-decimal list-inside space-y-1">
           <li>Run the command — it generates a one-time device code</li>
           <li>A browser window opens to confirm the code</li>
@@ -389,24 +389,24 @@ function SshInfoView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-zinc-400">
+      <p className="text-sm text-zinc-600 dark:text-zinc-400">
         Register your SSH public key to authenticate with CIG infrastructure
         services — ideal for automated pipelines and local development.
       </p>
       <div className="relative group">
-        <pre className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm font-mono text-cyan-400 overflow-x-auto">
-          <span className="text-zinc-500 select-none">$ </span>
+        <pre className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 px-4 py-3 text-sm font-mono text-cyan-600 dark:text-cyan-400 overflow-x-auto">
+          <span className="text-zinc-400 dark:text-zinc-500 select-none">$ </span>
           {sshCommand}
         </pre>
         <button
           onClick={handleCopy}
-          className="absolute top-2 right-2 rounded-lg border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity hover:text-zinc-200"
+          className="absolute top-2 right-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 text-xs text-zinc-500 dark:text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity hover:text-zinc-800 dark:hover:text-zinc-200"
         >
           {copied ? <CheckIcon /> : "Copy"}
         </button>
       </div>
-      <div className="rounded-xl border border-zinc-800 bg-zinc-800/30 px-4 py-3 text-xs text-zinc-400 space-y-1.5">
-        <p className="font-medium text-zinc-300">Supported key types</p>
+      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/30 px-4 py-3 text-xs text-zinc-600 dark:text-zinc-400 space-y-1.5">
+        <p className="font-medium text-zinc-800 dark:text-zinc-300">Supported key types</p>
         <ul className="list-disc list-inside space-y-1">
           <li>Ed25519 (recommended)</li>
           <li>RSA (2048-bit minimum)</li>
@@ -452,7 +452,7 @@ function AuthButtonReady() {
   }, [signIn]);
 
   if (loading) {
-    return <div className="h-10 w-24 rounded-full bg-zinc-800 animate-pulse" />;
+    return <div className="h-10 w-24 rounded-full bg-zinc-200 dark:bg-zinc-800 animate-pulse" />;
   }
 
   if (user) {
@@ -460,7 +460,7 @@ function AuthButtonReady() {
       <div className="relative" ref={menuRef}>
         <button
           onClick={() => setShowMenu((v) => !v)}
-          className="flex items-center gap-2 rounded-full px-2 py-1 hover:bg-zinc-800/60 transition-colors"
+          className="flex items-center gap-2 rounded-full px-2 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors"
         >
           {user.avatarUrl ? (
             <Image
@@ -468,7 +468,7 @@ function AuthButtonReady() {
               alt=""
               width={32}
               height={32}
-              className="size-8 rounded-full border border-zinc-700"
+              className="size-8 rounded-full border border-zinc-200 dark:border-zinc-700"
               referrerPolicy="no-referrer"
             />
           ) : (
@@ -476,16 +476,16 @@ function AuthButtonReady() {
               {(user.email?.[0] || "U").toUpperCase()}
             </div>
           )}
-          <span className="text-sm text-zinc-300 hidden sm:inline max-w-[140px] truncate">
+          <span className="text-sm text-zinc-700 dark:text-zinc-300 hidden sm:inline max-w-[140px] truncate">
             {user.email}
           </span>
           <svg className="size-3.5 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6" /></svg>
         </button>
 
         {showMenu && (
-          <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-zinc-700/50 bg-zinc-900 shadow-xl shadow-black/30 overflow-hidden animate-fade-in-fast">
-            <div className="px-4 py-3 border-b border-zinc-800">
-              <p className="text-sm font-medium text-zinc-200 truncate">{user.email}</p>
+          <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-zinc-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900 shadow-xl shadow-black/10 dark:shadow-black/30 overflow-hidden animate-fade-in-fast">
+            <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800">
+              <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{user.email}</p>
               {user.provider && (
                 <p className="text-xs text-zinc-500 mt-0.5 capitalize">
                   via {user.provider}
@@ -498,7 +498,7 @@ function AuthButtonReady() {
                   setShowMenu(false);
                   signOutUser();
                 }}
-                className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-red-400 transition-colors"
+                className="w-full text-left px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-red-500 dark:hover:text-red-400 transition-colors"
               >
                 Sign Out
               </button>
