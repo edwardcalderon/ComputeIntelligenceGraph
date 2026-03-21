@@ -209,12 +209,245 @@ function withAlpha(color: string, alpha: number) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+/* ─── Feature detail modal ───────────────────────────────────────────── */
+
+const FEATURE_HIGHLIGHTS_COUNT = 5;
+const FEATURE_USE_CASES_COUNT = 3;
+
+interface FeatureModalProps {
+  feature: Feature | null;
+  onClose: () => void;
+  onOpen: (path: string) => void;
+}
+
+function FeatureModal({ feature, onClose, onOpen }: FeatureModalProps) {
+  const t = useTranslation();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
+  // Close on Escape
+  useEffect(() => {
+    if (!feature) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [feature, onClose]);
+
+  // Lock body scroll while open
+  useEffect(() => {
+    if (feature) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [feature]);
+
+  const visible = !!feature;
+  const c = feature?.color ?? "#06b6d4";
+
+  const highlights = Array.from({ length: FEATURE_HIGHLIGHTS_COUNT }, (_, i) =>
+    t(`authed.${feature?.id}.detail.highlights.${i}`)
+  ).filter((v) => v && !v.startsWith("authed."));
+
+  const useCases = Array.from({ length: FEATURE_USE_CASES_COUNT }, (_, i) =>
+    t(`authed.${feature?.id}.detail.useCases.${i}`)
+  ).filter((v) => v && !v.startsWith("authed."));
+
+  const headline = feature ? t(`authed.${feature.id}.detail.headline`) : "";
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        className="fixed inset-0 z-50"
+        style={{
+          backdropFilter: visible ? "blur(12px)" : "none",
+          backgroundColor: visible
+            ? isDark ? "rgba(0,0,0,0.72)" : "rgba(15,23,42,0.48)"
+            : "transparent",
+          opacity: visible ? 1 : 0,
+          pointerEvents: visible ? "auto" : "none",
+          transition: "opacity 0.3s ease, backdrop-filter 0.3s ease",
+        }}
+      />
+
+      {/* Panel */}
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="relative w-full max-w-lg rounded-3xl overflow-hidden pointer-events-auto"
+          style={{
+            background: isDark
+              ? `radial-gradient(circle at top right, ${withAlpha(c, 0.22)} 0%, transparent 50%), linear-gradient(180deg, rgba(14,20,35,0.98) 0%, rgba(3,7,18,0.99) 100%)`
+              : `radial-gradient(circle at top right, ${withAlpha(c, 0.16)} 0%, transparent 50%), linear-gradient(180deg, rgba(255,255,255,0.99) 0%, rgba(241,245,249,0.99) 100%)`,
+            border: `1px solid ${withAlpha(c, isDark ? 0.3 : 0.2)}`,
+            boxShadow: isDark
+              ? `0 0 0 1px ${withAlpha(c, 0.14)}, 0 32px 80px rgba(0,0,0,0.8), 0 0 60px ${withAlpha(c, 0.16)}`
+              : `0 0 0 1px ${withAlpha(c, 0.1)}, 0 32px 80px rgba(15,23,42,0.24), 0 0 40px ${withAlpha(c, 0.08)}`,
+            transform: visible ? "scale(1) translateY(0)" : "scale(0.92) translateY(24px)",
+            opacity: visible ? 1 : 0,
+            transition: "transform 0.35s cubic-bezier(.34,1.56,.64,1), opacity 0.3s ease",
+            maxHeight: "90vh",
+            overflowY: "auto",
+          }}
+        >
+          {/* Scan line */}
+          <div
+            className="absolute left-0 right-0 h-px pointer-events-none z-10"
+            style={{
+              background: `linear-gradient(90deg, transparent, ${c}80, transparent)`,
+              animation: visible ? "cig-scan 2s ease-in-out infinite" : "none",
+              top: 0,
+            }}
+          />
+
+          {/* Corner glow */}
+          <div className="absolute top-0 right-0 w-32 h-32 pointer-events-none"
+            style={{ background: `radial-gradient(circle at top right, ${c}35 0%, transparent 70%)` }} />
+
+          {/* Header */}
+          <div className="relative flex items-start justify-between p-6 pb-4">
+            <div className="flex items-center gap-3">
+              <div
+                className="flex items-center justify-center size-10 rounded-xl flex-shrink-0"
+                style={{
+                  backgroundColor: withAlpha(c, isDark ? 0.14 : 0.1),
+                  color: c,
+                  border: `1px solid ${withAlpha(c, 0.22)}`,
+                  boxShadow: `0 0 20px ${withAlpha(c, 0.16)}`,
+                }}
+              >
+                <div style={{ transform: "scale(1.4)", transformOrigin: "center" }}>
+                  {feature?.icon}
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold tracking-widest uppercase" style={{ color: c }}>
+                  {feature ? t(feature.tagKey) : ""}
+                </p>
+                <h2 className={`text-lg font-bold leading-tight ${isDark ? "text-zinc-50" : "text-slate-900"}`}>
+                  {feature ? t(feature.titleKey) : ""}
+                </h2>
+              </div>
+            </div>
+
+            {/* Close */}
+            <button
+              onClick={onClose}
+              className="flex items-center justify-center size-8 rounded-xl transition-colors flex-shrink-0 mt-0.5"
+              style={{
+                backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(15,23,42,0.06)",
+                color: isDark ? "#94a3b8" : "#64748b",
+              }}
+              aria-label={t("authed.modal.close")}
+            >
+              <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Headline */}
+          <div className="px-6 pb-4">
+            <p className={`text-sm leading-relaxed ${isDark ? "text-zinc-300" : "text-slate-600"}`}>
+              {headline}
+            </p>
+          </div>
+
+          {/* Preview viz */}
+          <div className="px-6 pb-4">
+            <div
+              className="rounded-2xl p-4 flex items-center justify-center"
+              style={{
+                background: isDark ? withAlpha(c, 0.08) : withAlpha(c, 0.06),
+                border: `1px solid ${withAlpha(c, isDark ? 0.16 : 0.12)}`,
+                minHeight: 80,
+              }}
+            >
+              <div style={{ transform: "scale(1.5)", transformOrigin: "center" }}>
+                {feature?.preview}
+              </div>
+            </div>
+          </div>
+
+          {/* Highlights */}
+          {highlights.length > 0 && (
+            <div className="px-6 pb-4">
+              <p className="text-[10px] font-semibold tracking-widest uppercase mb-3" style={{ color: c }}>
+                {t("authed.modal.highlights")}
+              </p>
+              <ul className="flex flex-col gap-2">
+                {highlights.map((h, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <span
+                      className="mt-1.5 size-1.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: c }}
+                    />
+                    <span className={`text-xs leading-relaxed ${isDark ? "text-zinc-300" : "text-slate-600"}`}>
+                      {h}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Use cases */}
+          {useCases.length > 0 && (
+            <div className="px-6 pb-4">
+              <p className="text-[10px] font-semibold tracking-widest uppercase mb-3" style={{ color: c }}>
+                {t("authed.modal.useCases")}
+              </p>
+              <div className="flex flex-col gap-2">
+                {useCases.map((uc, i) => (
+                  <div
+                    key={i}
+                    className="rounded-xl px-3.5 py-2.5 text-xs leading-relaxed"
+                    style={{
+                      background: isDark ? withAlpha(c, 0.08) : withAlpha(c, 0.06),
+                      border: `1px solid ${withAlpha(c, isDark ? 0.14 : 0.1)}`,
+                      color: isDark ? "#cbd5e1" : "#475569",
+                      fontStyle: uc.startsWith('"') ? "italic" : "normal",
+                    }}
+                  >
+                    {uc}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Footer CTA */}
+          <div className="px-6 pb-6 pt-2">
+            <button
+              onClick={() => { onClose(); onOpen(feature?.path ?? "/"); }}
+              className="w-full py-3 rounded-2xl text-sm font-semibold transition-all active:scale-95"
+              style={{
+                background: `linear-gradient(135deg, ${c}, ${withAlpha(c, 0.7)})`,
+                color: isDark ? "#030712" : "#030712",
+                boxShadow: `0 8px 28px ${withAlpha(c, 0.35)}`,
+              }}
+            >
+              {t("authed.modal.open", { title: feature ? t(feature.titleKey) : "" })}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 /* ─── Holographic card ────────────────────────────────────────────────── */
 
 interface HoloCardProps {
   feature: Feature;
   selected: boolean;
   onSelect: () => void;
+  onKnowMore: () => void;
 }
 
 /** Typewriter hook — types `text` character by character when `active` is true. */
@@ -239,7 +472,7 @@ function useTypewriter(text: string, active: boolean, delay = 260, speed = 14) {
   return { typed, done: typed.length === text.length };
 }
 
-function HoloCard({ feature, selected, onSelect }: HoloCardProps) {
+function HoloCard({ feature, selected, onSelect, onKnowMore }: HoloCardProps) {
   const t = useTranslation();
   const { theme } = useTheme();
   const [hovered, setHovered] = useState(false);
@@ -429,20 +662,41 @@ function HoloCard({ feature, selected, onSelect }: HoloCardProps) {
             {feature.preview}
           </div>
 
-          {/* CTA */}
+          {/* CTAs */}
           <div
-            className="text-[11px] font-semibold text-center py-1.5 rounded-xl border"
+            className="flex gap-1.5"
             style={{
-              background: ctaBackground,
-              borderColor: withAlpha(c, isDark ? 0.22 : 0.16),
-              color: ctaColor,
               opacity: revealed ? 1 : 0,
               transform: revealed ? "translateY(0)" : "translateY(8px)",
               transition: "opacity 0.35s ease 0.32s, transform 0.35s ease 0.32s",
-              boxShadow: isDark ? `0 10px 24px ${withAlpha(c, 0.16)}` : `0 10px 20px ${withAlpha(c, 0.08)}`,
             }}
           >
-            {t("authed.openFeature", { title })}
+            {/* Know more — stops propagation so card doesn't also fire onSelect */}
+            <button
+              onClick={(e) => { e.stopPropagation(); onKnowMore(); }}
+              className="flex-1 text-[11px] font-semibold text-center py-1.5 rounded-xl border transition-all active:scale-95"
+              style={{
+                background: ctaBackground,
+                borderColor: withAlpha(c, isDark ? 0.22 : 0.16),
+                color: ctaColor,
+                boxShadow: isDark ? `0 10px 24px ${withAlpha(c, 0.16)}` : `0 10px 20px ${withAlpha(c, 0.08)}`,
+              }}
+            >
+              {t("authed.knowMore")}
+            </button>
+
+            {/* Open feature */}
+            <button
+              onClick={(e) => { e.stopPropagation(); goToDashboard(feature.path); }}
+              className="flex-shrink-0 text-[11px] font-semibold text-center py-1.5 px-3 rounded-xl transition-all active:scale-95"
+              style={{
+                background: `linear-gradient(135deg, ${c}, ${withAlpha(c, 0.7)})`,
+                color: "#030712",
+                boxShadow: `0 6px 18px ${withAlpha(c, 0.35)}`,
+              }}
+            >
+              {t("authed.openFeatureShort")}
+            </button>
           </div>
         </div>
       </div>
@@ -465,10 +719,12 @@ function ScrollingRow({
   features,
   direction,
   duration,
+  onKnowMore,
 }: {
   features: Feature[];
   direction: "left" | "right";
   duration: string;
+  onKnowMore: (f: Feature) => void;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   // null = CSS animation running; number = manual override while dragging
@@ -582,6 +838,7 @@ function ScrollingRow({
             feature={f}
             selected={selectedId === f.id}
             onSelect={() => handleCardClick(f)}
+            onKnowMore={() => onKnowMore(f)}
           />
         ))}
       </div>
@@ -607,6 +864,7 @@ export function AuthenticatedLanding() {
   useAuth(); // keeps session alive; user data used in AuthButton
   const handleEnterDashboard = useCallback(() => goToDashboard("/"), []);
   const isDark = theme === "dark";
+  const [modalFeature, setModalFeature] = useState<Feature | null>(null);
 
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden text-zinc-900 dark:text-white flex flex-col bg-gradient-to-br from-zinc-50 via-white to-zinc-100 dark:from-transparent dark:via-transparent dark:to-transparent">
@@ -689,8 +947,8 @@ export function AuthenticatedLanding() {
           {t("authed.carouselHint")}
         </p>
 
-        <ScrollingRow features={FEATURES}                        direction="left"  duration="42s" />
-        <ScrollingRow features={[...FEATURES].reverse()} direction="right" duration="36s" />
+        <ScrollingRow features={FEATURES}                   direction="left"  duration="42s" onKnowMore={setModalFeature} />
+        <ScrollingRow features={[...FEATURES].reverse()}   direction="right" duration="36s" onKnowMore={setModalFeature} />
 
         <div
           className="pointer-events-none absolute bottom-0 left-0 right-0 h-16 z-10"
@@ -711,6 +969,13 @@ export function AuthenticatedLanding() {
           {process.env.NEXT_PUBLIC_APP_BUILD ? ` · ${t("common.build", { build: process.env.NEXT_PUBLIC_APP_BUILD })}` : ""}
         </p>
       </footer>
+
+      {/* ── Feature detail modal ─────────────────────────────── */}
+      <FeatureModal
+        feature={modalFeature}
+        onClose={() => setModalFeature(null)}
+        onOpen={(path) => goToDashboard(path)}
+      />
     </div>
   );
 }
