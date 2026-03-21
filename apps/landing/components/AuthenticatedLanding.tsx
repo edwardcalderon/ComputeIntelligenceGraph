@@ -478,8 +478,24 @@ function HoloCard({ feature, selected, onSelect, onKnowMore }: HoloCardProps) {
   // Hover reveals the card for browsing; click LOCKS it (selected=true).
   // Once locked, revealed stays true regardless of hover — user can freely
   // move cursor to buttons without the card collapsing.
+  // When not locked, a 300ms grace period keeps the card revealed after
+  // the cursor leaves, giving users time to reach buttons.
   const [hovered, setHovered] = useState(false);
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const revealed = hovered || selected;
+
+  const handleMouseEnter = () => {
+    if (leaveTimer.current) { clearTimeout(leaveTimer.current); leaveTimer.current = null; }
+    setHovered(true);
+  };
+  const handleMouseLeave = () => {
+    // If card is locked (selected), don't collapse on hover leave.
+    // Otherwise use a 300ms grace window so the user can reach the buttons.
+    if (!selected) {
+      leaveTimer.current = setTimeout(() => setHovered(false), 300);
+    }
+  };
+  useEffect(() => () => { if (leaveTimer.current) clearTimeout(leaveTimer.current); }, []);
   const title = t(feature.titleKey);
   const tag = t(feature.tagKey);
   const { typed, done } = useTypewriter(t(feature.descKey), revealed);
@@ -516,8 +532,8 @@ function HoloCard({ feature, selected, onSelect, onKnowMore }: HoloCardProps) {
     <article
       onClick={onSelect}
       data-selected={selected ? "" : undefined}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       className="cig-holocard relative flex-shrink-0 w-64 rounded-2xl cursor-pointer select-none overflow-hidden"
       style={{
         height: revealed ? "auto" : 220,
