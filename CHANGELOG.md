@@ -1,3 +1,25 @@
+## [0.1.28](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.27...v0.1.28) (2026-03-21)
+
+
+### Bug Fixes
+
+* **dashboard:** server-side auth guard + card height expansion ([63f4672](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/63f4672eccad85abfd4f60ade9c47db941e95b2d))
+
+
+
+
+
+## [0.1.28](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.27...v0.1.28) (2026-03-21)
+
+
+### Bug Fixes
+
+* **dashboard:** server-side auth guard + card height expansion ([63f4672](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/63f4672eccad85abfd4f60ade9c47db941e95b2d))
+
+
+
+
+
 ## [0.1.27](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.26...v0.1.27) (2026-03-21)
 
 
