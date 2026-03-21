@@ -1,3 +1,25 @@
+## [0.1.26](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.25...v0.1.26) (2026-03-21)
+
+
+### Features
+
+* **infra:** add GCP Cloud Run provider + Workload Identity Federation ([910f60f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/910f60fc4ba09ea9bf24a9b13ad74b1ed2e87a9a))
+
+
+
+
+
+## [0.1.26](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.25...v0.1.26) (2026-03-21)
+
+
+### Features
+
+* **infra:** add GCP Cloud Run provider + Workload Identity Federation ([910f60f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/910f60fc4ba09ea9bf24a9b13ad74b1ed2e87a9a))
+
+
+
+
+
 ## [0.1.25](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.24...v0.1.25) (2026-03-21)
 
 
