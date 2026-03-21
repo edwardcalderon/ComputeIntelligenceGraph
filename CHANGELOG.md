@@ -1,3 +1,14 @@
+## [0.1.19](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.18...v0.1.19) (2026-03-21)
+
+
+### Features
+
+* **landing:** add FallingPattern light-mode background animation ([47eede3](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/47eede34d900535e05e26d91f1d10f9362403fd3))
+
+
+
+
+
 ## [0.1.18](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.17...v0.1.18) (2026-03-21)
 
 
