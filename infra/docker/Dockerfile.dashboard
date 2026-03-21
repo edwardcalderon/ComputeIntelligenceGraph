@@ -8,12 +8,14 @@ RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 # Copy workspace manifests first (layer-cache friendly)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
 COPY packages/ui/package.json ./packages/ui/
+COPY packages/i18n/package.json ./packages/i18n/
 COPY apps/dashboard/package.json ./apps/dashboard/
 
 RUN pnpm install --frozen-lockfile
 
 # Copy source
 COPY packages/ui ./packages/ui
+COPY packages/i18n ./packages/i18n
 COPY apps/dashboard ./apps/dashboard
 
 # NEXT_PUBLIC_* vars are baked into the JS bundle at build time.
