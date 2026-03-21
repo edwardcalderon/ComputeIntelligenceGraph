@@ -193,3 +193,78 @@ export const sendChatMessage = (message: string, sessionId: string): Promise<Cha
     method: "POST",
     body: JSON.stringify({ message, sessionId }),
   });
+
+/* ─── Targets (managed nodes) ──────────────────────────────────────────── */
+
+export interface ManagedTarget {
+  id: string;
+  hostname: string;
+  os: string;
+  architecture: string;
+  ip_address: string;
+  profile: "core" | "full";
+  status: "online" | "degraded" | "offline" | "revoked";
+  last_seen: string | null;
+  service_status: Record<string, unknown> | null;
+  system_metrics: Record<string, unknown> | null;
+  cig_version: string | null;
+  created_at: string;
+}
+
+export interface TargetsResponse {
+  items: ManagedTarget[];
+  total: number;
+}
+
+export const getTargets = (): Promise<TargetsResponse> =>
+  apiFetch<TargetsResponse>("/api/v1/targets");
+
+export const deleteTarget = (id: string): Promise<{ message: string }> =>
+  apiFetch<{ message: string }>(`/api/v1/targets/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+
+export interface EnrollmentTokenResponse {
+  enrollment_token: string;
+  expires_at: string;
+}
+
+export const createEnrollmentToken = (): Promise<EnrollmentTokenResponse> =>
+  apiFetch<EnrollmentTokenResponse>("/api/v1/targets/enrollment-token", {
+    method: "POST",
+  });
+
+/* ─── Bootstrap (self-hosted setup) ────────────────────────────────────── */
+
+export interface BootstrapStatus {
+  requires_bootstrap: boolean;
+}
+
+export const getBootstrapStatus = (): Promise<BootstrapStatus> =>
+  apiFetch<BootstrapStatus>("/api/v1/bootstrap/status");
+
+export const validateBootstrapToken = (token: string): Promise<{ valid: boolean }> =>
+  apiFetch<{ valid: boolean }>("/api/v1/bootstrap/validate", {
+    method: "POST",
+    body: JSON.stringify({ bootstrap_token: token }),
+  });
+
+export interface BootstrapCompletePayload {
+  bootstrap_token: string;
+  username: string;
+  email: string;
+  password: string;
+}
+
+export interface BootstrapCompleteResponse {
+  access_token: string;
+  refresh_token: string;
+}
+
+export const completeBootstrap = (
+  payload: BootstrapCompletePayload
+): Promise<BootstrapCompleteResponse> =>
+  apiFetch<BootstrapCompleteResponse>("/api/v1/bootstrap/complete", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });

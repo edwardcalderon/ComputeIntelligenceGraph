@@ -33,10 +33,10 @@ export function UserMenu() {
     : "?";
 
   return (
-    <div ref={menuRef} className="relative px-2 pb-3">
+    <div ref={menuRef} className="relative px-2.5 py-2.5">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-white/[0.04] transition-colors"
         aria-label="User menu"
       >
         {/* Avatar */}
@@ -45,27 +45,27 @@ export function UserMenu() {
           <img
             src={identity.avatar}
             alt={identity.name}
-            className="size-8 rounded-full object-cover flex-shrink-0"
+            className="size-8 rounded-full object-cover flex-shrink-0 ring-1 ring-white/10"
           />
         ) : (
-          <span className="size-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
+          <span className="size-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 text-white flex items-center justify-center text-xs font-semibold flex-shrink-0 shadow-[0_0_10px_rgba(6,182,212,0.3)]">
             {initials}
           </span>
         )}
 
         {/* Name & email */}
         <div className="min-w-0 flex-1 text-left">
-          <p className="truncate text-xs font-medium text-gray-900 dark:text-gray-100">
+          <p className="truncate text-xs font-medium text-white/80">
             {identity?.name ?? "User"}
           </p>
-          <p className="truncate text-[10px] text-gray-500 dark:text-gray-400">
+          <p className="truncate text-[10px] text-white/30">
             {identity?.email ?? ""}
           </p>
         </div>
 
         {/* Chevron */}
         <svg
-          className={`size-4 text-gray-400 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`size-3.5 text-white/25 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="m19 9-7 7-7-7" />
@@ -73,29 +73,29 @@ export function UserMenu() {
       </button>
 
       {open && (
-        <div className="absolute bottom-full left-2 right-2 mb-1 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg py-1 z-50">
+        <div className="absolute bottom-full left-2.5 right-2.5 mb-1 rounded-xl border border-white/[0.08] bg-[#0e1a30] shadow-[0_20px_60px_rgba(0,0,0,0.7)] py-1 z-50 backdrop-blur-lg">
           <Link
             href="/profile"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+            className="flex items-center gap-2.5 px-3 py-2 text-[13px] text-white/60 hover:text-white/90 hover:bg-white/[0.04] transition-colors"
           >
             <ProfileIcon /> Profile
           </Link>
           <Link
             href="/settings"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+            className="flex items-center gap-2.5 px-3 py-2 text-[13px] text-white/60 hover:text-white/90 hover:bg-white/[0.04] transition-colors"
           >
             <SettingsIcon /> Settings
           </Link>
-          <hr className="my-1 border-gray-200 dark:border-gray-700" />
+          <hr className="my-1 border-white/[0.06]" />
           <button
             onClick={() => { setOpen(false); logout(); }}
             disabled={isLoading}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
+            className="flex w-full items-center gap-2.5 px-3 py-2 text-[13px] text-red-400/80 hover:text-red-400 hover:bg-red-500/[0.06] transition-colors disabled:opacity-50"
           >
             <LogoutIcon />
-            {isLoading ? "Signing out…" : "Sign out"}
+            {isLoading ? "Signing out..." : "Sign out"}
           </button>
         </div>
       )}

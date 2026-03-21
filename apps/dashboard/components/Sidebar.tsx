@@ -9,17 +9,23 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ReactNode;
+  color: string; // CIG accent color for active state glow
 }
 
 const navItems: NavItem[] = [
-  { label: "Overview",        href: "/",               icon: <HomeIcon /> },
-  { label: "Resources",       href: "/resources",      icon: <ResourcesIcon /> },
-  { label: "Graph",           href: "/graph",          icon: <GraphIcon /> },
-  { label: "Costs",           href: "/costs",          icon: <CostsIcon /> },
-  { label: "Security",        href: "/security",       icon: <SecurityIcon /> },
-  { label: "Device Approval", href: "/device-approval", icon: <DeviceIcon /> },
-  { label: "Targets",         href: "/targets",        icon: <TargetsIcon /> },
-  { label: "Bootstrap",       href: "/bootstrap",      icon: <BootstrapIcon /> },
+  { label: "Overview",        href: "/",                icon: <HomeIcon />,      color: "#06b6d4" },
+  { label: "Resources",       href: "/resources",       icon: <ResourcesIcon />, color: "#3b82f6" },
+  { label: "Graph",           href: "/graph",           icon: <GraphIcon />,     color: "#8b5cf6" },
+  { label: "Costs",           href: "/costs",           icon: <CostsIcon />,     color: "#a855f7" },
+  { label: "Security",        href: "/security",        icon: <SecurityIcon />,  color: "#10b981" },
+  { label: "Device Approval", href: "/device-approval", icon: <DeviceIcon />,    color: "#f59e0b" },
+  { label: "Targets",         href: "/targets",         icon: <TargetsIcon />,   color: "#ef4444" },
+  { label: "Bootstrap",       href: "/bootstrap",       icon: <BootstrapIcon />, color: "#06b6d4" },
+];
+
+const secondaryItems: NavItem[] = [
+  { label: "Profile",  href: "/profile",  icon: <ProfileIcon />,  color: "#3b82f6" },
+  { label: "Settings", href: "/settings", icon: <SettingsIcon />, color: "#8b5cf6" },
 ];
 
 export function Sidebar() {
@@ -36,14 +42,15 @@ export function Sidebar() {
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-20 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       <aside
         className={[
-          "fixed inset-y-0 left-0 z-30 flex w-56 flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transition-transform duration-200",
+          "fixed inset-y-0 left-0 z-30 flex w-60 flex-col transition-transform duration-200",
+          "bg-[#050b14] border-r border-white/[0.06]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
           "lg:static lg:translate-x-0",
         ].join(" ")}
@@ -51,20 +58,31 @@ export function Sidebar() {
         {/* Logo — links back to landing */}
         <a
           href={process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}
-          className="flex h-14 items-center px-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+          className="group flex h-14 items-center gap-3 px-5 border-b border-white/[0.06] transition-colors hover:bg-white/[0.03]"
         >
-          <span className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
-            CIG
-          </span>
-          <span className="ml-2 text-xs text-gray-400 dark:text-gray-500 font-mono">
-            v{process.env.NEXT_PUBLIC_APP_VERSION}
-          </span>
+          {/* Glow dot */}
+          <div className="relative flex items-center justify-center size-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+            <div className="size-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.6)]" />
+            <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-[0_0_12px_rgba(6,182,212,0.3)]" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-base font-bold tracking-tight text-white">
+              CIG
+            </span>
+            <span className="text-[10px] font-mono text-white/30">
+              v{process.env.NEXT_PUBLIC_APP_VERSION}
+            </span>
+          </div>
         </a>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-4">
-          <ul className="space-y-0.5 px-2">
-            {navItems.map(({ label, href, icon }) => {
+        <nav className="flex-1 overflow-y-auto py-3 px-2.5">
+          {/* Section label */}
+          <p className="px-3 mb-2 text-[10px] uppercase tracking-[0.15em] font-semibold text-white/25">
+            Platform
+          </p>
+          <ul className="space-y-0.5">
+            {navItems.map(({ label, href, icon, color }) => {
               const active = isActive(href);
               return (
                 <li key={href}>
@@ -72,16 +90,38 @@ export function Sidebar() {
                     href={href}
                     onClick={() => setSidebarOpen(false)}
                     className={[
-                      "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                      "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
                       active
-                        ? "bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
-                        : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800",
+                        ? "text-white bg-white/[0.07]"
+                        : "text-white/50 hover:text-white/80 hover:bg-white/[0.04]",
                     ].join(" ")}
                   >
-                    <span className={active ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"}>
+                    {/* Active indicator bar */}
+                    {active && (
+                      <div
+                        className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
+                        style={{
+                          backgroundColor: color,
+                          boxShadow: `0 0 8px ${color}80`,
+                        }}
+                      />
+                    )}
+                    <span
+                      className="flex items-center justify-center size-5 transition-colors"
+                      style={{ color: active ? color : undefined }}
+                    >
                       {icon}
                     </span>
                     {label}
+                    {/* Subtle glow on active */}
+                    {active && (
+                      <div
+                        className="absolute inset-0 rounded-lg pointer-events-none"
+                        style={{
+                          background: `radial-gradient(ellipse at left, ${color}12 0%, transparent 70%)`,
+                        }}
+                      />
+                    )}
                   </Link>
                 </li>
               );
@@ -89,15 +129,12 @@ export function Sidebar() {
           </ul>
 
           {/* Secondary section */}
-          <div className="mt-6 px-2">
-            <p className="px-3 mb-1 text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-600 font-semibold">
+          <div className="mt-6">
+            <p className="px-3 mb-2 text-[10px] uppercase tracking-[0.15em] font-semibold text-white/25">
               Account
             </p>
             <ul className="space-y-0.5">
-              {[
-                { label: "Profile",  href: "/profile",  icon: <ProfileIcon /> },
-                { label: "Settings", href: "/settings", icon: <SettingsIcon /> },
-              ].map(({ label, href, icon }) => {
+              {secondaryItems.map(({ label, href, icon, color }) => {
                 const active = isActive(href);
                 return (
                   <li key={href}>
@@ -105,16 +142,36 @@ export function Sidebar() {
                       href={href}
                       onClick={() => setSidebarOpen(false)}
                       className={[
-                        "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                        "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
                         active
-                          ? "bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
-                          : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800",
+                          ? "text-white bg-white/[0.07]"
+                          : "text-white/50 hover:text-white/80 hover:bg-white/[0.04]",
                       ].join(" ")}
                     >
-                      <span className={active ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"}>
+                      {active && (
+                        <div
+                          className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
+                          style={{
+                            backgroundColor: color,
+                            boxShadow: `0 0 8px ${color}80`,
+                          }}
+                        />
+                      )}
+                      <span
+                        className="flex items-center justify-center size-5 transition-colors"
+                        style={{ color: active ? color : undefined }}
+                      >
                         {icon}
                       </span>
                       {label}
+                      {active && (
+                        <div
+                          className="absolute inset-0 rounded-lg pointer-events-none"
+                          style={{
+                            background: `radial-gradient(ellipse at left, ${color}12 0%, transparent 70%)`,
+                          }}
+                        />
+                      )}
                     </Link>
                   </li>
                 );
@@ -124,7 +181,7 @@ export function Sidebar() {
         </nav>
 
         {/* User menu at bottom */}
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
+        <div className="border-t border-white/[0.06]">
           <UserMenu />
         </div>
       </aside>

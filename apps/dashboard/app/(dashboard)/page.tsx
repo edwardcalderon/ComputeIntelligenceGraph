@@ -19,8 +19,22 @@ const WS_URL =
 const RESOURCE_TYPES = ["compute", "storage", "network", "database"] as const;
 const PROVIDERS = ["aws", "gcp", "kubernetes", "docker"] as const;
 
+const TYPE_COLORS: Record<string, string> = {
+  compute: "#06b6d4",
+  storage: "#3b82f6",
+  network: "#a855f7",
+  database: "#10b981",
+};
+
+const PROVIDER_COLORS: Record<string, string> = {
+  aws: "#f59e0b",
+  gcp: "#3b82f6",
+  kubernetes: "#06b6d4",
+  docker: "#8b5cf6",
+};
+
 function fmt(date: string | null): string {
-  if (!date) return "—";
+  if (!date) return "\u2014";
   return new Date(date).toLocaleString();
 }
 
@@ -109,8 +123,7 @@ export default function OverviewPage() {
     };
   }, [queryClient]);
 
-  // Derive region counts from total data (regions not filterable via simple query;
-  // we show a breakdown from the items we have)
+  // Derive region counts from total data
   const { data: regionSampleData } = useQuery<PagedResources>({
     queryKey: ["resources", "region-sample"],
     queryFn: () => getResourcesPaged("limit=200"),
@@ -128,46 +141,49 @@ export default function OverviewPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+        <h1 className="text-2xl font-bold text-white/95">
           Overview
         </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-sm text-white/40">
           Infrastructure at a glance
         </p>
       </div>
 
       {/* Total */}
       <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/30">
           Total Resources
         </h2>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <StatCard
             label="All resources"
             value={totalData?.total ?? 0}
             loading={totalLoading}
+            color="#06b6d4"
           />
           <StatCard
             label="Inactive"
             value={inactiveData?.total ?? 0}
             loading={inactiveLoading}
             sub="stopped / terminated"
+            color="#ef4444"
           />
         </div>
       </section>
 
       {/* By type */}
       <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/30">
           By Type
         </h2>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {typeQueries.map(({ type, result }) => (
             <StatCard
               key={type}
               label={type.charAt(0).toUpperCase() + type.slice(1)}
               value={result.data?.total ?? 0}
               loading={result.isLoading}
+              color={TYPE_COLORS[type]}
             />
           ))}
         </div>
@@ -175,16 +191,17 @@ export default function OverviewPage() {
 
       {/* By provider */}
       <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/30">
           By Provider
         </h2>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {providerQueries.map(({ provider, result }) => (
             <StatCard
               key={provider}
               label={provider.toUpperCase()}
               value={result.data?.total ?? 0}
               loading={result.isLoading}
+              color={PROVIDER_COLORS[provider]}
             />
           ))}
         </div>
@@ -192,15 +209,15 @@ export default function OverviewPage() {
 
       {/* By region */}
       <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/30">
           By Region
         </h2>
         {!regionCounts || Object.keys(regionCounts).length === 0 ? (
-          <p className="text-sm text-gray-400 dark:text-gray-500">
+          <p className="text-sm text-white/25">
             No region data available.
           </p>
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
             {Object.entries(regionCounts)
               .sort((a, b) => b[1] - a[1])
               .map(([region, count]) => (
@@ -212,20 +229,21 @@ export default function OverviewPage() {
 
       {/* Discovery status */}
       <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/30">
           Discovery
         </h2>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <StatCard
             label="Status"
             value={
               discoveryLoading
-                ? "…"
+                ? "\u2026"
                 : discoveryData?.running
                 ? "Running"
                 : "Idle"
             }
             loading={discoveryLoading}
+            color="#10b981"
           />
           <StatCard
             label="Last run"
