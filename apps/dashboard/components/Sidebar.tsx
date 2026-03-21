@@ -45,15 +45,18 @@ export function Sidebar() {
           "lg:static lg:translate-x-0",
         ].join(" ")}
       >
-        {/* Logo */}
-        <div className="flex h-14 items-center px-4 border-b border-gray-200 dark:border-gray-700">
+        {/* Logo — links back to landing */}
+        <a
+          href={process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}
+          className="flex h-14 items-center px-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+        >
           <span className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
             CIG
           </span>
           <span className="ml-2 text-xs text-gray-400 dark:text-gray-500 font-mono">
             v{process.env.NEXT_PUBLIC_APP_VERSION}
           </span>
-        </div>
+        </a>
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-4">

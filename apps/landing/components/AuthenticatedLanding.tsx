@@ -475,10 +475,11 @@ function useTypewriter(text: string, active: boolean, delay = 260, speed = 14) {
 function HoloCard({ feature, selected, onSelect, onKnowMore }: HoloCardProps) {
   const t = useTranslation();
   const { theme } = useTheme();
-  // revealed is driven solely by the selected prop coming from ScrollingRow.
-  // No hover state here — hover causes subtle CSS ring only (no JS).
-  // This eliminates all mouseleave/timer race conditions with child buttons.
-  const revealed = selected;
+  // Hover reveals the card for browsing; click LOCKS it (selected=true).
+  // Once locked, revealed stays true regardless of hover — user can freely
+  // move cursor to buttons without the card collapsing.
+  const [hovered, setHovered] = useState(false);
+  const revealed = hovered || selected;
   const title = t(feature.titleKey);
   const tag = t(feature.tagKey);
   const { typed, done } = useTypewriter(t(feature.descKey), revealed);
@@ -515,6 +516,8 @@ function HoloCard({ feature, selected, onSelect, onKnowMore }: HoloCardProps) {
     <article
       onClick={onSelect}
       data-selected={selected ? "" : undefined}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className="cig-holocard relative flex-shrink-0 w-64 rounded-2xl cursor-pointer select-none overflow-hidden"
       style={{
         height: revealed ? "auto" : 220,
