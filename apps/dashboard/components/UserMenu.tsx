@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useGetIdentity, useLogout } from "@refinedev/core";
+import { useTranslation } from "@cig-technology/i18n/react";
 
 interface Identity {
   id: string;
@@ -12,6 +13,7 @@ interface Identity {
 }
 
 export function UserMenu() {
+  const t = useTranslation();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { data: identity } = useGetIdentity<Identity>();
@@ -36,7 +38,7 @@ export function UserMenu() {
       <button
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-cig-hover transition-colors"
-        aria-label="User menu"
+        aria-label={t("userMenu.userLabel")}
       >
         {identity?.avatar ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -66,11 +68,11 @@ export function UserMenu() {
         <div className="absolute bottom-full left-2.5 right-2.5 mb-1 rounded-xl border border-cig bg-cig-card shadow-lg dark:shadow-[0_20px_60px_rgba(0,0,0,0.7)] py-1 z-50">
           <Link href="/profile" onClick={() => setOpen(false)}
             className="flex items-center gap-2.5 px-3 py-2 text-[13px] text-cig-secondary hover:text-cig-primary hover:bg-cig-hover transition-colors">
-            <ProfileIcon /> Profile
+            <ProfileIcon /> {t("userMenu.profile")}
           </Link>
           <Link href="/settings" onClick={() => setOpen(false)}
             className="flex items-center gap-2.5 px-3 py-2 text-[13px] text-cig-secondary hover:text-cig-primary hover:bg-cig-hover transition-colors">
-            <SettingsIcon /> Settings
+            <SettingsIcon /> {t("userMenu.settings")}
           </Link>
           <hr className="my-1 border-cig" />
           <button
@@ -79,7 +81,7 @@ export function UserMenu() {
             className="flex w-full items-center gap-2.5 px-3 py-2 text-[13px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/[0.06] transition-colors disabled:opacity-50"
           >
             <LogoutIcon />
-            {isLoading ? "Signing out..." : "Sign out"}
+            {isLoading ? t("userMenu.signingOut") : t("userMenu.signOut")}
           </button>
         </div>
       )}

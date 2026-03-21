@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "@cig-technology/i18n/react";
 import { useAppStore } from "../../../lib/store";
 import { notifyUser } from "../../../components/NotificationBell";
 
 export default function SettingsPage() {
+  const t = useTranslation();
   const { theme, setTheme } = useAppStore();
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
@@ -14,30 +16,30 @@ export default function SettingsPage() {
 
   function handleSave() {
     setSaved(true);
-    notifyUser("Settings saved successfully", "success" as const);
+    notifyUser(t("settings.saved"), "success" as const);
     setTimeout(() => setSaved(false), 2000);
   }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Settings</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t("settings.title")}</h1>
 
       {/* Appearance */}
-      <Section title="Appearance">
-        <Field label="Theme" description="Choose between light and dark mode.">
+      <Section title={t("settings.appearance")}>
+        <Field label={t("settings.theme")} description={t("settings.themeDesc")}>
           <div className="flex gap-2">
-            {(["light", "dark"] as const).map((t) => (
+            {(["light", "dark"] as const).map((themeKey) => (
               <button
-                key={t}
-                onClick={() => setTheme(t)}
+                key={themeKey}
+                onClick={() => setTheme(themeKey)}
                 className={[
                   "px-4 py-1.5 rounded-md text-sm font-medium border transition-colors capitalize",
-                  theme === t
+                  theme === themeKey
                     ? "bg-blue-600 text-white border-blue-600"
                     : "border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800",
                 ].join(" ")}
               >
-                {t}
+                {t("settings." + themeKey)}
               </button>
             ))}
           </div>
@@ -45,14 +47,14 @@ export default function SettingsPage() {
       </Section>
 
       {/* Data & sync */}
-      <Section title="Data & Sync">
-        <Field label="API endpoint" description="Backend API URL (read-only, set via env).">
+      <Section title={t("settings.dataSync")}>
+        <Field label={t("settings.apiEndpoint")} description={t("settings.apiEndpointDesc")}>
           <code className="block rounded bg-gray-100 dark:bg-gray-800 px-3 py-1.5 text-xs font-mono text-gray-700 dark:text-gray-300">
             {apiUrl}
           </code>
         </Field>
 
-        <Field label="Auto-refresh interval" description="How often dashboard data is re-fetched (seconds).">
+        <Field label={t("settings.autoRefresh")} description={t("settings.autoRefreshDesc")}>
           <div className="flex items-center gap-3">
             <input
               type="range"
@@ -67,19 +69,19 @@ export default function SettingsPage() {
           </div>
         </Field>
 
-        <Field label="Real-time updates" description="Receive live updates via WebSocket.">
+        <Field label={t("settings.realtimeUpdates")} description={t("settings.realtimeUpdatesDesc")}>
           <Toggle checked={wsEnabled} onChange={setWsEnabled} />
         </Field>
       </Section>
 
       {/* About */}
-      <Section title="About">
-        <Field label="Dashboard version" description="">
+      <Section title={t("settings.about")}>
+        <Field label={t("settings.dashboardVersion")} description="">
           <span className="font-mono text-sm text-gray-700 dark:text-gray-300">
             v{process.env.NEXT_PUBLIC_APP_VERSION ?? "—"}
           </span>
         </Field>
-        <Field label="Release tag" description="">
+        <Field label={t("settings.releaseTag")} description="">
           <span className="font-mono text-sm text-gray-700 dark:text-gray-300">
             {process.env.NEXT_PUBLIC_RELEASE_TAG ?? process.env.NEXT_PUBLIC_APP_VERSION ?? "—"}
           </span>
@@ -95,7 +97,7 @@ export default function SettingsPage() {
             saved ? "bg-green-600" : "bg-blue-600 hover:bg-blue-700",
           ].join(" ")}
         >
-          {saved ? "Saved!" : "Save settings"}
+          {saved ? t("settings.saved") : t("settings.save")}
         </button>
       </div>
     </div>

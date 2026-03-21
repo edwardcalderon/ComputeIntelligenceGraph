@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "@cig-technology/i18n/react";
 import {
   getTargets,
   deleteTarget,
@@ -13,19 +14,20 @@ import {
 
 type TargetStatus = ManagedTarget["status"];
 
-const STATUS_CONFIG: Record<TargetStatus, { dot: string; badge: string; label: string }> = {
-  online:   { dot: "bg-emerald-500 dark:shadow-[0_0_6px_rgba(16,185,129,0.6)]", badge: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/20", label: "Online" },
-  degraded: { dot: "bg-amber-500 dark:shadow-[0_0_6px_rgba(245,158,11,0.6)]",   badge: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/20",     label: "Degraded" },
-  offline:  { dot: "bg-red-500 dark:shadow-[0_0_6px_rgba(239,68,68,0.6)]",       badge: "bg-red-50 text-red-700 border-red-200 dark:bg-red-500/15 dark:text-red-400 dark:border-red-500/20",           label: "Offline" },
-  revoked:  { dot: "bg-slate-400 dark:bg-white/25",                               badge: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-white/[0.06] dark:text-white/40 dark:border-white/[0.08]", label: "Revoked" },
+const STATUS_CONFIG: Record<TargetStatus, { dot: string; badge: string; labelKey: string }> = {
+  online:   { dot: "bg-emerald-500 dark:shadow-[0_0_6px_rgba(16,185,129,0.6)]", badge: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/20", labelKey: "targets.statusOnline" },
+  degraded: { dot: "bg-amber-500 dark:shadow-[0_0_6px_rgba(245,158,11,0.6)]",   badge: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/20",     labelKey: "targets.statusDegraded" },
+  offline:  { dot: "bg-red-500 dark:shadow-[0_0_6px_rgba(239,68,68,0.6)]",       badge: "bg-red-50 text-red-700 border-red-200 dark:bg-red-500/15 dark:text-red-400 dark:border-red-500/20",           labelKey: "targets.statusOffline" },
+  revoked:  { dot: "bg-slate-400 dark:bg-white/25",                               badge: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-white/[0.06] dark:text-white/40 dark:border-white/[0.08]", labelKey: "targets.statusRevoked" },
 };
 
 function StatusBadge({ status }: { status: TargetStatus }) {
+  const t = useTranslation();
   const cfg = STATUS_CONFIG[status];
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${cfg.badge}`}>
       <span className={`size-1.5 rounded-full ${cfg.dot}`} />
-      {cfg.label}
+      {t(cfg.labelKey)}
     </span>
   );
 }
@@ -42,6 +44,7 @@ function timeAgo(date: string | null): string {
 }
 
 export default function TargetsPage() {
+  const t = useTranslation();
   const queryClient = useQueryClient();
   const [enrollToken, setEnrollToken] = useState<EnrollmentTokenResponse | null>(null);
   const [revokeId, setRevokeId] = useState<string | null>(null);
@@ -70,8 +73,8 @@ export default function TargetsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-cig-primary">Targets</h1>
-          <p className="mt-1 text-sm text-cig-secondary">Managed nodes enrolled in your CIG cluster</p>
+          <h1 className="text-2xl font-bold text-cig-primary">{t("targets.title")}</h1>
+          <p className="mt-1 text-sm text-cig-secondary">{t("targets.subtitle")}</p>
         </div>
         <button
           onClick={() => enrollMutation.mutate()}
@@ -81,7 +84,7 @@ export default function TargetsPage() {
           <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
-          {enrollMutation.isPending ? "Generating..." : "Enroll Target"}
+          {enrollMutation.isPending ? t("targets.generating") : t("targets.enrollTarget")}
         </button>
       </div>
 
@@ -89,12 +92,12 @@ export default function TargetsPage() {
       {enrollToken && (
         <div className="rounded-xl border border-cyan-200 dark:border-cyan-500/20 bg-cyan-50 dark:bg-cyan-500/[0.06] p-4 space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-cyan-700 dark:text-cyan-400">Enrollment Token Generated</p>
+            <p className="text-sm font-medium text-cyan-700 dark:text-cyan-400">{t("targets.tokenGenerated")}</p>
             <button onClick={() => setEnrollToken(null)} className="text-cig-muted hover:text-cig-secondary transition-colors">
               <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
             </button>
           </div>
-          <p className="text-[11px] text-cig-secondary">Run this on the target machine. Token expires {new Date(enrollToken.expires_at).toLocaleString()}.</p>
+          <p className="text-[11px] text-cig-secondary">{t("targets.tokenExpires", { date: new Date(enrollToken.expires_at).toLocaleString() })}</p>
           <code className="block text-xs font-mono bg-slate-100 dark:bg-black/30 rounded-lg px-3 py-2 text-cyan-700 dark:text-cyan-300 break-all select-all">
             cig enroll --token {enrollToken.enrollment_token}
           </code>
@@ -104,21 +107,21 @@ export default function TargetsPage() {
       {/* Error */}
       {error && (
         <div className="rounded-xl border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/[0.06] px-4 py-3">
-          <p className="text-sm text-red-700 dark:text-red-400">Failed to load targets. The API may be unreachable.</p>
+          <p className="text-sm text-red-700 dark:text-red-400">{t("targets.failedToLoad")}</p>
         </div>
       )}
 
       {/* Stats row */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {(["online", "degraded", "offline", "revoked"] as const).map((status) => {
-          const count = targets.filter((t) => t.status === status).length;
+          const count = targets.filter((tgt) => tgt.status === status).length;
           const cfg = STATUS_CONFIG[status];
           return (
             <div key={status} className="rounded-xl border border-cig bg-cig-card p-3 flex items-center gap-3">
               <span className={`size-2.5 rounded-full ${cfg.dot}`} />
               <div>
                 <p className="text-lg font-semibold text-cig-primary">{count}</p>
-                <p className="text-[10px] uppercase tracking-wider text-cig-muted">{cfg.label}</p>
+                <p className="text-[10px] uppercase tracking-wider text-cig-muted">{t(cfg.labelKey)}</p>
               </div>
             </div>
           );
@@ -129,7 +132,7 @@ export default function TargetsPage() {
       {isLoading && (
         <div className="text-center py-12">
           <div className="inline-flex size-8 border-2 border-cyan-500/40 border-t-transparent rounded-full animate-spin mb-3" />
-          <p className="text-sm text-cig-muted">Loading targets...</p>
+          <p className="text-sm text-cig-muted">{t("targets.loading")}</p>
         </div>
       )}
 
@@ -139,8 +142,8 @@ export default function TargetsPage() {
           <svg className="mx-auto size-10 text-cig-muted/40 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
           </svg>
-          <p className="text-sm text-cig-secondary">No targets enrolled yet</p>
-          <p className="text-xs text-cig-muted mt-1">Click &quot;Enroll Target&quot; to add your first node</p>
+          <p className="text-sm text-cig-secondary">{t("targets.noTargets")}</p>
+          <p className="text-xs text-cig-muted mt-1">{t("targets.noTargetsHint")}</p>
         </div>
       )}
 
@@ -150,13 +153,13 @@ export default function TargetsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-cig">
-                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-cig-muted">Hostname</th>
-                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-cig-muted">Status</th>
-                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-cig-muted hidden sm:table-cell">OS / Arch</th>
-                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-cig-muted hidden md:table-cell">IP</th>
-                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-cig-muted hidden md:table-cell">Profile</th>
-                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-cig-muted hidden lg:table-cell">Last Seen</th>
-                <th className="text-right px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-cig-muted">Actions</th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-cig-muted">{t("targets.colHostname")}</th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-cig-muted">{t("targets.colStatus")}</th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-cig-muted hidden sm:table-cell">{t("targets.colOsArch")}</th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-cig-muted hidden md:table-cell">{t("targets.colIp")}</th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-cig-muted hidden md:table-cell">{t("targets.colProfile")}</th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-cig-muted hidden lg:table-cell">{t("targets.colLastSeen")}</th>
+                <th className="text-right px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-cig-muted">{t("targets.colActions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-cig">
@@ -181,7 +184,7 @@ export default function TargetsPage() {
                   <td className="px-4 py-3 text-xs text-cig-muted hidden lg:table-cell">{timeAgo(target.last_seen)}</td>
                   <td className="px-4 py-3 text-right">
                     {target.status !== "revoked" && (
-                      <button onClick={() => setRevokeId(target.id)} className="text-xs text-red-600 dark:text-red-400/60 hover:text-red-700 dark:hover:text-red-400 transition-colors">Revoke</button>
+                      <button onClick={() => setRevokeId(target.id)} className="text-xs text-red-600 dark:text-red-400/60 hover:text-red-700 dark:hover:text-red-400 transition-colors">{t("targets.revoke")}</button>
                     )}
                   </td>
                 </tr>
@@ -197,13 +200,13 @@ export default function TargetsPage() {
           <div className="fixed inset-0 z-50 bg-black/30 dark:bg-black/60 backdrop-blur-sm" onClick={() => setRevokeId(null)} />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
             <div className="pointer-events-auto w-full max-w-sm rounded-2xl border border-red-200 dark:border-red-500/20 bg-cig-card p-6 shadow-xl">
-              <h3 className="text-base font-semibold text-cig-primary mb-2">Revoke Target</h3>
-              <p className="text-sm text-cig-secondary mb-5">This will invalidate the node identity. The target will no longer communicate with CIG.</p>
+              <h3 className="text-base font-semibold text-cig-primary mb-2">{t("targets.revokeTitle")}</h3>
+              <p className="text-sm text-cig-secondary mb-5">{t("targets.revokeDescription")}</p>
               <div className="flex gap-3 justify-end">
-                <button onClick={() => setRevokeId(null)} className="px-4 py-2 rounded-xl text-sm text-cig-secondary hover:text-cig-primary hover:bg-cig-hover transition-colors">Cancel</button>
+                <button onClick={() => setRevokeId(null)} className="px-4 py-2 rounded-xl text-sm text-cig-secondary hover:text-cig-primary hover:bg-cig-hover transition-colors">{t("common.cancel")}</button>
                 <button onClick={() => revokeMutation.mutate(revokeId)} disabled={revokeMutation.isPending}
                   className="px-4 py-2 rounded-xl text-sm font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors disabled:opacity-50">
-                  {revokeMutation.isPending ? "Revoking..." : "Revoke"}
+                  {revokeMutation.isPending ? t("targets.revoking") : t("targets.revoke")}
                 </button>
               </div>
             </div>

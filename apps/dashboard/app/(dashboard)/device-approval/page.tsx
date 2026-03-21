@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "@cig-technology/i18n/react";
 
 interface DeviceAuthRequest {
   device_code: string;
@@ -56,6 +57,7 @@ function timeLeft(expiresAt: string): string {
 }
 
 export default function DeviceApprovalPage() {
+  const t = useTranslation();
   const queryClient = useQueryClient();
   const [approving, setApproving] = useState<string | null>(null);
   const [denying, setDenying] = useState<string | null>(null);
@@ -97,9 +99,9 @@ export default function DeviceApprovalPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-cig-primary">Device Approval</h1>
+        <h1 className="text-2xl font-bold text-cig-primary">{t("deviceApproval.title")}</h1>
         <p className="mt-1 text-sm text-cig-secondary">
-          Approve or deny pending device authorization requests
+          {t("deviceApproval.subtitle")}
         </p>
       </div>
 
@@ -107,7 +109,7 @@ export default function DeviceApprovalPage() {
       {error && (
         <div className="rounded-xl border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/[0.06] px-4 py-3">
           <p className="text-sm text-red-700 dark:text-red-400">
-            Failed to load pending requests. The API may be unreachable.
+            {t("deviceApproval.failedToLoad")}
           </p>
         </div>
       )}
@@ -116,7 +118,7 @@ export default function DeviceApprovalPage() {
       {isLoading && (
         <div className="text-center py-12">
           <div className="inline-flex size-8 border-2 border-cyan-500/40 border-t-transparent rounded-full animate-spin mb-3" />
-          <p className="text-sm text-cig-muted">Loading device requests...</p>
+          <p className="text-sm text-cig-muted">{t("deviceApproval.loading")}</p>
         </div>
       )}
 
@@ -126,8 +128,8 @@ export default function DeviceApprovalPage() {
           <svg className="mx-auto size-10 text-cig-muted/40 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
           </svg>
-          <p className="text-sm text-cig-secondary">No pending device authorization requests</p>
-          <p className="text-xs text-cig-muted mt-1">Requests from CLI devices will appear here</p>
+          <p className="text-sm text-cig-secondary">{t("deviceApproval.noPending")}</p>
+          <p className="text-xs text-cig-muted mt-1">{t("deviceApproval.requestsFromCli")}</p>
         </div>
       )}
 
@@ -141,7 +143,7 @@ export default function DeviceApprovalPage() {
             >
               {/* User code — prominent */}
               <div className="text-center">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-cig-muted mb-1">User Code</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-cig-muted mb-1">{t("deviceApproval.userCode")}</p>
                 <p className="text-2xl font-mono font-bold tracking-[0.2em] text-cig-primary">
                   {req.user_code}
                 </p>
@@ -160,14 +162,14 @@ export default function DeviceApprovalPage() {
                   disabled={approving === req.user_code}
                   className="flex-1 py-2 rounded-lg text-sm font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
                 >
-                  {approving === req.user_code ? "Approving..." : "Approve"}
+                  {approving === req.user_code ? t("deviceApproval.approving") : t("deviceApproval.approve")}
                 </button>
                 <button
                   onClick={() => handleDeny(req.user_code)}
                   disabled={denying === req.user_code}
                   className="flex-1 py-2 rounded-lg text-sm font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors disabled:opacity-50"
                 >
-                  {denying === req.user_code ? "Denying..." : "Deny"}
+                  {denying === req.user_code ? t("deviceApproval.denying") : t("deviceApproval.deny")}
                 </button>
               </div>
             </div>

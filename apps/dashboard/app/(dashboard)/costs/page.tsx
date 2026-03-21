@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "@cig-technology/i18n/react";
 import { StatCard } from "../../../components/StatCard";
 import {
   getCostSummary,
@@ -28,6 +29,7 @@ function BreakdownTable({
   currency: string;
   loading: boolean;
 }) {
+  const t = useTranslation();
   return (
     <section>
       <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
@@ -41,16 +43,16 @@ function BreakdownTable({
             ))}
           </div>
         ) : rows.length === 0 ? (
-          <p className="p-6 text-sm text-gray-400 dark:text-gray-500">No data available.</p>
+          <p className="p-6 text-sm text-gray-400 dark:text-gray-500">{t("costs.noData")}</p>
         ) : (
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                  Name
+                  {t("costs.colName")}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                  Monthly Cost
+                  {t("costs.colMonthlyCost")}
                 </th>
                 {rows.some((r) => r.percentage != null) && (
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
@@ -90,12 +92,13 @@ function TopResourcesTable({
   currency: string;
   loading: boolean;
 }) {
+  const t = useTranslation();
   const top10 = [...resources].sort((a, b) => b.amount - a.amount).slice(0, 10);
 
   return (
     <section>
       <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-        Top 10 Most Expensive Resources
+        {t("costs.top10")}
       </h2>
       <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
         {loading ? (
@@ -105,12 +108,12 @@ function TopResourcesTable({
             ))}
           </div>
         ) : top10.length === 0 ? (
-          <p className="p-6 text-sm text-gray-400 dark:text-gray-500">No resource cost data available.</p>
+          <p className="p-6 text-sm text-gray-400 dark:text-gray-500">{t("costs.noResourceCost")}</p>
         ) : (
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                {["#", "Resource", "Type", "Region", "Monthly Cost"].map((col) => (
+                {["#", t("costs.colResource"), t("costs.colType"), t("costs.colRegion"), t("costs.colMonthlyCost")].map((col) => (
                   <th
                     key={col}
                     className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
@@ -148,6 +151,7 @@ function TopResourcesTable({
 }
 
 export default function CostsPage() {
+  const t = useTranslation();
   const { data, isLoading, isError } = useQuery<CostSummary>({
     queryKey: ["costs", "summary"],
     queryFn: getCostSummary,
@@ -159,26 +163,26 @@ export default function CostsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Costs</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("costs.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Monthly infrastructure cost breakdown
+          {t("costs.subtitle")}
         </p>
       </div>
 
       {isError && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-          Failed to load cost data. Check API connectivity.
+          {t("costs.failedToLoad")}
         </div>
       )}
 
       {/* Total monthly cost */}
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-          Total Monthly Cost
+          {t("costs.totalMonthlyCost")}
         </h2>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <StatCard
-            label="Total this month"
+            label={t("costs.totalThisMonth")}
             value={data ? fmt(data.totalMonthlyCost, currency) : "—"}
             loading={isLoading}
           />
@@ -188,7 +192,7 @@ export default function CostsPage() {
       {/* Cost trends */}
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-          Cost Trends
+          {t("costs.costTrends")}
         </h2>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           {(["7d", "30d", "90d"] as const).map((period) => {
@@ -196,11 +200,11 @@ export default function CostsPage() {
             return (
               <StatCard
                 key={period}
-                label={`Last ${period}`}
+                label={t("costs.last", { period })}
                 value={trend ? fmt(trend.total, trend.currency || currency) : "—"}
                 sub={
                   trend?.change != null
-                    ? `${trend.change >= 0 ? "+" : ""}${trend.change.toFixed(1)}% vs prior period`
+                    ? t("costs.vsPrior", { change: `${trend.change >= 0 ? "+" : ""}${trend.change.toFixed(1)}` })
                     : undefined
                 }
                 loading={isLoading}
@@ -212,7 +216,7 @@ export default function CostsPage() {
 
       {/* By type */}
       <BreakdownTable
-        title="By Resource Type"
+        title={t("costs.byResourceType")}
         rows={data?.breakdown?.byType ?? []}
         currency={currency}
         loading={isLoading}
@@ -220,7 +224,7 @@ export default function CostsPage() {
 
       {/* By region */}
       <BreakdownTable
-        title="By Region"
+        title={t("costs.byRegion")}
         rows={data?.breakdown?.byRegion ?? []}
         currency={currency}
         loading={isLoading}
@@ -229,7 +233,7 @@ export default function CostsPage() {
       {/* By tag */}
       {(isLoading || (data?.breakdown?.byTag?.length ?? 0) > 0) && (
         <BreakdownTable
-          title="By Tag"
+          title={t("costs.byTag")}
           rows={data?.breakdown?.byTag ?? []}
           currency={currency}
           loading={isLoading}

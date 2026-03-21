@@ -1,68 +1,122 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslation } from "@cig-technology/i18n/react";
 import { useAppStore } from "../lib/store";
 import { UserMenu } from "./UserMenu";
 
 interface NavItem {
-  label: string;
+  labelKey: string;
   href: string;
   icon: React.ReactNode;
   color: string;
 }
 
-const navItems: NavItem[] = [
-  { label: "Overview",        href: "/",                icon: <HomeIcon />,      color: "#06b6d4" },
-  { label: "Resources",       href: "/resources",       icon: <ResourcesIcon />, color: "#3b82f6" },
-  { label: "Graph",           href: "/graph",           icon: <GraphIcon />,     color: "#8b5cf6" },
-  { label: "Costs",           href: "/costs",           icon: <CostsIcon />,     color: "#a855f7" },
-  { label: "Security",        href: "/security",        icon: <SecurityIcon />,  color: "#10b981" },
-  { label: "Device Approval", href: "/device-approval", icon: <DeviceIcon />,    color: "#f59e0b" },
-  { label: "Targets",         href: "/targets",         icon: <TargetsIcon />,   color: "#ef4444" },
-  { label: "Bootstrap",       href: "/bootstrap",       icon: <BootstrapIcon />, color: "#06b6d4" },
+const platformItems: NavItem[] = [
+  { labelKey: "nav.overview",  href: "/",          icon: <HomeIcon />,      color: "#06b6d4" },
+  { labelKey: "nav.resources", href: "/resources", icon: <ResourcesIcon />, color: "#3b82f6" },
+  { labelKey: "nav.graph",     href: "/graph",     icon: <GraphIcon />,     color: "#8b5cf6" },
+  { labelKey: "nav.costs",     href: "/costs",     icon: <CostsIcon />,     color: "#a855f7" },
+  { labelKey: "nav.security",  href: "/security",  icon: <SecurityIcon />,  color: "#10b981" },
 ];
 
-const secondaryItems: NavItem[] = [
-  { label: "Profile",  href: "/profile",  icon: <ProfileIcon />,  color: "#3b82f6" },
-  { label: "Settings", href: "/settings", icon: <SettingsIcon />, color: "#8b5cf6" },
+const operationsItems: NavItem[] = [
+  { labelKey: "nav.deviceApproval", href: "/device-approval", icon: <DeviceIcon />,    color: "#f59e0b" },
+  { labelKey: "nav.targets",        href: "/targets",         icon: <TargetsIcon />,   color: "#ef4444" },
+  { labelKey: "nav.bootstrap",      href: "/bootstrap",       icon: <BootstrapIcon />, color: "#06b6d4" },
 ];
 
-function NavLink({ item, isActive, onClick }: { item: NavItem; isActive: boolean; onClick: () => void }) {
+const accountItems: NavItem[] = [
+  { labelKey: "nav.profile",  href: "/profile",  icon: <ProfileIcon />,  color: "#3b82f6" },
+  { labelKey: "nav.settings", href: "/settings", icon: <SettingsIcon />, color: "#8b5cf6" },
+];
+
+function ChevronIcon({ open }: { open: boolean }) {
   return (
-    <li>
-      <Link
-        href={item.href}
-        onClick={onClick}
-        className={[
-          "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
-          isActive
-            ? "text-cig-primary bg-slate-100 dark:bg-white/[0.07]"
-            : "text-cig-secondary hover:text-cig-primary hover:bg-slate-50 dark:hover:bg-white/[0.04]",
-        ].join(" ")}
+    <svg
+      className={`size-3.5 transition-transform duration-200 ${open ? "rotate-90" : ""}`}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+    </svg>
+  );
+}
+
+function NavSection({
+  titleKey,
+  items,
+  isActive,
+  onNavClick,
+  defaultOpen = true,
+}: {
+  titleKey: string;
+  items: NavItem[];
+  isActive: (href: string) => boolean;
+  onNavClick: () => void;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const t = useTranslation();
+
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center justify-between px-3 mb-1 group cursor-pointer"
       >
-        {/* Active indicator bar */}
-        {isActive && (
-          <div
-            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
-            style={{ backgroundColor: item.color, boxShadow: `0 0 8px ${item.color}60` }}
-          />
-        )}
-        <span
-          className="flex items-center justify-center size-5 transition-colors"
-          style={{ color: isActive ? item.color : undefined }}
-        >
-          {item.icon}
+        <span className="text-[10px] uppercase tracking-[0.15em] font-semibold text-cig-muted group-hover:text-cig-secondary transition-colors">
+          {t(titleKey)}
         </span>
-        {item.label}
-        {isActive && (
-          <div
-            className="absolute inset-0 rounded-lg pointer-events-none dark:block hidden"
-            style={{ background: `radial-gradient(ellipse at left, ${item.color}10 0%, transparent 70%)` }}
-          />
-        )}
-      </Link>
-    </li>
+        <span className="text-cig-muted group-hover:text-cig-secondary transition-colors">
+          <ChevronIcon open={open} />
+        </span>
+      </button>
+      <div
+        className={`grid transition-[grid-template-rows] duration-200 ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+      >
+        <ul className="space-y-0.5 overflow-hidden">
+          {items.map((item) => (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                onClick={onNavClick}
+                className={[
+                  "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
+                  isActive(item.href)
+                    ? "text-cig-primary bg-slate-100 dark:bg-white/[0.07]"
+                    : "text-cig-secondary hover:text-cig-primary hover:bg-slate-50 dark:hover:bg-white/[0.04]",
+                ].join(" ")}
+              >
+                {isActive(item.href) && (
+                  <div
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
+                    style={{ backgroundColor: item.color, boxShadow: `0 0 8px ${item.color}60` }}
+                  />
+                )}
+                <span
+                  className="flex items-center justify-center size-5 transition-colors"
+                  style={{ color: isActive(item.href) ? item.color : undefined }}
+                >
+                  {item.icon}
+                </span>
+                {t(item.labelKey)}
+                {isActive(item.href) && (
+                  <div
+                    className="absolute inset-0 rounded-lg pointer-events-none hidden dark:block"
+                    style={{ background: `radial-gradient(ellipse at left, ${item.color}10 0%, transparent 70%)` }}
+                  />
+                )}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
   );
 }
 
@@ -108,79 +162,25 @@ export function Sidebar() {
         </a>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-3 px-2.5">
-          <p className="px-3 mb-2 text-[10px] uppercase tracking-[0.15em] font-semibold text-cig-muted">Platform</p>
-          <ul className="space-y-0.5">
-            {navItems.map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={[
-                    "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
-                    isActive(item.href)
-                      ? "text-cig-primary bg-slate-100 dark:bg-white/[0.07]"
-                      : "text-cig-secondary hover:text-cig-primary hover:bg-slate-50 dark:hover:bg-white/[0.04]",
-                  ].join(" ")}
-                >
-                  {isActive(item.href) && (
-                    <div
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
-                      style={{ backgroundColor: item.color, boxShadow: `0 0 8px ${item.color}60` }}
-                    />
-                  )}
-                  <span
-                    className="flex items-center justify-center size-5 transition-colors"
-                    style={{ color: isActive(item.href) ? item.color : undefined }}
-                  >
-                    {item.icon}
-                  </span>
-                  {item.label}
-                  {isActive(item.href) && (
-                    <div
-                      className="absolute inset-0 rounded-lg pointer-events-none hidden dark:block"
-                      style={{ background: `radial-gradient(ellipse at left, ${item.color}10 0%, transparent 70%)` }}
-                    />
-                  )}
-                </Link>
-              </li>
-            ))}
-          </ul>
-
-          {/* Secondary */}
-          <div className="mt-6">
-            <p className="px-3 mb-2 text-[10px] uppercase tracking-[0.15em] font-semibold text-cig-muted">Account</p>
-            <ul className="space-y-0.5">
-              {secondaryItems.map((item) => (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={[
-                      "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
-                      isActive(item.href)
-                        ? "text-cig-primary bg-slate-100 dark:bg-white/[0.07]"
-                        : "text-cig-secondary hover:text-cig-primary hover:bg-slate-50 dark:hover:bg-white/[0.04]",
-                    ].join(" ")}
-                  >
-                    {isActive(item.href) && (
-                      <div
-                        className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
-                        style={{ backgroundColor: item.color, boxShadow: `0 0 8px ${item.color}60` }}
-                      />
-                    )}
-                    <span
-                      className="flex items-center justify-center size-5 transition-colors"
-                      style={{ color: isActive(item.href) ? item.color : undefined }}
-                    >
-                      {item.icon}
-                    </span>
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+        <nav className="flex-1 overflow-y-auto py-3 px-2.5 space-y-4">
+          <NavSection
+            titleKey="sidebar.platform"
+            items={platformItems}
+            isActive={isActive}
+            onNavClick={() => setSidebarOpen(false)}
+          />
+          <NavSection
+            titleKey="sidebar.operations"
+            items={operationsItems}
+            isActive={isActive}
+            onNavClick={() => setSidebarOpen(false)}
+          />
+          <NavSection
+            titleKey="sidebar.account"
+            items={accountItems}
+            isActive={isActive}
+            onNavClick={() => setSidebarOpen(false)}
+          />
         </nav>
 
         {/* User menu */}
@@ -204,14 +204,14 @@ function HomeIcon() {
 function ResourcesIcon() {
   return (
     <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 0 1-3-3m3 3a3 3 0 1 0 6 0m-6 0H2.25m13.5 0a3 3 0 0 0 3-3m-3 3a3 3 0 1 1-6 0m6 0h3.75m-3.75 0V6m-7.5 8.25V6m0 0a3 3 0 0 1 3-3m-3 3a3 3 0 1 0 6 0m-6 0H2.25m13.5 0a3 3 0 0 0-3-3m3 3a3 3 0 1 1-6 0m6 0h3.75" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25" />
     </svg>
   );
 }
 function GraphIcon() {
   return (
     <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0 0 20.25 18V6A2.25 2.25 0 0 0 18 3.75H6A2.25 2.25 0 0 0 3.75 6v12A2.25 2.25 0 0 0 6 20.25Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
     </svg>
   );
 }

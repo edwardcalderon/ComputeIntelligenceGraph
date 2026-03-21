@@ -1,6 +1,7 @@
 "use client";
 
 import { useGetIdentity, useLogout } from "@refinedev/core";
+import { useTranslation } from "@cig-technology/i18n/react";
 
 interface Identity {
   id: string;
@@ -10,6 +11,7 @@ interface Identity {
 }
 
 export default function ProfilePage() {
+  const t = useTranslation();
   const { data: identity, isLoading } = useGetIdentity<Identity>();
   const { mutate: logout, isPending: loggingOut } = useLogout();
 
@@ -27,7 +29,7 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Profile</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t("profile.title")}</h1>
 
       {/* Avatar & identity card */}
       <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6">
@@ -49,7 +51,7 @@ export default function ProfilePage() {
             <p className="text-sm text-gray-500 dark:text-gray-400">{identity?.email}</p>
             <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/30 px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">
               <span className="size-1.5 rounded-full bg-green-500" />
-              Active session
+              {t("profile.activeSession")}
             </span>
           </div>
         </div>
@@ -58,35 +60,35 @@ export default function ProfilePage() {
       {/* Account info */}
       <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800">
         <div className="px-6 py-4">
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Account Information</h2>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">{t("profile.accountInfo")}</h2>
           <dl className="space-y-3">
-            <Row label="Full name"  value={identity?.name  ?? "—"} />
-            <Row label="Email"      value={identity?.email ?? "—"} />
-            <Row label="User ID"    value={identity?.id    ?? "—"} mono />
+            <Row label={t("profile.fullName")}  value={identity?.name  ?? "—"} />
+            <Row label={t("profile.email")}      value={identity?.email ?? "—"} />
+            <Row label={t("profile.userId")}    value={identity?.id    ?? "—"} mono />
           </dl>
         </div>
 
         <div className="px-6 py-4">
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Authentication</h2>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">{t("profile.authentication")}</h2>
           <dl className="space-y-3">
-            <Row label="Provider"      value="Supabase OAuth" />
-            <Row label="Session type"  value="Browser session (sessionStorage)" />
+            <Row label={t("profile.provider")}      value={t("profile.providerValue")} />
+            <Row label={t("profile.sessionType")}  value={t("profile.sessionTypeValue")} />
           </dl>
         </div>
       </div>
 
       {/* Sign out */}
       <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 p-6">
-        <h2 className="text-sm font-semibold text-red-800 dark:text-red-300 mb-1">Sign out</h2>
+        <h2 className="text-sm font-semibold text-red-800 dark:text-red-300 mb-1">{t("profile.signOutTitle")}</h2>
         <p className="text-xs text-red-600 dark:text-red-400 mb-4">
-          This will clear your session and redirect you to the landing page.
+          {t("profile.signOutDesc")}
         </p>
         <button
           onClick={() => logout()}
           disabled={loggingOut}
           className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
         >
-          {loggingOut ? "Signing out…" : "Sign out"}
+          {loggingOut ? t("profile.signingOut") : t("profile.signOutButton")}
         </button>
       </div>
     </div>

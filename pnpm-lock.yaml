@@ -26,6 +26,9 @@ importers:
 
   apps/dashboard:
     dependencies:
+      '@cig-technology/i18n':
+        specifier: 1.0.0
+        version: 1.0.0(react@18.3.1)
       '@cig/ui':
         specifier: workspace:^
         version: link:../../packages/ui

@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useTransition, Suspense } from "react";
+import { useTranslation } from "@cig-technology/i18n/react";
 import { getResourcesPaged, searchResources, Resource } from "../../../lib/api";
 import { getProviderColor, getProviderLabel } from "../../../lib/providers";
 
@@ -64,6 +65,7 @@ export default function ResourcesPage() {
 }
 
 function ResourcesContent() {
+  const t = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -117,10 +119,10 @@ function ResourcesContent() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          Resources
+          {t("resources.title")}
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {data ? `${data.total} resource${data.total !== 1 ? "s" : ""} found` : "Loading…"}
+          {data ? t("resources.found", { count: data.total }) : t("common.loading")}
         </p>
       </div>
 
@@ -129,7 +131,7 @@ function ResourcesContent() {
         {/* Search */}
         <input
           type="search"
-          placeholder="Search by name…"
+          placeholder={t("resources.searchByName")}
           value={search}
           onChange={(e) => setParam("search", e.target.value)}
           className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
@@ -141,10 +143,10 @@ function ResourcesContent() {
           onChange={(e) => setParam("type", e.target.value)}
           className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
         >
-          <option value="">All types</option>
-          {TYPES.map((t) => (
-            <option key={t} value={t}>
-              {t.charAt(0).toUpperCase() + t.slice(1)}
+          <option value="">{t("resources.allTypes")}</option>
+          {TYPES.map((tp) => (
+            <option key={tp} value={tp}>
+              {tp.charAt(0).toUpperCase() + tp.slice(1)}
             </option>
           ))}
         </select>
@@ -155,7 +157,7 @@ function ResourcesContent() {
           onChange={(e) => setParam("provider", e.target.value)}
           className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
         >
-          <option value="">All providers</option>
+          <option value="">{t("resources.allProviders")}</option>
           {PROVIDERS.map((p) => (
             <option key={p} value={p}>
               {p.toUpperCase()}
@@ -169,7 +171,7 @@ function ResourcesContent() {
           onChange={(e) => setParam("state", e.target.value)}
           className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
         >
-          <option value="">All states</option>
+          <option value="">{t("resources.allStates")}</option>
           {STATES.map((s) => (
             <option key={s} value={s}>
               {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -185,7 +187,7 @@ function ResourcesContent() {
             }}
             className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-600 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
           >
-            Clear filters
+            {t("resources.clearFilters")}
           </button>
         )}
       </div>
@@ -194,13 +196,13 @@ function ResourcesContent() {
       <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
         {isError ? (
           <div className="p-8 text-center text-sm text-red-500">
-            Failed to load resources. Check API connectivity.
+            {t("resources.failedToLoad")}
           </div>
         ) : (
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                {["Name", "Type", "Provider", "Region", "State", "Tags"].map(
+                {[t("resources.colName"), t("resources.colType"), t("resources.colProvider"), t("resources.colRegion"), t("resources.colState"), t("resources.colTags")].map(
                   (col) => (
                     <th
                       key={col}
@@ -229,7 +231,7 @@ function ResourcesContent() {
                     colSpan={6}
                     className="px-4 py-8 text-center text-sm text-gray-400"
                   >
-                    No resources match the current filters.
+                    {t("resources.noMatch")}
                   </td>
                 </tr>
               ) : (
@@ -279,7 +281,7 @@ function ResourcesContent() {
       {!isLoading && !isError && totalPages > 1 && (
         <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
           <span>
-            Page {page} of {totalPages}
+            {t("resources.pageOf", { page, total: totalPages })}
           </span>
           <div className="flex gap-2">
             <button
@@ -287,14 +289,14 @@ function ResourcesContent() {
               onClick={() => setParam("page", String(page - 1))}
               className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-40 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
             >
-              Previous
+              {t("resources.previous")}
             </button>
             <button
               disabled={page >= totalPages}
               onClick={() => setParam("page", String(page + 1))}
               className="rounded-md border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-40 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
             >
-              Next
+              {t("resources.next")}
             </button>
           </div>
         </div>

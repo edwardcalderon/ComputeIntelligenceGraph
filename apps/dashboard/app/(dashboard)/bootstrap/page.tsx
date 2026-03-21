@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useTranslation } from "@cig-technology/i18n/react";
 import {
   getBootstrapStatus,
   validateBootstrapToken,
@@ -12,6 +13,7 @@ import {
 type Step = "check" | "token" | "admin" | "complete";
 
 export default function BootstrapPage() {
+  const t = useTranslation();
   const [step, setStep] = useState<Step>("check");
   const [token, setToken] = useState("");
   const [username, setUsername] = useState("");
@@ -58,7 +60,7 @@ export default function BootstrapPage() {
       setStep("admin");
     },
     onError: (err: Error) => {
-      setError(err.message || "Invalid bootstrap token");
+      setError(err.message || t("bootstrap.errorInvalidToken"));
     },
   });
 
@@ -75,7 +77,7 @@ export default function BootstrapPage() {
       setStep("complete");
     },
     onError: (err: Error) => {
-      setError(err.message || "Bootstrap failed");
+      setError(err.message || t("bootstrap.errorFailed"));
     },
   });
 
@@ -83,7 +85,7 @@ export default function BootstrapPage() {
     e.preventDefault();
     setError(null);
     if (!token.trim()) {
-      setError("Please enter a bootstrap token");
+      setError(t("bootstrap.errorToken"));
       return;
     }
     validateMutation.mutate();
@@ -94,15 +96,15 @@ export default function BootstrapPage() {
     setError(null);
 
     if (!username.trim() || !email.trim() || !password) {
-      setError("All fields are required");
+      setError(t("bootstrap.errorAllRequired"));
       return;
     }
     if (password.length < 12) {
-      setError("Password must be at least 12 characters");
+      setError(t("bootstrap.errorPasswordLength"));
       return;
     }
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("bootstrap.errorPasswordMatch"));
       return;
     }
     completeMutation.mutate();
@@ -120,9 +122,9 @@ export default function BootstrapPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-cig-primary">Bootstrap</h1>
+          <h1 className="text-2xl font-bold text-cig-primary">{t("bootstrap.title")}</h1>
           <p className="mt-1 text-sm text-cig-muted">
-            Set up your self-hosted CIG instance
+            {t("bootstrap.subtitle")}
           </p>
         </div>
 
@@ -169,7 +171,7 @@ export default function BootstrapPage() {
         {step === "check" && checkLoading && (
           <div className="text-center py-12">
             <div className="inline-flex size-8 border-2 border-cyan-500/40 border-t-transparent rounded-full animate-spin mb-3" />
-            <p className="text-sm text-cig-muted">Checking bootstrap status...</p>
+            <p className="text-sm text-cig-muted">{t("bootstrap.checking")}</p>
           </div>
         )}
 
@@ -181,9 +183,9 @@ export default function BootstrapPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
               </svg>
             </div>
-            <h2 className="text-lg font-semibold text-cig-primary">Already Bootstrapped</h2>
+            <h2 className="text-lg font-semibold text-cig-primary">{t("bootstrap.alreadyDone")}</h2>
             <p className="text-sm text-cig-secondary">
-              This CIG instance has already been configured. An admin account exists.
+              {t("bootstrap.alreadyDoneDesc")}
             </p>
           </div>
         )}
@@ -193,18 +195,18 @@ export default function BootstrapPage() {
           <form onSubmit={handleValidate} className="rounded-2xl border border-cig bg-cig-card p-6 space-y-5">
             <div>
               <label className="block text-[11px] font-semibold uppercase tracking-wider text-cig-muted mb-2">
-                Bootstrap Token
+                {t("bootstrap.tokenLabel")}
               </label>
               <input
                 type="text"
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
-                placeholder="Enter the token from your CLI setup"
+                placeholder={t("bootstrap.tokenPlaceholder")}
                 className={`${inputClasses} font-mono`}
                 autoFocus
               />
               <p className="mt-2 text-[11px] text-cig-muted">
-                The bootstrap token was generated when you first ran <code className="text-cyan-600 dark:text-cyan-400/60">cig init</code>.
+                {t("bootstrap.tokenHint", { command: "cig init" })}
               </p>
             </div>
             <button
@@ -212,7 +214,7 @@ export default function BootstrapPage() {
               disabled={validateMutation.isPending}
               className="w-full py-2.5 rounded-xl text-sm font-medium text-cyan-700 dark:text-white bg-cyan-50 dark:bg-gradient-to-br dark:from-cyan-500/20 dark:to-blue-600/20 border border-cyan-200 dark:border-cyan-500/20 hover:bg-cyan-100 dark:hover:border-cyan-500/40 dark:hover:shadow-[0_0_16px_rgba(6,182,212,0.15)] transition-all disabled:opacity-50"
             >
-              {validateMutation.isPending ? "Validating..." : "Validate Token"}
+              {validateMutation.isPending ? t("bootstrap.validating") : t("bootstrap.validateToken")}
             </button>
           </form>
         )}
@@ -221,11 +223,11 @@ export default function BootstrapPage() {
         {step === "admin" && (
           <form onSubmit={handleComplete} className="rounded-2xl border border-cig bg-cig-card p-6 space-y-4">
             <p className="text-sm text-cig-secondary mb-2">
-              Create the first admin account for your CIG instance.
+              {t("bootstrap.createAdmin")}
             </p>
             <div>
               <label className="block text-[11px] font-semibold uppercase tracking-wider text-cig-muted mb-1.5">
-                Username
+                {t("bootstrap.username")}
               </label>
               <input
                 type="text"
@@ -238,7 +240,7 @@ export default function BootstrapPage() {
             </div>
             <div>
               <label className="block text-[11px] font-semibold uppercase tracking-wider text-cig-muted mb-1.5">
-                Email
+                {t("bootstrap.email")}
               </label>
               <input
                 type="email"
@@ -250,25 +252,25 @@ export default function BootstrapPage() {
             </div>
             <div>
               <label className="block text-[11px] font-semibold uppercase tracking-wider text-cig-muted mb-1.5">
-                Password
+                {t("bootstrap.password")}
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min. 12 characters"
+                placeholder={t("bootstrap.passwordPlaceholder")}
                 className={inputClasses}
               />
             </div>
             <div>
               <label className="block text-[11px] font-semibold uppercase tracking-wider text-cig-muted mb-1.5">
-                Confirm Password
+                {t("bootstrap.confirmPassword")}
               </label>
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Repeat password"
+                placeholder={t("bootstrap.confirmPasswordPlaceholder")}
                 className={inputClasses}
               />
             </div>
@@ -278,14 +280,14 @@ export default function BootstrapPage() {
                 onClick={() => setStep("token")}
                 className="px-4 py-2.5 rounded-xl text-sm text-cig-muted hover:text-cig-secondary hover:bg-cig-hover transition-colors"
               >
-                Back
+                {t("common.back")}
               </button>
               <button
                 type="submit"
                 disabled={completeMutation.isPending}
                 className="flex-1 py-2.5 rounded-xl text-sm font-medium text-cyan-700 dark:text-white bg-cyan-50 dark:bg-gradient-to-br dark:from-cyan-500/20 dark:to-blue-600/20 border border-cyan-200 dark:border-cyan-500/20 hover:bg-cyan-100 dark:hover:border-cyan-500/40 dark:hover:shadow-[0_0_16px_rgba(6,182,212,0.15)] transition-all disabled:opacity-50"
               >
-                {completeMutation.isPending ? "Creating account..." : "Create Admin Account"}
+                {completeMutation.isPending ? t("bootstrap.creatingAccount") : t("bootstrap.createAdminAccount")}
               </button>
             </div>
           </form>
@@ -299,15 +301,15 @@ export default function BootstrapPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
               </svg>
             </div>
-            <h2 className="text-lg font-semibold text-cig-primary">Bootstrap Complete</h2>
+            <h2 className="text-lg font-semibold text-cig-primary">{t("bootstrap.complete")}</h2>
             <p className="text-sm text-cig-secondary">
-              Your admin account has been created. You can now sign in and start configuring CIG.
+              {t("bootstrap.completeDesc")}
             </p>
             <a
               href="/"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-cyan-700 dark:text-white bg-cyan-50 dark:bg-gradient-to-br dark:from-cyan-500/20 dark:to-blue-600/20 border border-cyan-200 dark:border-cyan-500/20 hover:bg-cyan-100 dark:hover:border-cyan-500/40 transition-all"
             >
-              Go to Dashboard
+              {t("bootstrap.goToDashboard")}
               <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
               </svg>

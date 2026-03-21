@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useCallback, useState, useMemo, Suspense } from "react";
+import { useTranslation } from "@cig-technology/i18n/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ReactFlow, {
   Node,
@@ -107,6 +108,7 @@ const nodeTypes: NodeTypes = { resource: ResourceNode };
 // ─── Detail Panel ─────────────────────────────────────────────────────────────
 
 function DetailPanel({ resource, onClose }: { resource: Resource; onClose: () => void }) {
+  const t = useTranslation();
   const colors = TYPE_COLORS[resource.type] ?? TYPE_COLORS.default;
   return (
     <div className="absolute right-4 top-4 z-10 w-72 rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900">
@@ -120,37 +122,37 @@ function DetailPanel({ resource, onClose }: { resource: Resource; onClose: () =>
         <button
           onClick={onClose}
           className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-          aria-label="Close"
+          aria-label={t("common.close")}
         >
           ✕
         </button>
       </div>
       <div className="space-y-2 p-4 text-sm">
         <div>
-          <span className="text-xs font-semibold uppercase text-gray-400">Name</span>
+          <span className="text-xs font-semibold uppercase text-gray-400">{t("graph.detailName")}</span>
           <p className="mt-0.5 font-medium text-gray-900 dark:text-gray-100">{resource.name || "—"}</p>
         </div>
         <div>
-          <span className="text-xs font-semibold uppercase text-gray-400">ID</span>
+          <span className="text-xs font-semibold uppercase text-gray-400">{t("graph.detailId")}</span>
           <p className="mt-0.5 font-mono text-xs text-gray-600 dark:text-gray-300 break-all">{resource.id}</p>
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <span className="text-xs font-semibold uppercase text-gray-400">Provider</span>
+            <span className="text-xs font-semibold uppercase text-gray-400">{t("graph.detailProvider")}</span>
             <p className="mt-0.5 text-gray-700 dark:text-gray-300 uppercase">{resource.provider}</p>
           </div>
           <div>
-            <span className="text-xs font-semibold uppercase text-gray-400">Region</span>
+            <span className="text-xs font-semibold uppercase text-gray-400">{t("graph.detailRegion")}</span>
             <p className="mt-0.5 text-gray-700 dark:text-gray-300">{resource.region ?? "—"}</p>
           </div>
         </div>
         <div>
-          <span className="text-xs font-semibold uppercase text-gray-400">State</span>
+          <span className="text-xs font-semibold uppercase text-gray-400">{t("graph.detailState")}</span>
           <p className="mt-0.5 text-gray-700 dark:text-gray-300">{resource.state ?? "—"}</p>
         </div>
         {resource.tags && Object.keys(resource.tags).length > 0 && (
           <div>
-            <span className="text-xs font-semibold uppercase text-gray-400">Tags</span>
+            <span className="text-xs font-semibold uppercase text-gray-400">{t("graph.detailTags")}</span>
             <div className="mt-1 flex flex-wrap gap-1">
               {Object.entries(resource.tags).map(([k, v]) => (
                 <span key={k} className="rounded bg-blue-50 px-1.5 py-0.5 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
@@ -168,6 +170,7 @@ function DetailPanel({ resource, onClose }: { resource: Resource; onClose: () =>
 // ─── Graph Content ────────────────────────────────────────────────────────────
 
 function GraphContent() {
+  const t = useTranslation();
   const queryClient = useQueryClient();
 
   // Filters
@@ -306,9 +309,9 @@ function GraphContent() {
       {/* Header + Filters */}
       <div className="flex flex-wrap items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-900">
         <div className="mr-auto">
-          <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">Graph</h1>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t("graph.title")}</h1>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            {resources.length} node{resources.length !== 1 ? "s" : ""} · {edges.length} edge{edges.length !== 1 ? "s" : ""}
+            {t("graph.nodeCount", { nodes: resources.length })} · {t("graph.edgeCount", { edges: edges.length })}
           </p>
         </div>
 
@@ -318,9 +321,9 @@ function GraphContent() {
           onChange={(e) => { setFilterType(e.target.value); setSelectedId(null); }}
           className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
         >
-          <option value="">All types</option>
-          {TYPES.map((t) => (
-            <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+          <option value="">{t("graph.allTypes")}</option>
+          {TYPES.map((tp) => (
+            <option key={tp} value={tp}>{tp.charAt(0).toUpperCase() + tp.slice(1)}</option>
           ))}
         </select>
 
@@ -330,7 +333,7 @@ function GraphContent() {
           onChange={(e) => { setFilterProvider(e.target.value); setSelectedId(null); }}
           className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
         >
-          <option value="">All providers</option>
+          <option value="">{t("graph.allProviders")}</option>
           {PROVIDERS.map((p) => (
             <option key={p} value={p}>{p.toUpperCase()}</option>
           ))}
@@ -341,7 +344,7 @@ function GraphContent() {
             onClick={() => { setFilterType(""); setFilterProvider(""); setSelectedId(null); }}
             className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-600 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
           >
-            Clear
+            {t("graph.clear")}
           </button>
         )}
 
@@ -385,7 +388,7 @@ function GraphContent() {
 
         {/* Provider legend */}
         <div className="pointer-events-none absolute right-4 top-4 z-10 rounded-lg border border-gray-200 bg-white/90 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/90">
-          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Providers</p>
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("graph.providers")}</p>
           <div className="space-y-1">
             {Object.entries(PROVIDER_LABELS).map(([key, label]) => (
               <div key={key} className="flex items-center gap-2">
@@ -402,7 +405,7 @@ function GraphContent() {
         {/* Empty state */}
         {resources.length === 0 && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <p className="text-sm text-gray-400">No resources found. Run discovery to populate the graph.</p>
+            <p className="text-sm text-gray-400">{t("graph.noResources")}</p>
           </div>
         )}
 

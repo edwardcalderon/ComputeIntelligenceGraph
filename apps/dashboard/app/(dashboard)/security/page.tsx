@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "@cig-technology/i18n/react";
 import { StatCard } from "../../../components/StatCard";
 import {
   getSecurityFindings,
@@ -72,6 +73,7 @@ function ScorePanel({
   score: SecurityScore | undefined;
   loading: boolean;
 }) {
+  const t = useTranslation();
   return (
     <div className="flex items-center gap-6 rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
       {loading ? (
@@ -85,7 +87,7 @@ function ScorePanel({
           >
             {score?.grade ?? "—"}
           </span>
-          <span className="mt-1 text-xs text-gray-400 dark:text-gray-500">grade</span>
+          <span className="mt-1 text-xs text-gray-400 dark:text-gray-500">{t("security.grade")}</span>
         </div>
       )}
       <div className="flex-1">
@@ -103,7 +105,7 @@ function ScorePanel({
               </span>
             </p>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Security score
+              {t("security.score")}
             </p>
           </>
         )}
@@ -121,6 +123,7 @@ function FindingsTable({
   findings: SecurityFinding[];
   loading: boolean;
 }) {
+  const t = useTranslation();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (loading) {
@@ -136,7 +139,7 @@ function FindingsTable({
   if (findings.length === 0) {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-8 text-center dark:border-gray-700 dark:bg-gray-900">
-        <p className="text-sm text-gray-400 dark:text-gray-500">No findings found.</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500">{t("security.noFindings")}</p>
       </div>
     );
   }
@@ -146,7 +149,7 @@ function FindingsTable({
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead className="bg-gray-50 dark:bg-gray-800">
           <tr>
-            {["Severity", "Title", "Resource", "Category", "Status", ""].map((col) => (
+            {[t("security.colSeverity"), t("security.colTitle"), t("security.colResource"), t("security.colCategory"), t("security.colStatus"), ""].map((col) => (
               <th
                 key={col}
                 className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
@@ -188,13 +191,13 @@ function FindingsTable({
                   <td colSpan={6} className="px-6 py-4">
                     <div className="space-y-3 text-sm">
                       <div>
-                        <p className="font-semibold text-gray-700 dark:text-gray-300">Description</p>
+                        <p className="font-semibold text-gray-700 dark:text-gray-300">{t("security.description")}</p>
                         <p className="mt-1 text-gray-600 dark:text-gray-400">{f.description}</p>
                       </div>
                       {f.remediationSteps && (
                         <div>
                           <p className="font-semibold text-gray-700 dark:text-gray-300">
-                            Remediation Steps
+                            {t("security.remediationSteps")}
                           </p>
                           <p className="mt-1 text-gray-600 dark:text-gray-400 whitespace-pre-line">
                             {f.remediationSteps}
@@ -216,6 +219,7 @@ function FindingsTable({
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function SecurityPage() {
+  const t = useTranslation();
   const [activeCategory, setActiveCategory] = useState<Category>("all");
 
   const {
@@ -258,22 +262,22 @@ export default function SecurityPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Security</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("security.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Security posture and findings overview
+          {t("security.subtitle")}
         </p>
       </div>
 
       {isError && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-          Failed to load security data. Check API connectivity.
+          {t("security.failedToLoad")}
         </div>
       )}
 
       {/* Score */}
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-          Security Score
+          {t("security.securityScore")}
         </h2>
         <ScorePanel score={scoreData} loading={scoreLoading} />
       </section>
@@ -281,26 +285,26 @@ export default function SecurityPage() {
       {/* Findings by severity */}
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-          Findings by Severity
+          {t("security.findingsBySeverity")}
         </h2>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <StatCard
-            label="Critical"
+            label={t("security.critical")}
             value={bySeverity.critical}
             loading={scoreLoading && findingsLoading}
           />
           <StatCard
-            label="High"
+            label={t("security.high")}
             value={bySeverity.high}
             loading={scoreLoading && findingsLoading}
           />
           <StatCard
-            label="Medium"
+            label={t("security.medium")}
             value={bySeverity.medium}
             loading={scoreLoading && findingsLoading}
           />
           <StatCard
-            label="Low"
+            label={t("security.low")}
             value={bySeverity.low}
             loading={scoreLoading && findingsLoading}
           />
@@ -311,7 +315,7 @@ export default function SecurityPage() {
       <section>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            Findings
+            {t("security.findings")}
           </h2>
           {/* Category filter */}
           <div className="flex flex-wrap gap-1">
@@ -325,7 +329,7 @@ export default function SecurityPage() {
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                 }`}
               >
-                {cat === "all" ? "All" : cat.replace("-", " ")}
+                {cat === "all" ? t("security.all") : cat.replace("-", " ")}
               </button>
             ))}
           </div>

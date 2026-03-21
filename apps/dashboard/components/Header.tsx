@@ -4,7 +4,9 @@ import { useAppStore } from "../lib/store";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useTranslation } from "@cig-technology/i18n/react";
 import { NotificationBell } from "./NotificationBell";
+import { LocaleSwitcher } from "./LocaleSwitcher";
 
 interface DeviceAuthResponse {
   items: Array<{ expires_at: string }>;
@@ -26,6 +28,7 @@ async function getPendingDeviceRequests(): Promise<DeviceAuthResponse> {
 
 export function Header() {
   const { toggleSidebar, theme, setTheme } = useAppStore();
+  const t = useTranslation();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -55,7 +58,7 @@ export function Header() {
       {/* Mobile menu toggle */}
       <button
         onClick={toggleSidebar}
-        aria-label="Toggle sidebar"
+        aria-label={t("header.toggleSidebar")}
         className="rounded-lg p-2 text-cig-muted hover:text-cig-secondary hover:bg-cig-hover transition-colors lg:hidden"
       >
         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -71,7 +74,7 @@ export function Header() {
           <Link
             href="/device-approval"
             className="relative rounded-lg p-2 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10 transition-colors"
-            title="Pending device approvals"
+            title={t("header.pendingDeviceApprovals")}
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -85,10 +88,12 @@ export function Header() {
 
         <NotificationBell />
 
+        <LocaleSwitcher />
+
         {/* Dark mode toggle */}
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          aria-label="Toggle dark mode"
+          aria-label={t("header.toggleDarkMode")}
           className="rounded-lg p-2 text-cig-muted hover:text-cig-secondary hover:bg-cig-hover transition-colors"
         >
           {theme === "dark" ? (
