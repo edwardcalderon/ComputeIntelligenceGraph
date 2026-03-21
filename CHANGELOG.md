@@ -1,3 +1,14 @@
+## [0.1.22](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.21...v0.1.22) (2026-03-21)
+
+
+### Features
+
+* **landing:** add DitheringShader WebGL effect to footer background ([d0d5ad6](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/d0d5ad6c64a238032a309b2893708ebde785666e))
+
+
+
+
+
 ## [0.1.21](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.20...v0.1.21) (2026-03-21)
 
 
