@@ -18,22 +18,14 @@ export { getSupabaseClient } from "./client";
 export { useAuthReady, useAuthAvailable } from "./auth-ready-context";
 export { sendEmailOtp, verifyEmailOtp } from "./otp";
 
-// Auth adapter factory
-export { createAuthAdapter } from "./create-auth-adapter";
-export type { AuthMode } from "./create-auth-adapter";
-
-// OIDC adapter
-export { OIDCAdapter } from "./adapters/oidc-adapter";
+// Server-only utilities (jose / node:crypto) are exported from subpaths
+// to avoid bundling Node.js built-ins into client-side static builds:
+//   @cig/auth/server  → OIDCAdapter, LocalJWTAdapter, createInternalToken, etc.
+// Type-only re-exports are safe — they're erased at compile time.
 export type {
   OIDCAdapterConfig,
   AuthAdapter,
   VerifiedClaims,
 } from "./adapters/oidc-adapter";
-
-// Local JWT adapter
-export { LocalJWTAdapter } from "./adapters/local-jwt-adapter";
 export type { LocalJWTAdapterConfig } from "./adapters/local-jwt-adapter";
-
-// Internal JWT helpers
-export { createInternalToken, verifyInternalToken } from "./internal-jwt";
 export type { InternalTokenPayload } from "./internal-jwt";
