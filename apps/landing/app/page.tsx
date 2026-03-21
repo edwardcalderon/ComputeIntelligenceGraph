@@ -8,7 +8,6 @@ import { AuthButton } from "../components/AuthButton";
 import { AuthenticatedLanding } from "../components/AuthenticatedLanding";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { LocaleSwitcher } from "../components/LocaleSwitcher";
-import { FallingPattern } from "../components/FallingPattern";
 import { useAuth, useAuthReady, useAuthAvailable } from "@cig/auth";
 import { useTranslation } from "@cig-technology/i18n/react";
 import {
@@ -768,11 +767,6 @@ function PublicLanding() {
         <LocaleSwitcher />
         <ThemeToggle />
         <AuthButton />
-      </div>
-
-      {/* Falling pattern — light mode only */}
-      <div className="pointer-events-none fixed inset-0 z-0 dark:hidden">
-        <FallingPattern color="rgba(6,182,212,0.18)" backgroundColor="transparent" duration={150} blurIntensity="0.5em" density={1} />
       </div>
 
       {/* Blob glows — both modes */}

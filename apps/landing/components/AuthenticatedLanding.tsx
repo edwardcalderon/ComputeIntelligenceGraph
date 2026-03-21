@@ -5,6 +5,7 @@ import { useAuth, getSupabaseClient } from "@cig/auth";
 import { useTranslation } from "@cig-technology/i18n/react";
 import { SpaceBackground } from "./SpaceBackground";
 import { ElectricWavesBackground } from "./ElectricWavesBackground";
+import { FallingPattern } from "./FallingPattern";
 import { AuthButton } from "./AuthButton";
 import { ThemeToggle } from "./ThemeToggle";
 import { LocaleSwitcher } from "./LocaleSwitcher";
@@ -623,6 +624,11 @@ export function AuthenticatedLanding() {
         <LocaleSwitcher />
         <ThemeToggle />
         <AuthButton />
+      </div>
+
+      {/* Falling pattern — light mode only, behind everything */}
+      <div className="pointer-events-none fixed inset-0 z-0 dark:hidden">
+        <FallingPattern color="rgba(6,182,212,0.18)" backgroundColor="transparent" duration={150} blurIntensity="0.5em" density={1} />
       </div>
 
       {/* WebGL electric waves — fullscreen behind everything */}
