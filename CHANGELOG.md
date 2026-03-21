@@ -1,3 +1,25 @@
+## [0.1.32](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.31...v0.1.32) (2026-03-21)
+
+
+### Bug Fixes
+
+* **docker:** add packages/i18n to dashboard Dockerfile build context ([8a2645c](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/8a2645cc33dbe32857e8e3ed86571b5553a9170c))
+
+
+
+
+
+## [0.1.32](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.31...v0.1.32) (2026-03-21)
+
+
+### Bug Fixes
+
+* **docker:** add packages/i18n to dashboard Dockerfile build context ([8a2645c](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/8a2645cc33dbe32857e8e3ed86571b5553a9170c))
+
+
+
+
+
 ## [0.1.31](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.30...v0.1.31) (2026-03-21)
 
 
