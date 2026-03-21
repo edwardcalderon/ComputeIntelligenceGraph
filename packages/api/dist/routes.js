@@ -6,6 +6,7 @@ const discovery_1 = require("@cig/discovery");
 const auth_1 = require("./auth");
 const costs_1 = require("./costs");
 const security_1 = require("./security");
+const newsletter_1 = require("./newsletter");
 // Shared instances
 const graphEngine = new graph_1.GraphEngine();
 const queryEngine = new graph_1.GraphQueryEngine();
@@ -139,6 +140,37 @@ async function registerRoutes(app) {
             status: 'accepted',
             message: 'Action queued for execution',
         });
+    });
+    // ─── Newsletter ──────────────────────────────────────────────────────────────
+    // POST /api/v1/newsletter/subscribe — public endpoint, no auth required
+    app.post('/api/v1/newsletter/subscribe', async (request, reply) => {
+        const body = request.body;
+        if (!body?.email) {
+            return reply.status(400).send({ error: 'Missing required field: email', statusCode: 400 });
+        }
+        try {
+            const result = await newsletter_1.newsletterManager.subscribe(body.email, body.source ?? 'landing');
+            if (!result.success) {
+                const status = result.duplicate ? 409 : 400;
+                return reply.status(status).send({ error: result.message, statusCode: status });
+            }
+            return reply.status(201).send({ subscription: result.subscription });
+        }
+        catch (err) {
+            app.log.error({ err }, 'Newsletter subscription error');
+            return reply.status(500).send({ error: 'Internal server error', statusCode: 500 });
+        }
+    });
+    // GET /api/v1/newsletter/subscriptions — admin-only list of all subscriptions
+    app.get('/api/v1/newsletter/subscriptions', { preHandler: [auth_1.authenticate, (0, auth_1.authorize)([auth_1.Permission.ADMIN])] }, async (_request, reply) => {
+        try {
+            const subscriptions = await newsletter_1.newsletterManager.listSubscriptions();
+            return reply.send({ subscriptions, total: subscriptions.length });
+        }
+        catch (err) {
+            app.log.error({ err }, 'Newsletter list error');
+            return reply.status(500).send({ error: 'Internal server error', statusCode: 500 });
+        }
     });
 }
 //# sourceMappingURL=routes.js.map

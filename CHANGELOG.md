@@ -1,3 +1,14 @@
+## [0.1.18](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.17...v0.1.18) (2026-03-21)
+
+
+### Features
+
+* **i18n:** integrate @cig-technology/i18n into landing app ([67e2659](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/67e2659d02eae91f30009ebe2e86401425f54585))
+
+
+
+
+
 ## [0.1.17](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.16...v0.1.17) (2026-03-21)
 
 

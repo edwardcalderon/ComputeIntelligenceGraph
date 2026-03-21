@@ -13,6 +13,27 @@ const graphql_1 = require("./graphql");
 const websocket_1 = require("./websocket");
 const metrics_1 = require("./metrics");
 const VERSION = '0.1.0';
+function resolveCorsOrigins() {
+    const configuredOrigins = process.env.CORS_ORIGINS?.trim();
+    if (configuredOrigins === '*') {
+        return true;
+    }
+    if (configuredOrigins) {
+        return configuredOrigins
+            .split(',')
+            .map((origin) => origin.trim())
+            .filter(Boolean);
+    }
+    if (process.env.NODE_ENV !== 'production') {
+        return true;
+    }
+    // Default production fallback during domain migration.
+    return [
+        'https://cig.lat',
+        'https://www.cig.lat',
+        'https://edwardcalderon.github.io',
+    ];
+}
 async function createServer() {
     const app = (0, fastify_1.default)({
         logger: {
@@ -20,9 +41,8 @@ async function createServer() {
         },
     });
     // CORS
-    const corsOrigins = process.env.CORS_ORIGINS ?? '*';
     await app.register(cors_1.default, {
-        origin: corsOrigins === '*' ? true : corsOrigins.split(',').map((o) => o.trim()),
+        origin: resolveCorsOrigins(),
     });
     // Rate limiting (100 req/min per client, Requirement 16.9)
     app.addHook('preHandler', (0, rate_limit_1.createRateLimiter)());
