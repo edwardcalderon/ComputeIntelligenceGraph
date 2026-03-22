@@ -1,3 +1,25 @@
+## [0.1.38](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.37...v0.1.38) (2026-03-22)
+
+
+### Features
+
+* **auth:** add Authentik PKCE social login flow ([3f877bd](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/3f877bdf6826fc7e0cae814fce23d793a9d6cd54))
+
+
+
+
+
+## [0.1.38](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.37...v0.1.38) (2026-03-22)
+
+
+### Features
+
+* **auth:** add Authentik PKCE social login flow ([3f877bd](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/3f877bdf6826fc7e0cae814fce23d793a9d6cd54))
+
+
+
+
+
 ## [0.1.37](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.36...v0.1.37) (2026-03-22)
 
 
