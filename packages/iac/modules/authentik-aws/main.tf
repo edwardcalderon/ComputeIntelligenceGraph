@@ -171,7 +171,7 @@ resource "aws_iam_instance_profile" "ec2" {
 }
 
 ################################################################################
-# EC2 t3.micro — Authentik + Redis + PostgreSQL via Docker Compose
+# EC2 t3.small — Authentik 2026.x + PostgreSQL via Docker Compose (no Redis)
 ################################################################################
 
 data "aws_ami" "amazon_linux_2023" {
@@ -193,6 +193,15 @@ locals {
   user_data = <<-EOF
     #!/bin/bash
     set -euo pipefail
+
+    # ── Swap (2 GB) — prevents OOM on t3.small ────────────────────────────────
+    if [ ! -f /swapfile ]; then
+      fallocate -l 2G /swapfile
+      chmod 600 /swapfile
+      mkswap /swapfile
+      swapon /swapfile
+      echo '/swapfile none swap sw 0 0' >> /etc/fstab
+    fi
 
     # ── System setup ─────────────────────────────────────────────────────────
     dnf update -y
@@ -235,6 +244,7 @@ locals {
     ENV
 
     # ── docker-compose.yml ────────────────────────────────────────────────────
+    # Authentik 2026.x: no Redis required (built-in task queue)
     cat > /opt/authentik/docker-compose.yml <<COMPOSE
     services:
       postgresql:
@@ -325,7 +335,7 @@ locals {
 
 resource "aws_instance" "authentik" {
   ami                    = data.aws_ami.amazon_linux_2023.id
-  instance_type          = "t3.micro"
+  instance_type          = "t3.small"
   subnet_id              = data.aws_subnet.first.id
   vpc_security_group_ids = [aws_security_group.ec2.id]
   iam_instance_profile   = aws_iam_instance_profile.ec2.name

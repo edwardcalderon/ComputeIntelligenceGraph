@@ -1,3 +1,25 @@
+## [0.1.40](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.39...v0.1.40) (2026-03-22)
+
+
+### Bug Fixes
+
+* **auth:** fully end Authentik browser sessions on logout ([69cb692](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/69cb69262123a5c6ed2fddf88d6d03986a52a60e))
+
+
+
+
+
+## [0.1.40](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.39...v0.1.40) (2026-03-22)
+
+
+### Bug Fixes
+
+* **auth:** fully end Authentik browser sessions on logout ([69cb692](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/69cb69262123a5c6ed2fddf88d6d03986a52a60e))
+
+
+
+
+
 ## [0.1.39](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.38...v0.1.39) (2026-03-22)
 
 

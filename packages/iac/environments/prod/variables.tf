@@ -13,7 +13,7 @@ variable "route53_zone_id" {
 
 variable "authentik_image_tag" {
   type    = string
-  default = "2024.12.3"
+  default = "2026.2.1"
 }
 
 variable "ssh_public_key" {
