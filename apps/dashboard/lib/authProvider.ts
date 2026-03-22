@@ -45,8 +45,8 @@ export const authProvider: AuthProvider = {
 
   logout: async () => {
     clearSession();
-    // Redirect to landing with ?signout=1 so it revokes the Authentik token
-    // and resets to the unauthenticated view.
+    // Redirect to landing with ?signout=1 so the landing app can revoke the
+    // token and run Authentik RP-initiated logout with its own session copy.
     return {
       success: true,
       redirectTo: `${getLandingUrl()}?signout=1`,

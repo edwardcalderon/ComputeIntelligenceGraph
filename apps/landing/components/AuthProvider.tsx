@@ -1,7 +1,11 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { revokeAuthentikToken, getSupabaseClient } from "@cig/auth";
+import {
+  buildAuthentikEndSessionUrl,
+  revokeAuthentikToken,
+  getSupabaseClient,
+} from "@cig/auth";
 
 /* ─── Shared auth interface ──────────────────────────────────────────── */
 
@@ -173,13 +177,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(() => {
+    let logoutUrl: string | null = null;
+
     if (AUTH_PROVIDER === "authentik") {
       try {
-        const token = sessionStorage.getItem("cig_access_token");
-        if (token) {
+        const accessToken = sessionStorage.getItem("cig_access_token");
+        const idToken = sessionStorage.getItem("cig_id_token");
+        if (accessToken) {
           const issuerUrl = process.env.NEXT_PUBLIC_AUTHENTIK_URL ?? "https://auth.cig.technology";
           const clientId  = process.env.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID ?? "G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v";
-          revokeAuthentikToken({ issuerUrl, clientId, redirectUri: "" }, token).catch(() => {});
+          revokeAuthentikToken({ issuerUrl, clientId, redirectUri: "" }, accessToken).catch(() => {});
+        }
+        if (idToken) {
+          logoutUrl = buildAuthentikEndSessionUrl(
+            idToken,
+            `${window.location.origin}${window.location.pathname}`,
+          );
         }
       } catch { /* ignore */ }
       clearAuthentikSession();
@@ -188,6 +201,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       supabase?.auth.signOut().catch(() => {});
     }
     setUser(null);
+    if (logoutUrl) {
+      window.location.replace(logoutUrl);
+    }
   }, []);
 
   return (

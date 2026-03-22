@@ -21,6 +21,7 @@ export { sendEmailOtp, verifyEmailOtp } from "./otp";
 // Authentik PKCE helpers (client-safe)
 export {
   buildAuthentikAuthUrl,
+  buildAuthentikEndSessionUrl,
   startAuthentikSocialLogin,
   exchangeAuthentikCode,
   revokeAuthentikToken,

@@ -37,6 +37,15 @@ function generateState(): string {
   return base64urlEncode(crypto.getRandomValues(new Uint8Array(16)).buffer);
 }
 
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const part = token.split(".")[1];
+    return JSON.parse(atob(part.replace(/-/g, "+").replace(/_/g, "/")));
+  } catch {
+    return null;
+  }
+}
+
 /* ── Public API ────────────────────────────────────────────────────────── */
 
 export interface AuthentikConfig {
@@ -154,6 +163,28 @@ export interface AuthentikTokens {
 }
 
 /**
+ * Build the RP-initiated logout URL for the current Authentik OIDC session.
+ * Uses the `iss` claim from the id_token so the app does not need a separate
+ * public issuer env var.
+ */
+export function buildAuthentikEndSessionUrl(
+  idToken: string,
+  postLogoutRedirectUri?: string,
+): string | null {
+  const payload = decodeJwtPayload(idToken);
+  const issuer = typeof payload?.iss === "string" ? payload.iss : "";
+  if (!issuer) return null;
+
+  const baseIssuer = issuer.endsWith("/") ? issuer : `${issuer}/`;
+  const url = new URL("end-session/", baseIssuer);
+  url.searchParams.set("id_token_hint", idToken);
+  if (postLogoutRedirectUri) {
+    url.searchParams.set("post_logout_redirect_uri", postLogoutRedirectUri);
+  }
+  return url.toString();
+}
+
+/**
  * Exchange the authorization code from the callback URL for tokens.
  * Reads the PKCE verifier from sessionStorage.
  */
@@ -220,6 +251,7 @@ export async function revokeAuthentikToken(
     method:  "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body:    body.toString(),
+    keepalive: true,
   }).catch(() => {
     // Ignore revocation errors — session will expire naturally
   });
