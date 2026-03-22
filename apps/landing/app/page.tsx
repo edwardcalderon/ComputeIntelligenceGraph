@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js"; // newsletter only
 import { GraphParticleTypography } from "../components/GraphParticleTypography";
 import { SpaceBackground } from "../components/SpaceBackground";
 import { AuthButton } from "../components/AuthButton";
 import { AuthenticatedLanding } from "../components/AuthenticatedLanding";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { LocaleSwitcher } from "../components/LocaleSwitcher";
-import { useAuth, useAuthReady, useAuthAvailable } from "@cig/auth";
+import { useCIGAuth } from "../components/AuthProvider";
 import { useTranslation } from "@cig-technology/i18n/react";
 import { DitheringShader } from "../components/DitheringShader";
 import { useTheme } from "./providers";
@@ -807,44 +807,20 @@ function PublicLanding() {
   );
 }
 
-// Auth-aware inner — only rendered when AuthProvider is confirmed in scope
-function HomePageInner() {
-  const { user, loading, signOutUser } = useAuth();
+export default function HomePage() {
+  const { user, signOut } = useCIGAuth();
 
-  // When the dashboard redirects here with ?signout=1, sign out of Supabase
+  // When the dashboard redirects here with ?signout=1, clear the session
   // and clean the URL so a refresh shows the normal unauthenticated landing.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("signout") === "1") {
-      signOutUser();
+      signOut();
       const clean = window.location.pathname;
       window.history.replaceState({}, "", clean);
     }
-  }, [signOutUser]);
+  }, [signOut]);
 
-  if (loading) return null;
   if (user) return <AuthenticatedLanding />;
   return <PublicLanding />;
-}
-
-export default function HomePage() {
-  const ready = useAuthReady();
-  const available = useAuthAvailable();
-  const [timedOut, setTimedOut] = useState(false);
-
-  useEffect(() => {
-    if (ready) return;
-    const t = setTimeout(() => setTimedOut(true), 2000);
-    return () => clearTimeout(t);
-  }, [ready]);
-
-  // Timed out or ready but no Supabase client — show public landing without
-  // ever calling useAuth() which would throw outside AuthProvider.
-  if ((timedOut && !ready) || (ready && !available)) return <PublicLanding />;
-
-  // Still initializing
-  if (!ready) return null;
-
-  // AuthProvider is confirmed in scope — safe to call useAuth() inside
-  return <HomePageInner />;
 }

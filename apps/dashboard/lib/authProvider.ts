@@ -16,6 +16,7 @@ function getSession() {
 function clearSession() {
   try {
     sessionStorage.removeItem("cig_access_token");
+    sessionStorage.removeItem("cig_id_token");
     sessionStorage.removeItem("cig_refresh_token");
     sessionStorage.removeItem("cig_expires_in");
     sessionStorage.removeItem("cig_expires_at");
@@ -44,8 +45,8 @@ export const authProvider: AuthProvider = {
 
   logout: async () => {
     clearSession();
-    // Redirect to landing with ?signout=1 so it can call supabase.signOut()
-    // and reset to the unauthenticated view cleanly.
+    // Redirect to landing with ?signout=1 so it revokes the Authentik token
+    // and resets to the unauthenticated view.
     return {
       success: true,
       redirectTo: `${getLandingUrl()}?signout=1`,
@@ -76,17 +77,35 @@ export const authProvider: AuthProvider = {
     const session = getSession();
     if (!session) return null;
 
-    const payload = decodeJwt(session.token);
+    // Prefer id_token (has full OIDC claims: email, name, picture).
+    // Fall back to access_token for legacy sessions.
+    const idToken = (() => {
+      try { return sessionStorage.getItem("cig_id_token"); } catch { return null; }
+    })();
+    const payload = decodeJwt(idToken ?? session.token);
     if (!payload) return null;
 
-    const email  = (payload.email as string) ?? "";
-    const name   = (payload.user_metadata as Record<string, string>)?.full_name
-                ?? (payload.user_metadata as Record<string, string>)?.name
-                ?? email.split("@")[0]
-                ?? "User";
-    const avatar = (payload.user_metadata as Record<string, string>)?.avatar_url ?? null;
+    const email = (payload.email as string) ?? "";
+    const name =
+      (payload.name as string) ??
+      (payload.preferred_username as string) ??
+      (payload.given_name as string) ??
+      email.split("@")[0] ??
+      "User";
+    const avatar = (payload.picture as string) ?? null;
 
-    return { id: payload.sub as string, name, email, avatar };
+    // Detect auth provider and social provider for profile display
+    const authBackend = (process.env.NEXT_PUBLIC_AUTH_PROVIDER as string) || "authentik";
+    const socialProvider = (() => {
+      try { return sessionStorage.getItem("cig_social_provider") ?? ""; } catch { return ""; }
+    })();
+    const providerLabel = authBackend === "supabase"
+      ? "Supabase OAuth"
+      : socialProvider
+        ? `CIG Auth: ${socialProvider.charAt(0).toUpperCase()}${socialProvider.slice(1)}`
+        : "CIG Auth";
+
+    return { id: payload.sub as string, name, email, avatar, provider: providerLabel };
   },
 
   getPermissions: async () => null,

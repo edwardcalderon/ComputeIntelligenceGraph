@@ -2,7 +2,8 @@
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
-import { useAuth, useAuthReady, useAuthAvailable, getSupabaseClient, sendEmailOtp, verifyEmailOtp } from "@cig/auth";
+import { startAuthentikSocialLogin, getSupabaseClient, type AuthentikSocialProvider } from "@cig/auth";
+import { useCIGAuth } from "./AuthProvider";
 import { useTranslation } from "@cig-technology/i18n/react";
 
 /* ─── Icons ───────────────────────────────────────────────────────────── */
@@ -22,15 +23,6 @@ function GitHubIcon() {
   return (
     <svg className="size-5" viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
-    </svg>
-  );
-}
-
-function MailIcon() {
-  return (
-    <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect width="20" height="16" x="2" y="4" rx="2" />
-      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
     </svg>
   );
 }
@@ -83,24 +75,34 @@ const methodBtnClass =
   "w-full flex items-center gap-3 rounded-xl border border-zinc-200 dark:border-zinc-700/60 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-3 text-sm font-medium text-zinc-800 dark:text-zinc-200 transition-all hover:border-zinc-300 dark:hover:border-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 disabled:opacity-40 disabled:pointer-events-none";
 
 /* ─── Modal views ─────────────────────────────────────────────────────── */
-type ModalView = "methods" | "email-otp" | "cli-code" | "ssh-info";
+type ModalView = "methods" | "cli-code" | "ssh-info";
+
+/* ─── Authentik config (from env) ─────────────────────────────────────── */
+
+function getAuthentikConfig() {
+  const issuerUrl = process.env.NEXT_PUBLIC_AUTHENTIK_URL ?? "https://auth.cig.technology";
+  const clientId  = process.env.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID ?? "G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v";
+  const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3001";
+  return {
+    issuerUrl,
+    clientId,
+    redirectUri: `${dashboardUrl}/auth/callback`,
+  };
+}
 
 /* ─── Sign-in modal content ──────────────────────────────────────────── */
 
 function SignInModal({
   onClose,
-  onGoogleSignIn,
-  onGitHubSignIn,
+  onSSOSignIn,
 }: {
   onClose: () => void;
-  onGoogleSignIn: () => void;
-  onGitHubSignIn: () => void;
+  onSSOSignIn: (provider: AuthentikSocialProvider) => void;
 }) {
   const t = useTranslation();
   const [view, setView] = useState<ModalView>("methods");
   const backdropRef = useRef<HTMLDivElement>(null);
 
-  // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -109,7 +111,6 @@ function SignInModal({
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  // Close on backdrop click
   const handleBackdrop = useCallback(
     (e: React.MouseEvent) => {
       if (e.target === backdropRef.current) onClose();
@@ -137,7 +138,6 @@ function SignInModal({
             )}
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               {view === "methods" && t("auth.signInTitle")}
-              {view === "email-otp" && t("auth.emailOtpViewTitle")}
               {view === "cli-code" && t("auth.cliAuthTitle")}
               {view === "ssh-info" && t("auth.sshAuthTitle")}
             </h2>
@@ -153,13 +153,8 @@ function SignInModal({
         {/* Body */}
         <div className="px-6 py-5">
           {view === "methods" && (
-            <MethodsView
-              onGoogleSignIn={onGoogleSignIn}
-              onGitHubSignIn={onGitHubSignIn}
-              goTo={setView}
-            />
+            <MethodsView onSSOSignIn={onSSOSignIn} goTo={setView} />
           )}
-          {view === "email-otp" && <EmailOtpView onSuccess={onClose} />}
           {view === "cli-code" && <CliCodeView />}
           {view === "ssh-info" && <SshInfoView />}
         </div>
@@ -171,12 +166,10 @@ function SignInModal({
 /* ─── Methods list ────────────────────────────────────────────────────── */
 
 function MethodsView({
-  onGoogleSignIn,
-  onGitHubSignIn,
+  onSSOSignIn,
   goTo,
 }: {
-  onGoogleSignIn: () => void;
-  onGitHubSignIn: () => void;
+  onSSOSignIn: (provider: AuthentikSocialProvider) => void;
   goTo: (v: ModalView) => void;
 }) {
   const t = useTranslation();
@@ -186,13 +179,13 @@ function MethodsView({
         {t("auth.signInDesc")}
       </p>
 
-      {/* ── OAuth providers ─── */}
+      {/* ── SSO — goes directly to Google / GitHub, Authentik handles the backend ─── */}
       <div className="flex flex-col gap-2">
-        <button onClick={onGoogleSignIn} className={methodBtnClass}>
+        <button onClick={() => onSSOSignIn("google")} className={methodBtnClass}>
           <GoogleIcon />
           {t("auth.continueWithGoogle")}
         </button>
-        <button onClick={onGitHubSignIn} className={methodBtnClass}>
+        <button onClick={() => onSSOSignIn("github")} className={methodBtnClass}>
           <GitHubIcon />
           {t("auth.continueWithGitHub")}
         </button>
@@ -206,11 +199,6 @@ function MethodsView({
 
       {/* ── Other methods ─── */}
       <div className="flex flex-col gap-2">
-        <button onClick={() => goTo("email-otp")} className={methodBtnClass}>
-          <MailIcon />
-          {t("auth.emailOtp")}
-          <span className="ml-auto text-xs text-zinc-500">{t("auth.passwordless")}</span>
-        </button>
         <button onClick={() => goTo("cli-code")} className={methodBtnClass}>
           <TerminalIcon />
           {t("auth.cliCode")}
@@ -223,112 +211,6 @@ function MethodsView({
         </button>
       </div>
     </div>
-  );
-}
-
-/* ─── Email OTP flow ──────────────────────────────────────────────────── */
-
-function EmailOtpView({ onSuccess }: { onSuccess: () => void }) {
-  const t = useTranslation();
-  const [email, setEmail] = useState("");
-  const [otpCode, setOtpCode] = useState("");
-  const [step, setStep] = useState<"email" | "verify">("email");
-  const [sending, setSending] = useState(false);
-  const [verifying, setVerifying] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSending(true);
-    try {
-      await sendEmailOtp(email);
-      setStep("verify");
-    } catch (err: any) {
-      setError(err.message || "Failed to send OTP");
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setVerifying(true);
-    try {
-      await verifyEmailOtp(email, otpCode);
-      onSuccess();
-    } catch (err: any) {
-      setError(err.message || "Invalid code");
-    } finally {
-      setVerifying(false);
-    }
-  };
-
-  if (step === "email") {
-    return (
-      <form onSubmit={handleSendOtp} className="flex flex-col gap-4">
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          {t("auth.emailOtpDesc")}
-        </p>
-        <input
-          type="email"
-          required
-          autoFocus
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder={t("auth.emailPlaceholder")}
-          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-3 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 transition-colors"
-        />
-        {error && <p className="text-xs text-red-400">{error}</p>}
-        <button
-          type="submit"
-          disabled={sending || !email}
-          className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:shadow-xl hover:shadow-cyan-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {sending ? t("auth.sending") : t("auth.sendOtp")}
-        </button>
-      </form>
-    );
-  }
-
-  return (
-    <form onSubmit={handleVerify} className="flex flex-col gap-4">
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-        {t("auth.otpSentTo", { email })}
-      </p>
-      <input
-        type="text"
-        required
-        autoFocus
-        inputMode="numeric"
-        pattern="[0-9]{6}"
-        maxLength={6}
-        value={otpCode}
-        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-        placeholder="000000"
-        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-3 text-center text-2xl font-mono tracking-[0.3em] text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 transition-colors"
-      />
-      {error && <p className="text-xs text-red-400">{error}</p>}
-      <button
-        type="submit"
-        disabled={verifying || otpCode.length < 6}
-        className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:shadow-xl hover:shadow-cyan-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {verifying ? t("auth.verifying") : t("auth.verifySignIn")}
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          setStep("email");
-          setOtpCode("");
-          setError(null);
-        }}
-        className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
-      >
-        {t("auth.didntReceive")}
-      </button>
-    </form>
   );
 }
 
@@ -422,9 +304,9 @@ function SshInfoView() {
 
 /* ─── Main AuthButton ─────────────────────────────────────────────────── */
 
-function AuthButtonReady() {
+export function AuthButton() {
   const t = useTranslation();
-  const { user, loading, signIn, signOutUser } = useAuth();
+  const { user, signOut, authProvider } = useCIGAuth();
   const [showModal, setShowModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -441,19 +323,25 @@ function AuthButtonReady() {
     return () => document.removeEventListener("mousedown", handler);
   }, [showMenu]);
 
-  const handleGoogleSignIn = useCallback(() => {
-    signIn({ provider: "google", flow: "redirect", redirectUri: window.location.origin });
+  const handleSSOSignIn = useCallback(async (provider: AuthentikSocialProvider) => {
     setShowModal(false);
-  }, [signIn]);
-
-  const handleGitHubSignIn = useCallback(() => {
-    signIn({ provider: "github", flow: "redirect", redirectUri: window.location.origin });
-    setShowModal(false);
-  }, [signIn]);
-
-  if (loading) {
-    return <div className="h-10 w-24 rounded-full bg-zinc-200 dark:bg-zinc-800 animate-pulse" />;
-  }
+    if (authProvider === "supabase") {
+      // Supabase fallback: use Supabase OAuth
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3001";
+        await supabase.auth.signInWithOAuth({
+          provider,
+          options: { redirectTo: `${dashboardUrl}/auth/callback` },
+        });
+      }
+    } else {
+      // Authentik: PKCE social login
+      const config = getAuthentikConfig();
+      const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3001";
+      await startAuthentikSocialLogin(config, provider, dashboardUrl);
+    }
+  }, [authProvider]);
 
   if (user) {
     return (
@@ -486,18 +374,13 @@ function AuthButtonReady() {
           <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-zinc-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900 shadow-xl shadow-black/10 dark:shadow-black/30 overflow-hidden animate-fade-in-fast">
             <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800">
               <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{user.email}</p>
-              {user.provider && (
-                <p className="text-xs text-zinc-500 mt-0.5 capitalize">
-                  {t("auth.via", { provider: user.provider })}
-                </p>
-              )}
+              <p className="text-xs text-zinc-500 mt-0.5">
+                {t("auth.via", { provider: `CIG Auth: ${user.socialProvider.charAt(0).toUpperCase()}${user.socialProvider.slice(1)}` })}
+              </p>
             </div>
             <div className="py-1">
               <button
-                onClick={() => {
-                  setShowMenu(false);
-                  signOutUser();
-                }}
+                onClick={() => { setShowMenu(false); signOut(); }}
                 className="w-full text-left px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-red-500 dark:hover:text-red-400 transition-colors"
               >
                 {t("common.signOut")}
@@ -521,57 +404,9 @@ function AuthButtonReady() {
       {showModal && (
         <SignInModal
           onClose={() => setShowModal(false)}
-          onGoogleSignIn={handleGoogleSignIn}
-          onGitHubSignIn={handleGitHubSignIn}
+          onSSOSignIn={handleSSOSignIn}
         />
       )}
     </>
   );
-}
-
-function SignInButtonOnly() {
-  const t = useTranslation();
-  const [showModal, setShowModal] = useState(false);
-
-  const triggerOAuth = useCallback((provider: "google" | "github") => {
-    setShowModal(false);
-    const supabase = getSupabaseClient();
-    if (!supabase) return;
-    supabase.auth.signInWithOAuth({
-      provider,
-      options: { redirectTo: window.location.origin },
-    });
-  }, []);
-
-  return (
-    <>
-      <button
-        onClick={() => setShowModal(true)}
-        className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all duration-200 hover:scale-105 hover:shadow-xl hover:shadow-cyan-500/30 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-      >
-        {t("common.signIn")}
-      </button>
-      {showModal && (
-        <SignInModal
-          onClose={() => setShowModal(false)}
-          onGoogleSignIn={() => triggerOAuth("google")}
-          onGitHubSignIn={() => triggerOAuth("github")}
-        />
-      )}
-    </>
-  );
-}
-
-export function AuthButton() {
-  const ready = useAuthReady();
-  const available = useAuthAvailable();
-
-  // Not initialised yet — show nothing briefly
-  if (!ready) return null;
-
-  // Auth client not configured (missing env vars) — still show sign-in button
-  // so the page doesn't look broken; useAuth() is never called here
-  if (!available) return <SignInButtonOnly />;
-
-  return <AuthButtonReady />;
 }

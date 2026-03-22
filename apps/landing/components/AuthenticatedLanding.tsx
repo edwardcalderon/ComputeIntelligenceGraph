@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useAuth, getSupabaseClient } from "@cig/auth";
+import { useCIGAuth } from "./AuthProvider";
 import { useTranslation } from "@cig-technology/i18n/react";
 import { SpaceBackground } from "./SpaceBackground";
 import { ElectricWavesBackground } from "./ElectricWavesBackground";
@@ -16,29 +16,46 @@ const DASHBOARD_URL =
 
 /* ─── Session-aware navigation ───────────────────────────────────────── */
 
+const AUTH_PROVIDER = process.env.NEXT_PUBLIC_AUTH_PROVIDER || "authentik";
+
 async function goToDashboard(path = "/") {
-  const supabase = getSupabaseClient();
-  if (!supabase) {
-    window.location.href = `${DASHBOARD_URL}${path}`;
-    return;
+  if (AUTH_PROVIDER === "supabase") {
+    // ── Supabase fallback: pass Supabase session tokens ──
+    try {
+      const { getSupabaseClient } = await import("@cig/auth");
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const hash = new URLSearchParams({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token ?? "",
+            token_type: "bearer",
+            expires_in: String(session.expires_in ?? 3600),
+          }).toString();
+          window.location.href = `${DASHBOARD_URL}/auth/callback?redirect=${encodeURIComponent(path)}#${hash}`;
+          return;
+        }
+      }
+    } catch { /* ignore */ }
+  } else {
+    // ── Authentik: pass Authentik session tokens ──
+    try {
+      const accessToken = sessionStorage.getItem("cig_access_token");
+      if (accessToken) {
+        const idToken = sessionStorage.getItem("cig_id_token") ?? "";
+        const expiresIn = sessionStorage.getItem("cig_expires_in") ?? "3600";
+        const hash = new URLSearchParams({
+          access_token: accessToken,
+          ...(idToken && { id_token: idToken }),
+          expires_in: expiresIn,
+        }).toString();
+        window.location.href = `${DASHBOARD_URL}/auth/callback?redirect=${encodeURIComponent(path)}#${hash}`;
+        return;
+      }
+    } catch { /* ignore */ }
   }
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session) {
-    window.location.href = `${DASHBOARD_URL}${path}`;
-    return;
-  }
-
-  const hash = new URLSearchParams({
-    access_token: session.access_token,
-    refresh_token: session.refresh_token ?? "",
-    token_type: "bearer",
-    expires_in: String(session.expires_in ?? 3600),
-  }).toString();
-
-  window.location.href = `${DASHBOARD_URL}/auth/callback?redirect=${encodeURIComponent(path)}#${hash}`;
+  window.location.href = `${DASHBOARD_URL}${path}`;
 }
 
 /* ─── Icons ───────────────────────────────────────────────────────────── */
@@ -841,7 +858,7 @@ const STATUS_BADGE_DEFS = [
 export function AuthenticatedLanding() {
   const t = useTranslation();
   const { theme } = useTheme();
-  useAuth(); // keeps session alive; user data used in AuthButton
+  useCIGAuth(); // keeps session alive; user data used in AuthButton
   const handleEnterDashboard = useCallback(() => goToDashboard("/"), []);
   const isDark = theme === "dark";
   const [modalFeature, setModalFeature] = useState<Feature | null>(null);

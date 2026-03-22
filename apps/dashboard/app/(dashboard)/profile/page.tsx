@@ -2,12 +2,14 @@
 
 import { useGetIdentity, useLogout } from "@refinedev/core";
 import { useTranslation } from "@cig-technology/i18n/react";
+import { useState, useCallback } from "react";
 
 interface Identity {
   id: string;
   name: string;
   email: string;
   avatar: string | null;
+  provider?: string;
 }
 
 export default function ProfilePage() {
@@ -64,14 +66,14 @@ export default function ProfilePage() {
           <dl className="space-y-3">
             <Row label={t("profile.fullName")}  value={identity?.name  ?? "—"} />
             <Row label={t("profile.email")}      value={identity?.email ?? "—"} />
-            <Row label={t("profile.userId")}    value={identity?.id    ?? "—"} mono />
+            <UserIdRow label={t("profile.userId")} value={identity?.id ?? "—"} />
           </dl>
         </div>
 
         <div className="px-6 py-4">
           <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">{t("profile.authentication")}</h2>
           <dl className="space-y-3">
-            <Row label={t("profile.provider")}      value={t("profile.providerValue")} />
+            <Row label={t("profile.provider")}      value={identity?.provider ?? "CIG Auth"} />
             <Row label={t("profile.sessionType")}  value={t("profile.sessionTypeValue")} />
           </dl>
         </div>
@@ -101,6 +103,47 @@ function Row({ label, value, mono = false }: { label: string; value: string; mon
       <dt className="text-xs text-gray-500 dark:text-gray-400 w-32 flex-shrink-0">{label}</dt>
       <dd className={`text-sm text-gray-900 dark:text-gray-100 text-right break-all ${mono ? "font-mono text-xs" : ""}`}>
         {value}
+      </dd>
+    </div>
+  );
+}
+
+function UserIdRow({ label, value }: { label: string; value: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [value]);
+
+  const truncated = value.length > 16
+    ? `${value.slice(0, 8)}...${value.slice(-8)}`
+    : value;
+
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <dt className="text-xs text-gray-500 dark:text-gray-400 w-32 flex-shrink-0">{label}</dt>
+      <dd className="flex items-center gap-1.5 text-right">
+        <span className="font-mono text-xs text-gray-900 dark:text-gray-100" title={value}>
+          {truncated}
+        </span>
+        <button
+          onClick={handleCopy}
+          className="rounded p-0.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+          title={copied ? "Copied!" : "Copy to clipboard"}
+        >
+          {copied ? (
+            <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          ) : (
+            <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+          )}
+        </button>
       </dd>
     </div>
   );

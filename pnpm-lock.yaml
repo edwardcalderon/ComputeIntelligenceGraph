@@ -29,6 +29,9 @@ importers:
       '@cig-technology/i18n':
         specifier: 1.0.0
         version: 1.0.0(react@18.3.1)
+      '@cig/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@cig/ui':
         specifier: workspace:^
         version: link:../../packages/ui
@@ -50,6 +53,9 @@ importers:
       '@refinedev/react-hook-form':
         specifier: ^5.0.4
         version: 5.0.4(@refinedev/core@5.0.11(@tanstack/react-query@5.90.21(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react-hook-form@7.71.2(react@18.3.1))(react@18.3.1)
+      '@supabase/supabase-js':
+        specifier: ^2.49.4
+        version: 2.99.2
       '@tanstack/react-query':
         specifier: ^5.40.0
         version: 5.90.21(react@18.3.1)

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { CIGAuthProvider } from "@cig/auth";
+import { AuthProvider } from "../components/AuthProvider";
 import { I18nProvider } from "@cig-technology/i18n/react";
 import { initI18n } from "./i18n";
 
@@ -49,7 +49,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <I18nProvider>
       <ThemeProvider>
-        <CIGAuthProvider>{children}</CIGAuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </ThemeProvider>
     </I18nProvider>
   );
