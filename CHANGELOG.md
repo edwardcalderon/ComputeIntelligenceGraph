@@ -1,3 +1,25 @@
+## [0.1.39](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.38...v0.1.39) (2026-03-22)
+
+
+### Bug Fixes
+
+* **release:** validate dashboard container build ([2e1220b](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/2e1220b4b1bebcbf4ac438c7307bc572124383c4))
+
+
+
+
+
+## [0.1.39](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.38...v0.1.39) (2026-03-22)
+
+
+### Bug Fixes
+
+* **release:** validate dashboard container build ([2e1220b](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/2e1220b4b1bebcbf4ac438c7307bc572124383c4))
+
+
+
+
+
 ## [0.1.38](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.37...v0.1.38) (2026-03-22)
 
 
