@@ -1,127 +1,172 @@
 # CIG Authentication Architecture
 
-This document describes the authentication system for the CIG platform, including the OIDC/PKCE flow via Authentik, cross-origin token bridging, social provider integration, profile sync, and the Supabase fallback path.
+This document describes the current authentication setup used by CIG and the Authentik resources that make it work. It also calls out the provider-agnostic pattern to follow when adding another social identity source or another relying party.
 
 ## Overview
 
-CIG uses **Authentik** as the primary identity provider with OAuth 2.0 Authorization Code + PKCE (S256). Social logins (Google, GitHub) bypass the Authentik login UI via dedicated per-provider flows. A **Supabase** fallback is available via a feature flag.
+CIG uses **Authentik** as the primary identity provider and **Supabase** as a feature-flagged fallback. The primary path is:
 
-### Key Principals
+1. Start OIDC Authorization Code + PKCE from the landing app
+2. Bounce through the dashboard relay route so PKCE state exists on the dashboard origin
+3. Enter Authentik through a provider-specific social login flow
+4. Exchange the OIDC code on the dashboard
+5. Return the tokens to landing through a hash fragment
+6. Use the landing app as the canonical logout orchestrator
 
-| Component            | Origin (production)              | Role                                 |
-| -------------------- | -------------------------------- | ------------------------------------ |
-| Landing (`apps/landing`) | `cig.lat`                    | Login UI, social buttons, user menu  |
-| Dashboard (`apps/dashboard`) | `app.cig.technology`     | Protected app, auth callback/relay   |
-| Authentik            | `auth.cig.technology`            | OIDC provider, user directory        |
-| Google / GitHub      | External                         | Social identity providers            |
+### Current production principals
 
-## Auth Flow: Social Login (Google/GitHub)
+| Component | Production origin | Role |
+| --------- | ----------------- | ---- |
+| Landing (`apps/landing`) | `https://cig.lat` | Public entrypoint, login buttons, canonical logout completion target |
+| Dashboard (`apps/dashboard`) | `https://app.cig.technology` | Protected app, PKCE relay, OAuth callback |
+| Authentik | `https://auth.cig.technology` | OIDC provider, user directory, social-source broker |
+| Google / GitHub | External | Upstream social identity providers |
+
+## Current login flow
+
+### Social login sequence
 
 ```
 Landing (cig.lat)                  Dashboard (app.cig.technology)            Authentik                    Google/GitHub
        |                                      |                                  |                              |
-  1. User clicks "Continue with Google"        |                                  |                              |
+  1. User clicks a social login button         |                                  |                              |
        |                                      |                                  |                              |
   2. startAuthentikSocialLogin()              |                                  |                              |
      - Generate PKCE verifier + challenge      |                                  |                              |
      - Generate state                          |                                  |                              |
-     - Store verifier, state, social_provider  |                                  |                              |
-       in landing's sessionStorage             |                                  |                              |
+     - Store verifier/state/provider in        |                                  |                              |
+       landing sessionStorage                  |                                  |                              |
      - Navigate to dashboard relay route       |                                  |                              |
        |                                      |                                  |                              |
-       |-------- GET /auth/login/google ------>|                                  |                              |
-       |    ?code_challenge=...&state=...      |                                  |                              |
-       |    &code_verifier=...&client_id=...   |                                  |                              |
+       |-------- GET /auth/login/{provider} -->|                                  |                              |
        |                                      |                                  |                              |
-  3.   |                            Relay route serves HTML that:                  |                              |
-       |                            - Stores verifier, state, social_provider      |                              |
-       |                              in dashboard's sessionStorage                |                              |
-       |                            - Redirects to Authentik flow                  |                              |
+  3.   |                            Relay HTML stores verifier/state/provider     |                              |
+       |                            in dashboard sessionStorage                   |                              |
+       |                            and redirects into an Authentik flow          |                              |
        |                                      |                                  |                              |
-       |                                      |--- /if/flow/cig-google-login/ -->|                              |
+       |                                      |--- /if/flow/cig-{provider}-login/|                              |
        |                                      |    ?next=/application/o/authorize |                              |
        |                                      |                                  |                              |
-  4.   |                                      |                     Flow has Redirect Stage                     |
-       |                                      |                     pointing to Google source                   |
+  4.   |                                      |                     Redirect stage points to                     |
+       |                                      |                     /source/oauth/login/{provider}/             |
        |                                      |                                  |                              |
        |                                      |                                  |--- OAuth2 authorize -------->|
        |                                      |                                  |                              |
-  5.   |                                      |                                  |<--- code (Google) ----------|
+  5.   |                                      |                                  |<--- provider callback ------|
        |                                      |                                  |                              |
-       |                                      |                     Authentik exchanges Google code,             |
-       |                                      |                     links/creates user,                         |
-       |                                      |                     runs source property mapping                |
-       |                                      |                     (syncs name, email, picture),               |
-       |                                      |                     follows ?next= to OIDC authorize,           |
-       |                                      |                     issues CIG authorization code               |
+  6.   |                                      |                     Authentik links or enrolls the user,        |
+       |                                      |                     runs source property mappings,              |
+       |                                      |                     resumes ?next= authorization,               |
+       |                                      |                     and issues the CIG auth code               |
        |                                      |                                  |                              |
-  6.   |                                      |<-- /auth/callback?code=...&state= |                              |
+  7.   |                                      |<-- /auth/callback?code=...&state=|                              |
        |                                      |                                  |                              |
-  7.   |                            exchangeAuthentikCode():                      |                              |
-       |                            - Read verifier from sessionStorage            |                              |
-       |                            - Validate state                               |                              |
-       |                            - POST /application/o/token/                   |                              |
-       |                              (code + verifier -> tokens)                  |                              |
-       |                            - Store tokens in sessionStorage               |                              |
-       |                                      |                                  |                              |
-  8.   |                            Cross-origin redirect back to landing:         |                              |
-       |                            cig.lat#access_token=...&id_token=...          |                              |
-       |                            &expires_in=...&social_provider=google         |                              |
+  8.   |                            exchangeAuthentikCode()                      |                              |
+       |                            - Validate state                             |                              |
+       |                            - Read verifier from dashboard storage       |                              |
+       |                            - POST /application/o/token/                 |                              |
+       |                            - Store tokens in dashboard storage          |                              |
        |                                      |                                  |                              |
   9.   |<------- hash fragment redirect ------|                                  |                              |
+       |            #access_token=...&id_token=...&expires_in=...                |                              |
        |                                      |                                  |                              |
- 10. AuthProvider reads hash:                 |                                  |                              |
-     - Store tokens in landing's sessionStorage                                  |                              |
-     - Decode id_token for user claims         |                                  |                              |
-     - Clear hash from URL                     |                                  |                              |
-     - Display user profile                    |                                  |                              |
+ 10. Landing AuthProvider stores the tokens, decodes id_token claims, and clears the hash                          |
 ```
 
-### Why the Relay Route?
+### Why the relay route exists
 
-The landing and dashboard are on **different origins**. `sessionStorage` is per-origin, so the landing cannot write the PKCE verifier into the dashboard's storage. The relay route (`/auth/login/[provider]`) runs on the dashboard origin and bridges this gap by:
+The landing app and dashboard are different origins. `sessionStorage` is origin-scoped, so the PKCE verifier created on landing would not be visible to the dashboard callback page. The relay route on the dashboard origin solves that by writing the PKCE verifier into the dashboard's `sessionStorage` before entering Authentik.
 
-1. Storing the PKCE verifier + state in the **dashboard's** `sessionStorage`
-2. Redirecting to Authentik with the OIDC authorize URL as the `?next=` parameter
+### Why per-provider login flows exist
 
-After auth completes, `/auth/callback` (also on the dashboard) reads the verifier from its own `sessionStorage` to exchange the code.
+Authentik's default login UI is intentionally bypassed for social login. Each upstream social provider gets its own Authentik **authentication** flow with a single **Redirect Stage**:
 
-### Why Per-Provider Flows?
+| Flow slug | Redirect target |
+| --------- | --------------- |
+| `cig-google-login` | `/source/oauth/login/google/` |
+| `cig-github-login` | `/source/oauth/login/github/` |
 
-Standard Authentik login shows its own login page. To skip this and go directly to Google/GitHub, each provider has a dedicated Authentik flow:
+That keeps the RP flow explicit and avoids accidental dependence on whatever the tenant's default login screen happens to show.
 
-| Provider | Flow slug            | Redirect Stage target                       |
-| -------- | -------------------- | ------------------------------------------- |
-| Google   | `cig-google-login`   | `/source/oauth/login/google/`               |
-| GitHub   | `cig-github-login`   | `/source/oauth/login/github/`               |
+## Current logout flow
 
-Each flow has a single **Redirect Stage** that sends the user straight to the social provider. The `?next=` parameter (containing the OIDC authorize URL) is preserved by Authentik's flow executor, so after the social auth completes, Authentik issues the CIG authorization code.
+Logout is intentionally centralized in the landing app, even when the user clicks logout inside the dashboard.
 
-## Authentik Configuration
+```
+Dashboard or Landing                  Landing                              Authentik
+        |                               |                                     |
+  1. Dashboard logout redirects -------->| ?signout=1                          |
+        |                               |                                     |
+  2. Landing signOut()                  |                                     |
+     - Best-effort revoke access token  |                                     |
+     - Clear local `cig_*` session keys |                                     |
+     - Build RP-initiated end-session   |                                     |
+       URL using `id_token_hint`        |                                     |
+     - Set post_logout_redirect_uri     |                                     |
+       to `https://cig.lat/?logged_out=1`                                     |
+        |------------------------------>| /end-session/...                     |
+        |                               |                                     |
+  3. Authentik provider invalidation flow runs                                 |
+     - User Logout stage ends the authentik browser session                    |
+     - Redirect stage sends the browser back to landing                        |
+        |<------------------------------|                                     |
+        |                               |                                     |
+  4. Landing loads `?logged_out=1`, cleans the URL, and remains signed out     |
+```
 
-### OIDC Provider
+### Important logout design rules
 
-- **Application**: CIG Platform
-- **Client type**: Public (PKCE-only, no client secret)
-- **Allowed redirect URIs**: `https://app.cig.technology/auth/callback`, `http://localhost:3001/auth/callback`
-- **Scopes**: `openid`, `email`, `profile`
+- The app clears its own session **before** leaving for Authentik so a partially completed remote logout does not leave stale local identity visible.
+- The post-logout target is always the landing root with `?logged_out=1`, not the current pathname, so logout completion is deterministic.
+- If you keep using `default-provider-invalidation-flow`, every RP that shares it will inherit the same post-logout behavior.
+- Once multiple relying parties need different logout destinations, create a provider-specific invalidation flow instead of hardcoding a shared default flow.
 
-### OAuth Sources (Google, GitHub)
+## Authentik resources CIG depends on
 
-Each source must be configured with:
-- **Consumer key/secret**: From the respective provider's developer console
-- **Callback URL**: `https://auth.cig.technology/source/oauth/callback/{provider}/`
-- **Authentication flow**: `default-authentication-flow` (existing users)
-- **Enrollment flow**: CIG enrollment flow (new users)
-- **User matching mode**: `identifier` (matches by source connection, not email)
+### 1. OIDC provider and application
 
-### Source Property Mapping: Profile Sync
+Current CIG production provider:
 
-A source property mapping **"CIG: Sync profile from social provider"** is assigned to both Google and GitHub sources. It runs on each login and syncs the user's profile from the social provider:
+- Application: `CIG Platform`
+- Provider: `CIG Dashboard`
+- Client type: public
+- Flow style: Authorization Code + PKCE
+- Redirect URIs: `https://app.cig.technology/auth/callback`, `http://localhost:3001/auth/callback`
+- Scopes used by the app: `openid email profile`
+- Invalidation flow: currently `default-provider-invalidation-flow`
+
+Provider-agnostic requirement:
+
+- Every relying party needs an application/provider pair with redirect URIs for every environment it serves.
+- For browser-only apps, use PKCE and avoid client secrets in the frontend.
+- Decide the invalidation flow deliberately. The Authentik default is not enough if you want RP logout to also end the Authentik browser session and return to the application.
+
+### 2. OAuth sources
+
+Current CIG sources:
+
+- `google`
+- `github`
+
+Each source needs:
+
+- provider-issued client credentials
+- callback URL in the upstream provider console:
+  `https://auth.cig.technology/source/oauth/callback/{provider}/`
+- authentication flow for existing users
+- enrollment flow for first-time users
+- matching mode set to `identifier`
+
+Why `identifier` matters:
+
+- source links are based on the upstream account binding, not on email equality
+- this avoids silently merging accounts just because two providers share an email address
+
+### 3. Source property mapping
+
+CIG uses a source property mapping to normalize profile fields from upstream providers into Authentik's user record:
 
 ```python
-# Source OAuth property mappings receive `info` (OAuth userinfo dict)
-# and must return a dict of User model fields to set.
 name = info.get("name", "")
 email = info.get("email", "")
 picture = info.get("picture", "") or info.get("avatar_url", "")
@@ -137,11 +182,14 @@ if picture:
 return result
 ```
 
-This ensures that if a user changes their name or avatar on Google/GitHub, it auto-updates in CIG on next login.
+Provider-agnostic rule:
 
-### OIDC Scope Mapping: Profile Claims
+- normalize upstream claims inside the identity provider once
+- downstream relying parties should consume stable OIDC claims, not provider-specific raw fields
 
-The OIDC provider's **profile scope mapping** includes the synced picture in the id_token:
+### 4. OIDC scope mapping
+
+CIG's OIDC profile scope mapping exposes the normalized avatar back to the applications:
 
 ```python
 return {
@@ -154,64 +202,90 @@ return {
 }
 ```
 
-### Per-Provider Flows
+Provider-agnostic rule:
 
-Each social provider needs a dedicated Authentik flow with a single **Redirect Stage**:
+- every relying party should receive the same normalized profile shape regardless of whether the user came from Google, GitHub, or another source
 
-1. Create flow: `cig-{provider}-login` (designation: Authentication)
-2. Add one stage: **Redirect Stage**
-   - Mode: Static URL
-   - URL: `/source/oauth/login/{provider}/`
-3. The landing's relay route passes `?next=<OIDC authorize URL>` to the flow
+### 5. Per-provider login flows
 
-## Token Lifecycle
+For every upstream social provider CIG exposes directly in the landing UI:
 
-| Event          | Action                                                          |
-| -------------- | --------------------------------------------------------------- |
-| Login start    | Clear all `cig_*` sessionStorage keys (prevent identity bleed)  |
-| Relay route    | Store PKCE verifier + state + social_provider in dashboard sessionStorage |
-| Callback       | Exchange code, store tokens, set `cig_has_session` cookie       |
-| Cross-origin redirect | Pass tokens in hash fragment, landing stores them        |
-| Page load      | `AuthProvider` reads sessionStorage, decodes id_token for user claims |
-| Token expired  | `readAuthentikSession()` returns null, user appears signed out  |
-| Sign out       | Revoke token via Authentik API, clear all `cig_*` keys + cookie |
+1. Create an **Authentication** flow named `cig-{provider}-login`
+2. Bind a **Redirect Stage**
+3. Set the Redirect Stage to static mode
+4. Point it at `/source/oauth/login/{provider}/`
 
-## Supabase Fallback
+This keeps the app's social buttons mapped to explicit Authentik resources instead of implicit tenant defaults.
 
-Set `NEXT_PUBLIC_AUTH_PROVIDER=supabase` to switch to Supabase auth:
+### 6. Provider invalidation flow
 
-- Login uses Supabase's `signInWithOAuth()` instead of PKCE
-- User info comes from `supabase.auth.getSession()` and `onAuthStateChange()`
-- Social provider detected from `user.app_metadata.provider`
-- Sign-out calls `supabase.auth.signOut()`
+This is the resource that fixes the logout issue that originally caused users to remain attached to the previous Authentik browser session.
 
-This fallback exists for resilience if Authentik is unavailable. No code changes are needed — just set the env variable.
+Minimum working pattern:
 
-## Security Measures
+1. Use an **Invalidation** flow for the provider
+2. Add a **User Logout** stage so RP logout also ends the Authentik session
+3. Add a **Redirect Stage** after it so the browser returns to the application
 
-| Measure                   | Implementation                                                        |
-| ------------------------- | --------------------------------------------------------------------- |
-| PKCE S256                 | 256-bit random verifier, SHA-256 challenge                            |
-| CSRF (state param)        | 128-bit random state, validated on callback                           |
-| Open redirect protection  | Callback validates redirect against allowed origins whitelist         |
-| Session isolation          | `sessionStorage` per-origin, per-tab, non-persistent                 |
-| Secure cookies            | `cig_has_session` includes `Secure` flag over HTTPS                  |
-| Identity bleed prevention | All `cig_*` keys cleared before storing new tokens on every login    |
-| Token revocation           | Access token revoked server-side via Authentik on sign-out           |
-| Referrer protection        | `referrerPolicy="no-referrer"` on external avatar images             |
-| Provider whitelisting      | Relay route only accepts `google` and `github` via `Set` check       |
-| JSON.stringify escaping    | Relay route HTML uses `JSON.stringify()` for all injected values     |
+Current CIG production behavior:
 
-## Files Reference
+- the `CIG Dashboard` provider uses `default-provider-invalidation-flow`
+- that flow must contain:
+  - `User Logout`
+  - a Redirect Stage to `https://cig.lat/?logged_out=1`
 
-| File                                                      | Purpose                                      |
-| --------------------------------------------------------- | -------------------------------------------- |
-| `packages/auth/src/authentik.ts`                          | PKCE helpers, social login, token exchange    |
-| `packages/auth/src/index.ts`                              | Package exports                              |
-| `packages/auth/src/client.ts`                             | Supabase client singleton                    |
-| `packages/auth/src/adapters/oidc-adapter.ts`              | Server-side JWT verification via JWKS        |
-| `apps/landing/components/AuthProvider.tsx`                 | Unified auth context (Authentik + Supabase)  |
-| `apps/landing/components/AuthButton.tsx`                   | Login modal with social buttons              |
-| `apps/dashboard/app/auth/login/[provider]/route.ts`       | Relay route (cross-origin PKCE bridge)       |
-| `apps/dashboard/app/auth/callback/page.tsx`               | OAuth callback (code exchange + redirect)    |
-| `apps/dashboard/middleware.ts`                             | Session cookie gate for protected routes     |
+Recommended provider-agnostic pattern:
+
+- create a dedicated invalidation flow per relying party when different apps need different logout destinations
+- reserve `default-provider-invalidation-flow` for shared behavior only
+- if you need the redirect target to vary dynamically, use a Redirect Stage plus policy-driven `redirect_stage_target`
+
+## Token and session lifecycle
+
+| Event | Action |
+| ----- | ------ |
+| Login start | Clear `cig_*` session keys before writing new PKCE/session state |
+| Relay route | Store verifier, state, and provider on the dashboard origin |
+| Callback | Exchange code, store tokens, set `cig_has_session` cookie |
+| Cross-origin return | Pass tokens back to landing via hash fragment |
+| Page load | `AuthProvider` reads session storage and decodes the id token |
+| Local logout | Clear local `cig_*` state immediately |
+| Remote logout | Revoke access token best-effort, then call Authentik end-session |
+| Logout completion | Return to `/?logged_out=1`, clean URL, remain signed out |
+
+## Supabase fallback
+
+Set `NEXT_PUBLIC_AUTH_PROVIDER=supabase` to use the fallback path:
+
+- login uses Supabase OAuth instead of the Authentik PKCE flow
+- user state comes from `supabase.auth.getSession()` and `onAuthStateChange()`
+- logout calls `supabase.auth.signOut()`
+
+The fallback is implementation-compatible at the app level, but it does not use Authentik login flows, Authentik source mappings, or Authentik invalidation flows.
+
+## Security and failure-mode notes
+
+| Measure | Implementation |
+| ------- | -------------- |
+| PKCE S256 | random verifier + SHA-256 challenge |
+| CSRF protection | state parameter validated on callback |
+| Origin isolation | verifier lives on the dashboard origin that completes the callback |
+| Identity bleed prevention | all `cig_*` session keys are cleared before new login data is stored |
+| Local-first logout | local app state is cleared before remote logout finishes |
+| Remote token revocation | access token revocation is best-effort and uses `keepalive` |
+| Authentik session termination | provider invalidation flow includes `User Logout` |
+| Deterministic return target | logout completes on `/?logged_out=1` |
+| Open redirect protection | callback validates redirect targets against allowed origins |
+
+## Files reference
+
+| File | Purpose |
+| ---- | ------- |
+| `packages/auth/src/authentik.ts` | PKCE helpers, code exchange, end-session URL builder, token revocation |
+| `packages/auth/src/index.ts` | client-safe auth exports |
+| `apps/landing/components/AuthProvider.tsx` | landing-side session state and canonical logout orchestration |
+| `apps/landing/components/AuthButton.tsx` | login UI and social button entrypoints |
+| `apps/landing/app/page.tsx` | logout entry and completion query normalization |
+| `apps/dashboard/app/auth/login/[provider]/route.ts` | cross-origin PKCE bridge into Authentik |
+| `apps/dashboard/app/auth/callback/page.tsx` | OIDC code exchange and landing redirect |
+| `apps/dashboard/lib/authProvider.ts` | dashboard logout handoff to landing |

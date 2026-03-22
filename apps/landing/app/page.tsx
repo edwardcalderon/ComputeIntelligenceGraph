@@ -810,14 +810,17 @@ function PublicLanding() {
 export default function HomePage() {
   const { user, signOut } = useCIGAuth();
 
-  // When the dashboard redirects here with ?signout=1, clear the session
-  // and clean the URL so a refresh shows the normal unauthenticated landing.
+  // Normalize logout entrypoints so both dashboard-initiated sign-out and the
+  // final landing redirect end on the clean unauthenticated home page.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("signout") === "1") {
+      window.history.replaceState({}, "", window.location.pathname);
       signOut();
-      const clean = window.location.pathname;
-      window.history.replaceState({}, "", clean);
+      return;
+    }
+    if (params.get("logged_out") === "1") {
+      window.history.replaceState({}, "", window.location.pathname);
     }
   }, [signOut]);
 

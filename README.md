@@ -1,6 +1,6 @@
 # CIG
 
-[![Version](https://img.shields.io/badge/version-0.1.40-blue.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-0.1.41-blue.svg)](package.json)
 [![Node](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen.svg)](package.json)
 [![pnpm](https://img.shields.io/badge/pnpm-%3E%3D9.0.0-orange.svg)](package.json)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -171,6 +171,7 @@ pnpm release:major
 ## Documentation
 
 - Docs index: [docs/README.md](docs/README.md)
+- Authentication notes: [docs/authentication/README.md](docs/authentication/README.md)
 - Architecture notes: [docs/architecture/README.md](docs/architecture/README.md)
 - Development notes: [docs/development/README.md](docs/development/README.md)
 - Deployment notes: [docs/deployment/README.md](docs/deployment/README.md)
@@ -212,7 +213,7 @@ This project uses [@edcalderon/versioning](https://www.npmjs.com/package/@edcald
 - ✅ Cleanup utilities
 - ✅ Branch-aware versioning
 
-All packages maintain version **0.1.40** in sync.
+All packages maintain version **0.1.41** in sync.
 
 ---
 

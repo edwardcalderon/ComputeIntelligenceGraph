@@ -39,6 +39,8 @@ export function useCIGAuth() {
 const AUTH_PROVIDER: "authentik" | "supabase" =
   (process.env.NEXT_PUBLIC_AUTH_PROVIDER as "authentik" | "supabase") || "authentik";
 
+const LANDING_LOGOUT_COMPLETE_QUERY = "logged_out=1";
+
 /* ─── JWT helpers ────────────────────────────────────────────────────── */
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
@@ -181,6 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (AUTH_PROVIDER === "authentik") {
       try {
+        const logoutReturnUrl = new URL(`/?${LANDING_LOGOUT_COMPLETE_QUERY}`, window.location.origin).toString();
         const accessToken = sessionStorage.getItem("cig_access_token");
         const idToken = sessionStorage.getItem("cig_id_token");
         if (accessToken) {
@@ -189,11 +192,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           revokeAuthentikToken({ issuerUrl, clientId, redirectUri: "" }, accessToken).catch(() => {});
         }
         if (idToken) {
-          logoutUrl = buildAuthentikEndSessionUrl(
-            idToken,
-            `${window.location.origin}${window.location.pathname}`,
-          );
+          logoutUrl = buildAuthentikEndSessionUrl(idToken, logoutReturnUrl);
         }
+        logoutUrl ??= logoutReturnUrl;
       } catch { /* ignore */ }
       clearAuthentikSession();
     } else {
