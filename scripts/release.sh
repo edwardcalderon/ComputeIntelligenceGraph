@@ -148,6 +148,37 @@ fs.writeFileSync(
   fi
 }
 
+verify_dashboard_container_build() {
+  local app_version="$1"
+  local image_tag="cig-dashboard-release-check:${app_version}"
+  local authentik_client_id_default="G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v"
+
+  command -v docker >/dev/null 2>&1 || {
+    error "docker is required to verify the dashboard container build. Install Docker or use --no-build."
+    exit 1
+  }
+
+  if ! docker info >/dev/null 2>&1; then
+    error "Docker daemon is not available. Start Docker or use --no-build."
+    exit 1
+  fi
+
+  docker build \
+    -f infra/docker/Dockerfile.dashboard \
+    -t "${image_tag}" \
+    --build-arg "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8080}" \
+    --build-arg "NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-https://cig.lat}" \
+    --build-arg "NEXT_PUBLIC_DASHBOARD_URL=${NEXT_PUBLIC_DASHBOARD_URL:-http://localhost:3001}" \
+    --build-arg "NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-}" \
+    --build-arg "NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}" \
+    --build-arg "NEXT_PUBLIC_AUTHENTIK_URL=${NEXT_PUBLIC_AUTHENTIK_URL:-https://auth.cig.technology}" \
+    --build-arg "NEXT_PUBLIC_AUTHENTIK_CLIENT_ID=${NEXT_PUBLIC_AUTHENTIK_CLIENT_ID:-$authentik_client_id_default}" \
+    --build-arg "NEXT_PUBLIC_APP_VERSION=${app_version}" \
+    . 2>&1
+
+  docker image rm -f "${image_tag}" >/dev/null 2>&1 || true
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     release|patch|minor|major) BUMP_TYPE="$1"; shift ;;
@@ -190,11 +221,12 @@ if [[ -z "$BUMP_TYPE" || "$BUMP_TYPE" == "help" ]]; then
   echo "  1. Validates branch state and stages source changes for release"
   echo "  2. Syncs workspace dependencies with pnpm install --frozen-lockfile"
   echo "  3. Runs tests (unless --no-tests)"
-  echo "  4. Either bumps semantic version or assigns the next build number"
-  echo "  5. Generates / updates CHANGELOG.md for semantic releases"
-  echo "  6. Updates README.md version badge for semantic releases"
-  echo "  7. Commits source changes when needed and tags the release"
-  echo "  8. Pushes to remote (unless --no-push)"
+  echo "  4. Verifies web builds + the deployable dashboard container (unless --no-build)"
+  echo "  5. Either bumps semantic version or assigns the next build number"
+  echo "  6. Generates / updates CHANGELOG.md for semantic releases"
+  echo "  7. Updates README.md version badge for semantic releases"
+  echo "  8. Commits source changes when needed and tags the release"
+  echo "  9. Pushes to remote (unless --no-push)"
   echo ""
   exit 0
 fi
@@ -327,17 +359,17 @@ fi
 if $SKIP_BUILD; then
   warn "Build verification skipped (--no-build)"
 else
-  step "4b/8 Verifying production builds (landing, dashboard, wizard-ui)"
+  step "4b/8 Verifying production builds (landing, dashboard container, wizard-ui)"
   if ! $DRY_RUN; then
     pnpm --filter @cig/landing build 2>&1 || { error "Landing build failed. Fix it before releasing."; exit 1; }
     success "Landing build OK"
-    pnpm --filter @cig/dashboard build 2>&1 || { error "Dashboard build failed. Fix it before releasing."; exit 1; }
-    success "Dashboard build OK"
+    verify_dashboard_container_build "${CURRENT_VERSION}" || { error "Dashboard container build failed. Fix it before releasing."; exit 1; }
+    success "Dashboard container build OK"
     pnpm --filter @cig/wizard-ui build 2>&1 || { error "Wizard-UI build failed. Fix it before releasing."; exit 1; }
     success "Wizard-UI build OK"
   else
     info "[dry-run] Would run: pnpm --filter @cig/landing build"
-    info "[dry-run] Would run: pnpm --filter @cig/dashboard build"
+    info "[dry-run] Would run: docker build -f infra/docker/Dockerfile.dashboard ..."
     info "[dry-run] Would run: pnpm --filter @cig/wizard-ui build"
   fi
 fi

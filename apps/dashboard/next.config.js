@@ -23,6 +23,7 @@ const nextConfig = {
     NEXT_PUBLIC_RELEASE_TAG: releaseTag,
     // Fallback to localhost landing so logout works in local dev even without .env.local
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+    NEXT_PUBLIC_DASHBOARD_URL: process.env.NEXT_PUBLIC_DASHBOARD_URL || 'http://localhost:3001',
     NEXT_PUBLIC_AUTHENTIK_URL: process.env.NEXT_PUBLIC_AUTHENTIK_URL || 'https://auth.cig.technology',
     NEXT_PUBLIC_AUTHENTIK_CLIENT_ID: process.env.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID || 'G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v',
   },

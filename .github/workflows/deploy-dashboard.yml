@@ -108,8 +108,11 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
             NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL || 'https://cig.lat' }}
+            NEXT_PUBLIC_DASHBOARD_URL=${{ secrets.NEXT_PUBLIC_DASHBOARD_URL || 'https://app.cig.lat' }}
             NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
             NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            NEXT_PUBLIC_AUTHENTIK_URL=${{ secrets.NEXT_PUBLIC_AUTHENTIK_URL || 'https://auth.cig.technology' }}
+            NEXT_PUBLIC_AUTHENTIK_CLIENT_ID=${{ secrets.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID || 'G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v' }}
             NEXT_PUBLIC_APP_VERSION=${{ needs.resolve-tag.outputs.tag }}
           # Registry-based layer cache — dramatically speeds up repeat builds
           cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
@@ -203,4 +206,3 @@ jobs:
             exit 1
           fi
           echo "✅ app.cig.lat returned 200"
-

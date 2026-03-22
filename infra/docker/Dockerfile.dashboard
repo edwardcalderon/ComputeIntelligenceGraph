@@ -7,6 +7,7 @@ RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 
 # Copy workspace manifests first (layer-cache friendly)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+COPY packages/auth/package.json ./packages/auth/
 COPY packages/ui/package.json ./packages/ui/
 COPY packages/i18n/package.json ./packages/i18n/
 COPY apps/dashboard/package.json ./apps/dashboard/
@@ -14,6 +15,7 @@ COPY apps/dashboard/package.json ./apps/dashboard/
 RUN pnpm install --frozen-lockfile
 
 # Copy source
+COPY packages/auth ./packages/auth
 COPY packages/ui ./packages/ui
 COPY packages/i18n ./packages/i18n
 COPY apps/dashboard ./apps/dashboard
@@ -22,14 +24,20 @@ COPY apps/dashboard ./apps/dashboard
 # Pass them as build args from CI so the container never needs them at runtime.
 ARG NEXT_PUBLIC_API_URL=http://localhost:8080
 ARG NEXT_PUBLIC_SITE_URL=https://cig.lat
+ARG NEXT_PUBLIC_DASHBOARD_URL=http://localhost:3001
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ARG NEXT_PUBLIC_AUTHENTIK_URL=https://auth.cig.technology
+ARG NEXT_PUBLIC_AUTHENTIK_CLIENT_ID=G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v
 ARG NEXT_PUBLIC_APP_VERSION
 
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
     NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
+    NEXT_PUBLIC_DASHBOARD_URL=$NEXT_PUBLIC_DASHBOARD_URL \
     NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
     NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
+    NEXT_PUBLIC_AUTHENTIK_URL=$NEXT_PUBLIC_AUTHENTIK_URL \
+    NEXT_PUBLIC_AUTHENTIK_CLIENT_ID=$NEXT_PUBLIC_AUTHENTIK_CLIENT_ID \
     NEXT_PUBLIC_APP_VERSION=$NEXT_PUBLIC_APP_VERSION \
     NEXT_TELEMETRY_DISABLED=1
 
