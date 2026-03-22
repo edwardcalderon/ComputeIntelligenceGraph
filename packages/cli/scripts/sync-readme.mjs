@@ -6,8 +6,6 @@ import { fileURLToPath } from 'node:url';
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const pkgDir = resolve(scriptDir, '..');
 const readmePath = resolve(pkgDir, 'README.md');
-const changelogPath = resolve(pkgDir, 'CHANGELOG.md');
-const packageJsonPath = resolve(pkgDir, 'package.json');
 const githubReleasesUrl = 'https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases';
 
 execFileSync(
@@ -32,7 +30,6 @@ const readme = readFileSync(readmePath, 'utf8')
     'https://github.com/edcalderon/my-second-brain/releases',
     githubReleasesUrl
   )
-  .replace(/\.\/+CHANGELOG\.md/g, './CHANGELOG.md')
-  .replace(/\.\/\/home\/[^\s)]+\/CHANGELOG\.md/g, './CHANGELOG.md');
+  .replace(/\.\/+CHANGELOG\.md/g, './CHANGELOG.md');
 
 writeFileSync(readmePath, readme);

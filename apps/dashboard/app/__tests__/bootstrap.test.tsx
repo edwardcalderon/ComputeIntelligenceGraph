@@ -138,7 +138,8 @@ describe("Bootstrap Page", () => {
     expect(button).toHaveTextContent("Validating...");
 
     await waitFor(() => {
-      expect(button).not.toBeDisabled();
+      expect(screen.getByTestId("admin-form")).toBeInTheDocument();
+      expect(screen.queryByTestId("validate-btn")).not.toBeInTheDocument();
     });
   });
 });

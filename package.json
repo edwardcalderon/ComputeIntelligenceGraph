@@ -1,6 +1,6 @@
 {
   "name": "cig-monorepo",
-  "version": "0.1.36",
+  "version": "0.1.37",
   "private": true,
   "license": "MIT",
   "description": "Compute Intelligence Graph - monorepo root",
@@ -70,7 +70,7 @@
     "__workspace_scripts_managed": "[\"dev:dashboard\",\"dev:landing\",\"dev:wizard-ui\",\"dev:api\",\"dev:agents\",\"dev:chatbot\",\"dev:cli\",\"dev:config\",\"dev:discovery\",\"dev:graph\",\"dev:sdk\",\"dev:all\",\"dev\",\"build:dashboard\",\"build:landing\",\"build:wizard-ui\",\"build:api\",\"build:agents\",\"build:chatbot\",\"build:cli\",\"build:config\",\"build:discovery\",\"build:graph\",\"build:sdk\",\"build:all\",\"build\"]"
   },
   "devDependencies": {
-    "@edcalderon/versioning": "^1.5.1",
+    "@edcalderon/versioning": "^1.5.5",
     "concurrently": "^9.2.1",
     "husky": "^9.1.7",
     "turbo": "^1.13.0",

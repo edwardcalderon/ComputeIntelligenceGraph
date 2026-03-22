@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@edcalderon/versioning':
-        specifier: ^1.5.1
-        version: 1.5.1
+        specifier: ^1.5.5
+        version: 1.5.5
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -398,8 +398,8 @@ importers:
         version: 9.3.8(@types/node@20.19.37)
     devDependencies:
       '@edcalderon/versioning':
-        specifier: ^1.5.1
-        version: 1.5.1
+        specifier: ^1.5.5
+        version: 1.5.5
       '@types/node':
         specifier: ^20.0.0
         version: 20.19.37
@@ -960,8 +960,8 @@ packages:
       react-native:
         optional: true
 
-  '@edcalderon/versioning@1.5.1':
-    resolution: {integrity: sha512-irfRZLe9rCoeRNCgCBHurKwnL+ngh90RvTyhV10k0V58XlCZvjHMJjlB4YF9SxLV0+7ZiM7jF3y5S0eEyeJ9EQ==}
+  '@edcalderon/versioning@1.5.5':
+    resolution: {integrity: sha512-kPy9qpvA6saKtPJtNkrzjl1BxF/BjpZEuyFcy5mPqLbEM8P8G32vX8McJ9P5j4LV7LxwtPiW5wr1RVuuyt43Fw==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
@@ -7752,7 +7752,7 @@ snapshots:
       '@supabase/supabase-js': 2.99.2
       react-dom: 18.3.1(react@18.3.1)
 
-  '@edcalderon/versioning@1.5.1':
+  '@edcalderon/versioning@1.5.5':
     dependencies:
       commander: 12.1.0
       conventional-changelog: 5.1.0

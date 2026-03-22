@@ -1,3 +1,27 @@
+## [0.1.37](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.36...v0.1.37) (2026-03-22)
+
+
+### Features
+
+* **cli:** prepare first public npm release ([c013c75](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/c013c75075cea9e93e42926d81f3a4798c409053))
+* **iac:** provision auth.cig.technology Authentik SSO on AWS ([0b750ed](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/0b750ed148e706f510dc8cdf0b54876302c32e1e))
+
+
+
+
+
+## [0.1.37](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.36...v0.1.37) (2026-03-22)
+
+
+### Features
+
+* **cli:** prepare first public npm release ([c013c75](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/c013c75075cea9e93e42926d81f3a4798c409053))
+* **iac:** provision auth.cig.technology Authentik SSO on AWS ([0b750ed](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/0b750ed148e706f510dc8cdf0b54876302c32e1e))
+
+
+
+
+
 ## [0.1.36](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.35...v0.1.36) (2026-03-21)
 
 

@@ -1,6 +1,6 @@
 {
   "name": "@cig-technology/cli",
-  "version": "0.1.1",
+  "version": "0.1.37",
   "description": "Production-oriented CLI for bootstrapping and operating CIG nodes and self-hosted installs",
   "keywords": [
     "cig",
@@ -61,7 +61,7 @@
     "inquirer": "^9.0.0"
   },
   "devDependencies": {
-    "@edcalderon/versioning": "^1.5.1",
+    "@edcalderon/versioning": "^1.5.5",
     "@types/node": "^20.0.0",
     "fast-check": "^3.23.2",
     "typescript": "^5.4.0",
