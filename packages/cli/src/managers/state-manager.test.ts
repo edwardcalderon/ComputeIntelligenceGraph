@@ -7,16 +7,20 @@ import { StateManager, InstallationState } from './state-manager.js';
 describe('StateManager', () => {
   let stateManager: StateManager;
   let testStateFile: string;
+  let tmpDir: string;
 
   beforeEach(() => {
-    stateManager = new StateManager();
-    const configDir = path.join(os.homedir(), '.cig');
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cig-state-'));
+    stateManager = new StateManager({
+      configDir: path.join(tmpDir, 'config'),
+    });
+    const configDir = path.join(tmpDir, 'config');
     testStateFile = path.join(configDir, 'state.json');
   });
 
   afterEach(async () => {
-    // Clean up test state file
     await stateManager.delete();
+    fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
   describe('save and load', () => {

@@ -1,7 +1,9 @@
-import * as crypto from 'crypto';
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
+import * as crypto from 'node:crypto';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
+import { CliPathOptions, resolveCliPaths } from './storage/paths.js';
+import { CliSecretStore } from './stores/cli-secret-store.js';
 
 export interface AuthTokens {
   accessToken: string;
@@ -39,28 +41,30 @@ export interface EncryptedCredential {
   type: 'aws' | 'gcp';
 }
 
-interface AuthFile {
-  tokens?: AuthTokens;
-  identity?: TargetIdentity;
-  bootstrapToken?: BootstrapToken;
+interface CredentialConfigFile {
+  credentials: Record<string, EncryptedCredential>;
 }
 
-interface ConfigFile {
-  credentials: Record<string, EncryptedCredential>;
+export interface CredentialManagerOptions {
+  paths?: CliPathOptions;
+  encryptionSeed?: string;
+  secretStore?: CliSecretStore;
 }
 
 export class CredentialManager {
   private readonly configDir: string;
   private readonly configFile: string;
   private readonly encryptionKey: Buffer;
+  private readonly secretStore: CliSecretStore;
 
-  constructor() {
-    this.configDir = path.join(os.homedir(), '.cig');
-    this.configFile = path.join(this.configDir, 'config.json');
-    this.encryptionKey = crypto
-      .createHash('sha256')
-      .update(os.hostname() + os.userInfo().username)
-      .digest();
+  constructor(options: CredentialManagerOptions = {}) {
+    const paths = resolveCliPaths(options.paths);
+    this.configDir = paths.configDir;
+    this.configFile = paths.credentialsFile;
+    const seed = options.encryptionSeed ?? `${os.hostname()}:${os.userInfo().username}`;
+    this.encryptionKey = crypto.createHash('sha256').update(seed).digest();
+    this.secretStore =
+      options.secretStore ?? new CliSecretStore({ paths: options.paths, encryptionSeed: seed });
   }
 
   private encrypt(plaintext: string): { iv: string; tag: string; data: string } {
@@ -84,15 +88,15 @@ export class CredentialManager {
     return Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8');
   }
 
-  private readConfig(): ConfigFile {
+  private readConfig(): CredentialConfigFile {
     if (!fs.existsSync(this.configFile)) {
       return { credentials: {} };
     }
     const raw = fs.readFileSync(this.configFile, 'utf8');
-    return JSON.parse(raw) as ConfigFile;
+    return JSON.parse(raw) as CredentialConfigFile;
   }
 
-  private writeConfig(config: ConfigFile): void {
+  private writeConfig(config: CredentialConfigFile): void {
     if (!fs.existsSync(this.configDir)) {
       fs.mkdirSync(this.configDir, { mode: 0o700, recursive: true });
     }
@@ -150,30 +154,12 @@ export class CredentialManager {
     }));
   }
 
-  // ── Auth file helpers ────────────────────────────────────────────────────
-
-  private get authFile(): string {
-    return path.join(this.configDir, 'auth.json');
-  }
-
-  private readAuthFile(): AuthFile {
-    if (!fs.existsSync(this.authFile)) return {};
-    return JSON.parse(fs.readFileSync(this.authFile, 'utf8')) as AuthFile;
-  }
-
-  private writeAuthFile(data: AuthFile): void {
-    if (!fs.existsSync(this.configDir)) {
-      fs.mkdirSync(this.configDir, { mode: 0o700, recursive: true });
-    }
-    fs.writeFileSync(this.authFile, JSON.stringify(data, null, 2), { mode: 0o600 });
-  }
-
   saveTokens(tokens: AuthTokens): void {
-    this.writeAuthFile({ ...this.readAuthFile(), tokens });
+    this.secretStore.set('auth.tokens', tokens);
   }
 
   loadTokens(): AuthTokens | null {
-    return this.readAuthFile().tokens ?? null;
+    return this.secretStore.get<AuthTokens>('auth.tokens');
   }
 
   needsRefresh(tokens: AuthTokens): boolean {
@@ -185,23 +171,33 @@ export class CredentialManager {
   }
 
   saveIdentity(identity: TargetIdentity): void {
-    this.writeAuthFile({ ...this.readAuthFile(), identity });
+    this.secretStore.set('node.identity', identity);
   }
 
   loadIdentity(): TargetIdentity | null {
-    return this.readAuthFile().identity ?? null;
+    return this.secretStore.get<TargetIdentity>('node.identity');
   }
 
   saveBootstrapToken(bootstrapToken: BootstrapToken): void {
-    this.writeAuthFile({ ...this.readAuthFile(), bootstrapToken });
+    this.secretStore.set('bootstrap.token', bootstrapToken);
   }
 
   loadBootstrapToken(): BootstrapToken | null {
-    return this.readAuthFile().bootstrapToken ?? null;
+    return this.secretStore.get<BootstrapToken>('bootstrap.token');
   }
 
   clearAll(): void {
-    if (fs.existsSync(this.authFile)) fs.unlinkSync(this.authFile);
+    this.secretStore.clear();
     if (fs.existsSync(this.configFile)) fs.unlinkSync(this.configFile);
   }
+}
+
+export function createTempCredentialManager(tmpDir: string): CredentialManager {
+  return new CredentialManager({
+    paths: {
+      configDir: path.join(tmpDir, 'config'),
+      installDir: path.join(tmpDir, 'install'),
+    },
+    encryptionSeed: 'test-seed',
+  });
 }

@@ -1,0 +1,11 @@
+src
+node_modules
+dist/*.test.*
+dist/**/*.test.*
+coverage
+*.log
+tsconfig.json
+tsconfig.tsbuildinfo
+package-lock.json
+vitest.config.*
+scripts

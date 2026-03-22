@@ -61,10 +61,12 @@ describe('Property 20: Credential Non-Logging', () => {
      */
     fc.assert(
       fc.property(credentialArb, credTypeArb, (credValue, credType) => {
-        // Patch the config dir to use our temp directory
-        const manager = new CredentialManager();
-        (manager as unknown as { configDir: string }).configDir = tmpDir;
-        (manager as unknown as { configFile: string }).configFile = path.join(tmpDir, 'config.json');
+        const manager = new CredentialManager({
+          paths: {
+            configDir: path.join(tmpDir, 'config'),
+          },
+          encryptionSeed: 'test-seed',
+        });
 
         try {
           manager.save(credType, credValue);
@@ -91,9 +93,12 @@ describe('Property 20: Credential Non-Logging', () => {
      */
     fc.assert(
       fc.property(credentialArb, credTypeArb, (credValue, credType) => {
-        const manager = new CredentialManager();
-        (manager as unknown as { configDir: string }).configDir = tmpDir;
-        (manager as unknown as { configFile: string }).configFile = path.join(tmpDir, 'config.json');
+        const manager = new CredentialManager({
+          paths: {
+            configDir: path.join(tmpDir, 'config'),
+          },
+          encryptionSeed: 'test-seed',
+        });
 
         // Save first (ignore errors), then delete
         try {
@@ -122,9 +127,12 @@ describe('Property 20: Credential Non-Logging', () => {
      */
     fc.assert(
       fc.property(credentialArb, credTypeArb, (credValue, credType) => {
-        const manager = new CredentialManager();
-        (manager as unknown as { configDir: string }).configDir = tmpDir;
-        (manager as unknown as { configFile: string }).configFile = path.join(tmpDir, 'config.json');
+        const manager = new CredentialManager({
+          paths: {
+            configDir: path.join(tmpDir, 'config'),
+          },
+          encryptionSeed: 'test-seed',
+        });
 
         try {
           manager.save(credType, credValue);

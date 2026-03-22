@@ -6,28 +6,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CredentialManager } from './credentials.js';
 import { detectOS, validateAwsRoleArn, validateGcpServiceAccount } from './wizard.js';
 
-// Subclass that redirects storage to a temp directory
-class TestCredentialManager extends CredentialManager {
-  private readonly testDir: string;
-  private readonly testFile: string;
-
-  constructor(tmpDir: string) {
-    super();
-    this.testDir = tmpDir;
-    this.testFile = path.join(tmpDir, 'config.json');
-    // Override private fields via Object.assign on the instance
-    (this as unknown as Record<string, unknown>)['configDir'] = this.testDir;
-    (this as unknown as Record<string, unknown>)['configFile'] = this.testFile;
-  }
-}
-
 describe('CredentialManager', () => {
   let tmpDir: string;
-  let mgr: TestCredentialManager;
+  let mgr: CredentialManager;
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cig-test-'));
-    mgr = new TestCredentialManager(tmpDir);
+    mgr = new CredentialManager({
+      paths: {
+        configDir: path.join(tmpDir, 'config'),
+      },
+      encryptionSeed: 'test-seed',
+    });
   });
 
   afterEach(() => {
@@ -36,7 +26,7 @@ describe('CredentialManager', () => {
 
   it('save() encrypts and stores a credential', () => {
     mgr.save('aws', 'arn:aws:iam::123456789012:role/MyRole');
-    const raw = fs.readFileSync(path.join(tmpDir, 'config.json'), 'utf8');
+    const raw = fs.readFileSync(path.join(tmpDir, 'config', 'credentials.json'), 'utf8');
     const config = JSON.parse(raw);
     expect(config.credentials.aws).toBeDefined();
     // Value should be encrypted, not plaintext

@@ -8,9 +8,11 @@
  */
 
 import { CredentialManager } from '../credentials.js';
+import { ApiClient } from '../services/api-client.js';
 
 export async function logout(apiUrl: string): Promise<void> {
   const credentialManager = new CredentialManager();
+  const apiClient = new ApiClient({ baseUrl: apiUrl, accessToken: credentialManager.loadTokens()?.accessToken });
 
   // Load tokens to get access token for logout request
   const tokens = credentialManager.loadTokens();
@@ -26,17 +28,7 @@ export async function logout(apiUrl: string): Promise<void> {
   // POST to /auth/logout (best-effort)
   if (tokens?.accessToken) {
     try {
-      const response = await fetch(`${apiUrl}/api/v1/auth/logout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${tokens.accessToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        console.warn(`Logout request returned ${response.status}; credentials already cleared locally.`);
-      }
+      await apiClient.post('/api/v1/auth/logout');
     } catch (err) {
       console.warn('Logout request failed (credentials already cleared locally):', err instanceof Error ? err.message : String(err));
     }

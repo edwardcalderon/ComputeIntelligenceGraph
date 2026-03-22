@@ -60,10 +60,12 @@ describe('E2E: cig connect aws — credential storage', () => {
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cig-e2e-'));
-    mgr = new CredentialManager();
-    // Redirect storage to temp dir
-    (mgr as unknown as Record<string, unknown>)['configDir'] = tmpDir;
-    (mgr as unknown as Record<string, unknown>)['configFile'] = path.join(tmpDir, 'config.json');
+    mgr = new CredentialManager({
+      paths: {
+        configDir: path.join(tmpDir, 'config'),
+      },
+      encryptionSeed: 'test-seed',
+    });
   });
 
   afterEach(() => {
@@ -75,7 +77,7 @@ describe('E2E: cig connect aws — credential storage', () => {
     const arn = 'arn:aws:iam::123456789012:role/CIGRole';
     mgr.save('aws', arn);
 
-    const raw = fs.readFileSync(path.join(tmpDir, 'config.json'), 'utf8');
+    const raw = fs.readFileSync(path.join(tmpDir, 'config', 'credentials.json'), 'utf8');
     const config = JSON.parse(raw);
 
     expect(config.credentials.aws).toBeDefined();

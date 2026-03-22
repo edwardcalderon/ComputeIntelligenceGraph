@@ -1,6 +1,6 @@
 import * as fs from 'fs';
-import * as os from 'os';
 import * as path from 'path';
+import { CliPathOptions, resolveCliPaths } from '../storage/paths.js';
 
 export interface InstallationState {
   version: string;
@@ -21,9 +21,8 @@ export interface ServiceState {
 export class StateManager {
   private readonly stateFile: string;
 
-  constructor() {
-    const configDir = path.join(os.homedir(), '.cig');
-    this.stateFile = path.join(configDir, 'state.json');
+  constructor(pathOptions: CliPathOptions = {}) {
+    this.stateFile = resolveCliPaths(pathOptions).stateFile;
   }
 
   async save(state: InstallationState): Promise<void> {

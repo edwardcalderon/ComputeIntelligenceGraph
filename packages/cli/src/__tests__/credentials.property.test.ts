@@ -45,29 +45,21 @@ const authTokensArb = fc
 // ─── Property Tests ───────────────────────────────────────────────────────────
 
 describe('Property 5: Token storage round trip', () => {
-  let originalHome: string | undefined;
   let tmpDir: string;
+  let manager: CredentialManager;
 
   beforeEach(() => {
-    // Use a temp directory to avoid touching real ~/.cig
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cig-test-'));
-    originalHome = process.env.HOME;
-    process.env.HOME = tmpDir;
+    manager = new CredentialManager({
+      paths: {
+        configDir: path.join(tmpDir, 'config'),
+      },
+      encryptionSeed: 'test-seed',
+    });
   });
 
   afterEach(() => {
-    // Restore original HOME
-    if (originalHome) {
-      process.env.HOME = originalHome;
-    } else {
-      delete process.env.HOME;
-    }
-    // Clean up temp dir
-    try {
-      fs.rmSync(tmpDir, { recursive: true, force: true });
-    } catch {
-      // ignore cleanup errors
-    }
+    fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
   it('tokens stored via saveTokens() can be retrieved and match original values', () => {
@@ -79,8 +71,6 @@ describe('Property 5: Token storage round trip', () => {
      */
     fc.assert(
       fc.property(authTokensArb, (originalTokens) => {
-        const manager = new CredentialManager();
-
         // Save the tokens
         manager.saveTokens(originalTokens);
 
@@ -107,8 +97,6 @@ describe('Property 5: Token storage round trip', () => {
      */
     fc.assert(
       fc.property(fc.array(authTokensArb, { minLength: 1, maxLength: 5 }), (tokenSequence) => {
-        const manager = new CredentialManager();
-
         // Save all tokens in sequence
         for (const tokens of tokenSequence) {
           manager.saveTokens(tokens);
@@ -131,9 +119,16 @@ describe('Property 5: Token storage round trip', () => {
 
 describe('Property 6: Token refresh predicate correctness', () => {
   let tmpDir: string;
+  let manager: CredentialManager;
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cig-test-'));
+    manager = new CredentialManager({
+      paths: {
+        configDir: path.join(tmpDir, 'config'),
+      },
+      encryptionSeed: 'test-seed',
+    });
   });
 
   afterEach(() => {
@@ -167,7 +162,6 @@ describe('Property 6: Token refresh predicate correctness', () => {
             refreshExpiresAt: Date.now() + refreshExpiresAtOffset,
           })),
         (tokens) => {
-          const manager = new CredentialManager();
           const result = manager.needsRefresh(tokens);
           expect(result).toBe(true);
         }
@@ -199,7 +193,6 @@ describe('Property 6: Token refresh predicate correctness', () => {
             refreshExpiresAt: Date.now() + refreshExpiresAtOffset,
           })),
         (tokens) => {
-          const manager = new CredentialManager();
           const result = manager.needsRefresh(tokens);
           expect(result).toBe(false);
         }
@@ -223,7 +216,6 @@ describe('Property 6: Token refresh predicate correctness', () => {
       refreshExpiresAt: Date.now() + 86400000,
     };
 
-    const manager = new CredentialManager();
     const result = manager.needsRefresh(tokens);
     expect(result).toBe(false);
   });
@@ -243,7 +235,6 @@ describe('Property 6: Token refresh predicate correctness', () => {
       refreshExpiresAt: Date.now() + 86400000,
     };
 
-    const manager = new CredentialManager();
     const result = manager.needsRefresh(tokens);
     expect(result).toBe(true);
   });
@@ -262,7 +253,6 @@ describe('Property 6: Token refresh predicate correctness', () => {
       refreshExpiresAt: Date.now() + 86400000,
     };
 
-    const manager = new CredentialManager();
     const result = manager.needsRefresh(tokens);
     expect(result).toBe(true);
   });

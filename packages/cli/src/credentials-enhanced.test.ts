@@ -6,22 +6,22 @@ import * as path from 'path';
 
 describe('CredentialManager - Enhanced Features', () => {
   let manager: CredentialManager;
-  const testConfigDir = path.join(os.homedir(), '.cig');
-  const testAuthFile = path.join(testConfigDir, 'auth.json');
+  let tmpDir: string;
+  let testSecretsFile: string;
 
   beforeEach(() => {
-    manager = new CredentialManager();
-    // Clean up any existing test files
-    if (fs.existsSync(testAuthFile)) {
-      fs.unlinkSync(testAuthFile);
-    }
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cig-credentials-'));
+    manager = new CredentialManager({
+      paths: {
+        configDir: path.join(tmpDir, 'config'),
+      },
+      encryptionSeed: 'test-seed',
+    });
+    testSecretsFile = path.join(tmpDir, 'config', 'secrets.json');
   });
 
   afterEach(() => {
-    // Clean up test files
-    if (fs.existsSync(testAuthFile)) {
-      fs.unlinkSync(testAuthFile);
-    }
+    fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
   describe('AuthTokens', () => {
@@ -181,15 +181,15 @@ describe('CredentialManager - Enhanced Features', () => {
       };
 
       manager.saveTokens(tokens);
-      expect(fs.existsSync(testAuthFile)).toBe(true);
+      expect(fs.existsSync(testSecretsFile)).toBe(true);
 
       manager.clearAll();
-      expect(fs.existsSync(testAuthFile)).toBe(false);
+      expect(fs.existsSync(testSecretsFile)).toBe(false);
     });
   });
 
   describe('File permissions', () => {
-    it('should create auth.json with 0600 permissions', () => {
+    it('should create secrets.json with 0600 permissions', () => {
       const tokens: AuthTokens = {
         accessToken: 'test',
         refreshToken: 'test',
@@ -199,7 +199,7 @@ describe('CredentialManager - Enhanced Features', () => {
 
       manager.saveTokens(tokens);
 
-      const stats = fs.statSync(testAuthFile);
+      const stats = fs.statSync(testSecretsFile);
       const mode = stats.mode & 0o777;
       
       // On Unix-like systems, should be 0600

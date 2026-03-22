@@ -509,6 +509,34 @@ importers:
         specifier: ^1.4.0
         version: 1.6.1(@types/node@20.19.37)(jsdom@20.0.3)
 
+  packages/node-runtime:
+    dependencies:
+      '@cig/discovery':
+        specifier: workspace:*
+        version: link:../discovery
+      '@cig/runtime-contracts':
+        specifier: workspace:*
+        version: link:../runtime-contracts
+    devDependencies:
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.37
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^1.4.0
+        version: 1.6.1(@types/node@20.19.37)(jsdom@20.0.3)
+
+  packages/runtime-contracts:
+    devDependencies:
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^1.4.0
+        version: 1.6.1(@types/node@20.19.37)(jsdom@20.0.3)
+
   packages/sdk:
     devDependencies:
       typescript:

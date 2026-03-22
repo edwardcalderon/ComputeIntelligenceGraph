@@ -337,7 +337,7 @@ function EmailOtpView({ onSuccess }: { onSuccess: () => void }) {
 function CliCodeView() {
   const t = useTranslation();
   const [copied, setCopied] = useState(false);
-  const loginCommand = "npx @cig/cli auth login";
+  const loginCommand = "npx @cig-technology/cli login";
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(loginCommand);

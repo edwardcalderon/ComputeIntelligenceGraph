@@ -12,6 +12,9 @@
  */
 
 import { CredentialManager, AuthTokens } from '../credentials.js';
+import { ApiClient } from '../services/api-client.js';
+import { ConnectionProfileStore } from '../stores/connection-profile-store.js';
+import { ConnectionProfile } from '../types/runtime.js';
 
 interface DeviceAuthorizeResponse {
   device_code: string;
@@ -29,22 +32,15 @@ interface DevicePollResponse {
 
 export async function login(apiUrl: string): Promise<void> {
   const credentialManager = new CredentialManager();
+  const apiClient = new ApiClient({ baseUrl: apiUrl });
+  const profileStore = new ConnectionProfileStore();
 
   // Step 1: POST to /auth/device/authorize
   console.log('Initiating device authorization...');
   let authorizeResponse: DeviceAuthorizeResponse;
 
   try {
-    const response = await fetch(`${apiUrl}/api/v1/auth/device/authorize`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Device authorize failed: ${response.status} ${response.statusText}`);
-    }
-
-    authorizeResponse = (await response.json()) as DeviceAuthorizeResponse;
+    authorizeResponse = await apiClient.post<DeviceAuthorizeResponse>('/api/v1/auth/device/authorize');
   } catch (err) {
     console.error('Failed to initiate device authorization:', err instanceof Error ? err.message : String(err));
     process.exit(1);
@@ -76,17 +72,9 @@ export async function login(apiUrl: string): Promise<void> {
     let pollResponse: DevicePollResponse;
 
     try {
-      const response = await fetch(`${apiUrl}/api/v1/auth/device/poll`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ device_code: deviceCode }),
+      pollResponse = await apiClient.post<DevicePollResponse>('/api/v1/auth/device/poll', {
+        device_code: deviceCode,
       });
-
-      if (!response.ok) {
-        throw new Error(`Poll failed: ${response.status} ${response.statusText}`);
-      }
-
-      pollResponse = (await response.json()) as DevicePollResponse;
     } catch (err) {
       console.error('Poll error:', err instanceof Error ? err.message : String(err));
       process.exit(1);
@@ -114,6 +102,20 @@ export async function login(apiUrl: string): Promise<void> {
 
       try {
         credentialManager.saveTokens(tokens);
+        const now = new Date().toISOString();
+        const profile: ConnectionProfile = {
+          id: 'managed-cloud',
+          name: 'Managed Cloud',
+          type: 'managed-cloud',
+          apiUrl,
+          authMode: 'managed',
+          dashboardUrl: apiUrl.replace(':8000', ':3000'),
+          createdAt: now,
+          updatedAt: now,
+          isDefault: true,
+        };
+        profileStore.save(profile);
+        profileStore.setDefault(profile.id);
         console.log('✓ Login successful! Tokens stored securely.');
         process.exit(0);
       } catch (err) {

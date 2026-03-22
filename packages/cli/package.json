@@ -1,18 +1,48 @@
 {
-  "name": "@cig/cli",
-  "version": "0.1.36",
-  "description": "CIG CLI tool",
+  "name": "@cig-technology/cli",
+  "version": "0.1.0",
+  "description": "Production-oriented CLI for bootstrapping and operating CIG nodes and self-hosted installs",
+  "keywords": [
+    "cig",
+    "cli",
+    "cloud",
+    "infrastructure",
+    "graph",
+    "security",
+    "devops"
+  ],
+  "license": "MIT",
+  "author": "Edward Calderon <edward@cig.lat>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/edwardcalderon/ComputeIntelligenceGraph.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/edwardcalderon/ComputeIntelligenceGraph/tree/main/packages/cli#readme",
+  "bugs": {
+    "url": "https://github.com/edwardcalderon/ComputeIntelligenceGraph/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "bin": {
     "cig": "dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "npm run clean && tsc",
     "dev": "tsc --watch",
     "lint": "tsc --noEmit",
     "test": "vitest run",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "prepublishOnly": "npm run build && npm run test"
   },
   "dependencies": {
     "commander": "^12.0.0",
@@ -23,5 +53,8 @@
     "fast-check": "^3.23.2",
     "typescript": "^5.4.0",
     "vitest": "^1.4.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

@@ -105,9 +105,18 @@ export async function enrollmentRoutes(app: FastifyInstance): Promise<void> {
         architecture?: string;
         ip_address?: string;
         profile?: string;
+        public_key?: string;
       };
 
-      const { enrollment_token, hostname, os, architecture, ip_address, profile = 'core' } = body ?? {};
+      const {
+        enrollment_token,
+        hostname,
+        os,
+        architecture,
+        ip_address,
+        profile = 'core',
+        public_key,
+      } = body ?? {};
       const ipAddress = getClientIp(request);
 
       if (!enrollment_token || !hostname || !os || !architecture || !ip_address) {
@@ -176,9 +185,19 @@ export async function enrollmentRoutes(app: FastifyInstance): Promise<void> {
         });
       }
 
-      // Generate Node_Identity
+      // Generate or accept the node public key. The private key must stay client-side.
       const targetId = generateUUID();
-      const { privateKey, publicKey } = generateEd25519KeyPair();
+      const generatedKeyPair = public_key ? null : generateEd25519KeyPair();
+      const publicKey = public_key ?? generatedKeyPair?.publicKey;
+      const privateKey = generatedKeyPair?.privateKey;
+
+      if (!publicKey) {
+        return reply.status(400).send({
+          error: 'Missing required field: public_key',
+          code: 'missing_public_key',
+          statusCode: 400,
+        });
+      }
 
       // Store the target node (public key only — private key is never stored)
       await query(
@@ -189,11 +208,17 @@ export async function enrollmentRoutes(app: FastifyInstance): Promise<void> {
       );
 
       writeAuditEvent(app, 'target_enrolled', tokenRecord.user_id, ipAddress, 'success', { target_id: targetId, hostname });
-      return reply.status(201).send({
+      const response: Record<string, string> = {
         target_id: targetId,
-        private_key: privateKey,
         public_key: publicKey,
-      });
+        enrolled_at: new Date().toISOString(),
+      };
+
+      if (privateKey) {
+        response['private_key'] = privateKey;
+      }
+
+      return reply.status(201).send(response);
     }
   );
 
