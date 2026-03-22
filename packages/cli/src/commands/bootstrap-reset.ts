@@ -10,6 +10,7 @@
 
 import * as crypto from 'crypto';
 import { CredentialManager, BootstrapToken } from '../credentials.js';
+import { resolveCliPaths } from '../storage/paths.js';
 
 /**
  * Generate a cryptographically random 32-character bootstrap token.
@@ -33,7 +34,7 @@ export async function bootstrapReset(): Promise<void> {
   const token = generateBootstrapToken();
   console.log('✓ New bootstrap token generated');
 
-  // Save to ~/.cig/bootstrap.json with permissions 0600
+  // Save in the encrypted CLI secrets store.
   const bootstrapTokenData: BootstrapToken = {
     token,
     createdAt: new Date().toISOString(),
@@ -42,7 +43,7 @@ export async function bootstrapReset(): Promise<void> {
 
   try {
     credentialManager.saveBootstrapToken(bootstrapTokenData);
-    console.log('✓ New bootstrap token saved to ~/.cig/bootstrap.json');
+    console.log(`✓ New bootstrap token saved to ${resolveCliPaths().secretsFile}`);
   } catch (err) {
     console.error('✗ Failed to save bootstrap token:', err instanceof Error ? err.message : String(err));
     process.exit(1);

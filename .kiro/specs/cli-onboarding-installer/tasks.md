@@ -2,8 +2,9 @@
 
 ## Overview
 
-This task board replaces the original installer-only plan with the current
-implementation target:
+This task board tracks the current CLI and node-runtime implementation path.
+
+The target remains:
 
 - a production CLI bootstrapper/operator
 - a persistent Linux-first `cig-node` runtime
@@ -11,20 +12,33 @@ implementation target:
 - layered permissions and connector expansion
 - runtime-focused install, upgrade, and uninstall flows
 
-The previous `cli-onboarding-installer` plan is no longer the source of truth
-for auth/bootstrap/dashboard work. Those pieces were largely delivered under
+The older installer-only board is no longer the source of truth for
+auth/bootstrap/dashboard work. Those pieces were largely delivered under
 `.kiro/specs/cig-auth-provisioning/`.
 
 ## Current Reality
 
-- `packages/cli` already has working scaffolding for `login`, `logout`,
-  `install`, `doctor`, bootstrap token generation, compose generation, and
-  encrypted provider credential storage.
+- `packages/cli` now ships as a standalone npm package:
+  `@cig-technology/cli`
+- `packages/cli` has working commands for `login`, `logout`, `install`,
+  `enroll`, `connect`, `permissions`, `status`, `open`, `upgrade`, and
+  `uninstall`
 - `packages/api` and `apps/dashboard` already implement device auth,
-  enrollment, bootstrap, heartbeat, target listing, and OIDC callback flows.
-- The repo did **not** yet have a persistent `cig-node` package, connection
-  profiles, path-injectable CLI state/secrets storage, or a runtime-centered
-  milestone plan.
+  enrollment, bootstrap, heartbeat, target listing, and OIDC callback flows
+- `packages/runtime-contracts` and `packages/node-runtime` now exist in the
+  monorepo as runtime groundwork
+- managed mode currently stages runtime assets locally; it does not yet
+  materialize a persistent host service on the target
+- self-hosted mode currently generates compose assets and starts the local stack
+  with Docker Compose
+
+## Release State
+
+- [x] Public CLI package metadata, README, release script, and publish workflow exist
+- [x] Tag-driven release flow is established with `cli-v*.*.*`
+- [x] `@cig-technology/cli@0.1.0` packaging was validated with build, test, and `npm pack --dry-run`
+- [x] CLI package-local versioning, README guard, and prerelease scripts are wired into `packages/cli`
+- [ ] Confirm npm registry publication and post-publish smoke install from the public registry
 
 ## Completed Baseline
 
@@ -34,18 +48,20 @@ for auth/bootstrap/dashboard work. Those pieces were largely delivered under
 - [x] Dashboard device approval, bootstrap, and targets pages exist
 - [x] Installer compose generation and prerequisite checks exist
 - [x] This task board has been rewritten to track the runtime architecture
+- [x] CLI foundation release packaging exists for `@cig-technology/cli`
+- [x] CLI/package/docs now describe the actual current behavior and known gaps
 
 ## Superseded Legacy Tasks
 
 These are intentionally archived rather than re-tracked here:
 
-- [x] Legacy Phases 1, 2, 4, and 5 from the original installer board
-  are superseded by the delivered auth/bootstrap/targets work in
-  `.kiro/specs/cig-auth-provisioning/`
-- [x] The old installer board’s “partial” markers that duplicate already-landed
-  API/dashboard functionality are retired
-- [x] Future work will be tracked by runtime milestone instead of week-based
-  installer phases
+- [x] Legacy Phases 1, 2, 4, and 5 from the original installer board are
+      superseded by the delivered auth/bootstrap/targets work in
+      `.kiro/specs/cig-auth-provisioning/`
+- [x] The old installer board’s partial markers that duplicate already-landed
+      API/dashboard functionality are retired
+- [x] Future work is tracked by runtime milestone instead of week-based
+      installer phases
 
 ## Active Milestones
 
@@ -57,13 +73,16 @@ These are intentionally archived rather than re-tracked here:
   - [x] 1.5 Fix CLI tests to use injectable temp paths instead of the real home directory
   - [ ] 1.6 Add OS keyring backend and seamless migration from encrypted-file fallback
   - [ ] 1.7 Add richer connection profile UX (`list`, `switch`, `delete`)
+  - [x] 1.8 Publish the CLI as a standalone npm package under `@cig-technology`
+  - [x] 1.9 Document current CLI behavior, storage paths, and setup flows
+  - [x] 1.10 Add package-local `@edcalderon/versioning` support for validate/sync/README guard and prerelease workflows
 
 - [~] 2. CLI command surface modernization
   - [x] 2.1 Add real `cig enroll` command
   - [x] 2.2 Replace top-level TODO handlers with store-backed `connect`, `status`, `open`, `upgrade`, and `uninstall` commands
-  - [ ] 2.3 Implement `permissions grant/request/list` subcommands
+  - [ ] 2.3 Implement `permissions grant/request/list` subcommands beyond the static tier summary
   - [ ] 2.4 Add `logs`, `restart`, `repair`, and connector lifecycle commands
-  - [ ] 2.5 Improve `doctor` to validate runtime bundle, profiles, and managed auth readiness
+  - [ ] 2.5 Improve `doctor` to validate runtime bundle, profiles, and managed auth readiness instead of only local Docker prerequisites
 
 - [~] 3. Shared contracts and runtime package
   - [x] 3.1 Add `@cig/runtime-contracts` package with node, permission, connector, and profile types
@@ -88,7 +107,7 @@ These are intentionally archived rather than re-tracked here:
   - [x] 5.2 Persist installation state through `StateManager`
   - [x] 5.3 Stage a `cig-node` bundle into the install directory
   - [ ] 5.4 Add privileged Linux installer for `/etc/cig-node`, `/var/lib/cig-node`, and `cig-node.service`
-  - [ ] 5.5 Hash self-hosted bootstrap tokens at rest
+  - [ ] 5.5 Hash self-hosted bootstrap tokens at rest in the API/database layer
   - [ ] 5.6 Wire local node-to-local API sync for self-hosted mode
   - [ ] 5.7 Split stack manifest from node config manifest on the API side
 
@@ -99,25 +118,26 @@ These are intentionally archived rather than re-tracked here:
   - [ ] 6.4 Add connector manifests and local connector secret references
   - [ ] 6.5 Add dashboard/CLI approval flow for Tier 2+ requests
 
-- [ ] 7. Lifecycle, remote install, and packaging
+- [~] 7. Lifecycle, remote install, and packaging
   - [ ] 7.1 Wire `RemoteExecutor` into SSH-based remote Linux bootstrap
   - [ ] 7.2 Add runtime upgrade bundle rollout and rollback
   - [ ] 7.3 Add uninstall purge flow for self-hosted stack + runtime data
-  - [ ] 7.4 Add release packaging for CLI bundle and node runtime bundle
-  - [ ] 7.5 Add Linux distribution validation matrix and runtime smoke tests
+  - [x] 7.4 Add standalone CLI npm packaging, README, release script, and GitHub Actions publish workflow
+  - [ ] 7.5 Add node runtime bundle packaging and release path
+  - [ ] 7.6 Add Linux distribution validation matrix and runtime smoke tests
 
 ## Immediate Next Steps
 
 - [ ] A. Add `/api/v1/nodes/*` compatibility layer and migrate the CLI/runtime to it
 - [ ] B. Implement runtime status + graph delta upload persistence in `@cig/node-runtime`
-- [ ] C. Implement Linux host installer that materializes the staged bundle into
-      `/etc/cig-node`, `/var/lib/cig-node`, and `cig-node.service`
+- [ ] C. Implement Linux host installer that materializes the staged bundle into `/etc/cig-node`, `/var/lib/cig-node`, and `cig-node.service`
 - [ ] D. Unify managed API auth onto `@cig/auth/server` instead of the legacy JWT-only path
+- [ ] E. Verify the first npm release end-to-end from the public registry and add smoke-install notes
 
 ## Verification Gates
 
-- [ ] CLI package: build, lint, and tests pass with temp-path-based storage
-- [ ] New packages: `@cig/runtime-contracts` and `@cig/node-runtime` build and lint cleanly
-- [ ] Managed enrollment flow works with client-generated node keys
+- [x] CLI package: build, lint, tests, and `npm pack --dry-run` pass with temp-path-based storage
+- [x] New packages: `@cig/runtime-contracts` and `@cig/node-runtime` build cleanly
+- [ ] Managed enrollment flow works end-to-end with client-generated node keys against a running API
 - [ ] Self-hosted install still stages compose assets correctly
 - [ ] Runtime bundle output includes config, identity, and systemd unit artifacts

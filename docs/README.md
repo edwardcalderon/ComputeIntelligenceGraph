@@ -9,6 +9,8 @@ This directory is organized into current guidance, supporting references, and ar
 - [deployment/README.md](deployment/README.md) — deployment surface, Docker, and infrastructure entry points
 - [reference/README.md](reference/README.md) — root-level status and versioning references
 - [testing/README.md](testing/README.md) — testing entry points, performance notes, and security notes
+- [reference/cli.md](reference/cli.md) — current CLI usage, commands, and operator behavior
+- [architecture/cli-current-state.md](architecture/cli-current-state.md) — actual runtime and packaging state of the CLI/node work
 
 ## Current Supporting Docs
 

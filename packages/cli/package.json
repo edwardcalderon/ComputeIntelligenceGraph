@@ -1,6 +1,6 @@
 {
   "name": "@cig-technology/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Production-oriented CLI for bootstrapping and operating CIG nodes and self-hosted installs",
   "keywords": [
     "cig",
@@ -31,6 +31,7 @@
   "files": [
     "dist",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "bin": {
@@ -42,13 +43,25 @@
     "lint": "tsc --noEmit",
     "test": "vitest run",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
-    "prepublishOnly": "npm run build && npm run test"
+    "version:status": "versioning status -c versioning.config.json",
+    "version:validate": "versioning validate -c versioning.config.json && npm run version:guard:readme",
+    "version:sync": "versioning sync -c versioning.config.json",
+    "version:update-readme": "node scripts/sync-readme.mjs",
+    "version:guard:readme": "node scripts/guard-readme.mjs",
+    "version:bump:patch": "versioning patch -c versioning.config.json --no-commit --no-tag",
+    "version:bump:minor": "versioning minor -c versioning.config.json --no-commit --no-tag",
+    "version:bump:major": "versioning major -c versioning.config.json --no-commit --no-tag",
+    "version:bump:prerelease": "versioning bump prerelease --pre-release beta -c versioning.config.json --no-commit --no-tag",
+    "publish:npm": "versioning publish-package --tag latest",
+    "publish:npm:dry": "versioning publish-package --dry-run --tag latest",
+    "prepublishOnly": "npm run version:validate && npm run build && npm run test"
   },
   "dependencies": {
     "commander": "^12.0.0",
     "inquirer": "^9.0.0"
   },
   "devDependencies": {
+    "@edcalderon/versioning": "^1.5.1",
     "@types/node": "^20.0.0",
     "fast-check": "^3.23.2",
     "typescript": "^5.4.0",

@@ -3,7 +3,7 @@
  *
  * Implements the bootstrap flow for self-hosted mode:
  * 1. Generate cryptographically random 32-character Bootstrap_Token
- * 2. Save to ~/.cig/bootstrap.json with permissions 0600
+ * 2. Save to the encrypted CLI secrets store
  * 3. Display Dashboard URL and token prominently
  * 4. Return minimal InstallManifest for compose generation
  *
@@ -16,6 +16,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { CredentialManager, BootstrapToken } from '../credentials.js';
 import { InstallManifest } from '../compose-generator.js';
+import { resolveCliPaths } from '../storage/paths.js';
 
 /**
  * Generate a cryptographically random 32-character bootstrap token.
@@ -36,7 +37,7 @@ export async function bootstrapFlow(): Promise<InstallManifest> {
   const token = generateBootstrapToken();
   console.log('✓ Bootstrap token generated');
 
-  // Step 2: Save to ~/.cig/bootstrap.json with permissions 0600
+  // Step 2: Save in the encrypted CLI secrets store.
   const bootstrapTokenData: BootstrapToken = {
     token,
     createdAt: new Date().toISOString(),
@@ -45,7 +46,7 @@ export async function bootstrapFlow(): Promise<InstallManifest> {
 
   try {
     credentialManager.saveBootstrapToken(bootstrapTokenData);
-    console.log('✓ Bootstrap token saved to ~/.cig/bootstrap.json');
+    console.log(`✓ Bootstrap token saved to ${resolveCliPaths().secretsFile}`);
   } catch (err) {
     console.error('✗ Failed to save bootstrap token:', err instanceof Error ? err.message : String(err));
     process.exit(1);

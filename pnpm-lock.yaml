@@ -397,6 +397,9 @@ importers:
         specifier: ^9.0.0
         version: 9.3.8(@types/node@20.19.37)
     devDependencies:
+      '@edcalderon/versioning':
+        specifier: ^1.5.1
+        version: 1.5.1
       '@types/node':
         specifier: ^20.0.0
         version: 20.19.37

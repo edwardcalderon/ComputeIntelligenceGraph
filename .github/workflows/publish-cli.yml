@@ -49,6 +49,9 @@ jobs:
       - name: Lint (type-check)
         run: pnpm lint
 
+      - name: Validate package versioning state
+        run: pnpm run version:validate
+
       - name: Run tests
         run: pnpm test
 

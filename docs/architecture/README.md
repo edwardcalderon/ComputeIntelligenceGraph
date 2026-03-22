@@ -31,5 +31,6 @@ CLI -> Local config / deployment / orchestration workflows
 
 - Current generated status snapshot: [../../PROJECT_STATUS.md](../../PROJECT_STATUS.md)
 - Archived blueprint material: [../archive/CIG_final_blueprint.md](../archive/CIG_final_blueprint.md)
+- CLI/runtime implementation snapshot: [cli-current-state.md](cli-current-state.md)
 
 Use the implementation in `apps/`, `packages/`, and `services/` as the source of truth when these documents diverge.

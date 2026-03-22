@@ -7,6 +7,7 @@ These are useful repository records and generated summaries that still live at t
 - Project status snapshot: [../../PROJECT_STATUS.md](../../PROJECT_STATUS.md)
 - Versioning guide: [../../VERSIONING_GUIDE.md](../../VERSIONING_GUIDE.md)
 - Versioning upgrade summary: [../../UPGRADE_SUMMARY.md](../../UPGRADE_SUMMARY.md)
+- CLI usage and current command behavior: [cli.md](cli.md)
 
 ## Reading Order
 

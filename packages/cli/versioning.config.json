@@ -1,0 +1,39 @@
+{
+  "rootPackageJson": "package.json",
+  "packages": [],
+  "changelogFile": "CHANGELOG.md",
+  "conventionalCommits": true,
+  "syncDependencies": false,
+  "ignorePackages": [],
+  "branchAwareness": {
+    "enabled": false,
+    "defaultBranch": "main",
+    "branches": {
+      "main": {
+        "versionFormat": "semantic",
+        "tagFormat": "cli-v{version}",
+        "syncFiles": [
+          "package.json",
+          "README.md",
+          "CHANGELOG.md"
+        ],
+        "environment": "production",
+        "bumpStrategy": "semantic"
+      },
+      "develop": {
+        "versionFormat": "dev",
+        "tagFormat": "cli-v{version}",
+        "syncFiles": [
+          "package.json",
+          "README.md",
+          "CHANGELOG.md"
+        ],
+        "environment": "development",
+        "bumpStrategy": "dev-build"
+      }
+    }
+  },
+  "sync": {
+    "includeRoot": true
+  }
+}
