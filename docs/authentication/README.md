@@ -2,6 +2,8 @@
 
 This document describes the current authentication setup used by CIG and the Authentik resources that make it work. It also calls out the provider-agnostic pattern to follow when adding another social identity source or another relying party.
 
+Last audited against the live Authentik tenant on `2026-03-22`.
+
 ## Overview
 
 CIG uses **Authentik** as the primary identity provider and **Supabase** as a feature-flagged fallback. The primary path is:
@@ -18,7 +20,7 @@ CIG uses **Authentik** as the primary identity provider and **Supabase** as a fe
 | Component | Production origin | Role |
 | --------- | ----------------- | ---- |
 | Landing (`apps/landing`) | `https://cig.lat` | Public entrypoint, login buttons, canonical logout completion target |
-| Dashboard (`apps/dashboard`) | `https://app.cig.technology` | Protected app, PKCE relay, OAuth callback |
+| Dashboard (`apps/dashboard`) | `https://app.cig.lat` | Protected app, PKCE relay, OAuth callback |
 | Authentik | `https://auth.cig.technology` | OIDC provider, user directory, social-source broker |
 | Google / GitHub | External | Upstream social identity providers |
 
@@ -27,7 +29,7 @@ CIG uses **Authentik** as the primary identity provider and **Supabase** as a fe
 ### Social login sequence
 
 ```
-Landing (cig.lat)                  Dashboard (app.cig.technology)            Authentik                    Google/GitHub
+Landing (cig.lat)                  Dashboard (app.cig.lat)                   Authentik                    Google/GitHub
        |                                      |                                  |                              |
   1. User clicks a social login button         |                                  |                              |
        |                                      |                                  |                              |
@@ -125,15 +127,19 @@ Dashboard or Landing                  Landing                              Authe
 
 ### 1. OIDC provider and application
 
-Current CIG production provider:
+Current live CIG production provider:
 
-- Application: `CIG Platform`
 - Provider: `CIG Dashboard`
-- Client type: public
-- Flow style: Authorization Code + PKCE
-- Redirect URIs: `https://app.cig.technology/auth/callback`, `http://localhost:3001/auth/callback`
-- Scopes used by the app: `openid email profile`
-- Invalidation flow: currently `default-provider-invalidation-flow`
+- Client type: `public`
+- Authorization flow: `default-provider-authorization-implicit-consent`
+- Redirect URIs:
+  - `https://app.cig.lat/auth/callback`
+  - `http://localhost:3001/auth/callback`
+- Scope mappings currently attached:
+  - `authentik default OAuth Mapping: OpenID 'openid'`
+  - `authentik default OAuth Mapping: OpenID 'email'`
+  - `authentik default OAuth Mapping: OpenID 'profile'`
+- Invalidation flow: `default-provider-invalidation-flow`
 
 Provider-agnostic requirement:
 
@@ -143,68 +149,66 @@ Provider-agnostic requirement:
 
 ### 2. OAuth sources
 
-Current CIG sources:
+Current live CIG sources:
 
 - `google`
 - `github`
 
-Each source needs:
+Each live source currently uses:
 
-- provider-issued client credentials
 - callback URL in the upstream provider console:
   `https://auth.cig.technology/source/oauth/callback/{provider}/`
-- authentication flow for existing users
-- enrollment flow for first-time users
-- matching mode set to `identifier`
+- authentication flow: `default-source-authentication`
+- enrollment flow: `cig-source-enrollment`
+- matching mode: `identifier`
 
 Why `identifier` matters:
 
 - source links are based on the upstream account binding, not on email equality
 - this avoids silently merging accounts just because two providers share an email address
 
-### 3. Source property mapping
+### 3. Verified flow layout
 
-CIG uses a source property mapping to normalize profile fields from upstream providers into Authentik's user record:
+The live Authentik tenant currently has these relevant flow-stage bindings:
 
-```python
-name = info.get("name", "")
-email = info.get("email", "")
-picture = info.get("picture", "") or info.get("avatar_url", "")
+- `cig-google-login`
+  - order `10`: `cig-redirect-google-source`
+- `cig-github-login`
+  - order `10`: `cig-redirect-github-source`
+- `default-source-authentication`
+  - order `0`: `default-source-authentication-login`
+- `cig-source-enrollment`
+  - order `0`: `cig-source-enrollment-write`
+  - order `1`: `cig-source-enrollment-login`
+- `default-provider-invalidation-flow`
+  - order `0`: `CIG: Full logout`
+  - order `10`: `CIG: Return to landing after logout`
+- `default-invalidation-flow`
+  - order `0`: `default-invalidation-logout`
 
-result = {}
-if name:
-    result["name"] = name
-if email:
-    result["email"] = email
-if picture:
-    result["attributes"] = {"picture": picture, "avatar": picture}
-
-return result
-```
-
-Provider-agnostic rule:
-
-- normalize upstream claims inside the identity provider once
-- downstream relying parties should consume stable OIDC claims, not provider-specific raw fields
-
-### 4. OIDC scope mapping
-
-CIG's OIDC profile scope mapping exposes the normalized avatar back to the applications:
-
-```python
-return {
-    "name": request.user.name,
-    "given_name": request.user.name,
-    "preferred_username": request.user.username,
-    "nickname": request.user.username,
-    "groups": [group.name for group in request.user.groups.all()],
-    "picture": request.user.attributes.get("picture", ""),
-}
-```
+This is the actual current tenant wiring that the application depends on. If any of these flow slugs or stage names change in Authentik, this document should be updated in the same change.
 
 Provider-agnostic rule:
 
-- every relying party should receive the same normalized profile shape regardless of whether the user came from Google, GitHub, or another source
+- keep the login, enrollment, and invalidation flows explicit and named per use case
+- document the real flow slugs and stage bindings, not just the conceptual intent
+
+### 4. Mappings and claim-shaping notes
+
+The live provider audit on `2026-03-22` verified the attached OIDC scope mappings, but this repo does not currently provision or export the full claim-shaping expressions from the Authentik tenant.
+
+That means the source of truth for:
+
+- custom source property mappings
+- any modifications to the default `profile` scope mapping
+- any extra custom claims beyond `openid`, `email`, and `profile`
+
+is still the live Authentik tenant, not infrastructure code in this repository.
+
+Provider-agnostic rule:
+
+- if a relying party depends on custom claims such as avatar URLs, group lists, or normalized provider metadata, codify those mappings in exportable Authentik config or IaC and then document that exported form here
+- do not leave custom claim behavior described only from memory
 
 ### 5. Per-provider login flows
 
@@ -231,8 +235,9 @@ Current CIG production behavior:
 
 - the `CIG Dashboard` provider uses `default-provider-invalidation-flow`
 - that flow must contain:
-  - `User Logout`
-  - a Redirect Stage to `https://cig.lat/?logged_out=1`
+  - `CIG: Full logout`
+  - `CIG: Return to landing after logout`
+  - the redirect target `https://cig.lat/?logged_out=1`
 
 Recommended provider-agnostic pattern:
 
@@ -276,6 +281,18 @@ The fallback is implementation-compatible at the app level, but it does not use 
 | Authentik session termination | provider invalidation flow includes `User Logout` |
 | Deterministic return target | logout completes on `/?logged_out=1` |
 | Open redirect protection | callback validates redirect targets against allowed origins |
+
+## Drift checks
+
+Before trusting this document after Authentik admin changes, re-check these live tenant values:
+
+- provider redirect URIs for `CIG Dashboard`
+- source `user_matching_mode` for `google` and `github`
+- `default-provider-invalidation-flow` stage bindings
+- `cig-google-login` and `cig-github-login` redirect stages
+- `default-source-authentication` and `cig-source-enrollment` bindings
+
+This is the minimum audit set that caught the March 22, 2026 GitHub login regression, where the live sources had drifted from `identifier` to `email_link`.
 
 ## Files reference
 
