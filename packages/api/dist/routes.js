@@ -7,6 +7,14 @@ const auth_1 = require("./auth");
 const costs_1 = require("./costs");
 const security_1 = require("./security");
 const newsletter_1 = require("./newsletter");
+const device_auth_1 = require("./routes/device-auth");
+const enrollment_1 = require("./routes/enrollment");
+const heartbeat_1 = require("./routes/heartbeat");
+const bootstrap_1 = require("./routes/bootstrap");
+const oidc_1 = require("./routes/oidc");
+const audit_1 = require("./routes/audit");
+const sessions_1 = require("./routes/sessions");
+const scans_1 = require("./routes/scans");
 // Shared instances
 const graphEngine = new graph_1.GraphEngine();
 const queryEngine = new graph_1.GraphQueryEngine();
@@ -15,6 +23,22 @@ const readResources = [auth_1.authenticate, (0, auth_1.authorize)([auth_1.Permis
 const manageDiscovery = [auth_1.authenticate, (0, auth_1.authorize)([auth_1.Permission.MANAGE_DISCOVERY])];
 const executeActions = [auth_1.authenticate, (0, auth_1.authorize)([auth_1.Permission.EXECUTE_ACTIONS])];
 async function registerRoutes(app) {
+    // ─── Device Authorization (RFC 8628) ────────────────────────────────────────
+    await app.register(device_auth_1.deviceAuthRoutes);
+    // ─── Target Enrollment (Requirement 13) ─────────────────────────────────────
+    await app.register(enrollment_1.enrollmentRoutes);
+    // ─── Heartbeat (Requirement 14) ──────────────────────────────────────────────
+    await app.register(heartbeat_1.heartbeatRoutes);
+    // ─── Bootstrap (Requirement 15) ──────────────────────────────────────────────
+    await app.register(bootstrap_1.bootstrapRoutes);
+    // ─── OIDC Callback (Requirement 16) ──────────────────────────────────────────
+    await app.register(oidc_1.oidcRoutes);
+    // ─── Audit (Requirement 18) ──────────────────────────────────────────────────
+    await app.register(audit_1.auditRoutes);
+    // ─── Session Management (Phase 1.3) ──────────────────────────────────────────
+    await app.register(sessions_1.sessionRoutes);
+    // ─── Scan Results (Phase 3.2) ────────────────────────────────────────────────
+    await app.register(scans_1.scanRoutes);
     // ─── Resources ──────────────────────────────────────────────────────────────
     // GET /api/v1/resources — list all resources with optional filtering
     app.get('/api/v1/resources', { preHandler: readResources }, async (request, reply) => {
