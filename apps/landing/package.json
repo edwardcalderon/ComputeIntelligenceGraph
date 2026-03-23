@@ -1,6 +1,6 @@
 {
   "name": "@cig/landing",
-  "version": "0.1.44",
+  "version": "0.1.45",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -12,6 +12,7 @@
     "@cig-technology/i18n": "1.0.0",
     "@cig/auth": "workspace:*",
     "@cig/ui": "workspace:^",
+    "@edcalderon/auth": "^1.4.1",
     "@supabase/supabase-js": "^2.0.0",
     "lucide-react": "^0.454.0",
     "next": "14.2.0",

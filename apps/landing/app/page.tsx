@@ -807,8 +807,45 @@ function PublicLanding() {
   );
 }
 
+function LandingTransitionShell({
+  title = "Restoring session",
+  description = "Finishing secure sign-in before rendering the landing.",
+}: {
+  title?: string;
+  description?: string;
+}) {
+  return (
+    <div className="min-h-screen w-full bg-gradient-to-br from-zinc-50 via-white to-zinc-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 text-zinc-900 dark:text-zinc-50 relative overflow-hidden">
+      <div className="pointer-events-none fixed -top-40 -left-40 h-[600px] w-[600px] rounded-full bg-gradient-to-tr from-cyan-600 via-blue-600 to-violet-600 opacity-[0.10] blur-3xl animate-pulse-slow" />
+      <div className="pointer-events-none fixed -bottom-40 -right-40 h-[500px] w-[500px] rounded-full bg-gradient-to-bl from-violet-600 via-blue-600 to-cyan-600 opacity-[0.08] blur-3xl animate-pulse-slow" />
+
+      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center gap-6 px-6 text-center animate-fade-in-fast">
+        <div className="relative flex size-28 items-center justify-center rounded-full border border-zinc-200/70 bg-white/85 shadow-2xl shadow-cyan-500/10 backdrop-blur dark:border-zinc-700/60 dark:bg-zinc-900/80">
+          <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-cyan-500/20 via-blue-500/15 to-emerald-500/20 blur-xl" />
+          <div className="relative animate-fade-in-fast">
+            <CigIconSvg className="size-20" />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium uppercase tracking-[0.28em] text-cyan-500/80 dark:text-cyan-300/80">
+            {title}
+          </p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            {description}
+          </p>
+        </div>
+
+        <div className="h-1.5 w-48 overflow-hidden rounded-full bg-zinc-200/80 dark:bg-zinc-800/80">
+          <div className="h-full w-1/2 rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-emerald-400 animate-pulse" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
-  const { user, signOut } = useCIGAuth();
+  const { user, signOut, isHydrated, isSigningOut } = useCIGAuth();
 
   // Normalize logout entrypoints so both dashboard-initiated sign-out and the
   // final landing redirect end on the clean unauthenticated home page.
@@ -824,6 +861,15 @@ export default function HomePage() {
     }
   }, [signOut]);
 
+  if (isSigningOut) {
+    return (
+      <LandingTransitionShell
+        title="Signing out"
+        description="Closing the Authentik session and returning you to the landing."
+      />
+    );
+  }
+  if (!isHydrated) return <LandingTransitionShell />;
   if (user) return <AuthenticatedLanding />;
   return <PublicLanding />;
 }

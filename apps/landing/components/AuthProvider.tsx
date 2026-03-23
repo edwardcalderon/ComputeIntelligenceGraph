@@ -2,10 +2,10 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import {
-  buildAuthentikEndSessionUrl,
-  revokeAuthentikToken,
-  getSupabaseClient,
-} from "@cig/auth";
+  discoverEndpoints,
+  orchestrateLogout,
+} from "@edcalderon/auth/authentik";
+import { getSupabaseClient } from "@cig/auth";
 
 /* ─── Shared auth interface ──────────────────────────────────────────── */
 
@@ -21,6 +21,8 @@ export interface CIGUser {
 interface AuthContextValue {
   user: CIGUser | null;
   signOut: () => void;
+  isHydrated: boolean;
+  isSigningOut: boolean;
   /** Which auth backend is active */
   authProvider: "authentik" | "supabase";
 }
@@ -28,6 +30,8 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   signOut: () => {},
+  isHydrated: false,
+  isSigningOut: false,
   authProvider: "authentik",
 });
 
@@ -125,9 +129,19 @@ async function readSupabaseSession(): Promise<CIGUser | null> {
 /* ─── Unified Provider ──────────────────────────────────────────────── */
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<CIGUser | null>(null);
+  const [authState, setAuthState] = useState<{
+    user: CIGUser | null;
+    isHydrated: boolean;
+    isSigningOut: boolean;
+  }>({
+    user: null,
+    isHydrated: false,
+    isSigningOut: false,
+  });
 
   useEffect(() => {
+    let cancelled = false;
+
     if (AUTH_PROVIDER === "authentik") {
       // ── Authentik: read tokens from URL hash or sessionStorage ──
       const hash = window.location.hash.slice(1);
@@ -153,63 +167,152 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           window.history.replaceState({}, "", window.location.pathname);
         }
       }
-      setUser(readAuthentikSession());
+      if (!cancelled) {
+        setAuthState({
+          user: readAuthentikSession(),
+          isHydrated: true,
+          isSigningOut: false,
+        });
+      }
     } else {
       // ── Supabase: read from Supabase auth ──
-      readSupabaseSession().then(setUser);
+      readSupabaseSession().then((nextUser) => {
+        if (!cancelled) {
+          setAuthState({
+            user: nextUser,
+            isHydrated: true,
+            isSigningOut: false,
+          });
+        }
+      });
       const supabase = getSupabaseClient();
       if (supabase) {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
           if (session?.user) {
             const u = session.user;
-            setUser({
-              sub:       u.id,
-              email:     u.email ?? "",
-              name:      u.user_metadata?.full_name ?? u.user_metadata?.name ?? u.email?.split("@")[0] ?? "",
-              avatarUrl: u.user_metadata?.avatar_url ?? undefined,
-              socialProvider: (u.app_metadata?.provider as string) ?? "sso",
+            setAuthState({
+              user: {
+                sub:       u.id,
+                email:     u.email ?? "",
+                name:      u.user_metadata?.full_name ?? u.user_metadata?.name ?? u.email?.split("@")[0] ?? "",
+                avatarUrl: u.user_metadata?.avatar_url ?? undefined,
+                socialProvider: (u.app_metadata?.provider as string) ?? "sso",
+              },
+              isHydrated: true,
+              isSigningOut: false,
             });
           } else {
-            setUser(null);
+            setAuthState({
+              user: null,
+              isHydrated: true,
+              isSigningOut: false,
+            });
           }
         });
-        return () => subscription.unsubscribe();
+        return () => {
+          cancelled = true;
+          subscription.unsubscribe();
+        };
       }
+
+      setAuthState({
+        user: null,
+        isHydrated: true,
+        isSigningOut: false,
+      });
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const signOut = useCallback(() => {
-    let logoutUrl: string | null = null;
-
-    if (AUTH_PROVIDER === "authentik") {
-      try {
-        const logoutReturnUrl = new URL(`/?${LANDING_LOGOUT_COMPLETE_QUERY}`, window.location.origin).toString();
-        const accessToken = sessionStorage.getItem("cig_access_token");
-        const idToken = sessionStorage.getItem("cig_id_token");
-        if (accessToken) {
-          const issuerUrl = process.env.NEXT_PUBLIC_AUTHENTIK_URL ?? "https://auth.cig.technology";
-          const clientId  = process.env.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID ?? "G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v";
-          revokeAuthentikToken({ issuerUrl, clientId, redirectUri: "" }, accessToken).catch(() => {});
-        }
-        if (idToken) {
-          logoutUrl = buildAuthentikEndSessionUrl(idToken, logoutReturnUrl);
-        }
-        logoutUrl ??= logoutReturnUrl;
-      } catch { /* ignore */ }
+    if (AUTH_PROVIDER !== "authentik") {
       clearAuthentikSession();
-    } else {
+      setAuthState({
+        user: null,
+        isHydrated: true,
+        isSigningOut: false,
+      });
       const supabase = getSupabaseClient();
       supabase?.auth.signOut().catch(() => {});
+      return;
     }
-    setUser(null);
-    if (logoutUrl) {
-      window.location.replace(logoutUrl);
-    }
+
+    const logoutReturnUrl = new URL(
+      `/?${LANDING_LOGOUT_COMPLETE_QUERY}`,
+      window.location.origin,
+    ).toString();
+    const accessToken = sessionStorage.getItem("cig_access_token") ?? undefined;
+    const idToken = sessionStorage.getItem("cig_id_token") ?? undefined;
+
+    clearAuthentikSession();
+    setAuthState({
+      user: null,
+      isHydrated: true,
+      isSigningOut: true,
+    });
+
+    void (async () => {
+      const issuer = decodeJwtPayload(idToken ?? accessToken ?? "")?.iss;
+      const fallbackIssuer = typeof issuer === "string" && issuer.trim()
+        ? issuer
+        : getAuthentikIssuer();
+      const issuerUrl = fallbackIssuer.endsWith("/")
+        ? fallbackIssuer
+        : `${fallbackIssuer}/`;
+      const clientId = process.env.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID ??
+        "G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v";
+      const baseConfig = {
+        issuer: fallbackIssuer,
+        postLogoutRedirectUri: logoutReturnUrl,
+        endSessionEndpoint: new URL("end-session/", issuerUrl).toString(),
+        revocationEndpoint: new URL("revoke/", issuerUrl).toString(),
+        clientId,
+      };
+
+      try {
+        const endpoints = await discoverEndpoints(fallbackIssuer).catch(() => null);
+        const logoutConfig = endpoints
+          ? {
+              ...baseConfig,
+              endSessionEndpoint: endpoints.endSession ?? baseConfig.endSessionEndpoint,
+              revocationEndpoint: endpoints.revocation ?? baseConfig.revocationEndpoint,
+            }
+          : baseConfig;
+
+        const result = await orchestrateLogout(logoutConfig, {
+          accessToken,
+          idToken,
+        });
+        window.location.replace(result.endSessionUrl);
+      } catch {
+        const result = await orchestrateLogout(baseConfig, {
+          accessToken,
+          idToken,
+        });
+        window.location.replace(result.endSessionUrl);
+      }
+    })();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, signOut, authProvider: AUTH_PROVIDER }}>
+    <AuthContext.Provider
+      value={{
+        user: authState.user,
+        signOut,
+        isHydrated: authState.isHydrated,
+        isSigningOut: authState.isSigningOut,
+        authProvider: AUTH_PROVIDER,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
+}
+
+function getAuthentikIssuer(): string {
+  const base = process.env.NEXT_PUBLIC_AUTHENTIK_URL ?? "https://auth.cig.technology";
+  return new URL("/application/o/cig-dashboard/", base).toString();
 }

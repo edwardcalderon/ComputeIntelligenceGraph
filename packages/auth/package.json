@@ -16,7 +16,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@edcalderon/auth": "^1.3.0",
+    "@edcalderon/auth": "^1.4.1",
     "@supabase/supabase-js": "^2.49.4",
     "jose": "^5.2.3"
   },

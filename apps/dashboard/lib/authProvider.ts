@@ -1,4 +1,8 @@
 import type { AuthProvider } from "@refinedev/core";
+import {
+  discoverEndpoints,
+  orchestrateLogout,
+} from "@edcalderon/auth/authentik";
 
 function getSession() {
   if (typeof window === "undefined") return null;
@@ -7,7 +11,9 @@ function getSession() {
     const expiresAt = sessionStorage.getItem("cig_expires_at");
     if (!token) return null;
     if (expiresAt && Date.now() > parseInt(expiresAt, 10)) return null;
-    return { token, expiresAt };
+    const idToken = sessionStorage.getItem("cig_id_token") ?? undefined;
+    const refreshToken = sessionStorage.getItem("cig_refresh_token") ?? undefined;
+    return { token, idToken, refreshToken, expiresAt };
   } catch {
     return null;
   }
@@ -39,18 +45,103 @@ function getLandingUrl(): string {
   return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 }
 
+function getLandingLoggedOutUrl(): string {
+  return `${getLandingUrl()}?logged_out=1`;
+}
+
+function getAuthentikIssuer(): string {
+  const base = process.env.NEXT_PUBLIC_AUTHENTIK_URL ?? "https://auth.cig.technology";
+  return new URL("/application/o/cig-dashboard/", base).toString();
+}
+
+function getAuthentikClientId(): string {
+  return process.env.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID ??
+    "G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v";
+}
+
+function getAuthBackend(): "authentik" | "supabase" {
+  return (process.env.NEXT_PUBLIC_AUTH_PROVIDER as "authentik" | "supabase") || "authentik";
+}
+
+function formatAuthProviderLabel(provider: string): string {
+  switch (provider.toLowerCase()) {
+    case "github":
+      return "GitHub";
+    case "google":
+      return "Google";
+    default:
+      return provider.charAt(0).toUpperCase() + provider.slice(1);
+  }
+}
+
+async function resolveDashboardLogoutUrl(
+  accessToken: string | undefined,
+  idToken: string | undefined,
+): Promise<string> {
+  const issuer = decodeJwt(idToken ?? accessToken ?? "")?.iss;
+  const fallbackIssuer = typeof issuer === "string" && issuer.trim()
+    ? issuer
+    : getAuthentikIssuer();
+  const issuerUrl = fallbackIssuer.endsWith("/")
+    ? fallbackIssuer
+    : `${fallbackIssuer}/`;
+  const postLogoutRedirectUri = getLandingLoggedOutUrl();
+  const baseConfig = {
+    issuer: fallbackIssuer,
+    postLogoutRedirectUri,
+    endSessionEndpoint: new URL("end-session/", issuerUrl).toString(),
+    revocationEndpoint: new URL("revoke/", issuerUrl).toString(),
+    clientId: getAuthentikClientId(),
+  };
+
+  try {
+    const endpoints = await discoverEndpoints(fallbackIssuer).catch(() => null);
+    const logoutConfig = endpoints
+      ? {
+          ...baseConfig,
+          endSessionEndpoint: endpoints.endSession ?? baseConfig.endSessionEndpoint,
+          revocationEndpoint: endpoints.revocation ?? baseConfig.revocationEndpoint,
+        }
+      : baseConfig;
+    const result = await orchestrateLogout(logoutConfig, {
+      accessToken,
+      idToken,
+    });
+    return result.endSessionUrl;
+  } catch {
+    const result = await orchestrateLogout(baseConfig, {
+      accessToken,
+      idToken,
+    });
+    return result.endSessionUrl;
+  }
+}
+
 export const authProvider: AuthProvider = {
   /** Login happens on the landing page — not used inside the dashboard. */
   login: async () => ({ success: true }),
 
   logout: async () => {
+    const session = getSession();
     clearSession();
-    // Redirect to landing with ?signout=1 so the landing app can revoke the
-    // token and run Authentik RP-initiated logout with its own session copy.
-    return {
-      success: true,
-      redirectTo: `${getLandingUrl()}?signout=1`,
-    };
+
+    if (getAuthBackend() !== "authentik") {
+      return {
+        success: true,
+        redirectTo: getLandingLoggedOutUrl(),
+      };
+    }
+
+    const endSessionUrl = await resolveDashboardLogoutUrl(
+      session?.token,
+      session?.idToken,
+    ).catch(() => getLandingLoggedOutUrl());
+
+    if (typeof window !== "undefined") {
+      window.location.replace(endSessionUrl);
+    }
+
+    return { success: true };
   },
 
   check: async () => {
@@ -102,7 +193,7 @@ export const authProvider: AuthProvider = {
     const providerLabel = authBackend === "supabase"
       ? "Supabase OAuth"
       : socialProvider
-        ? `CIG Auth: ${socialProvider.charAt(0).toUpperCase()}${socialProvider.slice(1)}`
+        ? `CIG Auth: ${formatAuthProviderLabel(socialProvider)}`
         : "CIG Auth";
 
     return { id: payload.sub as string, name, email, avatar, provider: providerLabel };

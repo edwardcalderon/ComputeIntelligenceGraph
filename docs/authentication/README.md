@@ -124,6 +124,7 @@ Authentik login succeeds              Dashboard callback                    Supa
 - The callback clears local `cig_*` session state if provisioning fails, so users do not continue with a half-signed-in state.
 - Supabase `auth.users` is matched by Authentik `(issuer, sub)` first and by email second, which prevents duplicate shadow users on repeat Google/GitHub logins.
 - Supabase `public.users` remains the app-owned registry keyed by `(sub, iss)`, while the corresponding Supabase auth user id is written into `raw_claims`.
+- Authentik callback provisioning derives claims from the `id_token` first and uses the configured OIDC issuer as `iss`, which avoids a browser-side `userinfo` fetch and keeps the login flow independent of Authentik CORS behavior.
 
 ### Required dashboard runtime configuration
 

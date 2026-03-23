@@ -859,9 +859,22 @@ export function AuthenticatedLanding() {
   const t = useTranslation();
   const { theme } = useTheme();
   useCIGAuth(); // keeps session alive; user data used in AuthButton
-  const handleEnterDashboard = useCallback(() => goToDashboard("/"), []);
   const isDark = theme === "dark";
   const [modalFeature, setModalFeature] = useState<Feature | null>(null);
+  const [isConnectingToDashboard, setIsConnectingToDashboard] = useState(false);
+
+  const startDashboardTransition = useCallback((path = "/") => {
+    if (isConnectingToDashboard) return;
+
+    setIsConnectingToDashboard(true);
+    window.requestAnimationFrame(() => {
+      void goToDashboard(path).catch(() => setIsConnectingToDashboard(false));
+    });
+  }, [isConnectingToDashboard]);
+
+  const handleEnterDashboard = useCallback(() => {
+    startDashboardTransition("/");
+  }, [startDashboardTransition]);
 
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden text-zinc-900 dark:text-white flex flex-col bg-gradient-to-br from-zinc-50 via-white to-zinc-100 dark:from-transparent dark:via-transparent dark:to-transparent">
@@ -882,6 +895,20 @@ export function AuthenticatedLanding() {
         <ThemeToggle />
         <AuthButton />
       </div>
+
+      {isConnectingToDashboard && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-zinc-950/70 px-6 backdrop-blur-md">
+          <div className="flex flex-col items-center gap-4 rounded-3xl border border-white/10 bg-zinc-950/80 px-8 py-7 text-center shadow-2xl shadow-cyan-950/30">
+            <div className="relative size-12">
+              <div className="absolute inset-0 rounded-full border-2 border-cyan-500/20" />
+              <div className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-cyan-400" />
+            </div>
+            <p className="text-sm font-medium tracking-wide text-cyan-300">
+              {t("auth.connectingDashboard")}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Falling pattern — light mode only, behind everything */}
       <div className="pointer-events-none fixed inset-0 z-0 dark:hidden">
@@ -973,7 +1000,7 @@ export function AuthenticatedLanding() {
       <FeatureModal
         feature={modalFeature}
         onClose={() => setModalFeature(null)}
-        onOpen={(path) => goToDashboard(path)}
+        onOpen={(path) => startDashboardTransition(path)}
       />
     </div>
   );

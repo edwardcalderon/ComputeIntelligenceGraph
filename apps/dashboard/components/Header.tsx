@@ -54,7 +54,7 @@ export function Header() {
   const pendingCount = activeRequests.length;
 
   return (
-    <header className="flex h-12 items-center justify-between border-b border-cig bg-cig-card px-4">
+    <header className="flex h-12 min-w-0 items-center justify-between border-b border-cig bg-cig-card px-3 sm:px-4">
       {/* Mobile menu toggle */}
       <button
         onClick={toggleSidebar}
@@ -69,7 +69,7 @@ export function Header() {
       <div className="hidden lg:block" />
 
       {/* Right actions */}
-      <div className="flex items-center gap-1">
+      <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
         {pendingCount > 0 && (
           <Link
             href="/device-approval"
