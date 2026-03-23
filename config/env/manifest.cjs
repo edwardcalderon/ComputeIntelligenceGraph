@@ -71,11 +71,37 @@ module.exports = {
       secret: true,
       targets: { api: 'JWT_SECRET' },
     },
+    AUTHENTIK_TOKEN_ENDPOINT: {
+      description: 'Authentik OIDC Token Endpoint',
+      example: 'https://<YOUR_AUTHENTIK_DOMAIN>/application/o/token/',
+      targets: { api: 'AUTHENTIK_TOKEN_ENDPOINT' },
+    },
+    AUTHENTIK_JWKS_URI: {
+      description: 'Authentik OIDC JWKS Endpoint',
+      example: 'https://<YOUR_AUTHENTIK_DOMAIN>/application/o/cig/jwks/',
+      targets: { api: 'AUTHENTIK_JWKS_URI' },
+    },
+    OIDC_CLIENT_ID: {
+      description: 'OIDC Client ID for Authentik',
+      example: '<YOUR_CLIENT_ID>',
+      targets: { api: 'OIDC_CLIENT_ID' },
+    },
+    OIDC_CLIENT_SECRET: {
+      description: 'OIDC Client Secret for Authentik',
+      example: '<YOUR_CLIENT_SECRET>',
+      secret: true,
+      targets: { api: 'OIDC_CLIENT_SECRET' },
+    },
+    OIDC_REDIRECT_URI: {
+      description: 'OIDC Redirect URI for local callback',
+      example: 'http://localhost:8080/api/v1/auth/oidc/callback',
+      targets: { api: 'OIDC_REDIRECT_URI' },
+    },
 
     // ── Supabase ───────────────────────────────────────────────────────────
     SUPABASE_URL: {
       description: 'Canonical Supabase URL for frontend consumers',
-      example: 'https://your-project.supabase.co',
+      example: 'https://<YOUR_PROJECT>.supabase.co',
       targets: {
         landing: 'NEXT_PUBLIC_SUPABASE_URL',
         dashboard: 'NEXT_PUBLIC_SUPABASE_URL',
@@ -83,7 +109,7 @@ module.exports = {
     },
     SUPABASE_ANON_KEY: {
       description: 'Canonical Supabase anon key for frontend consumers',
-      example: 'your-supabase-anon-key',
+      example: '<YOUR_SUPABASE_ANON_KEY>',
       secret: true,
       targets: {
         landing: 'NEXT_PUBLIC_SUPABASE_ANON_KEY',
@@ -92,7 +118,7 @@ module.exports = {
     },
     SUPABASE_SERVICE_ROLE_KEY: {
       description: 'Supabase service role key',
-      example: 'your-supabase-service-role-key',
+      example: '<YOUR_SUPABASE_SERVICE_ROLE_KEY>',
       secret: true,
       targets: {
         api: 'SUPABASE_SERVICE_ROLE_KEY',
@@ -203,12 +229,12 @@ module.exports = {
     // ── Google OAuth ───────────────────────────────────────────────────────
     GOOGLE_AUTH_CLIENT_ID: {
       description: 'Google OAuth client ID',
-      example: 'your-google-client-id.apps.googleusercontent.com',
+      example: '<YOUR_GOOGLE_CLIENT_ID>.apps.googleusercontent.com',
       targets: {},
     },
     GOOGLE_AUTH_CLIENT_SECRET: {
       description: 'Google OAuth client secret',
-      example: 'your-google-client-secret',
+      example: '<YOUR_GOOGLE_CLIENT_SECRET>',
       secret: true,
       targets: {},
     },
@@ -216,12 +242,12 @@ module.exports = {
     // ── Authentik ──────────────────────────────────────────────────────────
     AUTHENTIK_DOMAIN: {
       description: 'Authentik domain',
-      example: 'auth.example.com',
+      example: '<YOUR_AUTHENTIK_DOMAIN>',
       targets: {},
     },
     AUTHENTIK_ADMIN_EMAIL: {
       description: 'Authentik admin email',
-      example: 'admin@example.com',
+      example: '<YOUR_AUTHENTIK_ADMIN_EMAIL>',
       targets: {},
     },
     AUTHENTIK_TOKEN_ENDPOINT: {

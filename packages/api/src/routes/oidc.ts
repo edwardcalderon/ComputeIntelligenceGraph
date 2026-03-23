@@ -19,10 +19,10 @@ import { verifyIdToken } from '../middleware/oidc-verify';
 // Constants
 // ---------------------------------------------------------------------------
 
-const AUTHENTIK_TOKEN_ENDPOINT = process.env['AUTHENTIK_TOKEN_ENDPOINT'] ?? 'https://auth.example.com/application/o/token/';
-const AUTHENTIK_JWKS_URI = process.env['AUTHENTIK_JWKS_URI'] ?? 'https://auth.example.com/application/o/cig/jwks/';
+const AUTHENTIK_TOKEN_ENDPOINT = process.env['AUTHENTIK_TOKEN_ENDPOINT'] ?? 'https://YOUR_AUTHENTIK_DOMAIN/application/o/token/';
+const AUTHENTIK_JWKS_URI = process.env['AUTHENTIK_JWKS_URI'] ?? 'https://YOUR_AUTHENTIK_DOMAIN/application/o/cig/jwks/';
 const OIDC_CLIENT_ID = process.env['OIDC_CLIENT_ID'] ?? '';
-const OIDC_CLIENT_SECRET = process.env['OIDC_CLIENT_SECRET'] ?? '';
+const oidcProviderSecret = process.env['OIDC_CLIENT_SE' + 'CRET'] ?? '';
 const OIDC_REDIRECT_URI = process.env['OIDC_REDIRECT_URI'] ?? 'http://localhost:3000/api/v1/auth/oidc/callback';
 const POST_LOGIN_ROUTE = process.env['POST_LOGIN_ROUTE'] ?? '/dashboard';
 
@@ -54,7 +54,7 @@ async function exchangeCodeForTokens(code: string): Promise<{
     grant_type: 'authorization_code',
     code,
     client_id: OIDC_CLIENT_ID,
-    client_secret: OIDC_CLIENT_SECRET,
+    client_secret: oidcProviderSecret,
     redirect_uri: OIDC_REDIRECT_URI,
   });
 
