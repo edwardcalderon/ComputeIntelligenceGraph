@@ -5,6 +5,7 @@ import { resolveLandingUrl } from "./lib/siteUrl";
 /** Routes that are always public — no session required. */
 const PUBLIC_PATHS = [
   "/auth/callback",
+  "/auth/login-callback",
   "/auth/login",
   "/api/auth/sync",
   "/_next",
@@ -17,6 +18,14 @@ export function middleware(request: NextRequest) {
     hostname: request.nextUrl.hostname,
     protocol: request.nextUrl.protocol,
   });
+
+  if (pathname === "/auth/callback" && request.nextUrl.searchParams.has("code")) {
+    const loginCallbackUrl = new URL("/auth/login-callback", request.url);
+    for (const [key, value] of request.nextUrl.searchParams.entries()) {
+      loginCallbackUrl.searchParams.set(key, value);
+    }
+    return NextResponse.redirect(loginCallbackUrl);
+  }
 
   // Allow public paths through
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {

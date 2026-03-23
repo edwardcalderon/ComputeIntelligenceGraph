@@ -33,7 +33,7 @@ async function goToDashboard(path = "/") {
             token_type: "bearer",
             expires_in: String(session.expires_in ?? 3600),
           }).toString();
-          window.location.href = `${DASHBOARD_URL}/auth/callback?redirect=${encodeURIComponent(path)}#${hash}`;
+          window.location.replace(`${DASHBOARD_URL}/auth/callback?redirect=${encodeURIComponent(path)}#${hash}`);
           return;
         }
       }
@@ -50,12 +50,12 @@ async function goToDashboard(path = "/") {
           ...(idToken && { id_token: idToken }),
           expires_in: expiresIn,
         }).toString();
-        window.location.href = `${DASHBOARD_URL}/auth/callback?redirect=${encodeURIComponent(path)}#${hash}`;
+        window.location.replace(`${DASHBOARD_URL}/auth/callback?redirect=${encodeURIComponent(path)}#${hash}`);
         return;
       }
     } catch { /* ignore */ }
   }
-  window.location.href = `${DASHBOARD_URL}${path}`;
+  window.location.replace(`${DASHBOARD_URL}${path}`);
 }
 
 /* ─── Icons ───────────────────────────────────────────────────────────── */

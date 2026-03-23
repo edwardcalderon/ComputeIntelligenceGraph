@@ -19,15 +19,18 @@ const AUTH_SYNC_TIMEOUT_MS = 10_000;
 const AUTH_SYNC_MAX_ATTEMPTS = 2;
 
 /**
- * Handles two callback patterns:
+ * Handles the dashboard handoff patterns:
  *
- * 1. Authentik PKCE (current):
- *    /auth/callback?code=...&state=...&redirect=/graph
- *    -> exchanges code for tokens, stores in sessionStorage
- *
- * 2. Legacy hash fragment (Supabase-style, kept for backwards compat):
+ * 1. Landing-to-dashboard handoff:
  *    /auth/callback?redirect=/graph#access_token=...&expires_in=3600
- *    -> reads tokens from URL hash directly
+ *    -> reads tokens from URL hash directly and stores them in sessionStorage
+ *
+ * 2. Legacy Authentik PKCE callback (older login URIs only):
+ *    /auth/callback?code=...&state=...&redirect=/graph
+ *    -> exchanges code for tokens, stores them in sessionStorage
+ *
+ * The current social-login flow now uses /auth/login-callback for the
+ * Authentik code exchange so this page stays focused on the dashboard handoff.
  */
 export default function AuthCallback() {
   const router = useRouter();
@@ -140,7 +143,7 @@ export default function AuthCallback() {
           expires_in: expIn,
           ...(socialProvider && { social_provider: socialProvider }),
         });
-        window.location.href = `${redirect}#${hashParams}`;
+        window.location.replace(`${redirect}#${hashParams}`);
       } else {
         router.replace(redirect);
       }

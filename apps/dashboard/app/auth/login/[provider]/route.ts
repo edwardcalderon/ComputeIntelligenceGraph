@@ -1,40 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  createRelayPageHtml,
-  parseRelayParams,
-} from "@edcalderon/auth/authentik";
 
 /**
  * GET /auth/login/[provider]?code_challenge=...&state=...&redirect_uri=...&client_id=...&code_verifier=...
  *
- * Relay page that:
- *   1. Stores the PKCE verifier + state in sessionStorage (dashboard origin,
- *      so /auth/callback can read them later for the token exchange).
- *   2. Redirects the browser to a provider-specific Authentik flow that goes
- *      directly to Google/GitHub without showing the Authentik login UI.
+ * Server-side relay that:
+ *   1. Persists the PKCE verifier/state/provider in short-lived cookies on the
+ *      dashboard origin, so the Authentik callback can complete the exchange.
+ *   2. Redirects the browser directly into the provider-specific Authentik
+ *      flow that jumps straight to Google/GitHub.
  *
- * Why this avoids the Authentik login page:
- *   We redirect to /if/flow/cig-{provider}-login/?next=<oidc-authorize-url>.
- *   That flow has a single Redirect Stage pointing to /source/oauth/login/{provider}/.
- *   Authentik's flow executor stores SESSION_KEY_GET (with the `next` param) when the
- *   flow starts, so after Google/GitHub auth completes, SourceFlowManager reads it and
- *   redirects back to the OIDC authorize endpoint → issues the code → back to /auth/callback.
- *
- * Why sessionStorage must be set HERE:
- *   The landing page (cig.lat / localhost:3000) and the dashboard
- *   (app.cig.technology / localhost:3001) are different origins.
- *   sessionStorage is per-origin, so the landing can't write to the dashboard's
- *   storage. This page runs on the dashboard origin, bridging the gap.
+ * This removes the previous interstitial relay page. The browser now sees a
+ * real HTTP redirect instead of a rendered "redirecting" screen.
  */
 
 const ALLOWED_PROVIDERS = new Set(["google", "github"]);
 
-/** Authentik flow slug per provider — these flows have a single Redirect Stage
- *  that goes straight to /source/oauth/login/{provider}/ without any login UI. */
 const PROVIDER_FLOW: Record<string, string> = {
   google: "cig-google-login",
   github: "cig-github-login",
 };
+
+const PKCE_VERIFIER_COOKIE = "cig_pkce_verifier";
+const PKCE_STATE_COOKIE = "cig_pkce_state";
+const SOCIAL_PROVIDER_COOKIE = "cig_social_provider";
+const PKCE_COOKIE_MAX_AGE_SECONDS = 10 * 60;
 
 export async function GET(
   req: NextRequest,
@@ -46,41 +35,79 @@ export async function GET(
     return NextResponse.json({ error: "Unknown provider" }, { status: 400 });
   }
 
-  // The shared relay parser expects provider in the incoming parameter bundle.
-  // Our route carries it in the path, so we inject it before validation.
-  const relaySearchParams = new URLSearchParams(req.nextUrl.searchParams);
-  relaySearchParams.set("provider", provider);
-  const relayParams = parseRelayParams(relaySearchParams);
-  if (!relayParams) {
+  const clientId = req.nextUrl.searchParams.get("client_id");
+  const redirectUri = req.nextUrl.searchParams.get("redirect_uri");
+  const codeChallenge = req.nextUrl.searchParams.get("code_challenge");
+  const codeVerifier = req.nextUrl.searchParams.get("code_verifier");
+  const state = req.nextUrl.searchParams.get("state");
+
+  if (!clientId || !redirectUri || !codeChallenge || !codeVerifier || !state) {
     return NextResponse.json({ error: "Missing PKCE parameters" }, { status: 400 });
   }
 
   const authentikUrl = process.env.NEXT_PUBLIC_AUTHENTIK_URL ?? "https://auth.cig.technology";
-  const clientId = req.nextUrl.searchParams.get("client_id");
-  const redirectUri = req.nextUrl.searchParams.get("redirect_uri");
-  if (!clientId || !redirectUri) {
-    return NextResponse.json({ error: "Missing PKCE parameters" }, { status: 400 });
-  }
-  const authorizePath = `${authentikUrl.replace(/\/$/, "")}/application/o/authorize/`;
-  const html = createRelayPageHtml(
-    {
-      issuer: authentikUrl,
-      clientId,
-      redirectUri,
-      authorizePath,
-      providerFlowSlugs: PROVIDER_FLOW,
-    },
-    {
-      provider,
-      codeVerifier: relayParams.codeVerifier,
-      codeChallenge: relayParams.codeChallenge,
-      state: relayParams.state,
-      next: relayParams.next,
-    },
-  ).html;
+  const authBase = authentikUrl.replace(/\/$/, "");
+  const authorizePath = `${authBase}/application/o/authorize/`;
+  const flowUrl = new URL(`/if/flow/${PROVIDER_FLOW[provider]}/`, authBase);
+  flowUrl.searchParams.set("next", buildAuthorizeUrl(authorizePath, {
+    clientId,
+    redirectUri,
+    state,
+    codeChallenge,
+  }));
 
-  return new NextResponse(html, {
-    status: 200,
-    headers: { "Content-Type": "text/html; charset=utf-8" },
+  const response = NextResponse.redirect(flowUrl, 302);
+  setPkceCookies(response, req, {
+    verifier: codeVerifier,
+    state,
+    provider,
   });
+  response.headers.set("Cache-Control", "no-store");
+  response.headers.set("Pragma", "no-cache");
+  return response;
+}
+
+function buildAuthorizeUrl(
+  authorizePath: string,
+  params: {
+    clientId: string;
+    redirectUri: string;
+    state: string;
+    codeChallenge: string;
+  },
+): string {
+  const authorizeParams = new URLSearchParams({
+    response_type: "code",
+    client_id: params.clientId,
+    redirect_uri: params.redirectUri,
+    scope: "openid email profile",
+    state: params.state,
+    code_challenge: params.codeChallenge,
+    code_challenge_method: "S256",
+  });
+
+  return `${authorizePath}?${authorizeParams}`;
+}
+
+function setPkceCookies(
+  response: NextResponse,
+  req: NextRequest,
+  session: {
+    verifier: string;
+    state: string;
+    provider: string;
+  },
+) {
+  const secure = req.nextUrl.protocol === "https:";
+  const cookieOptions = {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure,
+    path: "/",
+    maxAge: PKCE_COOKIE_MAX_AGE_SECONDS,
+  };
+
+  response.cookies.set(PKCE_VERIFIER_COOKIE, session.verifier, cookieOptions);
+  response.cookies.set(PKCE_STATE_COOKIE, session.state, cookieOptions);
+  response.cookies.set(SOCIAL_PROVIDER_COOKIE, session.provider, cookieOptions);
 }

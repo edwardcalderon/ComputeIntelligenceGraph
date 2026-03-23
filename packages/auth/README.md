@@ -19,10 +19,10 @@ This package now tracks `@edcalderon/auth@1.4.1` as the shared baseline. The
 published package adds a reusable Authentik kit (`authentik` subpath) for
 relay, callback, logout, provisioning, endpoint discovery, and redirect
 validation. CIG now consumes those shared primitives directly in the dashboard
-relay/callback and landing logout flow, while the local wrapper remains as
+relay, login-callback bridge, and landing logout flow, while the local wrapper remains as
 compatibility glue for any legacy callers that still import `@cig/auth`.
-The dashboard callback now derives provisioning claims from the `id_token`
-locally so login does not depend on Authentik `userinfo` CORS behavior.
+The dashboard login-callback route now derives provisioning claims from the
+`id_token` locally so login does not depend on Authentik `userinfo` CORS behavior.
 
 The platform uses OAuth 2.0 Authorization Code with PKCE (S256) for browser-based authentication. Social providers (Google, GitHub) are supported via Authentik source integrations.
 
@@ -38,7 +38,7 @@ import {
 ```
 
 - **`buildAuthentikAuthUrl(config)`** — Generates PKCE verifier/challenge, stores in `sessionStorage`, returns the Authentik authorize URL.
-- **`startAuthentikSocialLogin(config, provider, dashboardUrl)`** — Initiates a direct social login (Google/GitHub) bypassing the Authentik login UI. Navigates to a dashboard relay route that bridges the PKCE verifier across origins.
+- **`startAuthentikSocialLogin(config, provider, dashboardUrl)`** — Initiates a direct social login (Google/GitHub) bypassing the Authentik login UI. Navigates to a dashboard relay route that bridges the PKCE verifier across origins with short-lived cookies.
 - **`exchangeAuthentikCode(config, code, state?)`** — Exchanges the authorization code for tokens via the Authentik token endpoint. Validates state and reads the PKCE verifier from `sessionStorage`.
 - **`revokeAuthentikToken(config, token)`** — Revokes a token on sign-out.
 

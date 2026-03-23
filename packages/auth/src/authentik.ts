@@ -138,9 +138,9 @@ export async function startAuthentikSocialLogin(
   }
 
   // Pass PKCE params to the relay route on the dashboard origin.
-  // The verifier must travel to the dashboard origin so /auth/callback can read it
-  // from sessionStorage (sessionStorage is per-origin). The relay page stores it
-  // before redirecting to Authentik.
+  // The verifier must travel to the dashboard origin so /auth/login-callback can
+  // complete the exchange. The relay route stores it in short-lived cookies before
+  // redirecting to Authentik.
   const relayParams = new URLSearchParams({
     client_id:             config.clientId,
     redirect_uri:          config.redirectUri,
@@ -151,7 +151,7 @@ export async function startAuthentikSocialLogin(
   });
 
   const base = dashboardUrl.replace(/\/$/, "");
-  window.location.href = `${base}/auth/login/${provider}?${relayParams}`;
+  window.location.replace(`${base}/auth/login/${provider}?${relayParams}`);
 }
 
 export interface AuthentikTokens {

@@ -9,9 +9,9 @@ Last audited against the live Authentik tenant on `2026-03-22`.
 CIG uses **Authentik** as the primary identity provider and **Supabase** as a feature-flagged fallback. The primary path is:
 
 1. Start OIDC Authorization Code + PKCE from the landing app
-2. Bounce through the dashboard relay route so PKCE state exists on the dashboard origin
+2. Bounce through the dashboard relay route so PKCE state exists in short-lived cookies on the dashboard origin
 3. Enter Authentik through a provider-specific social login flow
-4. Exchange the OIDC code on the dashboard
+4. Exchange the OIDC code on the dashboard login-callback bridge
 5. Provision or update the user in Supabase `auth.users` and `public.users`
 6. Return the tokens to landing through a hash fragment
 7. Use the landing app as the canonical logout orchestrator
@@ -21,7 +21,7 @@ CIG uses **Authentik** as the primary identity provider and **Supabase** as a fe
 | Component | Production origin | Role |
 | --------- | ----------------- | ---- |
 | Landing (`apps/landing`) | `https://cig.lat` | Public entrypoint, login buttons, canonical logout completion target |
-| Dashboard (`apps/dashboard`) | `https://app.cig.lat` | Protected app, PKCE relay, OAuth callback |
+| Dashboard (`apps/dashboard`) | `https://app.cig.lat` | Protected app, PKCE relay, login callback bridge |
 | Authentik | `https://auth.cig.technology` | OIDC provider, user directory, social-source broker |
 | Google / GitHub | External | Upstream social identity providers |
 
@@ -43,9 +43,9 @@ Landing (cig.lat)                  Dashboard (app.cig.lat)                   Aut
        |                                      |                                  |                              |
        |-------- GET /auth/login/{provider} -->|                                  |                              |
        |                                      |                                  |                              |
-  3.   |                            Relay HTML stores verifier/state/provider     |                              |
-       |                            in dashboard sessionStorage                   |                              |
-       |                            and redirects into an Authentik flow          |                              |
+  3.   |                            Relay response stores verifier/state/provider  |                              |
+       |                            in dashboard cookies and redirects into       |                              |
+       |                            an Authentik flow                              |                              |
        |                                      |                                  |                              |
        |                                      |--- /if/flow/cig-{provider}-login/|                              |
        |                                      |    ?next=/application/o/authorize |                              |
@@ -62,14 +62,14 @@ Landing (cig.lat)                  Dashboard (app.cig.lat)                   Aut
        |                                      |                     resumes ?next= authorization,               |
        |                                      |                     and issues the CIG auth code               |
        |                                      |                                  |                              |
-  7.   |                                      |<-- /auth/callback?code=...&state=|                              |
+  7.   |                                      |<-- /auth/callback?code=...&state=...                           |
        |                                      |                                  |                              |
-  8.   |                            exchangeAuthentikCode()                      |                              |
+  8.   |                            login-callback bridge                         |                              |
        |                            - Validate state                             |                              |
-       |                            - Read verifier from dashboard storage       |                              |
+       |                            - Read verifier from dashboard cookies       |                              |
        |                            - POST /application/o/token/                 |                              |
-       |                            - Store tokens in dashboard storage          |                              |
-       |                            - Wait for Supabase provisioning            |                              |
+       |                            - Provision Supabase                         |                              |
+       |                            - Redirect to landing with token hash        |                              |
        |                                      |                                  |                              |
   9.   |<------- hash fragment redirect ------|                                  |                              |
        |            #access_token=...&id_token=...&expires_in=...                |                              |
@@ -79,7 +79,9 @@ Landing (cig.lat)                  Dashboard (app.cig.lat)                   Aut
 
 ### Why the relay route exists
 
-The landing app and dashboard are different origins. `sessionStorage` is origin-scoped, so the PKCE verifier created on landing would not be visible to the dashboard callback page. The relay route on the dashboard origin solves that by writing the PKCE verifier into the dashboard's `sessionStorage` before entering Authentik.
+The landing app and dashboard are different origins. `sessionStorage` is origin-scoped, so the PKCE verifier created on landing would not be visible to the dashboard login-callback bridge. The relay route on the dashboard origin solves that by writing the PKCE verifier into short-lived cookies before entering Authentik.
+
+That removes the rendered "redirecting" interstitial while keeping the same origin boundary and PKCE safety model.
 
 ### Why per-provider login flows exist
 
@@ -94,17 +96,17 @@ That keeps the RP flow explicit and avoids accidental dependence on whatever the
 
 ## Current provisioning flow
 
-Authentik is the identity source, but the dashboard callback is the point where that identity is mirrored into Supabase.
+Authentik is the identity source, but the login-callback bridge is the point where that identity is mirrored into Supabase.
 
 ```
-Authentik login succeeds              Dashboard callback                    Supabase
+Authentik login succeeds              Login callback                        Supabase
          |                                   |                                 |
   1. User exists in Authentik                |                                 |
      and source link is resolved             |                                 |
          |                                   |                                 |
   2. Redirect back with OIDC code ---------->|                                 |
          |                                   |                                 |
-  3. exchangeAuthentikCode() stores tokens   |                                 |
+  3. token exchange stores tokens             |                                 |
          |                                   |                                 |
   4. POST /api/auth/sync ------------------->|                                 |
          |                                   |                                 |
@@ -115,16 +117,16 @@ Authentik login succeeds              Dashboard callback                    Supa
      keyed by `(sub, iss)`                   |    upsert_oidc_user RPC         |
          |                                   |                                 |
   7. Only after sync succeeds does the       |                                 |
-     callback redirect to landing/dashboard  |                                 |
+     callback redirect to landing            |                                 |
 ```
 
 ### Current provisioning guarantees
 
 - Authentik-backed logins are blocked until Supabase provisioning succeeds.
-- The callback clears local `cig_*` session state if provisioning fails, so users do not continue with a half-signed-in state.
+- The login-callback bridge fails closed if provisioning fails, so users do not continue with a half-signed-in state.
 - Supabase `auth.users` is matched by Authentik `(issuer, sub)` first and by email second, which prevents duplicate shadow users on repeat Google/GitHub logins.
 - Supabase `public.users` remains the app-owned registry keyed by `(sub, iss)`, while the corresponding Supabase auth user id is written into `raw_claims`.
-- Authentik callback provisioning derives claims from the `id_token` first and uses the configured OIDC issuer as `iss`, which avoids a browser-side `userinfo` fetch and keeps the login flow independent of Authentik CORS behavior.
+- The login-callback bridge derives claims from the `id_token` first and uses the configured OIDC issuer as `iss`, which avoids a browser-side `userinfo` fetch and keeps the login flow independent of Authentik CORS behavior.
 
 ### Required dashboard runtime configuration
 
@@ -155,8 +157,8 @@ When the dashboard runtime is missing its Supabase admin config, the failure is 
 
 Expected symptoms:
 
-- the callback page shows: `We could not finish provisioning your account. Please try again.`
-- the browser console logs: `[auth/callback] Supabase provisioning failed ... supabase_not_configured`
+- the login-callback bridge shows a failure page
+- the browser console logs: `[auth/login-callback] Authentik callback failed ...`
 - the dashboard `/api/auth/sync` route returns `503` with `{"synced":false,"reason":"supabase_not_configured"}`
 
 What that means:
@@ -229,6 +231,7 @@ Current live CIG production provider:
 - Redirect URIs:
   - `https://app.cig.lat/auth/callback`
   - `http://localhost:3001/auth/callback`
+  - The dashboard middleware forwards these code callbacks internally to `/auth/login-callback`.
 - Scope mappings currently attached:
   - `authentik default OAuth Mapping: OpenID 'openid'`
   - `authentik default OAuth Mapping: OpenID 'email'`
@@ -344,8 +347,9 @@ Recommended provider-agnostic pattern:
 | Event | Action |
 | ----- | ------ |
 | Login start | Clear `cig_*` session keys before writing new PKCE/session state |
-| Relay route | Store verifier, state, and provider on the dashboard origin |
-| Callback | Exchange code, store tokens, set `cig_has_session` cookie, and wait for Supabase sync |
+| Relay route | Store verifier, state, and provider in dashboard cookies |
+| Login callback | Exchange code, provision Supabase, and return tokens to landing |
+| Dashboard callback | Store landing-provided tokens in session storage and set `cig_has_session` |
 | Cross-origin return | Pass tokens back to landing via hash fragment |
 | Page load | `AuthProvider` reads session storage and decodes the id token |
 | Local logout | Clear local `cig_*` state immediately |
@@ -366,7 +370,7 @@ When Authentik remains the primary IdP, Supabase acts as a mirrored local regist
 
 - `auth.users` holds a shadow account for rollback and future migration scenarios
 - `public.users` holds the app-owned user registry keyed by Authentik `sub` + `iss`
-- the dashboard callback is the bridge that keeps both in sync
+- the login-callback route is the bridge that keeps both in sync
 
 ## Security and failure-mode notes
 
@@ -374,14 +378,14 @@ When Authentik remains the primary IdP, Supabase acts as a mirrored local regist
 | ------- | -------------- |
 | PKCE S256 | random verifier + SHA-256 challenge |
 | CSRF protection | state parameter validated on callback |
-| Origin isolation | verifier lives on the dashboard origin that completes the callback |
+| Origin isolation | verifier lives in dashboard cookies on the origin that completes the callback |
 | Identity bleed prevention | all `cig_*` session keys are cleared before new login data is stored |
 | Local-first logout | local app state is cleared before remote logout finishes |
 | Remote token revocation | access token revocation is best-effort and uses `keepalive` |
 | Authentik session termination | provider invalidation flow includes `User Logout` |
 | Deterministic return target | logout completes on `/?logged_out=1` |
 | Open redirect protection | callback validates redirect targets against allowed origins |
-| Provisioning guard | dashboard callback waits for Supabase sync before redirecting |
+| Provisioning guard | login-callback route waits for Supabase sync before redirecting |
 | Supabase shadow identity | `auth.users` is matched by Authentik identity first, then email |
 
 ## Drift checks
@@ -407,6 +411,7 @@ This is the minimum audit set that caught the March 22, 2026 GitHub login regres
 | `apps/landing/components/AuthButton.tsx` | login UI and social button entrypoints |
 | `apps/landing/app/page.tsx` | logout entry and completion query normalization |
 | `apps/dashboard/app/auth/login/[provider]/route.ts` | cross-origin PKCE bridge into Authentik |
-| `apps/dashboard/app/auth/callback/page.tsx` | OIDC code exchange, provisioning guard, and landing redirect |
+| `apps/dashboard/app/auth/login-callback/route.ts` | server-side Authentik code exchange and landing redirect |
+| `apps/dashboard/app/auth/callback/page.tsx` | dashboard handoff page for landing-provided tokens |
 | `apps/dashboard/lib/authSync.ts` | server-side Supabase auth/public user mirroring for Authentik logins |
 | `apps/dashboard/lib/authProvider.ts` | dashboard logout handoff to landing |
