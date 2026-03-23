@@ -13,6 +13,7 @@ import jwt from 'jsonwebtoken';
 import { query } from '../db/client';
 import { generateJwt, Permission } from '../auth';
 import { writeAuditEvent } from '../audit';
+import { verifyIdToken } from '../middleware/oidc-verify';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -72,13 +73,25 @@ async function exchangeCodeForTokens(code: string): Promise<{
 
 /**
  * Validate the ID token signature against the Authentik JWKS endpoint.
- * For this implementation, we decode the token without verification (in production,
- * use the auth adapter from @cig/auth which handles JWKS validation).
+ * Uses jose-based JWKS verification in managed mode, falls back to
+ * decode-only for self-hosted mode (local JWTs are signed differently).
  * Returns the decoded payload or throws.
  */
 async function validateIdToken(idToken: string): Promise<Record<string, unknown>> {
+  const authMode = process.env['CIG_AUTH_MODE'] ?? 'self-hosted';
+
+  if (authMode === 'managed' && process.env['AUTHENTIK_JWKS_URI']) {
+    try {
+      const payload = await verifyIdToken(idToken);
+      return payload as Record<string, unknown>;
+    } catch (err) {
+      throw new Error(`ID token validation failed: ${(err as Error).message}`);
+    }
+  }
+
+  // Self-hosted fallback: decode without JWKS verification
+  // (tokens are validated against local JWT_SECRET in other middleware)
   try {
-    // Decode without verification for now (in production, validate against JWKS)
     const decoded = jwt.decode(idToken, { complete: true });
     if (!decoded || typeof decoded === 'string') {
       throw new Error('Invalid ID token format');

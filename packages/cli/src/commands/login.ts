@@ -27,6 +27,7 @@ interface DevicePollResponse {
   status: 'pending' | 'approved' | 'denied' | 'expired' | 'slow_down';
   access_token?: string;
   refresh_token?: string;
+  session_id?: string;
   token_type?: string;
 }
 
@@ -102,6 +103,10 @@ export async function login(apiUrl: string): Promise<void> {
 
       try {
         credentialManager.saveTokens(tokens);
+        // Persist session_id for server-side session management
+        if (pollResponse.session_id) {
+          credentialManager.saveSessionId(pollResponse.session_id);
+        }
         const now = new Date().toISOString();
         const profile: ConnectionProfile = {
           id: 'managed-cloud',
