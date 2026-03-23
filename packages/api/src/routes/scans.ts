@@ -69,14 +69,25 @@ export async function scanRoutes(app: FastifyInstance): Promise<void> {
         });
       }
 
+      // Limit asset count to prevent resource exhaustion
+      const MAX_ASSETS = 1000;
+      if (body.assets && body.assets.length > MAX_ASSETS) {
+        return reply.status(400).send({
+          error: `Too many assets (max ${MAX_ASSETS})`,
+          code: 'too_many_assets',
+          statusCode: 400,
+        });
+      }
+
       const scanId = crypto.randomUUID();
       const now = new Date().toISOString();
 
       await query(
-        `INSERT INTO scan_results (id, scan_type, provider, started_at, completed_at, status, summary_json)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO scan_results (id, node_id, scan_type, provider, started_at, completed_at, status, summary_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           scanId,
+          userId,
           body.scan_type,
           body.provider ?? null,
           now,
