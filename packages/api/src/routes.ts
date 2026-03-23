@@ -12,6 +12,7 @@ import { bootstrapRoutes } from './routes/bootstrap';
 import { oidcRoutes } from './routes/oidc';
 import { auditRoutes } from './routes/audit';
 import { sessionRoutes } from './routes/sessions';
+import { scanRoutes } from './routes/scans';
 
 // Shared instances
 const graphEngine = new GraphEngine();
@@ -43,6 +44,9 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── Session Management (Phase 1.3) ──────────────────────────────────────────
   await app.register(sessionRoutes);
+
+  // ─── Scan Results (Phase 3.2) ────────────────────────────────────────────────
+  await app.register(scanRoutes);
 
   // ─── Resources ──────────────────────────────────────────────────────────────
 

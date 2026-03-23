@@ -12,6 +12,7 @@ import { status } from './commands/status.js';
 import { openDashboard } from './commands/open.js';
 import { upgrade } from './commands/upgrade.js';
 import { uninstall } from './commands/uninstall.js';
+import { scan } from './commands/scan.js';
 import { CLI_VERSION } from './version.js';
 
 const program = new Command();
@@ -159,6 +160,27 @@ program
   .action((opts) => {
     uninstall(Boolean(opts.purgeData)).catch((err) => {
       console.error('Error during uninstall:', err);
+      process.exit(1);
+    });
+  });
+
+program
+  .command('scan')
+  .description('Discover and map local/cloud infrastructure')
+  .option('--type <type>', 'Scan type: local, cloud, or all', 'local')
+  .option('--provider <provider>', 'Cloud provider: aws, gcp, k8s')
+  .option('--upload', 'Upload results to the API', false)
+  .option('--json', 'Output results as JSON', false)
+  .option('--api-url <url>', 'API URL', 'http://localhost:8000')
+  .action((opts) => {
+    scan({
+      type: opts.type as 'local' | 'cloud' | 'all',
+      provider: opts.provider as 'aws' | 'gcp' | 'k8s' | undefined,
+      upload: Boolean(opts.upload),
+      json: Boolean(opts.json),
+      apiUrl: opts.apiUrl,
+    }).catch((err) => {
+      console.error('Error during scan:', err);
       process.exit(1);
     });
   });
