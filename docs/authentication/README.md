@@ -137,6 +137,44 @@ Important rules:
 - never expose `SUPABASE_SERVICE_ROLE_KEY` through `next.config.js env` or any `NEXT_PUBLIC_*` variable
 - build-time `NEXT_PUBLIC_SUPABASE_URL` is not enough for server provisioning
 - the deployed dashboard container must receive the service-role key as a runtime env var
+- a successful Docker build does **not** prove runtime provisioning is configured; the login path still fails if the deployed service does not have these runtime vars
+
+### Current production deploy mapping
+
+In the current CIG dashboard deploy workflow, the runtime vars are expected to come from GitHub Actions secrets:
+
+- `SUPABASE_URL <- secrets.NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY <- secrets.SUPABASE_SERVICE_ROLE_KEY`
+
+If `secrets.SUPABASE_SERVICE_ROLE_KEY` is missing or empty, the deployment can still build and publish the dashboard image, but Authentik-backed login will fail during the provisioning step at runtime.
+
+### Provisioning failure mode and troubleshooting
+
+When the dashboard runtime is missing its Supabase admin config, the failure is intentionally fail-closed.
+
+Expected symptoms:
+
+- the callback page shows: `We could not finish provisioning your account. Please try again.`
+- the browser console logs: `[auth/callback] Supabase provisioning failed ... supabase_not_configured`
+- the dashboard `/api/auth/sync` route returns `503` with `{"synced":false,"reason":"supabase_not_configured"}`
+
+What that means:
+
+- `SUPABASE_SERVICE_ROLE_KEY` is missing in the dashboard runtime, or
+- both `SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_URL` are unavailable to the server route
+
+What the app does on purpose:
+
+- blocks entry into the protected app
+- clears the local `cig_*` session state
+- sends the user back to sign-in instead of allowing a half-provisioned session
+
+What to fix:
+
+- ensure the dashboard runtime has both `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
+- confirm the GitHub Actions secret `SUPABASE_SERVICE_ROLE_KEY` exists for the dashboard deploy workflow
+- redeploy the dashboard after fixing the runtime env
+- rerun one real social-login smoke test after deploy, because this failure only appears when the server-side sync route is exercised
 
 ## Current logout flow
 

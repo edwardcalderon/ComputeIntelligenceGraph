@@ -147,6 +147,7 @@ The script outputs two values. Add them as **GitHub Actions secrets**:
 | `GCP_SERVICE_ACCOUNT` | `cig-lat@cig-technology.iam.gserviceaccount.com` | No |
 | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL | Yes |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key | Yes |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service-role key for server-side provisioning | Yes |
 | `NEXT_PUBLIC_API_URL` | Production API URL (e.g. `https://api.cig.lat`) | No |
 | `NEXT_PUBLIC_SITE_URL` | `https://cig.lat` | No |
 
@@ -185,9 +186,11 @@ gcloud run deploy dashboard \
   --max-instances=5 \
   --concurrency=80 \
   --timeout=30s \
-  --set-env-vars="NODE_ENV=production,NEXT_PUBLIC_SITE_URL=https://cig.lat" \
+  --set-env-vars="NODE_ENV=production,NEXT_PUBLIC_SITE_URL=https://cig.lat,SUPABASE_URL=https://your-project.supabase.co,SUPABASE_SERVICE_ROLE_KEY=..." \
   --project=cig-technology
 ```
+
+For Authentik-backed login, the dashboard runtime must receive `SUPABASE_SERVICE_ROLE_KEY`. Without it, `/api/auth/sync` returns `supabase_not_configured` and the callback fails closed instead of entering the app with a half-provisioned session.
 
 ### Scaling policy
 
@@ -204,8 +207,8 @@ gcloud run deploy dashboard \
 ## CI/CD Pipeline
 
 The pipeline lives at `.github/workflows/deploy-dashboard.yml` and triggers on:
-- Push to `main` (continuous deployment)
 - Semver tags `v*.*.*` (release deployments)
+- Manual dispatch via `workflow_dispatch`
 
 ### Flow
 

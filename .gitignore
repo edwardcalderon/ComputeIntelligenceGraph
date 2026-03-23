@@ -53,6 +53,8 @@ __pycache__/
 *.pyd
 .Python
 env/
+!config/env/
+!config/env/manifest.cjs
 venv/
 ENV/
 

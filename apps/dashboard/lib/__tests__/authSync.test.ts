@@ -67,6 +67,18 @@ describe("authSync", () => {
     });
   });
 
+  it("accepts the legacy Supabase service role env alias", () => {
+    expect(
+      getSupabaseAdminConfig({
+        SUPABASE_URL: "https://project.supabase.co",
+        SUPABASE_SERVICE_ROLE: "legacy-service-role-key",
+      } as unknown as NodeJS.ProcessEnv),
+    ).toEqual({
+      url: "https://project.supabase.co",
+      serviceRoleKey: "legacy-service-role-key",
+    });
+  });
+
   it("creates a shadow auth user and upserts the app user", async () => {
     const client = makeClient();
 

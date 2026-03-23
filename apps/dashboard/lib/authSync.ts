@@ -101,7 +101,9 @@ export function getSupabaseAdminConfig(
   env: NodeJS.ProcessEnv = process.env,
 ): SupabaseAdminConfig | null {
   const url = normalizeOptionalText(env.SUPABASE_URL ?? env.NEXT_PUBLIC_SUPABASE_URL);
-  const serviceRoleKey = normalizeOptionalText(env.SUPABASE_SERVICE_ROLE_KEY);
+  const serviceRoleKey = normalizeOptionalText(
+    env.SUPABASE_SERVICE_ROLE_KEY ?? env.SUPABASE_SERVICE_ROLE,
+  );
 
   if (!url || !serviceRoleKey) return null;
 
