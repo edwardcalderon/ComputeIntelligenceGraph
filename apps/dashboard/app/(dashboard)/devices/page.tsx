@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { browserApiFetch } from "../../../lib/browserApi";
 
 interface DeviceSession {
   id: string;
@@ -45,11 +46,9 @@ export default function DevicesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
-
   const fetchSessions = useCallback(async () => {
     try {
-      const res = await fetch(`${apiUrl}/api/v1/sessions`, { credentials: "include" });
+      const res = await browserApiFetch("/api/v1/sessions");
       if (!res.ok) throw new Error(`Failed to fetch sessions: ${res.status}`);
       const data = await res.json();
       setSessions(data.items ?? []);
@@ -59,7 +58,7 @@ export default function DevicesPage() {
     } finally {
       setLoading(false);
     }
-  }, [apiUrl]);
+  }, []);
 
   useEffect(() => {
     fetchSessions();
@@ -73,9 +72,8 @@ export default function DevicesPage() {
 
   const revokeSession = async (sessionId: string) => {
     try {
-      const res = await fetch(`${apiUrl}/api/v1/sessions/${sessionId}`, {
+      const res = await browserApiFetch(`/api/v1/sessions/${sessionId}`, {
         method: "DELETE",
-        credentials: "include",
       });
       if (!res.ok) throw new Error(`Revocation failed: ${res.status}`);
       setSessions((prev) =>

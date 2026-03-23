@@ -14,7 +14,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { createServer } from '../index';
-import { generateJwt, Permission } from '../auth';
+import { generateJwt, Permission, verifyJwt } from '../auth';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -49,8 +49,39 @@ beforeAll(async () => {
       expires_at     TEXT NOT NULL,
       access_token   TEXT,
       refresh_token  TEXT,
+      session_id     TEXT,
       last_polled_at TEXT,
       created_at     TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
+  await dbQuery(`
+    CREATE TABLE IF NOT EXISTS device_sessions (
+      id          TEXT PRIMARY KEY,
+      user_id     TEXT NOT NULL,
+      device_code TEXT NOT NULL,
+      device_name TEXT,
+      device_os   TEXT,
+      device_arch TEXT,
+      ip_address  TEXT NOT NULL,
+      token_hash  TEXT NOT NULL,
+      status      TEXT NOT NULL DEFAULT 'active',
+      last_active TEXT NOT NULL DEFAULT (datetime('now')),
+      revoked_at  TEXT,
+      created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+      metadata    TEXT
+    )
+  `);
+
+  await dbQuery(`
+    CREATE TABLE IF NOT EXISTS audit_events (
+      id          TEXT PRIMARY KEY,
+      event_type  TEXT NOT NULL,
+      actor       TEXT NOT NULL,
+      ip_address  TEXT NOT NULL,
+      outcome     TEXT NOT NULL,
+      metadata    TEXT,
+      created_at  TEXT NOT NULL
     )
   `);
 
@@ -63,6 +94,8 @@ afterAll(async () => {
 
 beforeEach(async () => {
   // Clear records between tests
+  await dbQuery('DELETE FROM audit_events');
+  await dbQuery('DELETE FROM device_sessions');
   await dbQuery('DELETE FROM device_auth_records');
 });
 
@@ -134,13 +167,19 @@ describe('Full approve lifecycle', () => {
       status: string;
       access_token: string;
       refresh_token: string;
+      session_id?: string;
       token_type: string;
     }>();
 
     expect(pollBody.status).toBe('approved');
     expect(pollBody.access_token).toBeTruthy();
     expect(pollBody.refresh_token).toBeTruthy();
+    expect(pollBody.session_id).toBeTruthy();
     expect(pollBody.token_type).toBe('Bearer');
+
+    const payload = verifyJwt(pollBody.access_token);
+    expect(payload.sub).toBe('test-user-id');
+    expect(payload.permissions).toContain(Permission.READ_RESOURCES);
   });
 });
 

@@ -53,12 +53,100 @@ CREATE TABLE IF NOT EXISTS device_auth_records (
   expires_at     TIMESTAMPTZ NOT NULL,
   access_token   TEXT,
   refresh_token  TEXT,
+  session_id     TEXT,
   last_polled_at TIMESTAMPTZ,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX IF NOT EXISTS device_auth_records_user_code_idx  ON device_auth_records (user_code);
 CREATE INDEX IF NOT EXISTS device_auth_records_expires_at_idx ON device_auth_records (expires_at);
+
+-- users: OIDC-linked control plane users
+CREATE TABLE IF NOT EXISTS users (
+  id          TEXT PRIMARY KEY,
+  oidc_sub    TEXT UNIQUE,
+  email       TEXT NOT NULL,
+  groups      TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS users_oidc_sub_idx ON users (oidc_sub);
+
+-- refresh_tokens: long-lived refresh tokens issued for web sign-in
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+  token       TEXT PRIMARY KEY,
+  user_id     TEXT NOT NULL,
+  expires_at  TIMESTAMPTZ NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS refresh_tokens_user_id_idx ON refresh_tokens (user_id);
+
+-- oidc_states: CSRF protection state for the OIDC callback flow
+CREATE TABLE IF NOT EXISTS oidc_states (
+  state        TEXT PRIMARY KEY,
+  user_id      TEXT NOT NULL,
+  redirect_uri TEXT,
+  expires_at   TIMESTAMPTZ NOT NULL,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS oidc_states_expires_at_idx ON oidc_states (expires_at);
+
+-- device_sessions: revocable CLI sessions visible in the dashboard
+CREATE TABLE IF NOT EXISTS device_sessions (
+  id          TEXT PRIMARY KEY,
+  user_id     TEXT NOT NULL,
+  device_code TEXT NOT NULL,
+  device_name TEXT,
+  device_os   TEXT,
+  device_arch TEXT,
+  ip_address  TEXT NOT NULL,
+  token_hash  TEXT NOT NULL,
+  status      TEXT NOT NULL DEFAULT 'active'
+                CHECK (status IN ('active', 'revoked', 'expired')),
+  last_active TIMESTAMPTZ NOT NULL DEFAULT now(),
+  revoked_at  TIMESTAMPTZ,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  metadata    JSONB
+);
+
+CREATE INDEX IF NOT EXISTS device_sessions_user_id_idx ON device_sessions (user_id);
+CREATE INDEX IF NOT EXISTS device_sessions_token_hash_idx ON device_sessions (token_hash);
+CREATE INDEX IF NOT EXISTS device_sessions_status_idx ON device_sessions (status);
+
+-- scan_results: scan runs uploaded from the CLI/runtime
+CREATE TABLE IF NOT EXISTS scan_results (
+  id            TEXT PRIMARY KEY,
+  node_id       TEXT NOT NULL,
+  scan_type     TEXT NOT NULL CHECK (scan_type IN ('local', 'cloud', 'all')),
+  provider      TEXT,
+  started_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completed_at  TIMESTAMPTZ,
+  status        TEXT NOT NULL DEFAULT 'running'
+                  CHECK (status IN ('running', 'completed', 'failed')),
+  summary_json  JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS scan_results_node_id_idx ON scan_results (node_id);
+CREATE INDEX IF NOT EXISTS scan_results_started_at_idx ON scan_results (started_at DESC);
+
+-- scan_assets: assets discovered during a scan run
+CREATE TABLE IF NOT EXISTS scan_assets (
+  id            TEXT PRIMARY KEY,
+  scan_id       TEXT NOT NULL,
+  asset_type    TEXT NOT NULL,
+  provider      TEXT NOT NULL,
+  identifier    TEXT NOT NULL,
+  metadata_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS scan_assets_scan_id_idx ON scan_assets (scan_id);
+CREATE INDEX IF NOT EXISTS scan_assets_provider_idx ON scan_assets (provider);
+CREATE INDEX IF NOT EXISTS scan_assets_asset_type_idx ON scan_assets (asset_type);
 
 -- audit_events: immutable audit log for all auth and provisioning actions
 CREATE TABLE IF NOT EXISTS audit_events (

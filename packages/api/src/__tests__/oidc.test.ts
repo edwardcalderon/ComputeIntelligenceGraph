@@ -14,6 +14,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi, afterEach } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { createServer } from '../index';
+import * as oidcVerify from '../middleware/oidc-verify';
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
@@ -94,6 +95,7 @@ beforeEach(async () => {
 
 afterEach(() => {
   vi.clearAllMocks();
+  vi.restoreAllMocks();
   vi.resetModules();
 });
 
@@ -108,6 +110,29 @@ async function insertState(state: string, userId = 'test-user-id'): Promise<void
     `INSERT INTO oidc_states (state, user_id, expires_at) VALUES (?, ?, ?)`,
     [state, userId, futureExpiry()]
   );
+}
+
+function mockSuccessfulOidcExchange(claims: {
+  sub: string;
+  email: string;
+  groups?: string[];
+}): void {
+  vi.spyOn(oidcVerify, 'verifyIdToken').mockResolvedValue({
+    sub: claims.sub,
+    email: claims.email,
+    groups: claims.groups ?? [],
+  });
+
+  global.fetch = vi.fn().mockResolvedValueOnce({
+    ok: true,
+    json: async () => ({
+      access_token: 'mock-access-token',
+      id_token: 'mock-id-token',
+      refresh_token: 'mock-refresh-token',
+      token_type: 'Bearer',
+      expires_in: 3600,
+    }),
+  });
 }
 
 // ─── GET /api/v1/auth/oidc/callback ───────────────────────────────────────────
@@ -183,29 +208,10 @@ describe('GET /api/v1/auth/oidc/callback', () => {
 
   it('returns 302 redirect with access_token and refresh_token on valid code exchange', async () => {
     await insertState('valid-state', 'test-user-id');
-
-    // Create a valid JWT token for testing
-    const jwt = require('jsonwebtoken');
-    const idToken = jwt.sign(
-      {
-        sub: 'user-123',
-        email: 'test@test.com',
-        groups: ['admin'],
-      },
-      'test-secret',
-      { expiresIn: '1h' }
-    );
-
-    // Mock fetch to return successful token exchange
-    global.fetch = vi.fn().mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        access_token: 'mock-access-token',
-        id_token: idToken,
-        refresh_token: 'mock-refresh-token',
-        token_type: 'Bearer',
-        expires_in: 3600,
-      }),
+    mockSuccessfulOidcExchange({
+      sub: 'user-123',
+      email: 'test@test.com',
+      groups: ['admin'],
     });
 
     const res = await app.inject({
@@ -222,27 +228,10 @@ describe('GET /api/v1/auth/oidc/callback', () => {
 
   it('creates a new user record from OIDC claims on first login', async () => {
     await insertState('valid-state');
-
-    const jwt = require('jsonwebtoken');
-    const idToken = jwt.sign(
-      {
-        sub: 'new-user-sub',
-        email: 'newuser@example.com',
-        groups: ['users'],
-      },
-      'test-secret',
-      { expiresIn: '1h' }
-    );
-
-    global.fetch = vi.fn().mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        access_token: 'mock-access-token',
-        id_token: idToken,
-        refresh_token: 'mock-refresh-token',
-        token_type: 'Bearer',
-        expires_in: 3600,
-      }),
+    mockSuccessfulOidcExchange({
+      sub: 'new-user-sub',
+      email: 'newuser@example.com',
+      groups: ['users'],
     });
 
     await app.inject({
@@ -272,27 +261,10 @@ describe('GET /api/v1/auth/oidc/callback', () => {
     );
 
     await insertState('valid-state');
-
-    const jwt = require('jsonwebtoken');
-    const idToken = jwt.sign(
-      {
-        sub: 'existing-sub',
-        email: 'updated@example.com',
-        groups: ['admin', 'users'],
-      },
-      'test-secret',
-      { expiresIn: '1h' }
-    );
-
-    global.fetch = vi.fn().mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        access_token: 'mock-access-token',
-        id_token: idToken,
-        refresh_token: 'mock-refresh-token',
-        token_type: 'Bearer',
-        expires_in: 3600,
-      }),
+    mockSuccessfulOidcExchange({
+      sub: 'existing-sub',
+      email: 'updated@example.com',
+      groups: ['admin', 'users'],
     });
 
     await app.inject({
@@ -314,27 +286,10 @@ describe('GET /api/v1/auth/oidc/callback', () => {
   it('invalidates the state after successful callback', async () => {
     const state = 'state-to-invalidate';
     await insertState(state);
-
-    const jwt = require('jsonwebtoken');
-    const idToken = jwt.sign(
-      {
-        sub: 'user-123',
-        email: 'test@test.com',
-        groups: [],
-      },
-      'test-secret',
-      { expiresIn: '1h' }
-    );
-
-    global.fetch = vi.fn().mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        access_token: 'mock-access-token',
-        id_token: idToken,
-        refresh_token: 'mock-refresh-token',
-        token_type: 'Bearer',
-        expires_in: 3600,
-      }),
+    mockSuccessfulOidcExchange({
+      sub: 'user-123',
+      email: 'test@test.com',
+      groups: [],
     });
 
     await app.inject({
@@ -352,33 +307,18 @@ describe('GET /api/v1/auth/oidc/callback', () => {
 
   it('writes audit event on successful callback', async () => {
     await insertState('valid-state');
-
-    const jwt = require('jsonwebtoken');
-    const idToken = jwt.sign(
-      {
-        sub: 'user-123',
-        email: 'audit@test.com',
-        groups: [],
-      },
-      'test-secret',
-      { expiresIn: '1h' }
-    );
-
-    global.fetch = vi.fn().mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        access_token: 'mock-access-token',
-        id_token: idToken,
-        refresh_token: 'mock-refresh-token',
-        token_type: 'Bearer',
-        expires_in: 3600,
-      }),
+    mockSuccessfulOidcExchange({
+      sub: 'user-123',
+      email: 'audit@test.com',
+      groups: [],
     });
 
     await app.inject({
       method: 'GET',
       url: '/api/v1/auth/oidc/callback?code=valid-code&state=valid-state',
     });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     const auditResult = await dbQuery(
       `SELECT event_type, outcome FROM audit_events WHERE event_type = 'oidc_callback_success'`
@@ -398,6 +338,8 @@ describe('GET /api/v1/auth/oidc/callback', () => {
     });
 
     expect(res.statusCode).toBe(400);
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     const auditResult = await dbQuery(
       `SELECT event_type, outcome FROM audit_events WHERE event_type = 'oidc_callback_invalid_state'`

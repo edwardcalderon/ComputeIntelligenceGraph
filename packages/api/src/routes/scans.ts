@@ -129,6 +129,8 @@ export async function scanRoutes(app: FastifyInstance): Promise<void> {
     { preHandler: [authenticate] },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const queryParams = request.query as { limit?: string; offset?: string };
+      const user = (request as any).user as { sub: string } | undefined;
+      const userId = user?.sub ?? 'unknown';
       const limit = Math.min(parseInt(queryParams.limit ?? '50', 10) || 50, 100);
       const offset = Math.max(parseInt(queryParams.offset ?? '0', 10) || 0, 0);
 
@@ -143,9 +145,10 @@ export async function scanRoutes(app: FastifyInstance): Promise<void> {
       }>(
         `SELECT id, scan_type, provider, started_at, completed_at, status, summary_json
            FROM scan_results
+          WHERE node_id = ?
           ORDER BY started_at DESC
           LIMIT ? OFFSET ?`,
-        [limit, offset]
+        [userId, limit, offset]
       );
 
       return reply.send({ items: result.rows, total: result.rowCount });
@@ -158,6 +161,8 @@ export async function scanRoutes(app: FastifyInstance): Promise<void> {
     { preHandler: [authenticate] },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const { id } = request.params as { id: string };
+      const user = (request as any).user as { sub: string } | undefined;
+      const userId = user?.sub ?? 'unknown';
 
       const scanResult = await query<{
         id: string;
@@ -169,8 +174,9 @@ export async function scanRoutes(app: FastifyInstance): Promise<void> {
         summary_json: string;
       }>(
         `SELECT id, scan_type, provider, started_at, completed_at, status, summary_json
-           FROM scan_results WHERE id = ?`,
-        [id]
+           FROM scan_results
+          WHERE id = ? AND node_id = ?`,
+        [id, userId]
       );
 
       if (scanResult.rows.length === 0) {

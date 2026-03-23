@@ -15,7 +15,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import crypto from 'crypto';
 import { query } from '../db/client';
-import { authenticate } from '../auth';
+import { authenticate, generateJwt, Permission, verifyJwt } from '../auth';
 import { writeAuditEvent } from '../audit';
 
 // ---------------------------------------------------------------------------
@@ -239,8 +239,29 @@ export async function deviceAuthRoutes(app: FastifyInstance): Promise<void> {
       const user = (request as any).user as { sub: string } | undefined;
       const userId = user?.sub ?? 'unknown';
 
-      // Generate tokens for the approved device
-      const accessToken = crypto.randomBytes(32).toString('hex');
+      const pendingRecord = await query<{ device_code: string }>(
+        `SELECT device_code
+           FROM device_auth_records
+          WHERE user_code = ?
+            AND status = 'pending'
+            AND expires_at > ?`,
+        [userCode, new Date().toISOString()]
+      );
+
+      if (pendingRecord.rowCount === 0) {
+        writeAuditEvent(app, 'device_approved', userId, ipAddress, 'failure', { user_code: userCode });
+        return reply.status(404).send({
+          error: 'Device not found, already processed, or expired',
+          code: 'device_not_found',
+          statusCode: 404,
+        });
+      }
+
+      // Device sessions must receive JWTs because the rest of the API authenticates Bearer JWTs.
+      const accessToken = generateJwt({
+        sub: userId,
+        permissions: [Permission.READ_RESOURCES],
+      });
       const refreshToken = crypto.randomBytes(32).toString('hex');
       const tokenHash = crypto.createHash('sha256').update(accessToken).digest('hex');
 
@@ -272,7 +293,16 @@ export async function deviceAuthRoutes(app: FastifyInstance): Promise<void> {
         `INSERT INTO device_sessions
            (id, user_id, device_code, device_name, device_os, device_arch, ip_address, token_hash, status, metadata)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', '{}')`,
-        [sessionId, userId, userCode, body2.device_name ?? null, body2.device_os ?? null, body2.device_arch ?? null, ipAddress, tokenHash]
+        [
+          sessionId,
+          userId,
+          pendingRecord.rows[0]!.device_code,
+          body2.device_name ?? null,
+          body2.device_os ?? null,
+          body2.device_arch ?? null,
+          ipAddress,
+          tokenHash,
+        ]
       ).catch((err) => {
         app.log.warn({ err }, 'Failed to persist device session (table may not exist)');
       });
@@ -345,6 +375,12 @@ export async function deviceAuthRoutes(app: FastifyInstance): Promise<void> {
 
       if (authHeader?.startsWith('Bearer ')) {
         const token = authHeader.slice(7);
+        try {
+          userId = verifyJwt(token).sub;
+        } catch {
+          userId = 'unknown';
+        }
+
         // Mark any device_auth_record whose access_token matches as expired
         await query(
           `UPDATE device_auth_records

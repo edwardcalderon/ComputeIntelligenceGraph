@@ -48,7 +48,66 @@ export interface DeviceAuthRecord {
   expires_at: Date;
   access_token: string | null;
   refresh_token: string | null;
+  session_id: string | null;
   last_polled_at: Date | null;
+  created_at: Date;
+}
+
+// device_sessions
+export interface DeviceSession {
+  id: string;
+  user_id: string;
+  device_code: string;
+  device_name: string | null;
+  device_os: string | null;
+  device_arch: string | null;
+  ip_address: string;
+  token_hash: string;
+  status: 'active' | 'revoked' | 'expired';
+  last_active: Date;
+  revoked_at: Date | null;
+  created_at: Date;
+  metadata: Record<string, unknown> | null;
+}
+
+// oidc_states
+export interface OidcState {
+  state: string;
+  user_id: string;
+  redirect_uri: string | null;
+  expires_at: Date;
+  created_at: Date;
+}
+
+// refresh_tokens
+export interface RefreshToken {
+  token: string;
+  user_id: string;
+  expires_at: Date;
+  created_at: Date;
+}
+
+// scan_results
+export interface ScanResult {
+  id: string;
+  node_id: string;
+  scan_type: 'local' | 'cloud' | 'all';
+  provider: string | null;
+  started_at: Date;
+  completed_at: Date | null;
+  status: 'running' | 'completed' | 'failed';
+  summary_json: Record<string, unknown> | null;
+  created_at: Date;
+}
+
+// scan_assets
+export interface ScanAsset {
+  id: string;
+  scan_id: string;
+  asset_type: string;
+  provider: string;
+  identifier: string;
+  metadata_json: Record<string, unknown> | null;
   created_at: Date;
 }
 
@@ -76,6 +135,6 @@ export interface AdminAccount {
 export type NewManagedTarget = Omit<ManagedTarget, 'id' | 'created_at' | 'status' | 'last_seen' | 'service_status' | 'system_metrics' | 'cig_version'>;
 export type NewEnrollmentToken = Omit<EnrollmentToken, 'created_at' | 'used'>;
 export type NewBootstrapToken = Omit<BootstrapToken, 'created_at' | 'consumed'>;
-export type NewDeviceAuthRecord = Omit<DeviceAuthRecord, 'created_at' | 'status' | 'user_id' | 'access_token' | 'refresh_token' | 'last_polled_at'>;
+export type NewDeviceAuthRecord = Omit<DeviceAuthRecord, 'created_at' | 'status' | 'user_id' | 'access_token' | 'refresh_token' | 'session_id' | 'last_polled_at'>;
 export type NewAuditEvent = Omit<AuditEvent, 'id' | 'created_at'>;
 export type NewAdminAccount = Omit<AdminAccount, 'id' | 'created_at'>;
