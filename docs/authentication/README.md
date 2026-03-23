@@ -210,6 +210,13 @@ Dashboard or Landing                  Landing                              Authe
 - If you keep using `default-provider-invalidation-flow`, every RP that shares it will inherit the same post-logout behavior.
 - Once multiple relying parties need different logout destinations, create a provider-specific invalidation flow instead of hardcoding a shared default flow.
 
+### Known limitation
+
+- If Authentik shows its `Logout successful` page and does not return to `/?logged_out=1`, the local app logout has still completed. The remaining redirect is Authentik-side behavior, not a critical app failure.
+- We keep this documented as non-blocking for local development and for the current tenant configuration.
+- The proper long-term fix is a provider-specific invalidation flow or an upstream Authentik change that consistently honors the logout redirect target.
+- Track the upstream discussion here: https://github.com/goauthentik/authentik/issues/10430
+
 ## Authentik resources CIG depends on
 
 ### 1. OIDC provider and application

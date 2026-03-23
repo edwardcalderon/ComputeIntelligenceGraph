@@ -23,7 +23,7 @@ COPY apps/dashboard ./apps/dashboard
 # NEXT_PUBLIC_* vars are baked into the JS bundle at build time.
 # Pass them as build args from CI so the container never needs them at runtime.
 ARG NEXT_PUBLIC_API_URL=http://localhost:8080
-ARG NEXT_PUBLIC_SITE_URL=https://cig.lat
+ARG NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ARG NEXT_PUBLIC_DASHBOARD_URL=http://localhost:3001
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY

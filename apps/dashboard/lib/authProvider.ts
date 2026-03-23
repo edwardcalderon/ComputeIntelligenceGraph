@@ -3,6 +3,10 @@ import {
   discoverEndpoints,
   orchestrateLogout,
 } from "@edcalderon/auth/authentik";
+import {
+  resolveLandingLoggedOutUrl,
+  resolveLandingUrl,
+} from "./siteUrl";
 
 function getSession() {
   if (typeof window === "undefined") return null;
@@ -41,14 +45,6 @@ function decodeJwt(token: string): Record<string, unknown> | null {
   }
 }
 
-function getLandingUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-}
-
-function getLandingLoggedOutUrl(): string {
-  return `${getLandingUrl()}?logged_out=1`;
-}
-
 function getAuthentikIssuer(): string {
   const base = process.env.NEXT_PUBLIC_AUTHENTIK_URL ?? "https://auth.cig.technology";
   return new URL("/application/o/cig-dashboard/", base).toString();
@@ -85,7 +81,7 @@ async function resolveDashboardLogoutUrl(
   const issuerUrl = fallbackIssuer.endsWith("/")
     ? fallbackIssuer
     : `${fallbackIssuer}/`;
-  const postLogoutRedirectUri = getLandingLoggedOutUrl();
+  const postLogoutRedirectUri = resolveLandingLoggedOutUrl();
   const baseConfig = {
     issuer: fallbackIssuer,
     postLogoutRedirectUri,
@@ -128,14 +124,14 @@ export const authProvider: AuthProvider = {
     if (getAuthBackend() !== "authentik") {
       return {
         success: true,
-        redirectTo: getLandingLoggedOutUrl(),
+        redirectTo: resolveLandingLoggedOutUrl(),
       };
     }
 
     const endSessionUrl = await resolveDashboardLogoutUrl(
       session?.token,
       session?.idToken,
-    ).catch(() => getLandingLoggedOutUrl());
+    ).catch(() => resolveLandingLoggedOutUrl());
 
     if (typeof window !== "undefined") {
       window.location.replace(endSessionUrl);
@@ -150,7 +146,7 @@ export const authProvider: AuthProvider = {
     // No session → send straight to landing sign-in
     return {
       authenticated: false,
-      redirectTo: getLandingUrl(),
+      redirectTo: resolveLandingUrl(),
       error: { name: "Unauthenticated", message: "No active session." },
     };
   },
@@ -159,7 +155,7 @@ export const authProvider: AuthProvider = {
     const status = (error as { status?: number }).status;
     if (status === 401 || status === 403) {
       clearSession();
-      return { logout: true, redirectTo: getLandingUrl() };
+      return { logout: true, redirectTo: resolveLandingUrl() };
     }
     return { error };
   },

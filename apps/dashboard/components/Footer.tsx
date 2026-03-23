@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "@cig-technology/i18n/react";
+import { resolveLandingUrl } from "../lib/siteUrl";
 
 export function Footer() {
   const t = useTranslation();
@@ -9,7 +10,7 @@ export function Footer() {
     <footer className="shrink-0 border-t border-cig px-4 py-2 text-[10px] text-cig-muted">
       <div className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 text-center">
         <a
-          href={process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}
+          href={resolveLandingUrl()}
           className="hover:text-cig-secondary transition-colors"
         >
           {t("footer.site")}

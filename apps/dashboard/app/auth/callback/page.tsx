@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@cig-technology/i18n/react";
+import { resolveLandingUrl } from "../../../lib/siteUrl";
 import {
   clearRelayStorage,
   discoverEndpoints,
@@ -45,7 +46,7 @@ export default function AuthCallback() {
     const hashParams = new URLSearchParams(hash);
     const searchParams = new URLSearchParams(search);
 
-    const landingUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+    const landingUrl = resolveLandingUrl();
     const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3001";
 
     async function handle() {
@@ -154,7 +155,7 @@ export default function AuthCallback() {
         <div className="flex max-w-sm flex-col items-center gap-4 px-4 text-center">
           <p className="text-sm text-red-400">{error}</p>
           <a
-            href={process.env.NEXT_PUBLIC_SITE_URL ?? "/"}
+            href={resolveLandingUrl()}
             className="text-xs text-zinc-500 underline transition-colors hover:text-zinc-300"
           >
             {t("auth.backToSignIn")}

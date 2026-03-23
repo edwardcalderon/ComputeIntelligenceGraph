@@ -59,6 +59,8 @@ function resolveReleaseMetadata() {
 }
 
 const { releaseTag, buildNumber } = resolveReleaseMetadata();
+// Local builds should stay on localhost; the deploy workflow sets production explicitly.
+const defaultSiteUrl = 'http://localhost:3000';
 
 const nextConfig = {
   transpilePackages: ['@cig/auth', '@cig/ui', '@edcalderon/auth'],
@@ -73,7 +75,7 @@ const nextConfig = {
     NEXT_PUBLIC_APP_VERSION: version,
     NEXT_PUBLIC_APP_BUILD: buildNumber,
     NEXT_PUBLIC_RELEASE_TAG: releaseTag,
-    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'https://cig.lat',
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || defaultSiteUrl,
     NEXT_PUBLIC_LEGACY_SITE_URL:
       process.env.NEXT_PUBLIC_LEGACY_SITE_URL ||
       'https://edwardcalderon.github.io/ComputeIntelligenceGraph',

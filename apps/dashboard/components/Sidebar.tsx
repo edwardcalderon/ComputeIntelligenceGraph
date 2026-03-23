@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "@cig-technology/i18n/react";
 import { useAppStore } from "../lib/store";
+import { resolveLandingUrl } from "../lib/siteUrl";
 import { UserMenu } from "./UserMenu";
 
 interface NavItem {
@@ -133,7 +134,9 @@ export function Sidebar() {
     <>
       {/* Mobile overlay */}
       {sidebarOpen && (
-        <div
+        <button
+          type="button"
+          aria-label="Close sidebar"
           className="fixed inset-0 z-20 bg-black/40 dark:bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -149,7 +152,7 @@ export function Sidebar() {
       >
         {/* Logo */}
         <a
-          href={process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}
+          href={resolveLandingUrl()}
           className="group flex h-14 items-center gap-3 px-5 border-b border-cig transition-colors hover:bg-cig-hover"
         >
           <div className="relative flex items-center justify-center size-8 rounded-lg bg-cyan-500/10 dark:bg-cyan-500/10 border border-cyan-500/20">

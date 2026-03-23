@@ -2,7 +2,9 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://cig.lat";
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  "http://localhost:3000";
 
 export const viewport: Viewport = {
   themeColor: "#22d3ee",

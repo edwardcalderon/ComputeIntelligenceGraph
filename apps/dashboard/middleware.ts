@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
-const LANDING_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+import { resolveLandingUrl } from "./lib/siteUrl";
 
 /** Routes that are always public — no session required. */
 const PUBLIC_PATHS = [
@@ -15,6 +13,10 @@ const PUBLIC_PATHS = [
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const landingUrl = resolveLandingUrl({
+    hostname: request.nextUrl.hostname,
+    protocol: request.nextUrl.protocol,
+  });
 
   // Allow public paths through
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
@@ -25,7 +27,7 @@ export function middleware(request: NextRequest) {
 
   if (!hasSession) {
     // Redirect unauthenticated users to the landing sign-in page.
-    return NextResponse.redirect(LANDING_URL);
+    return NextResponse.redirect(landingUrl);
   }
 
   return NextResponse.next();
