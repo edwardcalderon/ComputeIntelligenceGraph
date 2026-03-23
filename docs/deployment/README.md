@@ -1,13 +1,25 @@
 # Deployment Notes
 
-## Current Deployment Surface
+Last synchronized with the current release workflow on `2026-03-23`.
+
+## Canonical Domains
+
+| Surface | Origin | Purpose |
+| --- | --- | --- |
+| Landing | `https://cig.lat` | Public site and authentication entrypoint |
+| Dashboard | `https://app.cig.lat` | Protected application UI |
+| Authentik | `https://auth.cig.technology` | Identity provider and social-login broker |
+
+## Current Deployment Surfaces
 
 - `docker-compose.yml` for the full local or single-host stack
 - `docker-compose.dev.yml` for development overrides
 - `infra/docker/` for container build definitions
-- `packages/iac/` for Terraform module scaffolding used by `packages/infra`
+- `infra/docker/Dockerfile.dashboard` for the deployable dashboard container
+- `packages/iac/` for Terraform modules and environment layouts
+- `packages/infra/` for the TypeScript deployment wrapper used around infrastructure workflows
 
-## Primary Services in Compose
+## Primary Services in the Local Stack
 
 - Neo4j
 - Chroma
@@ -17,13 +29,26 @@
 - Dashboard
 - Cartography
 
-## Domain Notes
+## Release Build Verification
 
-- Primary public domain: `https://cig.lat`
-- Legacy GitHub Pages base-path support exists only when explicitly enabled for the landing app
+The repository release workflow currently verifies:
 
-## Gaps
+- landing production build
+- dashboard production container build
+- wizard UI production build
 
-- Container publishing workflow is not documented here yet
-- Production environment variable reference still needs a dedicated document
-- Landing and wizard deployment docs should stay conservative until those apps are feature-complete
+That verification is performed by `scripts/release.sh` during patch, minor, and major releases.
+
+## Related Deployment Docs
+
+- GCP dashboard deployment: [gcloud-dashboard.md](gcloud-dashboard.md)
+- Root overview: [../../README.md](../../README.md)
+- Status snapshot: [../../PROJECT_STATUS.md](../../PROJECT_STATUS.md)
+- Authentication runtime details: [../authentication/README.md](../authentication/README.md)
+
+## Known Gaps
+
+- Container publishing/distribution is still lightly documented
+- A dedicated production environment-variable reference would still help
+- `apps/wizard-ui` is still conservative to document because the product surface is minimal
+- `packages/sdk` is not yet a deployable end-user surface

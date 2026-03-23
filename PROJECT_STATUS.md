@@ -1,549 +1,72 @@
-# CIG (Compute Intelligence Graph) - Project Status Report
+# CIG Project Status
 
-**Generated:** March 18, 2026  
-**Version:** 0.1.2  
-**Status:** 🟢 Development - Ready for Testing
+Last updated: 2026-03-23  
+Version: 0.1.51  
+Latest released tag: `v0.1.51`  
+Status: Active development
 
----
+## Current Snapshot
 
-## 📊 Executive Summary
+Compute Intelligence Graph is a monorepo for a self-hosted infrastructure intelligence platform covering discovery, graph modeling, querying, cost analysis, security review, dashboard workflows, and CLI-driven deployment/setup.
 
-The CIG project is in an advanced development state with **substantial progress** across all major components. The monorepo is well-structured, versioning is synchronized, and core functionality is implemented and tested.
+The current repository state is aligned around these primary surfaces:
 
-### Overall Completion: ~80%
+- `apps/landing` is the public landing site and authentication entrypoint at `https://cig.lat`
+- `apps/dashboard` is the main protected application at `https://app.cig.lat`
+- `packages/api` is the Fastify API layer for REST, GraphQL, WebSocket, auth, and metrics
+- `packages/graph` is the Neo4j graph engine
+- `packages/discovery` plus `services/cartography` provide discovery orchestration and inventory collection
+- `packages/chatbot` plus `packages/agents` provide retrieval, reasoning, and action workflows
+- `packages/cli` is the operator and install surface
 
-- ✅ **Foundation & Infrastructure:** 100% Complete
-- ✅ **Core Graph Engine:** 100% Complete  
-- ✅ **Discovery Service (Cartography):** 100% Complete
-- ✅ **API Layer (REST/GraphQL/WebSocket):** 100% Complete
-- ✅ **Dashboard UI:** 100% Complete
-- ✅ **Conversational Interface (RAG):** 100% Complete
-- ✅ **Infrastructure Actions (OpenFang):** 100% Complete
-- ✅ **CLI & Installation:** 100% Complete
-- ✅ **Multi-Cloud Support:** 100% Complete
-- ✅ **Cost & Security Features:** 100% Complete
-- ✅ **Auth Package:** 100% Complete
-- ✅ **Infra Deployment Wrapper (@cig/infra):** 100% Complete
-- 🟡 **Testing & Hardening:** 85% Complete
-- 🟡 **Documentation & Release:** 40% Complete
+## Release State
 
----
+The `v0.1.51` patch release completed successfully on 2026-03-23.
 
-## 🏗️ Architecture Overview
+Release verification completed during the release workflow:
 
-### Monorepo Structure
+- `pnpm test`
+- `pnpm --filter @cig/landing build`
+- dashboard container build via `infra/docker/Dockerfile.dashboard`
+- `pnpm --filter @cig/wizard-ui build`
 
-```
-cig/
-├── apps/                    # Deployable applications
-│   ├── dashboard/          ✅ Next.js 14 dashboard with E2E tests
-│   ├── landing/            ✅ Marketing/docs site
-│   └── wizard-ui/          ✅ Installation wizard
-├── packages/               # Shared libraries
-│   ├── agents/            ✅ OpenClaw & OpenFang agents
-│   ├── api/               ✅ Fastify REST/GraphQL API
-│   ├── auth/              ✅ Auth helpers & session management
-│   ├── chatbot/           ✅ RAG pipeline & LLM integration
-│   ├── cli/               ✅ CLI tool (cig command)
-│   ├── config/            ✅ Configuration management
-│   ├── discovery/         ✅ Discovery orchestrator
-│   ├── graph/             ✅ Neo4j graph engine
-│   ├── iac/               ✅ Terraform modules
-│   ├── infra/             ✅ AWS deployment wrapper (@lsts_tech/infra)
-│   └── sdk/               🟡 TypeScript/Python SDKs (partial)
-├── services/
-│   └── cartography/       ✅ Python discovery service
-└── infra/                 ✅ Docker & Terraform configs
-```
+## Implemented Areas
 
----
+- Dashboard application with resources, graph, costs, security, auth flows, and E2E coverage
+- Fastify API with REST, GraphQL, WebSocket, metrics, rate limiting, and device/auth flows
+- Neo4j graph engine with traversal and dependency handling
+- Discovery orchestration and Python Cartography service
+- Chatbot and agent packages for retrieval, query reasoning, and actions
+- CLI flows for login, install, bootstrap, enroll, connect, and local state management
+- Authentication helpers and shared auth/session utilities
+- Infrastructure wrapper and Terraform-backed deployment assets
+- Shared packages for config, i18n, UI primitives, node runtime, and runtime contracts
 
-## ✅ Completed Components
+## Partial or Still Evolving
 
-### 1. Foundation (Phase 1)
-- ✅ Monorepo with pnpm + TurboRepo
-- ✅ TypeScript configuration
-- ✅ ESLint + Prettier
-- ✅ Docker infrastructure
-- ✅ CI/CD pipeline (GitHub Actions)
-- ✅ Version management (@edcalderon/versioning)
+- `apps/wizard-ui` is still a placeholder surface with a minimal "coming soon" page
+- `packages/sdk` remains scaffolded and is not feature-complete
+- Documentation is active and now synchronized, but still needs ongoing maintenance as the code changes
 
-### 2. Graph Engine (Phase 2)
-- ✅ Neo4j database with APOC plugin
-- ✅ Graph schema & constraints
-- ✅ Resource CRUD operations
-- ✅ Relationship management
-- ✅ Dependency traversal (up to 3 levels)
-- ✅ Circular dependency detection
-- ✅ Resource filtering & pagination
-- ✅ Query timeout enforcement (30s)
-- ✅ Circuit breaker pattern
-- ✅ Retry logic with exponential backoff
-- ✅ 61 unit tests (100% coverage)
-- ✅ Property tests for transitive dependencies
-- ✅ Property tests for circular dependencies
+## Domains and Runtime Roles
 
-### 3. Cartography Discovery (Phase 3)
-- ✅ Python FastAPI microservice
-- ✅ Cartography CLI integration
-- ✅ AWS resource discovery (EC2, RDS, S3, Lambda, VPC, IAM)
-- ✅ GCP resource discovery (Compute, SQL, GCS, Functions)
-- ✅ Kubernetes resource discovery (Pods, Services, Deployments)
-- ✅ Discovery orchestrator (TypeScript)
-- ✅ Scheduled discovery (configurable interval)
-- ✅ WebSocket event emission
-- ✅ Integration tests
+| Surface | Origin | Role |
+| --- | --- | --- |
+| Landing | `https://cig.lat` | Public site, login entry, canonical logout return |
+| Dashboard | `https://app.cig.lat` | Protected application UI |
+| Authentik | `https://auth.cig.technology` | Identity provider and social-login broker |
 
-### 4. API Layer (Phase 4)
-- ✅ Fastify framework with TypeScript
-- ✅ CORS configuration
-- ✅ Pino logging (structured JSON)
-- ✅ Health check endpoint
-- ✅ Error handling middleware
-- ✅ Authentication (API keys + JWT)
-- ✅ Authorization with permissions
-- ✅ Rate limiting (100 req/min)
-- ✅ REST API endpoints (13 endpoints)
-- ✅ GraphQL API with GraphQL Yoga
-- ✅ Query depth limiting (max 5 levels)
-- ✅ Query complexity limiting (max 1000 points)
-- ✅ WebSocket server for real-time updates
-- ✅ Prometheus metrics endpoint
-- ✅ 108 tests passing
+## Linked Documentation
 
-### 5. Dashboard (Phase 5)
-- ✅ Next.js 14 with App Router
-- ✅ TailwindCSS styling
-- ✅ TanStack Query for data fetching
-- ✅ Zustand state management
-- ✅ Overview page with metrics
-- ✅ Resources list with filtering
-- ✅ Interactive graph visualization (React Flow)
-- ✅ Resource details panel
-- ✅ Costs dashboard
-- ✅ Security dashboard
-- ✅ Dark mode support
-- ✅ Responsive design
-- ✅ Real-time updates via WebSocket
-- ✅ 37+ E2E tests (Playwright)
+- Root overview: [README.md](README.md)
+- Documentation index: [docs/README.md](docs/README.md)
+- Architecture notes: [docs/architecture/README.md](docs/architecture/README.md)
+- Development notes: [docs/development/README.md](docs/development/README.md)
+- Deployment notes: [docs/deployment/README.md](docs/deployment/README.md)
+- Authentication notes: [docs/authentication/README.md](docs/authentication/README.md)
 
-### 6. Conversational Interface (Phase 6)
-- ✅ Chroma vector database
-- ✅ RAG pipeline with embeddings
-- ✅ OpenAI integration (text-embedding-3-small)
-- ✅ Vector similarity search (top-k=10)
-- ✅ Context assembly
-- ✅ OpenClaw query reasoning agent
-- ✅ Natural language to Cypher translation
-- ✅ Conversation context (last 5 turns)
-- ✅ Chat widget in dashboard
-- ✅ Streaming responses
-- ✅ Integration tests
+## Source of Truth
 
-### 7. Infrastructure Actions (Phase 7)
-- ✅ OpenFang action execution agent
-- ✅ Permission validation
-- ✅ Confirmation workflow
-- ✅ Audit logging
-- ✅ CREATE_S3_BUCKET action
-- ✅ START_EC2_INSTANCE action
-- ✅ STOP_EC2_INSTANCE action
-- ✅ Integration with conversational interface
-- ✅ Integration tests
-
-### 8. CLI & Installation (Phase 8)
-- ✅ Commander.js CLI framework
-- ✅ cig install command
-- ✅ cig connect aws/gcp commands
-- ✅ cig deploy command
-- ✅ cig start/stop/status commands
-- ✅ cig seed command
-- ✅ cig reset command
-- ✅ Credential management (AES-256-GCM)
-- ✅ OS keychain integration
-- ✅ Installation wizard
-- ✅ Terraform modules (AWS + GCP)
-- ✅ Configuration management
-- ✅ Unit tests
-
-### 9. Multi-Cloud Support (Phase 9)
-- ✅ GCP discovery configuration
-- ✅ Kubernetes discovery configuration
-- ✅ Multi-cloud dashboard views
-- ✅ Provider-specific icons & colors
-
-### 10. Cost & Security (Phase 10)
-- ✅ AWS Cost Explorer integration
-- ✅ GCP Cloud Billing integration
-- ✅ Cost aggregation & trends
-- ✅ Cost dashboard pages
-- ✅ Security misconfiguration detection
-- ✅ S3 public access detection
-- ✅ EC2 unrestricted SSH detection
-- ✅ RDS public accessibility detection
-- ✅ IAM unused keys detection
-- ✅ Security dashboard pages
-- ✅ Security score calculation
-
-### 11. Auth Package
-- ✅ Authentication helpers and session management
-- ✅ OTP support
-- ✅ Auth-ready React context and provider
-- ✅ Client utilities
-
-### 12. Infra Deployment Wrapper (packages/infra)
-- ✅ `@cig/infra` package wrapping `@lsts_tech/infra`
-- ✅ ConfigManager with env + file loading
-- ✅ Logger with structured output and level filtering
-- ✅ InfraWrapper with LSTS error wrapping
-- ✅ IACIntegration for Terraform module references
-- ✅ AuthentikDeployer — provisions Authentik to AWS
-- ✅ DashboardDeployer — deploys Next.js dashboard with Authentik integration
-- ✅ CLI entry point (`cig-infra` binary)
-- ✅ Full error class hierarchy
-- ✅ 37+ unit tests passing
-- ✅ JSDoc throughout
-- ✅ README and example configs
-
----
-
-## 🟡 In Progress / Partial
-
-### Testing & Hardening (Phase 11) - 85% Complete
-- ✅ Unit tests (80%+ coverage)
-- ✅ Integration tests
-- ✅ E2E tests (dashboard)
-- ✅ Property-based tests (8/33 implemented)
-- ✅ Security testing
-- ✅ Performance testing
-- ✅ Cross-platform testing
-- 🟡 Local development optimizations (partial)
-- 🟡 Data seeding (partial)
-
-### Documentation & Release (Phase 12) - 40% Complete
-- 🟡 IaC parser (not started)
-- 🟡 SDK packages (scaffolded, not implemented)
-- 🟡 User documentation (partial)
-- 🟡 Developer documentation (partial)
-- 🟡 Landing page (scaffolded)
-- 🟡 Tutorial content (not started)
-- 🟡 Open-source release prep (not started)
-- 🟡 Container image publishing (not started)
-- 🟡 Observability integrations (not started)
-
----
-
-## 📋 Remaining Required Tasks
-
-### High Priority (Blocking Release)
-
-1. **SDK Implementation** (Task 23.4)
-   - TypeScript SDK with all API methods
-   - Python SDK with all API methods
-   - Authentication helpers
-   - Event subscription support
-   - Examples for common patterns
-   - Publish to npm and PyPI
-
-2. **User Documentation** (Task 23.6)
-   - Installation guide (Linux, macOS, Windows)
-   - Getting started guide
-   - Configuration reference
-   - CLI command reference
-   - API documentation
-   - Conversational interface guide
-   - Troubleshooting guide
-   - FAQ
-
-3. **Developer Documentation** (Task 23.7)
-   - Architecture overview
-   - Component documentation
-   - Contribution guidelines
-   - Development setup guide
-   - Testing guide
-   - Release process
-
-4. **Landing Page** (Task 23.8)
-   - Design and implement with Next.js
-   - Project overview & features
-   - Architecture diagrams
-   - Example use cases
-   - Installation instructions
-   - Deploy to public URL
-
-5. **Open-Source Release Prep** (Task 23.10)
-   - LICENSE file
-   - Comprehensive README.md
-   - CONTRIBUTING.md
-   - CODE_OF_CONDUCT.md
-   - SECURITY.md
-   - Issue templates
-   - PR template
-   - CHANGELOG.md
-   - Tag v1.0.0 release
-
-6. **Container Publishing** (Task 23.11)
-   - Build production images
-   - Tag with version numbers
-   - Publish to Docker Hub/GHCR
-   - Document image usage
-
-### Medium Priority (Quality Improvements)
-
-7. **Local Development Optimizations** (Task 21.13)
-   - Hot reload configuration
-   - VS Code debug configs
-   - Docker layer caching
-   - Resource limits (4GB RAM)
-   - Minimal profile
-   - System requirements docs
-
-8. **Data Seeding** (Task 21.14)
-   - Seeding script
-   - Small scenario (10 resources)
-   - Medium scenario (100 resources)
-   - Large scenario (1,000 resources)
-   - Sample relationships
-   - Sample queries
-
-9. **IaC Parser** (Task 23.1)
-   - Terraform HCL parser
-   - CloudFormation YAML parser
-   - Resource_Model to HCL pretty printer
-   - Resource_Model to YAML pretty printer
-   - Round-trip validation
-   - Parse error reporting
-
-10. **Observability Integrations** (Task 23.12)
-    - Prometheus config examples
-    - Grafana dashboard templates
-    - OpenTelemetry integration docs
-    - Datadog integration docs
-
-### Low Priority (Optional Property Tests)
-
-11. **Property Tests** (15 remaining)
-    - Property 11: NL Query Translation
-    - Property 12: Conversation Context
-    - Property 13: Permission Validation
-    - Property 14: Action Confirmation
-    - Property 15: Action Audit Logging
-    - Property 16: RAG Context Retrieval
-    - Property 17: Vector Embedding Updates
-    - Property 18: Embedding Completeness
-    - And 7 more...
-
----
-
-## 🧪 Test Coverage Summary
-
-### Unit Tests
-- **packages/graph:** 61 tests ✅
-- **packages/api:** 108 tests ✅
-- **packages/agents:** 45 tests ✅
-- **packages/chatbot:** 32 tests ✅
-- **packages/cli:** 28 tests ✅
-- **packages/config:** 18 tests ✅
-- **packages/discovery:** 24 tests ✅
-- **packages/infra:** 37+ tests ✅
-
-### Integration Tests
-- API endpoints ✅
-- Discovery workflows ✅
-- Conversational interface ✅
-- Infrastructure actions ✅
-
-### E2E Tests (Dashboard)
-- Navigation (6 tests) ✅
-- Resources (9 tests) ✅
-- Graph visualization (11 tests) ✅
-- Real-time updates (6 tests) ✅
-- User journeys (5 tests) ✅
-- **Total:** 37+ E2E tests
-
-### Property-Based Tests
-- Transitive dependency resolution ✅
-- Circular dependency detection ✅
-- Discovery interval execution ✅
-- **Implemented:** 8/33 property tests
-
----
-
-## 🔧 Version Management
-
-### Versioning Tool Setup ✅
-- **Tool:** @edcalderon/versioning v1.4.6
-- **Status:** ✅ All versions synced at 0.1.0
-- **Packages:** 9 packages + 3 apps = 12 total
-
-### Available Commands
-```bash
-pnpm version:sync          # Sync versions across monorepo
-pnpm version:validate      # Validate version consistency
-pnpm version:status        # Display status report
-pnpm version:bump:patch    # Bump patch version (0.1.0 → 0.1.1)
-pnpm version:bump:minor    # Bump minor version (0.1.0 → 0.2.0)
-pnpm version:bump:major    # Bump major version (0.1.0 → 1.0.0)
-pnpm version:changelog     # Generate changelog
-pnpm check:secrets         # Scan for secrets in code
-pnpm clean                 # Clean build artifacts + repo cleanup
-```
-
-### Version Sync Status
-```
-✅ All 12 packages synced at version 0.1.0
-✅ No version conflicts detected
-✅ Dependencies properly locked
-✅ No circular dependencies
-```
-
----
-
-## 🚀 Next Steps to Release
-
-### Immediate (This Week)
-1. ✅ Add version management tool
-2. 📝 Create comprehensive status report (this document)
-3. 🔨 Implement TypeScript SDK (Task 23.4)
-4. 📚 Write user documentation (Task 23.6)
-
-### Short Term (Next 2 Weeks)
-5. 📚 Write developer documentation (Task 23.7)
-6. 🎨 Complete landing page (Task 23.8)
-7. 📦 Prepare open-source release (Task 23.10)
-8. 🐳 Publish container images (Task 23.11)
-
-### Medium Term (Next Month)
-9. 🧪 Complete remaining property tests
-10. 🔧 Local development optimizations (Task 21.13)
-11. 🌱 Data seeding implementation (Task 21.14)
-12. 📊 Observability integrations (Task 23.12)
-
----
-
-## 📊 Metrics & Statistics
-
-### Codebase
-- **Total Packages:** 11
-- **Total Apps:** 3
-- **Total Lines of Code:** ~18,000+ (estimated)
-- **Test Files:** 55+
-- **Test Cases:** 390+
-- **Test Coverage:** 80%+
-
-### Infrastructure
-- **Docker Services:** 6 (Neo4j, Chroma, Cartography, API, Dashboard, Chatbot)
-- **API Endpoints:** 13 REST + GraphQL
-- **Database:** Neo4j 5.x with APOC
-- **Vector DB:** Chroma
-- **Cloud Providers:** AWS, GCP, Kubernetes, Docker
-
-### Dependencies
-- **Node.js:** >=20.0.0
-- **pnpm:** >=9.0.0
-- **Python:** 3.11 (Cartography service)
-- **Neo4j:** 5.x
-- **Frameworks:** Fastify, Next.js 14, LangChain
-
----
-
-## 🎯 Quality Gates
-
-### Before v1.0.0 Release
-- ✅ All core functionality implemented
-- ✅ Unit test coverage >80%
-- ✅ Integration tests passing
-- ✅ E2E tests passing
-- ✅ Security testing complete
-- ✅ Performance testing complete
-- 🟡 SDK packages complete
-- 🟡 Documentation complete
-- 🟡 Landing page deployed
-- 🟡 Container images published
-- 🟡 Open-source release prep complete
-
-### Current Status: 75% Ready for v1.0.0
-
----
-
-## 🐛 Known Issues
-
-### Minor
-- Some property tests not yet implemented (optional)
-- IaC parser not implemented (optional feature)
-- Tutorial content not created (nice-to-have)
-
-### None Critical
-- All critical functionality is working
-- No blocking bugs identified
-- System is stable and testable
-
----
-
-## 🤝 Contributing
-
-The project is ready for:
-- ✅ Local development
-- ✅ Testing and QA
-- ✅ Feature development
-- ✅ Bug fixes
-- 🟡 Documentation contributions (needed)
-- 🟡 Tutorial creation (needed)
-
----
-
-## 📞 Support & Resources
-
-### Documentation
-- Requirements: `.kiro/specs/compute-intelligence-graph/requirements.md`
-- Design: `.kiro/specs/compute-intelligence-graph/design.md`
-- Tasks: `.kiro/specs/compute-intelligence-graph/tasks.md`
-- E2E Tests: `apps/dashboard/E2E_TESTS_SUMMARY.md`
-
-### Quick Start
-```bash
-# Install dependencies
-pnpm install
-
-# Start development environment
-docker-compose -f docker-compose.dev.yml up -d
-pnpm dev
-
-# Run tests
-pnpm test
-
-# Check version status
-pnpm version:status
-```
-
----
-
-## 📈 Progress Timeline
-
-- **Week 1-4:** Foundation & Monorepo ✅
-- **Week 5-8:** Graph Engine & Discovery ✅
-- **Week 9-12:** API Layer & Dashboard ✅
-- **Week 13-16:** Conversational Interface & Actions ✅
-- **Week 17-20:** CLI, Multi-Cloud, Cost & Security ✅
-- **Week 21-22:** Testing & Hardening 🟡
-- **Week 23-24:** Documentation & Release 🟡
-
-**Current:** Week 22 of 24 (92% timeline complete)
-
----
-
-## ✨ Conclusion
-
-The CIG project is in excellent shape with **75% overall completion**. All core functionality is implemented and tested. The remaining work focuses primarily on:
-
-1. **SDK packages** for programmatic access
-2. **Documentation** for users and developers
-3. **Release preparation** for open-source launch
-
-The system is **ready for testing** and can be deployed locally for development and QA purposes. With 2-3 weeks of focused effort on documentation and release prep, the project will be ready for v1.0.0 public release.
-
----
-
-**Last Updated:** March 18, 2026  
-**Next Review:** March 25, 2026  
-**Version:** 0.1.2
+- Treat the code under `apps/`, `packages/`, `services/`, and `infra/` as the final source of truth
+- Treat this file as a maintained snapshot, not an autogenerated inventory
+- When the root README shared links, version, domains, or major product surfaces change, update this file together with the linked docs above
