@@ -1,3 +1,25 @@
+## [0.1.53](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.52...v0.1.53) (2026-03-23)
+
+
+### Features
+
+* Authentik OIDC hardening, device session persistence, dashboard devices page, cartography scan service ([#7](https://github.com/edwardcalderon/ComputeIntelligenceGraph/issues/7)) ([5835322](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/58353226f65416b77f07868a0a932427c0f3c9b1))
+
+
+
+
+
+## [0.1.53](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.52...v0.1.53) (2026-03-23)
+
+
+### Features
+
+* Authentik OIDC hardening, device session persistence, dashboard devices page, cartography scan service ([#7](https://github.com/edwardcalderon/ComputeIntelligenceGraph/issues/7)) ([5835322](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/58353226f65416b77f07868a0a932427c0f3c9b1))
+
+
+
+
+
 ## [0.1.52](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.51...v0.1.52) (2026-03-23)
 
 

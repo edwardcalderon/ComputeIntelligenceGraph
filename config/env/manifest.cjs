@@ -67,7 +67,7 @@ module.exports = {
     // ── Auth / JWT ─────────────────────────────────────────────────────────
     JWT_SECRET: {
       description: 'JWT signing secret',
-      example: 'change-me-in-production',
+      example: '<YOUR_JWT_SECRET>',
       secret: true,
       targets: { api: 'JWT_SECRET' },
     },
@@ -115,7 +115,7 @@ module.exports = {
     // ── AI / LLM ───────────────────────────────────────────────────────────
     OPENAI_API_KEY: {
       description: 'OpenAI API key',
-      example: 'sk-your-openai-api-key',
+      example: '<YOUR_OPENAI_API_KEY>',
       secret: true,
       targets: { api: 'OPENAI_API_KEY', agents: 'OPENAI_API_KEY', chatbot: 'OPENAI_API_KEY' },
     },
