@@ -25,6 +25,7 @@ const platformItems: NavItem[] = [
 
 const operationsItems: NavItem[] = [
   { labelKey: "nav.deviceApproval", href: "/device-approval", icon: <DeviceIcon />,    color: "#f59e0b" },
+  { labelKey: "nav.devices",        href: "/devices",         icon: <DevicesIcon />,   color: "#06b6d4" },
   { labelKey: "nav.targets",        href: "/targets",         icon: <TargetsIcon />,   color: "#ef4444" },
   { labelKey: "nav.bootstrap",      href: "/bootstrap",       icon: <BootstrapIcon />, color: "#06b6d4" },
 ];
@@ -265,6 +266,13 @@ function BootstrapIcon() {
   return (
     <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
+    </svg>
+  );
+}
+function DevicesIcon() {
+  return (
+    <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 15V5.25A2.25 2.25 0 0 1 5.25 3h13.5A2.25 2.25 0 0 1 21 5.25Z" />
     </svg>
   );
 }

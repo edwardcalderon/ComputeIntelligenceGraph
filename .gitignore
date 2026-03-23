@@ -60,3 +60,4 @@ ENV/
 
 #gcloud
 config/env/private-gcloud.json
+*.tsbuildinfo

@@ -186,6 +186,15 @@ export class CredentialManager {
     return this.secretStore.get<BootstrapToken>('bootstrap.token');
   }
 
+  saveSessionId(sessionId: string): void {
+    this.secretStore.set('session.id', { sessionId });
+  }
+
+  loadSessionId(): string | null {
+    const data = this.secretStore.get<{ sessionId: string }>('session.id');
+    return data?.sessionId ?? null;
+  }
+
   clearAll(): void {
     this.secretStore.clear();
     if (fs.existsSync(this.configFile)) fs.unlinkSync(this.configFile);

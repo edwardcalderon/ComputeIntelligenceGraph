@@ -15,7 +15,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import crypto from 'crypto';
 import { query } from '../db/client';
-import { authenticate } from '../auth';
+import { authenticate, generateJwt, Permission, verifyJwt } from '../auth';
 import { writeAuditEvent } from '../audit';
 
 // ---------------------------------------------------------------------------
@@ -160,8 +160,9 @@ export async function deviceAuthRoutes(app: FastifyInstance): Promise<void> {
         last_polled_at: string | null;
         access_token: string | null;
         refresh_token: string | null;
+        session_id: string | null;
       }>(
-        `SELECT device_code, status, expires_at, last_polled_at, access_token, refresh_token
+        `SELECT device_code, status, expires_at, last_polled_at, access_token, refresh_token, session_id
            FROM device_auth_records
           WHERE device_code = ?`,
         [deviceCode]
@@ -208,6 +209,7 @@ export async function deviceAuthRoutes(app: FastifyInstance): Promise<void> {
           status: 'approved',
           access_token: record.access_token,
           refresh_token: record.refresh_token,
+          session_id: record.session_id ?? undefined,
           token_type: 'Bearer',
         });
       }
@@ -237,9 +239,31 @@ export async function deviceAuthRoutes(app: FastifyInstance): Promise<void> {
       const user = (request as any).user as { sub: string } | undefined;
       const userId = user?.sub ?? 'unknown';
 
-      // Generate tokens for the approved device
-      const accessToken = crypto.randomBytes(32).toString('hex');
+      const pendingRecord = await query<{ device_code: string }>(
+        `SELECT device_code
+           FROM device_auth_records
+          WHERE user_code = ?
+            AND status = 'pending'
+            AND expires_at > ?`,
+        [userCode, new Date().toISOString()]
+      );
+
+      if (pendingRecord.rowCount === 0) {
+        writeAuditEvent(app, 'device_approved', userId, ipAddress, 'failure', { user_code: userCode });
+        return reply.status(404).send({
+          error: 'Device not found, already processed, or expired',
+          code: 'device_not_found',
+          statusCode: 404,
+        });
+      }
+
+      // Device sessions must receive JWTs because the rest of the API authenticates Bearer JWTs.
+      const accessToken = generateJwt({
+        sub: userId,
+        permissions: [Permission.READ_RESOURCES],
+      });
       const refreshToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(accessToken).digest('hex');
 
       const result = await query(
         `UPDATE device_auth_records
@@ -261,6 +285,35 @@ export async function deviceAuthRoutes(app: FastifyInstance): Promise<void> {
           statusCode: 404,
         });
       }
+
+      // Persist device session for Dashboard management
+      const sessionId = crypto.randomUUID();
+      const body2 = request.body as { user_code?: string; device_name?: string; device_os?: string; device_arch?: string };
+      await query(
+        `INSERT INTO device_sessions
+           (id, user_id, device_code, device_name, device_os, device_arch, ip_address, token_hash, status, metadata)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', '{}')`,
+        [
+          sessionId,
+          userId,
+          pendingRecord.rows[0]!.device_code,
+          body2.device_name ?? null,
+          body2.device_os ?? null,
+          body2.device_arch ?? null,
+          ipAddress,
+          tokenHash,
+        ]
+      ).catch((err) => {
+        app.log.warn({ err }, 'Failed to persist device session (table may not exist)');
+      });
+
+      // Store session_id in the device_auth_record for poll retrieval
+      await query(
+        `UPDATE device_auth_records SET session_id = ? WHERE user_code = ? AND status = 'approved'`,
+        [sessionId, userCode]
+      ).catch((err) => {
+        app.log.warn({ err }, 'Failed to store session_id in device_auth_record');
+      });
 
       writeAuditEvent(app, 'device_approved', userId, ipAddress, 'success', { user_code: userCode });
       return reply.send({ success: true });
@@ -322,12 +375,42 @@ export async function deviceAuthRoutes(app: FastifyInstance): Promise<void> {
 
       if (authHeader?.startsWith('Bearer ')) {
         const token = authHeader.slice(7);
+        try {
+          userId = verifyJwt(token).sub;
+        } catch {
+          userId = 'unknown';
+        }
+
         // Mark any device_auth_record whose access_token matches as expired
         await query(
           `UPDATE device_auth_records
               SET status = 'expired'
             WHERE access_token = ?`,
           [token]
+        ).catch(() => {/* ignore — best effort */});
+
+        // Revoke token at Authentik when running in managed mode
+        if (process.env['CIG_AUTH_MODE'] === 'managed') {
+          const issuerUrl = process.env['AUTHENTIK_ISSUER_URL'] ?? '';
+          const clientId = process.env['OIDC_CLIENT_ID'] ?? '';
+          if (issuerUrl && clientId) {
+            const revokeBody = new URLSearchParams({ client_id: clientId, token });
+            fetch(`${issuerUrl}/application/o/revoke/`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: revokeBody.toString(),
+              signal: AbortSignal.timeout(5000),
+            }).catch(() => {/* ignore — best effort revocation */});
+          }
+        }
+
+        // Also revoke any device_sessions matching this token hash
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+        await query(
+          `UPDATE device_sessions
+              SET status = 'revoked', revoked_at = ?
+            WHERE token_hash = ? AND status = 'active'`,
+          [new Date().toISOString(), tokenHash]
         ).catch(() => {/* ignore — best effort */});
       }
 

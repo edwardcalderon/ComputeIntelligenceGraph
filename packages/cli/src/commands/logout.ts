@@ -14,8 +14,19 @@ export async function logout(apiUrl: string): Promise<void> {
   const credentialManager = new CredentialManager();
   const apiClient = new ApiClient({ baseUrl: apiUrl, accessToken: credentialManager.loadTokens()?.accessToken });
 
-  // Load tokens to get access token for logout request
+  // Load tokens and session_id before clearing
   const tokens = credentialManager.loadTokens();
+  const sessionId = credentialManager.loadSessionId();
+
+  // Revoke session server-side before clearing local state
+  if (tokens?.accessToken && sessionId) {
+    try {
+      await apiClient.delete(`/api/v1/sessions/${sessionId}`);
+      console.log('✓ Session revoked on server.');
+    } catch (err) {
+      console.warn('Session revocation failed (will clear locally):', err instanceof Error ? err.message : String(err));
+    }
+  }
 
   // Clear all stored credentials
   try {

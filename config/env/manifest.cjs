@@ -224,6 +224,37 @@ module.exports = {
       example: 'admin@example.com',
       targets: {},
     },
+    AUTHENTIK_TOKEN_ENDPOINT: {
+      description: 'Authentik OIDC token endpoint',
+      example: 'https://auth.example.com/application/o/token/',
+      targets: { api: 'AUTHENTIK_TOKEN_ENDPOINT' },
+    },
+    AUTHENTIK_JWKS_URI: {
+      description: 'Authentik JWKS endpoint for ID token signature verification',
+      example: 'https://auth.example.com/application/o/cig/jwks/',
+      targets: { api: 'AUTHENTIK_JWKS_URI' },
+    },
+    AUTHENTIK_ISSUER_URL: {
+      description: 'Authentik OIDC issuer URL',
+      example: 'https://auth.example.com/application/o/cig/',
+      targets: { api: 'AUTHENTIK_ISSUER_URL' },
+    },
+    OIDC_CLIENT_ID: {
+      description: 'OIDC client ID registered in Authentik',
+      example: 'your-oidc-client-id',
+      targets: { api: 'OIDC_CLIENT_ID' },
+    },
+    OIDC_CLIENT_SECRET: {
+      description: 'OIDC client secret',
+      example: 'your-oidc-client-secret',
+      secret: true,
+      targets: { api: 'OIDC_CLIENT_SECRET' },
+    },
+    OIDC_REDIRECT_URI: {
+      description: 'OIDC redirect URI for the API callback',
+      example: 'http://localhost:8080/api/v1/auth/oidc/callback',
+      targets: { api: 'OIDC_REDIRECT_URI' },
+    },
     AUTHENTIK_SUBNET_ID: {
       description: 'Authentik subnet ID',
       example: 'subnet-1234567890',

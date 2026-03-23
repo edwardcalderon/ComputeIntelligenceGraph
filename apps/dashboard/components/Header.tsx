@@ -7,19 +7,15 @@ import Link from "next/link";
 import { useTranslation } from "@cig-technology/i18n/react";
 import { NotificationBell } from "./NotificationBell";
 import { LocaleSwitcher } from "./LocaleSwitcher";
+import { browserApiFetch } from "../lib/browserApi";
 
 interface DeviceAuthResponse {
   items: Array<{ expires_at: string }>;
   total: number;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
-
 async function getPendingDeviceRequests(): Promise<DeviceAuthResponse> {
-  const res = await fetch(`${API_URL}/api/v1/auth/device/pending`, {
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-  });
+  const res = await browserApiFetch("/api/v1/auth/device/pending");
   if (!res.ok) {
     throw new Error(`API error ${res.status}: ${res.statusText}`);
   }

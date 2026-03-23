@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "@cig-technology/i18n/react";
+import { browserApiFetch } from "../../../lib/browserApi";
 
 interface DeviceAuthRequest {
   device_code: string;
@@ -17,32 +18,23 @@ interface DeviceAuthResponse {
   total: number;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
-
 async function getPendingDeviceRequests(): Promise<DeviceAuthResponse> {
-  const res = await fetch(`${API_URL}/api/v1/auth/device/pending`, {
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-  });
+  const res = await browserApiFetch("/api/v1/auth/device/pending");
   if (!res.ok) throw new Error(`API error ${res.status}: ${res.statusText}`);
   return res.json();
 }
 
 async function approveDevice(userCode: string): Promise<void> {
-  const res = await fetch(`${API_URL}/api/v1/auth/device/approve`, {
+  const res = await browserApiFetch("/api/v1/auth/device/approve", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
     body: JSON.stringify({ user_code: userCode }),
   });
   if (!res.ok) throw new Error(`API error ${res.status}: ${res.statusText}`);
 }
 
 async function denyDevice(userCode: string): Promise<void> {
-  const res = await fetch(`${API_URL}/api/v1/auth/device/deny`, {
+  const res = await browserApiFetch("/api/v1/auth/device/deny", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
     body: JSON.stringify({ user_code: userCode }),
   });
   if (!res.ok) throw new Error(`API error ${res.status}: ${res.statusText}`);
