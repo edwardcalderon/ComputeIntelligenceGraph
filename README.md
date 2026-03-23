@@ -1,77 +1,92 @@
 # CIG
 
-[![Version](https://img.shields.io/badge/version-0.1.50-blue.svg)](package.json)
-[![Node](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen.svg)](package.json)
-[![pnpm](https://img.shields.io/badge/pnpm-%3E%3D9.0.0-orange.svg)](package.json)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+<p align="center">
+  <img src="assets/cig-icon.svg" alt="CIG logo" width="160" />
+</p>
 
-Compute Intelligence Graph is a self-hosted infrastructure intelligence platform for discovery, graph modeling, querying, cost analysis, and security review across cloud environments.
+<p align="center">
+  <strong>Compute Intelligence Graph</strong><br />
+  Self-hosted infrastructure intelligence for discovery, graph modeling, querying, cost analysis, and security review.
+</p>
 
-Primary public domain: https://cig.lat/
+<p align="center">
+  <a href="package.json"><img src="https://img.shields.io/badge/version-0.1.51-blue.svg" alt="Version" /></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen.svg" alt="Node" /></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/pnpm-%3E%3D9.0.0-orange.svg" alt="pnpm" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /></a>
+</p>
 
-## Current State
+<p align="center">
+  <a href="#english">English</a> |
+  <a href="#espanol">Español</a> |
+  <a href="#zhongwen">中文</a>
+</p>
 
-The repository contains a working core platform plus a few scaffolded areas that are not finished yet.
+Primary public domain: [https://cig.lat/](https://cig.lat/)
 
-### Implemented
+## Shared Links
 
-- Dashboard application with resource views, graph visualization, costs, security, and Playwright E2E coverage
-- Fastify API with REST, GraphQL, WebSocket, auth, rate limiting, and metrics
-- Neo4j graph engine with traversal and circular dependency handling
-- Discovery orchestration plus Python Cartography service
-- RAG/chatbot pipeline and agent packages for query reasoning and actions
-- CLI for install, connect, deploy, seed, reset, and status workflows
-- Docker Compose plus separate Docker and Terraform infrastructure assets
-- `@cig/infra` package wrapping `@lsts_tech/infra` for AWS deployments (Authentik + dashboard pipelines)
+- Documentation index: [docs/README.md](docs/README.md)
+- Project status: [PROJECT_STATUS.md](PROJECT_STATUS.md)
+- Architecture: [docs/architecture/README.md](docs/architecture/README.md)
+- Development: [docs/development/README.md](docs/development/README.md)
+- Deployment: [docs/deployment/README.md](docs/deployment/README.md)
+- Authentication: [docs/authentication/README.md](docs/authentication/README.md)
 
-### Still Scaffolded or Partial
+## <a id="english"></a>English
 
-- `apps/landing` is present but still minimal
-- `apps/wizard-ui` is mostly a bare Next.js scaffold
-- `packages/sdk` is scaffolded and not feature-complete
+### Overview
 
-## Repository Layout
+Compute Intelligence Graph is a monorepo for a self-hosted platform focused on:
+
+- infrastructure discovery
+- graph-based modeling and querying
+- cost and security analysis
+- dashboard and API workflows
+- CLI and deployment tooling
+
+### Repository Layout
 
 ```text
 apps/
   dashboard/     Main Next.js dashboard UI
-  landing/       Public landing site scaffold
+  landing/       Public landing site
   wizard-ui/     Installation wizard scaffold
 packages/
-  agents/        OpenClaw and OpenFang agent logic
+  agents/        Agent logic
   api/           Fastify REST, GraphQL, and WebSocket API
   auth/          Authentication helpers and session management
-  chatbot/       RAG and vector retrieval pipeline
+  chatbot/       RAG and retrieval pipeline
   cli/           CLI commands and credential handling
   config/        YAML config loading and validation
   discovery/     Discovery orchestration and scheduler
   graph/         Neo4j graph engine
-  iac/           Terraform modules consumed by the deployment wrapper
-  infra/         TypeScript AWS deployment wrapper (@lsts_tech/infra)
+  iac/           Terraform modules
+  infra/         AWS deployment wrapper
   sdk/           SDK scaffold
 services/
   cartography/   Python FastAPI discovery service
 infra/
   docker/        Container build definitions
-docs/            Organized project documentation
+docs/            Project documentation
 ```
 
-## Quick Start
+### Quick Start
 
-### Prerequisites
+#### Prerequisites
 
 - Node.js 20+
 - pnpm 9+
 - Docker Engine or Docker Desktop
 - Docker Compose
 
-### Install
+#### Install
 
 ```bash
 pnpm install
 ```
 
-### Sync workspace env files
+#### Sync environment files
 
 ```bash
 pnpm env:sync
@@ -79,165 +94,236 @@ pnpm env:doctor
 pnpm env:validate
 ```
 
-The root `.env` is the canonical local input. `@edcalderon/versioning` now generates per-target `.env.local` files and tracked `.env.example` files from the workspace manifest automatically.
-
-### Start local infrastructure
+#### Start local infrastructure
 
 ```bash
 docker-compose -f docker-compose.dev.yml up -d
 ```
 
-This starts the local service dependencies used by the platform, including Neo4j and Chroma.
-
-### Start application code
-
-For focused development, start only what you need:
+#### Start the apps you need
 
 ```bash
+pnpm dev:landing
 pnpm dev:dashboard
 pnpm dev:api
-pnpm dev:landing
 ```
 
-You can also start the whole workspace:
+Run the whole workspace if needed:
 
 ```bash
 pnpm dev:all
 ```
 
-When multiple Next.js apps run together, they will use the next available local ports.
-
-### Build
+### Common Commands
 
 ```bash
 pnpm build
-```
-
-Or build a single workspace:
-
-```bash
-pnpm build:dashboard
-pnpm build:api
-```
-
-## Common Scripts
-
-### Development
-
-```bash
-pnpm dev:dashboard
-pnpm dev:landing
-pnpm dev:wizard-ui
-pnpm dev:api
-pnpm dev:agents
-pnpm dev:chatbot
-pnpm dev:cli
-pnpm dev:discovery
-pnpm dev:graph
-pnpm dev:sdk
-pnpm dev:all
-```
-
-### Validation
-
-```bash
-pnpm env:doctor
-pnpm env:validate
 pnpm test
 pnpm lint
 pnpm version:validate
 pnpm version:status
 ```
 
-### Release
+### Contact
 
-```bash
-pnpm release
-pnpm release:build
-pnpm release:dry:build
-pnpm release:dry
-pnpm release:patch
-pnpm release:minor
-pnpm release:major
+- Support: [support@cig.technolgy](mailto:support@cig.technolgy)
+- Development: [dev@cig.technolgy](mailto:dev@cig.technolgy)
+- General contact: [contact@cig.technology](mailto:contact@cig.technology)
+
+## <a id="espanol"></a>Español
+
+### Resumen
+
+Compute Intelligence Graph es un monorepo para una plataforma self-hosted enfocada en:
+
+- descubrimiento de infraestructura
+- modelado y consultas basadas en grafos
+- análisis de costos y seguridad
+- flujos de trabajo con dashboard y API
+- herramientas de CLI y despliegue
+
+### Estructura del Repositorio
+
+```text
+apps/
+  dashboard/     Interfaz principal en Next.js
+  landing/       Sitio público
+  wizard-ui/     Asistente de instalación
+packages/
+  agents/        Lógica de agentes
+  api/           API Fastify REST, GraphQL y WebSocket
+  auth/          Ayudas de autenticación y sesiones
+  chatbot/       Pipeline de RAG y recuperación
+  cli/           Comandos CLI y credenciales
+  config/        Carga y validación de YAML
+  discovery/     Orquestación y scheduler de discovery
+  graph/         Motor de grafos con Neo4j
+  iac/           Módulos Terraform
+  infra/         Wrapper de despliegue en AWS
+  sdk/           SDK en estado scaffold
+services/
+  cartography/   Servicio Python FastAPI para discovery
+infra/
+  docker/        Definiciones de contenedores
+docs/            Documentación del proyecto
 ```
 
-## Testing
+### Inicio Rápido
 
-- Unit and integration tests run with `pnpm test`
-- Dashboard E2E tests run from `apps/dashboard` with `pnpm test:e2e`
-- Security testing notes: [docs/testing/security.md](docs/testing/security.md)
-- Performance testing notes: [docs/testing/performance.md](docs/testing/performance.md)
+#### Requisitos
 
-## Documentation
+- Node.js 20+
+- pnpm 9+
+- Docker Engine o Docker Desktop
+- Docker Compose
 
-- Docs index: [docs/README.md](docs/README.md)
-- Authentication notes: [docs/authentication/README.md](docs/authentication/README.md)
-- Architecture notes: [docs/architecture/README.md](docs/architecture/README.md)
-- Development notes: [docs/development/README.md](docs/development/README.md)
-- Deployment notes: [docs/deployment/README.md](docs/deployment/README.md)
-- Reference notes: [docs/reference/README.md](docs/reference/README.md)
-- Historical material: [docs/archive/README.md](docs/archive/README.md)
+#### Instalación
 
-Additional root-level project records:
+```bash
+pnpm install
+```
 
-- Current status snapshot: [PROJECT_STATUS.md](PROJECT_STATUS.md)
-- Versioning workflow: [VERSIONING_GUIDE.md](VERSIONING_GUIDE.md)
-- Versioning upgrade notes: [UPGRADE_SUMMARY.md](UPGRADE_SUMMARY.md)
+#### Sincronizar archivos de entorno
 
-## Notes
+```bash
+pnpm env:sync
+pnpm env:doctor
+pnpm env:validate
+```
 
-- The root README is intended to describe the current codebase conservatively.
-- Historical planning documents have been moved under `docs/archive/` to separate them from active documentation.
-- If you are trying to understand implementation status, treat the codebase and the docs index as the source of truth before older blueprint documents.
-- Conversational Interface (RAG)
-- Infrastructure Actions
-- CLI & Installation
-- Multi-Cloud Support
-- Cost & Security Features
+#### Levantar la infraestructura local
 
-### 🟡 In Progress
-- Testing & Hardening (85%)
-- Documentation & Release (40%)
+```bash
+docker-compose -f docker-compose.dev.yml up -d
+```
 
-See [PROJECT_STATUS.md](PROJECT_STATUS.md) for detailed status.
+#### Iniciar las aplicaciones necesarias
 
----
+```bash
+pnpm dev:landing
+pnpm dev:dashboard
+pnpm dev:api
+```
 
-## 🔧 Version Management
+Para iniciar todo el workspace:
 
-This project uses [@edcalderon/versioning](https://www.npmjs.com/package/@edcalderon/versioning) v1.5.1 for:
+```bash
+pnpm dev:all
+```
 
-- ✅ Version synchronization across all packages
-- ✅ Auto-generated workspace scripts (dev:all, build:all)
-- ✅ Private package leak prevention
-- ✅ Cleanup utilities
-- ✅ Branch-aware versioning
+### Comandos Comunes
 
-All packages maintain version **0.1.50** in sync.
+```bash
+pnpm build
+pnpm test
+pnpm lint
+pnpm version:validate
+pnpm version:status
+```
 
----
+### Contacto
 
-## 📝 License
+- Soporte: [support@cig.technolgy](mailto:support@cig.technolgy)
+- Desarrollo: [dev@cig.technolgy](mailto:dev@cig.technolgy)
+- Contacto general: [contact@cig.technology](mailto:contact@cig.technology)
 
-TBD - To be determined before v1.0.0 release
+## <a id="zhongwen"></a>中文
 
----
+### 概述
 
-## 🙏 Acknowledgments
+Compute Intelligence Graph 是一个面向自托管基础设施智能平台的 monorepo，重点包括：
 
-- [Cartography](https://github.com/lyft/cartography) - Infrastructure discovery
-- [Neo4j](https://neo4j.com/) - Graph database
-- [LangChain](https://www.langchain.com/) - LLM framework
-- [@edcalderon/versioning](https://www.npmjs.com/package/@edcalderon/versioning) - Monorepo versioning
+- 基础设施发现
+- 图模型与图查询
+- 成本与安全分析
+- Dashboard 与 API 工作流
+- CLI 与部署工具
 
----
+### 仓库结构
 
-## 📞 Support
+```text
+apps/
+  dashboard/     主要的 Next.js 控制台
+  landing/       对外公开站点
+  wizard-ui/     安装向导脚手架
+packages/
+  agents/        智能体逻辑
+  api/           Fastify REST、GraphQL 与 WebSocket API
+  auth/          认证与会话辅助模块
+  chatbot/       RAG 与检索流水线
+  cli/           CLI 命令与凭据处理
+  config/        YAML 配置加载与校验
+  discovery/     发现编排与调度
+  graph/         Neo4j 图引擎
+  iac/           Terraform 模块
+  infra/         AWS 部署封装
+  sdk/           SDK 脚手架
+services/
+  cartography/   Python FastAPI 发现服务
+infra/
+  docker/        容器构建定义
+docs/            项目文档
+```
 
-- 📖 Documentation: See `docs/` directory
-- 🐛 Issues: GitHub Issues (TBD)
-- 💬 Discussions: GitHub Discussions (TBD)
+### 快速开始
 
----
+#### 环境要求
 
-**Built with ❤️ for infrastructure engineers**
+- Node.js 20+
+- pnpm 9+
+- Docker Engine 或 Docker Desktop
+- Docker Compose
+
+#### 安装
+
+```bash
+pnpm install
+```
+
+#### 同步环境文件
+
+```bash
+pnpm env:sync
+pnpm env:doctor
+pnpm env:validate
+```
+
+#### 启动本地基础设施
+
+```bash
+docker-compose -f docker-compose.dev.yml up -d
+```
+
+#### 启动需要的应用
+
+```bash
+pnpm dev:landing
+pnpm dev:dashboard
+pnpm dev:api
+```
+
+如需启动整个工作区：
+
+```bash
+pnpm dev:all
+```
+
+### 常用命令
+
+```bash
+pnpm build
+pnpm test
+pnpm lint
+pnpm version:validate
+pnpm version:status
+```
+
+### 联系方式
+
+- 技术支持: [support@cig.technolgy](mailto:support@cig.technolgy)
+- 开发团队: [dev@cig.technolgy](mailto:dev@cig.technolgy)
+- 综合联系: [contact@cig.technology](mailto:contact@cig.technology)
+
+## License
+
+[MIT](LICENSE)

@@ -33,7 +33,7 @@ const serviceNameArb = fc
 const installManifestArb = fc
   .tuple(
     fc.constantFrom('core', 'full'),
-    fc.array(serviceNameArb, { minLength: 1, maxLength: 5, uniqueBy: (s) => s })
+    fc.uniqueArray(serviceNameArb, { minLength: 1, maxLength: 5 })
   )
   .map(([profile, services]) => ({
     profile: profile as 'core' | 'full',
