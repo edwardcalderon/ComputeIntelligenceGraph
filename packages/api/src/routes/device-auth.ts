@@ -267,18 +267,23 @@ export async function deviceAuthRoutes(app: FastifyInstance): Promise<void> {
 
       // Persist device session for Dashboard management
       const sessionId = crypto.randomUUID();
+      const body2 = request.body as { user_code?: string; device_name?: string; device_os?: string; device_arch?: string };
       await query(
         `INSERT INTO device_sessions
            (id, user_id, device_code, device_name, device_os, device_arch, ip_address, token_hash, status, metadata)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', '{}')`,
-        [sessionId, userId, userCode, null, null, null, ipAddress, tokenHash]
-      ).catch(() => {/* best-effort — table may not exist in self-hosted / test environments */});
+        [sessionId, userId, userCode, body2.device_name ?? null, body2.device_os ?? null, body2.device_arch ?? null, ipAddress, tokenHash]
+      ).catch((err) => {
+        app.log.warn({ err }, 'Failed to persist device session (table may not exist)');
+      });
 
       // Store session_id in the device_auth_record for poll retrieval
       await query(
         `UPDATE device_auth_records SET session_id = ? WHERE user_code = ? AND status = 'approved'`,
         [sessionId, userCode]
-      ).catch(() => {/* best-effort — column may not exist yet */});
+      ).catch((err) => {
+        app.log.warn({ err }, 'Failed to store session_id in device_auth_record');
+      });
 
       writeAuditEvent(app, 'device_approved', userId, ipAddress, 'success', { user_code: userCode });
       return reply.send({ success: true });

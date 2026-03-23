@@ -52,12 +52,19 @@ export interface OIDCVerifiedPayload {
 export async function verifyIdToken(idToken: string): Promise<OIDCVerifiedPayload> {
   const keySet = getJWKS();
 
+  const authMode = process.env['CIG_AUTH_MODE'] ?? 'self-hosted';
   const verifyOptions: { issuer?: string; audience?: string } = {};
+
   if (AUTHENTIK_ISSUER_URL) {
     verifyOptions.issuer = AUTHENTIK_ISSUER_URL;
+  } else if (authMode === 'managed') {
+    throw new Error('AUTHENTIK_ISSUER_URL must be configured in managed mode');
   }
+
   if (OIDC_CLIENT_ID) {
     verifyOptions.audience = OIDC_CLIENT_ID;
+  } else if (authMode === 'managed') {
+    throw new Error('OIDC_CLIENT_ID must be configured in managed mode');
   }
 
   const { payload } = await jwtVerify(idToken, keySet, verifyOptions);

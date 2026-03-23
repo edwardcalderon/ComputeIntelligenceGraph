@@ -109,15 +109,15 @@ function scanLocal(): ScanResult {
   }
 
   // Docker containers
-  const dockerOutput = safeExec('docker ps --format "{{.ID}}|{{.Names}}|{{.Image}}|{{.Status}}"');
+  const dockerOutput = safeExec('docker ps --format "{{.ID}}|{{.Names}}|{{.Image}}|{{.Status}}|{{.Ports}}"');
   if (dockerOutput) {
     for (const line of dockerOutput.split('\n').filter(Boolean)) {
-      const [id, name, image, status] = line.split('|');
+      const [id, name, image, status, ports] = line.split('|');
       assets.push({
         asset_type: 'container',
         provider: 'docker',
         identifier: id ?? 'unknown',
-        metadata_json: { name, image, status },
+        metadata_json: { name, image, status, ports },
       });
     }
   }

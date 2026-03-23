@@ -118,8 +118,8 @@ export async function scanRoutes(app: FastifyInstance): Promise<void> {
     { preHandler: [authenticate] },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const queryParams = request.query as { limit?: string; offset?: string };
-      const limit = parseInt(queryParams.limit ?? '50', 10);
-      const offset = parseInt(queryParams.offset ?? '0', 10);
+      const limit = Math.min(parseInt(queryParams.limit ?? '50', 10) || 50, 100);
+      const offset = Math.max(parseInt(queryParams.offset ?? '0', 10) || 0, 0);
 
       const result = await query<{
         id: string;
