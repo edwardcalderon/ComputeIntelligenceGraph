@@ -808,11 +808,11 @@ function PublicLanding() {
 }
 
 function LandingTransitionShell({
-  title = "Restoring session",
-  description = "Finishing secure sign-in before rendering the landing.",
+  title,
+  description,
 }: {
-  title?: string;
-  description?: string;
+  title: string;
+  description: string;
 }) {
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-zinc-50 via-white to-zinc-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 text-zinc-900 dark:text-zinc-50 relative overflow-hidden">
@@ -845,6 +845,7 @@ function LandingTransitionShell({
 }
 
 export default function HomePage() {
+  const t = useTranslation();
   const { user, signOut, isHydrated, isSigningOut } = useCIGAuth();
 
   // Normalize logout entrypoints so both dashboard-initiated sign-out and the
@@ -856,20 +857,24 @@ export default function HomePage() {
       signOut();
       return;
     }
-    if (params.get("logged_out") === "1") {
-      window.history.replaceState({}, "", window.location.pathname);
-    }
   }, [signOut]);
 
   if (isSigningOut) {
     return (
       <LandingTransitionShell
-        title="Signing out"
-        description="Closing the Authentik session and returning you to the landing."
+        title={t("auth.signingOut")}
+        description={t("auth.signingOutDesc")}
       />
     );
   }
-  if (!isHydrated) return <LandingTransitionShell />;
+  if (!isHydrated) {
+    return (
+      <LandingTransitionShell
+        title={t("auth.restoringSession")}
+        description={t("auth.restoringSessionDesc")}
+      />
+    );
+  }
   if (user) return <AuthenticatedLanding />;
   return <PublicLanding />;
 }

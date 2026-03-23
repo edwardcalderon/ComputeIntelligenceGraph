@@ -56,9 +56,19 @@ function TagList({ tags }: { tags?: Record<string, string> }) {
   );
 }
 
+function ResourcesLoadingFallback() {
+  const t = useTranslation();
+
+  return (
+    <div className="p-8 text-sm text-gray-400">
+      {t("common.loading")}
+    </div>
+  );
+}
+
 export default function ResourcesPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-sm text-gray-400">Loading…</div>}>
+    <Suspense fallback={<ResourcesLoadingFallback />}>
       <ResourcesContent />
     </Suspense>
   );

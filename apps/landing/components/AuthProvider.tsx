@@ -143,6 +143,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
 
     if (AUTH_PROVIDER === "authentik") {
+      // Dashboard logout returns here with `logged_out=1`.
+      // Consume it before restoring any cached landing session.
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("logged_out") === "1") {
+        clearAuthentikSession();
+        window.history.replaceState({}, "", window.location.pathname);
+        if (!cancelled) {
+          setAuthState({
+            user: null,
+            isHydrated: true,
+            isSigningOut: false,
+          });
+        }
+        return () => {
+          cancelled = true;
+        };
+      }
+
       // ── Authentik: read tokens from URL hash or sessionStorage ──
       const hash = window.location.hash.slice(1);
       if (hash) {

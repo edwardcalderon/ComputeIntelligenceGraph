@@ -418,12 +418,22 @@ function GraphContent() {
   );
 }
 
+function GraphLoadingFallback() {
+  const t = useTranslation();
+
+  return (
+    <div className="flex h-full items-center justify-center text-sm text-gray-400">
+      {t("graph.loadingGraph")}
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function GraphPage() {
   return (
     <div className="flex h-[calc(100vh-3.5rem)] flex-col">
-      <Suspense fallback={<div className="flex h-full items-center justify-center text-sm text-gray-400">Loading graph…</div>}>
+      <Suspense fallback={<GraphLoadingFallback />}>
         <GraphContent />
       </Suspense>
     </div>

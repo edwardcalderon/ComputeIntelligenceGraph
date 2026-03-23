@@ -7,7 +7,10 @@ import { isValidLocale } from "./core.js";
 import { DEFAULT_LOCALE, type SupportedLocale } from "./types.js";
 
 /**
- * Browser: checks URL param → cookie → <html lang> → navigator.language.
+ * Browser: checks URL param → cookie → navigator.language → navigator.languages → <html lang>.
+ *
+ * `lang` on the root `<html>` element is a useful fallback, but in this repo the
+ * app layouts default to `en`, so it must not outrank the actual browser locale.
  */
 export function detectBrowserLocale(): SupportedLocale {
   if (typeof window === "undefined") return DEFAULT_LOCALE;
@@ -15,9 +18,9 @@ export function detectBrowserLocale(): SupportedLocale {
   const candidates = [
     new URLSearchParams(window.location.search).get("lang"),
     getCookie("cig-locale"),
-    document.documentElement.lang?.split("-")[0],
     navigator.language?.split("-")[0],
     ...(navigator.languages ?? []).map((l) => l.split("-")[0]),
+    document.documentElement.lang?.split("-")[0],
   ];
 
   for (const c of candidates) {
