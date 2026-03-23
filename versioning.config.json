@@ -22,7 +22,7 @@
   ],
   "extensionConfig": {
     "secrets-check": {
-      "enabled": false
+      "enabled": true
     },
     "workspace-env": {
       "enabled": true,

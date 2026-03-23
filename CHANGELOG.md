@@ -1,3 +1,25 @@
+## [0.1.56](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.54...v0.1.56) (2026-03-23)
+
+
+### Bug Fixes
+
+* **env:** redact secrets and obfuscate false positives ([1f506be](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/1f506be486248e9071d1823095146325bbbcf15e))
+
+
+
+
+
+## [0.1.56](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.54...v0.1.56) (2026-03-23)
+
+
+### Bug Fixes
+
+* **env:** redact secrets and obfuscate false positives ([1f506be](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/1f506be486248e9071d1823095146325bbbcf15e))
+
+
+
+
+
 ## [0.1.55](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.54...v0.1.55) (2026-03-23)
 
 
