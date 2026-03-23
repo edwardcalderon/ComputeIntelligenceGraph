@@ -1,3 +1,25 @@
+## [0.1.58](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.57...v0.1.58) (2026-03-23)
+
+
+### Features
+
+* **dashboard:** unify device management page ([b2b69e1](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/b2b69e1090c478520ea78a0975e153c650da7d0a))
+
+
+
+
+
+## [0.1.58](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.57...v0.1.58) (2026-03-23)
+
+
+### Features
+
+* **dashboard:** unify device management page ([b2b69e1](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/b2b69e1090c478520ea78a0975e153c650da7d0a))
+
+
+
+
+
 ## [0.1.57](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.54...v0.1.57) (2026-03-23)
 
 
