@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { exchangeAuthentikCode } from "@cig/auth";
 
+const AUTH_SYNC_TIMEOUT_MS = 10_000;
+const AUTH_SYNC_MAX_ATTEMPTS = 2;
+
 /**
  * Handles two callback patterns:
  *
@@ -66,24 +69,16 @@ export default function AuthCallback() {
         }
       }
 
-      // Sync user to Supabase (fire-and-forget, non-blocking)
       const idTokRaw = sessionStorage.getItem("cig_id_token") ?? sessionStorage.getItem("cig_access_token");
       if (idTokRaw) {
         try {
-          const payload = JSON.parse(atob(idTokRaw.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
-          fetch("/api/auth/sync", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            keepalive: true,
-            body: JSON.stringify({
-              sub: payload.sub ?? "",
-              email: payload.email ?? "",
-              name: payload.name ?? payload.preferred_username ?? "",
-              picture: payload.picture ?? "",
-              provider: sessionStorage.getItem("cig_social_provider") ?? "authentik",
-            }),
-          }).catch(() => {}); // non-blocking
-        } catch { /* ignore JWT decode errors */ }
+          await syncUserToSupabase(idTokRaw);
+        } catch (err: unknown) {
+          clearStoredSession();
+          console.error("[auth/callback] Supabase provisioning failed:", err);
+          setError("We could not finish provisioning your account. Please try again.");
+          return;
+        }
       }
 
       if (redirect.startsWith("http")) {
@@ -162,6 +157,20 @@ function storeSession(accessToken: string, idToken: string | undefined, refreshT
   }
 }
 
+function clearStoredSession() {
+  try {
+    sessionStorage.removeItem("cig_access_token");
+    sessionStorage.removeItem("cig_id_token");
+    sessionStorage.removeItem("cig_refresh_token");
+    sessionStorage.removeItem("cig_expires_in");
+    sessionStorage.removeItem("cig_expires_at");
+    sessionStorage.removeItem("cig_social_provider");
+    document.cookie = "cig_has_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+  } catch {
+    // sessionStorage blocked — continue anyway
+  }
+}
+
 function resolveRedirect(
   rawRedirect: string | null,
   landingUrl: string,
@@ -185,4 +194,83 @@ function resolveRedirect(
   } catch {
     return landingUrl;
   }
+}
+
+async function syncUserToSupabase(token: string) {
+  const payload = decodeJwtPayload(token);
+  if (!payload) {
+    throw new Error("Missing identity claims for Supabase provisioning");
+  }
+
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < AUTH_SYNC_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      await syncUserToSupabaseOnce(payload);
+      return;
+    } catch (error: unknown) {
+      lastError = error instanceof Error ? error : new Error("Account provisioning failed");
+      if (attempt < AUTH_SYNC_MAX_ATTEMPTS - 1) {
+        await delay(250 * (attempt + 1));
+      }
+    }
+  }
+
+  throw lastError ?? new Error("Account provisioning failed");
+}
+
+async function syncUserToSupabaseOnce(payload: Record<string, unknown>) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), AUTH_SYNC_TIMEOUT_MS);
+
+  try {
+    const response = await fetch("/api/auth/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      signal: controller.signal,
+      body: JSON.stringify({
+        sub: typeof payload.sub === "string" ? payload.sub : "",
+        iss: typeof payload.iss === "string" ? payload.iss : undefined,
+        email: typeof payload.email === "string" ? payload.email : "",
+        emailVerified: typeof payload.email_verified === "boolean" ? payload.email_verified : true,
+        name:
+          typeof payload.name === "string"
+            ? payload.name
+            : typeof payload.preferred_username === "string"
+              ? payload.preferred_username
+              : "",
+        picture: typeof payload.picture === "string" ? payload.picture : "",
+        provider: sessionStorage.getItem("cig_social_provider") ?? "authentik",
+        rawClaims: payload,
+      }),
+    });
+
+    const result = await response.json().catch(() => null) as
+      | { synced?: boolean; reason?: string }
+      | null;
+
+    if (!response.ok || !result?.synced) {
+      throw new Error(
+        result?.reason
+          ? `Supabase provisioning failed: ${result.reason}`
+          : `Supabase provisioning failed (${response.status})`,
+      );
+    }
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const payload = token.split(".")[1];
+    return JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+  } catch {
+    return null;
+  }
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
 }

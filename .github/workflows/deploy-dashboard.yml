@@ -171,6 +171,8 @@ jobs:
           env_vars: |
             NODE_ENV=production
             NEXT_TELEMETRY_DISABLED=1
+            SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: Print deployed URL
         run: |

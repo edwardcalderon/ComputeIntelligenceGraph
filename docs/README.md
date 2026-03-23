@@ -5,7 +5,7 @@ This directory is organized into current guidance, supporting references, and ar
 ## Start Here
 
 - [architecture/README.md](architecture/README.md) — current system shape, component status, and what is implemented today
-- [authentication/README.md](authentication/README.md) — Authentik/Supabase auth flows, Authentik resource setup, and logout behavior
+- [authentication/README.md](authentication/README.md) — Authentik/Supabase auth flows, Supabase provisioning, Authentik resource setup, and logout behavior
 - [development/README.md](development/README.md) — local development workflow and contributor-facing notes
 - [deployment/README.md](deployment/README.md) — deployment surface, Docker, and infrastructure entry points
 - [reference/README.md](reference/README.md) — root-level status and versioning references

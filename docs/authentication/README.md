@@ -12,8 +12,9 @@ CIG uses **Authentik** as the primary identity provider and **Supabase** as a fe
 2. Bounce through the dashboard relay route so PKCE state exists on the dashboard origin
 3. Enter Authentik through a provider-specific social login flow
 4. Exchange the OIDC code on the dashboard
-5. Return the tokens to landing through a hash fragment
-6. Use the landing app as the canonical logout orchestrator
+5. Provision or update the user in Supabase `auth.users` and `public.users`
+6. Return the tokens to landing through a hash fragment
+7. Use the landing app as the canonical logout orchestrator
 
 ### Current production principals
 
@@ -68,6 +69,7 @@ Landing (cig.lat)                  Dashboard (app.cig.lat)                   Aut
        |                            - Read verifier from dashboard storage       |                              |
        |                            - POST /application/o/token/                 |                              |
        |                            - Store tokens in dashboard storage          |                              |
+       |                            - Wait for Supabase provisioning            |                              |
        |                                      |                                  |                              |
   9.   |<------- hash fragment redirect ------|                                  |                              |
        |            #access_token=...&id_token=...&expires_in=...                |                              |
@@ -89,6 +91,52 @@ Authentik's default login UI is intentionally bypassed for social login. Each up
 | `cig-github-login` | `/source/oauth/login/github/` |
 
 That keeps the RP flow explicit and avoids accidental dependence on whatever the tenant's default login screen happens to show.
+
+## Current provisioning flow
+
+Authentik is the identity source, but the dashboard callback is the point where that identity is mirrored into Supabase.
+
+```
+Authentik login succeeds              Dashboard callback                    Supabase
+         |                                   |                                 |
+  1. User exists in Authentik                |                                 |
+     and source link is resolved             |                                 |
+         |                                   |                                 |
+  2. Redirect back with OIDC code ---------->|                                 |
+         |                                   |                                 |
+  3. exchangeAuthentikCode() stores tokens   |                                 |
+         |                                   |                                 |
+  4. POST /api/auth/sync ------------------->|                                 |
+         |                                   |                                 |
+  5. Server route ensures a shadow user in   |-------------------------------> |
+     `auth.users` using the service role     |    create/update auth user      |
+         |                                   |                                 |
+  6. Server route upserts `public.users`     |-------------------------------> |
+     keyed by `(sub, iss)`                   |    upsert_oidc_user RPC         |
+         |                                   |                                 |
+  7. Only after sync succeeds does the       |                                 |
+     callback redirect to landing/dashboard  |                                 |
+```
+
+### Current provisioning guarantees
+
+- Authentik-backed logins are blocked until Supabase provisioning succeeds.
+- The callback clears local `cig_*` session state if provisioning fails, so users do not continue with a half-signed-in state.
+- Supabase `auth.users` is matched by Authentik `(issuer, sub)` first and by email second, which prevents duplicate shadow users on repeat Google/GitHub logins.
+- Supabase `public.users` remains the app-owned registry keyed by `(sub, iss)`, while the corresponding Supabase auth user id is written into `raw_claims`.
+
+### Required dashboard runtime configuration
+
+The provisioning route is server-side. Production must provide these variables to the dashboard runtime, not only to the frontend build:
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+Important rules:
+
+- never expose `SUPABASE_SERVICE_ROLE_KEY` through `next.config.js env` or any `NEXT_PUBLIC_*` variable
+- build-time `NEXT_PUBLIC_SUPABASE_URL` is not enough for server provisioning
+- the deployed dashboard container must receive the service-role key as a runtime env var
 
 ## Current logout flow
 
@@ -251,7 +299,7 @@ Recommended provider-agnostic pattern:
 | ----- | ------ |
 | Login start | Clear `cig_*` session keys before writing new PKCE/session state |
 | Relay route | Store verifier, state, and provider on the dashboard origin |
-| Callback | Exchange code, store tokens, set `cig_has_session` cookie |
+| Callback | Exchange code, store tokens, set `cig_has_session` cookie, and wait for Supabase sync |
 | Cross-origin return | Pass tokens back to landing via hash fragment |
 | Page load | `AuthProvider` reads session storage and decodes the id token |
 | Local logout | Clear local `cig_*` state immediately |
@@ -268,6 +316,12 @@ Set `NEXT_PUBLIC_AUTH_PROVIDER=supabase` to use the fallback path:
 
 The fallback is implementation-compatible at the app level, but it does not use Authentik login flows, Authentik source mappings, or Authentik invalidation flows.
 
+When Authentik remains the primary IdP, Supabase acts as a mirrored local registry:
+
+- `auth.users` holds a shadow account for rollback and future migration scenarios
+- `public.users` holds the app-owned user registry keyed by Authentik `sub` + `iss`
+- the dashboard callback is the bridge that keeps both in sync
+
 ## Security and failure-mode notes
 
 | Measure | Implementation |
@@ -281,6 +335,8 @@ The fallback is implementation-compatible at the app level, but it does not use 
 | Authentik session termination | provider invalidation flow includes `User Logout` |
 | Deterministic return target | logout completes on `/?logged_out=1` |
 | Open redirect protection | callback validates redirect targets against allowed origins |
+| Provisioning guard | dashboard callback waits for Supabase sync before redirecting |
+| Supabase shadow identity | `auth.users` is matched by Authentik identity first, then email |
 
 ## Drift checks
 
@@ -291,6 +347,7 @@ Before trusting this document after Authentik admin changes, re-check these live
 - `default-provider-invalidation-flow` stage bindings
 - `cig-google-login` and `cig-github-login` redirect stages
 - `default-source-authentication` and `cig-source-enrollment` bindings
+- dashboard runtime env includes `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
 
 This is the minimum audit set that caught the March 22, 2026 GitHub login regression, where the live sources had drifted from `identifier` to `email_link`.
 
@@ -304,5 +361,6 @@ This is the minimum audit set that caught the March 22, 2026 GitHub login regres
 | `apps/landing/components/AuthButton.tsx` | login UI and social button entrypoints |
 | `apps/landing/app/page.tsx` | logout entry and completion query normalization |
 | `apps/dashboard/app/auth/login/[provider]/route.ts` | cross-origin PKCE bridge into Authentik |
-| `apps/dashboard/app/auth/callback/page.tsx` | OIDC code exchange and landing redirect |
+| `apps/dashboard/app/auth/callback/page.tsx` | OIDC code exchange, provisioning guard, and landing redirect |
+| `apps/dashboard/lib/authSync.ts` | server-side Supabase auth/public user mirroring for Authentik logins |
 | `apps/dashboard/lib/authProvider.ts` | dashboard logout handoff to landing |

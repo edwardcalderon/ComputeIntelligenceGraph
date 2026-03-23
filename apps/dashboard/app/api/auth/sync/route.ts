@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import {
+  createSupabaseAdminClient,
+  getSupabaseAdminConfig,
+  type OidcSyncPayload,
+  syncOidcUserToSupabase,
+} from "../../../../lib/authSync";
 
 /**
  * POST /api/auth/sync
@@ -11,14 +16,19 @@ import { createClient } from "@supabase/supabase-js";
  * rejects calls from anon/authenticated roles.
  */
 export async function POST(req: NextRequest) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const config = getSupabaseAdminConfig();
 
-  if (!supabaseUrl || !serviceKey) {
-    return NextResponse.json({ synced: false, reason: "supabase_not_configured" });
+  if (!config) {
+    console.error(
+      "[auth/sync] Missing Supabase admin config. Expected SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL) and SUPABASE_SERVICE_ROLE_KEY.",
+    );
+    return NextResponse.json(
+      { synced: false, reason: "supabase_not_configured" },
+      { status: 503 },
+    );
   }
 
-  let body: { sub: string; email: string; name: string; picture?: string; provider?: string; iss?: string };
+  let body: OidcSyncPayload;
   try {
     body = await req.json();
   } catch {
@@ -29,30 +39,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing sub or email" }, { status: 400 });
   }
 
-  const supabase = createClient(supabaseUrl, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const supabase = createSupabaseAdminClient(config);
 
   try {
-    const { error } = await supabase.rpc("upsert_oidc_user", {
-      p_sub: body.sub,
-      p_iss: body.iss ?? process.env.NEXT_PUBLIC_AUTHENTIK_URL ?? "https://auth.cig.technology",
-      p_email: body.email,
-      p_email_verified: true,
-      p_name: body.name || null,
-      p_picture: body.picture || null,
-      p_provider: body.provider || "authentik",
-      p_raw_claims: {},
-    });
-
-    if (error) {
-      console.error("[auth/sync] upsert_oidc_user error:", error.message);
-      return NextResponse.json({ synced: false, reason: error.message });
-    }
-
-    return NextResponse.json({ synced: true });
+    const result = await syncOidcUserToSupabase(supabase, body);
+    return NextResponse.json(result);
   } catch (err: unknown) {
     console.error("[auth/sync] Supabase sync failed:", err);
-    return NextResponse.json({ synced: false, reason: "sync_error" });
+    return NextResponse.json(
+      {
+        synced: false,
+        reason: err instanceof Error ? err.message : "sync_error",
+      },
+      { status: 500 },
+    );
   }
 }
