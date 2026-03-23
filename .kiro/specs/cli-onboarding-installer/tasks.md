@@ -46,6 +46,8 @@ auth/bootstrap/dashboard work. Those pieces were largely delivered under
 - [x] API device authorization endpoints exist in `packages/api`
 - [x] API enrollment, heartbeat, bootstrap, and OIDC routes exist
 - [x] Dashboard device approval, bootstrap, and targets pages exist
+- [x] Authentik OIDC hardening and device session persistence implemented (PR #7)
+- [x] Cartography scan service foundation implemented (PR #7)
 - [x] Installer compose generation and prerequisite checks exist
 - [x] This task board has been rewritten to track the runtime architecture
 - [x] CLI foundation release packaging exists for `@cig-technology/cli`
