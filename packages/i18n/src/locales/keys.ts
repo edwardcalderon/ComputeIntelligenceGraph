@@ -303,6 +303,7 @@ export type TranslationKey =
   | "nav.costs"
   | "nav.dashboard"
   | "nav.deviceApproval"
+  | "nav.devices"
   | "nav.discovery"
   | "nav.graph"
   | "nav.overview"

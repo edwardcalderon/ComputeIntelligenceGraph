@@ -24,7 +24,6 @@ const platformItems: NavItem[] = [
 ];
 
 const operationsItems: NavItem[] = [
-  { labelKey: "nav.deviceApproval", href: "/device-approval", icon: <DeviceIcon />,    color: "#f59e0b" },
   { labelKey: "nav.devices",        href: "/devices",         icon: <DevicesIcon />,   color: "#06b6d4" },
   { labelKey: "nav.targets",        href: "/targets",         icon: <TargetsIcon />,   color: "#ef4444" },
   { labelKey: "nav.bootstrap",      href: "/bootstrap",       icon: <BootstrapIcon />, color: "#06b6d4" },

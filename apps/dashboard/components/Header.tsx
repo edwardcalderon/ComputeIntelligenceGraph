@@ -68,7 +68,7 @@ export function Header() {
       <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
         {pendingCount > 0 && (
           <Link
-            href="/device-approval"
+            href="/devices"
             className="relative rounded-lg p-2 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10 transition-colors"
             title={t("header.pendingDeviceApprovals")}
           >

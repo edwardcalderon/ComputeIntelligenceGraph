@@ -198,13 +198,13 @@ test.describe("Full Authentication and Provisioning Flows", () => {
     }
   });
 
-  // Test: Device approval page navigation
-  test("should navigate to device approval page and display pending requests", async ({
+  // Test: Devices page navigation
+  test("should navigate to devices page and display device management", async ({
     page,
   }) => {
-    await page.goto("http://localhost:3000/device-approval");
+    await page.goto("http://localhost:3000/devices");
     // Page may require authentication, but should load
-    expect(page.url()).toContain("/device-approval");
+    expect(page.url()).toContain("/devices");
   });
 
   // Test: Targets page navigation
