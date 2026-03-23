@@ -1,4 +1,5 @@
 const DEFAULT_LANDING_URL = "http://localhost:3000";
+const DEFAULT_DASHBOARD_URL = "http://localhost:3001";
 
 type UrlContext = {
   hostname?: string | null;
@@ -15,10 +16,10 @@ function isLocalHostname(hostname: string): boolean {
   );
 }
 
-function formatLocalLandingUrl(hostname: string, protocol: string): string {
+function formatLocalOriginUrl(hostname: string, protocol: string, port: number): string {
   const normalizedProtocol = protocol.endsWith(":") ? protocol : `${protocol}:`;
   const renderedHost = hostname === "::1" ? "[::1]" : hostname;
-  return `${normalizedProtocol}//${renderedHost}:3000`;
+  return `${normalizedProtocol}//${renderedHost}:${port}`;
 }
 
 export function resolveLandingUrl(context: UrlContext = {}): string {
@@ -30,7 +31,7 @@ export function resolveLandingUrl(context: UrlContext = {}): string {
     (typeof window !== "undefined" ? window.location.protocol : undefined);
 
   if (hostname && isLocalHostname(hostname)) {
-    return formatLocalLandingUrl(hostname, protocol ?? "http:");
+    return formatLocalOriginUrl(hostname, protocol ?? "http:", 3000);
   }
 
   return process.env.NEXT_PUBLIC_SITE_URL ?? DEFAULT_LANDING_URL;
@@ -38,4 +39,19 @@ export function resolveLandingUrl(context: UrlContext = {}): string {
 
 export function resolveLandingLoggedOutUrl(context: UrlContext = {}): string {
   return `${resolveLandingUrl(context)}?logged_out=1`;
+}
+
+export function resolveDashboardUrl(context: UrlContext = {}): string {
+  const hostname =
+    context.hostname ??
+    (typeof window !== "undefined" ? window.location.hostname : undefined);
+  const protocol =
+    context.protocol ??
+    (typeof window !== "undefined" ? window.location.protocol : undefined);
+
+  if (hostname && isLocalHostname(hostname)) {
+    return formatLocalOriginUrl(hostname, protocol ?? "http:", 3001);
+  }
+
+  return process.env.NEXT_PUBLIC_DASHBOARD_URL ?? DEFAULT_DASHBOARD_URL;
 }

@@ -83,6 +83,8 @@ The landing app and dashboard are different origins. `sessionStorage` is origin-
 
 That removes the rendered "redirecting" interstitial while keeping the same origin boundary and PKCE safety model.
 
+The login-callback bridge also rebuilds the callback URL from the configured dashboard origin, not from the incoming request URL. That matters behind HTTPS-terminating proxies, where the internal request scheme can be `http:` even though the public callback must stay `https://app.cig.lat/auth/callback`.
+
 ### Why per-provider login flows exist
 
 Authentik's default login UI is intentionally bypassed for social login. Each upstream social provider gets its own Authentik **authentication** flow with a single **Redirect Stage**:
@@ -178,6 +180,8 @@ What to fix:
 - confirm the GitHub Actions secret `SUPABASE_SERVICE_ROLE_KEY` exists for the dashboard deploy workflow
 - redeploy the dashboard after fixing the runtime env
 - rerun one real social-login smoke test after deploy, because this failure only appears when the server-side sync route is exercised
+
+If the failure only happens in production and the logs mention a redirect URI mismatch, also confirm `NEXT_PUBLIC_DASHBOARD_URL` resolves to the public dashboard origin (`https://app.cig.lat`) so the login-callback bridge exchanges the code against the registered callback URL.
 
 ## Current logout flow
 

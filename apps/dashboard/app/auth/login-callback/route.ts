@@ -5,7 +5,7 @@ import {
   syncOidcUserToSupabase,
   type OidcSyncPayload,
 } from "../../../lib/authSync";
-import { resolveLandingUrl } from "../../../lib/siteUrl";
+import { resolveDashboardUrl, resolveLandingUrl } from "../../../lib/siteUrl";
 
 const PKCE_VERIFIER_COOKIE = "cig_pkce_verifier";
 const PKCE_STATE_COOKIE = "cig_pkce_state";
@@ -19,6 +19,10 @@ export async function GET(req: NextRequest) {
   const verifier = req.cookies.get(PKCE_VERIFIER_COOKIE)?.value ?? "";
   const savedState = req.cookies.get(PKCE_STATE_COOKIE)?.value ?? "";
   const socialProvider = req.cookies.get(SOCIAL_PROVIDER_COOKIE)?.value ?? "sso";
+  const dashboardUrl = resolveDashboardUrl({
+    hostname: req.nextUrl.hostname,
+    protocol: req.nextUrl.protocol,
+  });
 
   try {
     if (!code) {
@@ -32,7 +36,7 @@ export async function GET(req: NextRequest) {
     }
 
     const issuer = getAuthentikIssuer();
-    const redirectUri = new URL("/auth/callback", req.url).toString();
+    const redirectUri = new URL("/auth/callback", dashboardUrl).toString();
     const tokens = await exchangeAuthentikCode({
       issuer,
       clientId: getAuthentikClientId(),
@@ -54,7 +58,7 @@ export async function GET(req: NextRequest) {
     });
 
     const response = NextResponse.redirect(buildLandingRedirect(tokens, socialProvider), 302);
-    clearPkceCookies(response, req);
+    clearPkceCookies(response, dashboardUrl);
     response.headers.set("Cache-Control", "no-store");
     response.headers.set("Pragma", "no-cache");
     return response;
@@ -69,7 +73,7 @@ export async function GET(req: NextRequest) {
         "Pragma": "no-cache",
       },
     });
-    clearPkceCookies(response, req);
+    clearPkceCookies(response, dashboardUrl);
     return response;
   }
 }
@@ -95,8 +99,8 @@ function buildLandingRedirect(
   return target;
 }
 
-function clearPkceCookies(response: NextResponse, req: NextRequest) {
-  const secure = req.nextUrl.protocol === "https:";
+function clearPkceCookies(response: NextResponse, dashboardUrl: string) {
+  const secure = dashboardUrl.startsWith("https://");
   const cookieOptions = {
     httpOnly: true,
     sameSite: "lax" as const,

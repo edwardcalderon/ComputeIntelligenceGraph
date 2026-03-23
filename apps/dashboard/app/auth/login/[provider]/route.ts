@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resolveDashboardUrl } from "../../../../lib/siteUrl";
 
 /**
  * GET /auth/login/[provider]?code_challenge=...&state=...&redirect_uri=...&client_id=...&code_verifier=...
@@ -49,6 +50,10 @@ export async function GET(
   const authBase = authentikUrl.replace(/\/$/, "");
   const authorizePath = `${authBase}/application/o/authorize/`;
   const flowUrl = new URL(`/if/flow/${PROVIDER_FLOW[provider]}/`, authBase);
+  const dashboardUrl = resolveDashboardUrl({
+    hostname: req.nextUrl.hostname,
+    protocol: req.nextUrl.protocol,
+  });
   flowUrl.searchParams.set("next", buildAuthorizeUrl(authorizePath, {
     clientId,
     redirectUri,
@@ -57,7 +62,7 @@ export async function GET(
   }));
 
   const response = NextResponse.redirect(flowUrl, 302);
-  setPkceCookies(response, req, {
+  setPkceCookies(response, dashboardUrl.startsWith("https://"), {
     verifier: codeVerifier,
     state,
     provider,
@@ -91,14 +96,13 @@ function buildAuthorizeUrl(
 
 function setPkceCookies(
   response: NextResponse,
-  req: NextRequest,
+  secure: boolean,
   session: {
     verifier: string;
     state: string;
     provider: string;
   },
 ) {
-  const secure = req.nextUrl.protocol === "https:";
   const cookieOptions = {
     httpOnly: true,
     sameSite: "lax" as const,
