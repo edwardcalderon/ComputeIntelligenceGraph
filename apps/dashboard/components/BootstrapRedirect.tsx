@@ -3,22 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useTranslation } from "@cig-technology/i18n/react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
-
-interface BootstrapStatusResponse {
-  requires_bootstrap: boolean;
-}
-
-async function getBootstrapStatus(): Promise<BootstrapStatusResponse> {
-  const res = await fetch(`${API_URL}/api/v1/bootstrap/status`, {
-    headers: { "Content-Type": "application/json" },
-  });
-  if (!res.ok) {
-    throw new Error(`API error ${res.status}: ${res.statusText}`);
-  }
-  return res.json();
-}
+import { getBootstrapStatus } from "../lib/api";
 
 export function BootstrapRedirect({
   children,

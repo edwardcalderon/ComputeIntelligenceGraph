@@ -3,54 +3,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@cig-technology/i18n/react";
-import { browserApiFetch } from "../../../lib/browserApi";
-
-interface DeviceSession {
-  id: string;
-  device_code: string;
-  device_name: string | null;
-  device_os: string | null;
-  device_arch: string | null;
-  ip_address: string | null;
-  status: string;
-  last_active: string;
-  created_at: string;
-}
-
-interface DeviceAuthRequest {
-  device_code: string;
-  user_code: string;
-  ip_address: string;
-  created_at: string;
-  expires_at: string;
-}
-
-interface DeviceAuthResponse {
-  items: DeviceAuthRequest[];
-  total: number;
-}
-
-async function getPendingDeviceRequests(): Promise<DeviceAuthResponse> {
-  const res = await browserApiFetch("/api/v1/auth/device/pending");
-  if (!res.ok) throw new Error(`API error ${res.status}: ${res.statusText}`);
-  return res.json();
-}
-
-async function approveDevice(userCode: string): Promise<void> {
-  const res = await browserApiFetch("/api/v1/auth/device/approve", {
-    method: "POST",
-    body: JSON.stringify({ user_code: userCode }),
-  });
-  if (!res.ok) throw new Error(`API error ${res.status}: ${res.statusText}`);
-}
-
-async function denyDevice(userCode: string): Promise<void> {
-  const res = await browserApiFetch("/api/v1/auth/device/deny", {
-    method: "POST",
-    body: JSON.stringify({ user_code: userCode }),
-  });
-  if (!res.ok) throw new Error(`API error ${res.status}: ${res.statusText}`);
-}
+import {
+  approveDevice,
+  denyDevice,
+  getPendingDeviceRequests,
+  getSessions,
+  revokeSession as revokeDeviceSession,
+  type DeviceAuthResponse,
+  type DeviceSession,
+} from "../../../lib/api";
 
 function formatRelativeTime(isoDate: string): string {
   const diff = Date.now() - new Date(isoDate).getTime();
@@ -114,9 +75,7 @@ export default function DevicesPage() {
     }
 
     try {
-      const res = await browserApiFetch("/api/v1/sessions");
-      if (!res.ok) throw new Error(`Failed to fetch sessions: ${res.status}`);
-      const payload = await res.json();
+      const payload = await getSessions();
       setSessions(payload.items ?? []);
       setError(null);
     } catch (err) {
@@ -175,12 +134,9 @@ export default function DevicesPage() {
     }
   };
 
-  const revokeSession = async (sessionId: string) => {
+  const handleRevokeSession = async (sessionId: string) => {
     try {
-      const res = await browserApiFetch(`/api/v1/sessions/${sessionId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error(`Revocation failed: ${res.status}`);
+      await revokeDeviceSession(sessionId);
       setSessions((prev) =>
         prev.map((session) =>
           session.id === sessionId ? { ...session, status: "revoked" } : session
@@ -382,7 +338,7 @@ export default function DevicesPage() {
                     <td className="px-4 py-3 text-right">
                       {session.status === "active" && (
                         <button
-                          onClick={() => revokeSession(session.id)}
+                    onClick={() => handleRevokeSession(session.id)}
                           className="rounded-md bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"
                         >
                           Revoke

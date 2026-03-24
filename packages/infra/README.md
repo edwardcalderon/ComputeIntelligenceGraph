@@ -1,121 +1,94 @@
 # @cig/infra
 
-Infrastructure deployment wrapper for the CIG monorepo. Wraps [@lsts_tech/infra](https://www.npmjs.com/package/@lsts_tech/infra) to provide CIG-specific AWS deployment capabilities including Authentik authentication and dashboard pipelines.
+AWS deployment foundation for Compute Intelligence Graph.
 
-In this repository the infrastructure assets are split intentionally:
+This package now owns two related concerns:
 
-- `packages/infra` contains the TypeScript deployment wrapper and config loading.
-- `packages/iac` contains the Terraform module sources consumed by that wrapper.
-- `infra/docker` contains container build definitions used by local and deployment workflows.
+- the TypeScript deployment wrapper and config surface used by the repo
+- the SST runtime stack for the production API at `https://api.cig.technology`
 
-## Installation
+## Ownership Boundary
+
+- `packages/iac` owns stateful/shared API core data:
+  - VPC
+  - subnets
+  - security groups
+  - Neo4j instance and storage
+- `packages/infra` owns runtime delivery:
+  - ECR repository
+  - ECS/Fargate service
+  - ALB
+  - ACM
+  - Route53
+  - optional native pipeline scaffolding
+
+GitHub Actions is the primary production deployment entrypoint. Native SST pipeline creation remains optional and disabled during normal deploys.
+
+## Key Files
+
+- `sst.config.ts` — SST app entrypoint
+- `infra.config.ts` — AWS API runtime definition
+- `src/deployers/ApiDeployer.ts` — programmatic deploy wrapper for SST
+- `src/deployers/apiRuntime.ts` — Terraform-output parsing and runtime config resolution
+- `config/pipelines.example.json` — optional native pipeline config example
+
+## API Config Surface
+
+Programmatic/public types exported by this package:
+
+- `ApiDeploymentConfig`
+- `ApiDeploymentResult`
+- `ApiRuntimeConfig`
+- `ApiCoreTerraformOutputs`
+
+Core runtime inputs:
+
+- `API_DOMAIN`
+- `API_IMAGE_REPOSITORY`
+- `API_VPC_ID`
+- `API_ALB_SECURITY_GROUP_ID`
+- `API_PUBLIC_SUBNET_IDS`
+- `API_PRIVATE_SUBNET_IDS`
+- `API_SECURITY_GROUP_IDS`
+- `API_DATABASE_URL_SECRET_ARN`
+- `API_JWT_SECRET_ARN`
+- `API_NEO4J_BOLT_URI`
+- `API_NEO4J_PASSWORD_SECRET_ARN`
+- `API_AUTHENTIK_ISSUER_URL_SECRET_ARN`
+- `API_AUTHENTIK_JWKS_URI_SECRET_ARN`
+- `API_AUTHENTIK_TOKEN_ENDPOINT_SECRET_ARN`
+- `API_OIDC_CLIENT_ID_SECRET_ARN`
+- `API_OIDC_CLIENT_SECRET_SECRET_ARN`
+- `API_CORS_ORIGINS`
+
+Bootstrap-only mode uses:
+
+- `INFRA_API_BOOTSTRAP_ONLY=true`
+- `INFRA_CREATE_PIPELINES=false`
+
+## Commands
 
 ```bash
-pnpm add @cig/infra
+pnpm --filter @cig/infra test
+pnpm --filter @cig/infra build
+pnpm --filter @cig/infra diff:api:prod
+pnpm --filter @cig/infra bootstrap:api:prod
+pnpm --filter @cig/infra deploy:api:prod
+pnpm --filter @cig/infra bootstrap:api:pipelines
 ```
 
-## Quick Start
+## Production Flow
 
-```typescript
-import { ConfigManager, InfraWrapper, AuthentikDeployer, DashboardDeployer } from '@cig/infra';
+1. Terraform in `packages/iac/environments/api-prod` applies networking and Neo4j.
+2. GitHub Actions syncs runtime secrets into AWS Secrets Manager.
+3. GitHub Actions bootstraps the ECR repository through SST.
+4. GitHub Actions builds and pushes the API image.
+5. GitHub Actions runs `pnpm --filter @cig/api migrate:up` against Supabase Postgres.
+6. GitHub Actions runs the full SST deploy for the ECS/Fargate runtime.
+7. GitHub Actions runs health, authenticated REST, GraphQL, and WebSocket smoke checks.
 
-const config = new ConfigManager();
-const wrapper = new InfraWrapper(config);
+## Related Docs
 
-// Deploy Authentik
-const authentikDeployer = new AuthentikDeployer(wrapper, config);
-const auth = await authentikDeployer.deploy({
-  domain: 'auth.example.com',
-  adminEmail: 'admin@example.com',
-  region: 'us-east-1'
-});
-
-// Deploy Dashboard
-const dashboardDeployer = new DashboardDeployer(wrapper, config);
-const dashboard = await dashboardDeployer.deploy({
-  buildPath: './apps/dashboard/.next',
-  region: 'us-east-1',
-  authentikUrl: auth.connectionDetails.url,
-  authentikClientId: auth.connectionDetails.clientId
-});
-
-console.log(`Dashboard live at: ${dashboard.url}`);
-```
-
-## CLI
-
-```bash
-# Deploy Authentik
-cig-infra deploy:authentik --env production --region us-east-1
-
-# Deploy Dashboard
-cig-infra deploy:dashboard --env production --region us-east-1
-
-# List deployments
-cig-infra list --env production
-```
-
-## Configuration
-
-Configuration is loaded from environment variables and/or a JSON config file.
-
-### Environment Variables
-
-| Variable | Required | Description |
-|---|---|---|
-| `AWS_REGION` | ✅ | AWS region (e.g. `us-east-1`) |
-| `AWS_ACCOUNT_ID` | | AWS account ID |
-| `AWS_PROFILE` | | AWS CLI profile |
-| `AUTHENTIK_DOMAIN` | ✅ | Domain for Authentik (e.g. `auth.example.com`) |
-| `AUTHENTIK_ADMIN_EMAIL` | ✅ | Admin email for initial setup |
-| `AUTHENTIK_VPC_ID` | | VPC ID (uses IAC default if omitted) |
-| `AUTHENTIK_SUBNET_ID` | | Subnet ID (uses IAC default if omitted) |
-| `DASHBOARD_BUILD_PATH` | ✅ | Path to built dashboard files |
-| `DASHBOARD_DOMAIN` | | Custom domain for dashboard |
-| `DASHBOARD_AUTHENTIK_INTEGRATION` | | Enable Authentik auth (`true`/`false`) |
-| `IAC_MODULES_PATH` | ✅ | Path to the Terraform modules directory |
-| `IAC_NETWORKING_MODULE` | ✅ | Networking module name |
-| `IAC_COMPUTE_MODULE` | ✅ | Compute module name |
-| `LOG_LEVEL` | | Log level: `debug`, `info`, `warn`, `error` |
-| `LOG_TIMESTAMPS` | | Include timestamps (`true`/`false`) |
-
-### Config File
-
-Place a `config/<environment>.json` file in your working directory:
-
-```json
-{
-  "aws": { "region": "us-east-1" },
-  "authentik": {
-    "domain": "auth.example.com",
-    "adminEmail": "admin@example.com"
-  },
-  "dashboard": {
-    "buildPath": "./apps/dashboard/.next",
-    "authentikIntegration": true
-  },
-  "iac": {
-    "modulesPath": "packages/iac",
-    "networkingModule": "networking",
-    "computeModule": "compute"
-  },
-  "logging": { "level": "info", "timestamps": true }
-}
-```
-
-## IAC Integration
-
-This package integrates with `@cig/iac` Terraform modules:
-
-- `modules/networking` — VPC, subnets, security groups
-- `modules/compute` — EC2 / container compute resources
-
-Set `IAC_MODULES_PATH` to `packages/iac` when you run this package from the monorepo root.
-
-## Troubleshooting
-
-**`ConfigValidationError: aws.region is required`** — Set the `AWS_REGION` environment variable.
-
-**`IAC_MODULE_NOT_FOUND`** — Verify `IAC_MODULES_PATH` points to a valid `@cig/iac` directory containing `modules/networking` and `modules/compute`.
-
-**`DeploymentError` during networking phase** — Check that the VPC/subnet IDs are valid for the target region, or omit them to use IAC module defaults.
+- [../iac/README.md](../iac/README.md)
+- [../../docs/deployment/README.md](../../docs/deployment/README.md)
+- [../../docs/deployment/api-aws.md](../../docs/deployment/api-aws.md)

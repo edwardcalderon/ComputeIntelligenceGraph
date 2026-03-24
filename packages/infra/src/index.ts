@@ -25,6 +25,8 @@ export * from './providers/index.js';
 // Deployers
 export * from './deployers/AuthentikDeployer.js';
 export * from './deployers/DashboardDeployer.js';
+export * from './deployers/ApiDeployer.js';
+export * from './deployers/apiRuntime.js';
 export * from './deployers/GcpCloudRunDeployer.js';
 
 // Orchestration wrapper

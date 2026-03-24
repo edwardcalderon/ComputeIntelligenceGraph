@@ -4,7 +4,7 @@
 
 resource "random_password" "authentik_secret_key" {
   length  = 50
-  special = false  # Authentik secret key must be alphanumeric
+  special = false # Authentik secret key must be alphanumeric
 }
 
 resource "aws_secretsmanager_secret" "authentik_secret_key" {

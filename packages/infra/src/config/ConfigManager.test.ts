@@ -87,6 +87,51 @@ describe('ConfigManager', () => {
       expect(config.logging?.timestamps).toBe(true);
     });
 
+    it('should load API deployment configuration from environment variables', () => {
+      process.env.AWS_REGION = 'us-east-1';
+      process.env.API_DOMAIN = 'api.cig.technology';
+      process.env.API_IMAGE_REPOSITORY = 'cig-api-production';
+      process.env.API_CONTAINER_PORT = '8080';
+      process.env.API_CPU = '512';
+      process.env.API_MEMORY_MIB = '1024';
+      process.env.API_DESIRED_COUNT = '1';
+      process.env.API_ALB_SECURITY_GROUP_ID = 'sg-alb';
+      process.env.API_PUBLIC_SUBNET_IDS = 'subnet-public-a,subnet-public-b';
+      process.env.API_PRIVATE_SUBNET_IDS = 'subnet-private-a,subnet-private-b';
+      process.env.API_SECURITY_GROUP_IDS = 'sg-api';
+      process.env.API_AUTHENTIK_ISSUER_URL_SECRET_ARN = 'arn:aws:secretsmanager:::issuer';
+      process.env.API_AUTHENTIK_JWKS_URI_SECRET_ARN = 'arn:aws:secretsmanager:::jwks';
+      process.env.API_AUTHENTIK_TOKEN_ENDPOINT_SECRET_ARN = 'arn:aws:secretsmanager:::token';
+      process.env.API_OIDC_CLIENT_ID_SECRET_ARN = 'arn:aws:secretsmanager:::client-id';
+      process.env.API_OIDC_CLIENT_SECRET_SECRET_ARN = 'arn:aws:secretsmanager:::client-secret';
+      process.env.API_CORS_ORIGINS = 'https://app.cig.lat,https://cig.lat';
+      process.env.API_CREATE_PIPELINE = 'false';
+
+      const config = configManager.loadFromEnv();
+
+      expect(config.api).toBeDefined();
+      expect(config.api?.region).toBe('us-east-1');
+      expect(config.api?.domain).toBe('api.cig.technology');
+      expect(config.api?.imageRepository).toBe('cig-api-production');
+      expect(config.api?.containerPort).toBe(8080);
+      expect(config.api?.cpu).toBe(512);
+      expect(config.api?.memoryMiB).toBe(1024);
+      expect(config.api?.desiredCount).toBe(1);
+      expect(config.api?.albSecurityGroupId).toBe('sg-alb');
+      expect(config.api?.publicSubnetIds).toEqual(['subnet-public-a', 'subnet-public-b']);
+      expect(config.api?.privateSubnetIds).toEqual(['subnet-private-a', 'subnet-private-b']);
+      expect(config.api?.securityGroupIds).toEqual(['sg-api']);
+      expect(config.api?.authentikSecretRefs).toEqual({
+        issuerUrlSecretArn: 'arn:aws:secretsmanager:::issuer',
+        jwksUriSecretArn: 'arn:aws:secretsmanager:::jwks',
+        tokenEndpointSecretArn: 'arn:aws:secretsmanager:::token',
+        oidcClientIdSecretArn: 'arn:aws:secretsmanager:::client-id',
+        oidcClientSecretSecretArn: 'arn:aws:secretsmanager:::client-secret'
+      });
+      expect(config.api?.corsOrigins).toEqual(['https://app.cig.lat', 'https://cig.lat']);
+      expect(config.api?.createPipeline).toBe(false);
+    });
+
     it('should return empty object when no environment variables are set', () => {
       const config = configManager.loadFromEnv();
       expect(config).toEqual({});
@@ -120,6 +165,11 @@ describe('ConfigManager', () => {
         dashboard: {
           buildPath: './dist',
           authentikIntegration: true
+        },
+        api: {
+          domain: 'api.cig.technology',
+          region: 'us-east-1',
+          imageRepository: 'cig-api-production'
         },
         iac: {
           modulesPath: '../iac',
@@ -220,11 +270,34 @@ describe('ConfigManager', () => {
       expect(result.errors).toContain('dashboard.buildPath is required');
     });
 
+    it('should validate API configuration when present', () => {
+      const config = {
+        aws: {
+          region: 'us-east-1'
+        },
+        api: {
+          region: 'us-east-1'
+        },
+        iac: {
+          modulesPath: '../iac',
+          networkingModule: 'networking',
+          computeModule: 'compute'
+        },
+        logging: {
+          level: 'info' as const,
+          timestamps: true
+        }
+      };
+
+      const result = configManager.validate(config);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('api.domain is required');
+      expect(result.errors).toContain('api.imageRepository is required');
+    });
+
     it('should return multiple errors for multiple missing fields', () => {
       const config = {
         aws: {},
-        authentik: {},
-        dashboard: {},
         iac: {},
         logging: {}
       };
@@ -240,8 +313,6 @@ describe('ConfigManager', () => {
       const result = configManager.validate(config);
       expect(result.valid).toBe(false);
       expect(result.errors).toContain('aws configuration is required');
-      expect(result.errors).toContain('authentik configuration is required');
-      expect(result.errors).toContain('dashboard configuration is required');
       expect(result.errors).toContain('iac configuration is required');
       expect(result.errors).toContain('logging configuration is required');
     });

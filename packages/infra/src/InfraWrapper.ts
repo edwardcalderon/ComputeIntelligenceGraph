@@ -89,6 +89,9 @@ export class InfraWrapper {
   async deployAuthentik(options: DeploymentOptions): Promise<DeploymentResult> {
     // Load configuration for environment
     const infraConfig = this.config.load(options.environment);
+    if (!infraConfig.authentik) {
+      throw new Error('authentik configuration is required for deployAuthentik');
+    }
     
     // Create operation-specific logger
     const opLogger = new Logger(infraConfig.logging, {
@@ -168,6 +171,9 @@ export class InfraWrapper {
   async deployDashboard(options: DeploymentOptions): Promise<DeploymentResult> {
     // Load configuration for environment
     const infraConfig = this.config.load(options.environment);
+    if (!infraConfig.dashboard) {
+      throw new Error('dashboard configuration is required for deployDashboard');
+    }
     
     // Create operation-specific logger
     const opLogger = new Logger(infraConfig.logging, {

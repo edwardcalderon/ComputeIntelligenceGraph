@@ -7,20 +7,7 @@ import Link from "next/link";
 import { useTranslation } from "@cig-technology/i18n/react";
 import { NotificationBell } from "./NotificationBell";
 import { LocaleSwitcher } from "./LocaleSwitcher";
-import { browserApiFetch } from "../lib/browserApi";
-
-interface DeviceAuthResponse {
-  items: Array<{ expires_at: string }>;
-  total: number;
-}
-
-async function getPendingDeviceRequests(): Promise<DeviceAuthResponse> {
-  const res = await browserApiFetch("/api/v1/auth/device/pending");
-  if (!res.ok) {
-    throw new Error(`API error ${res.status}: ${res.statusText}`);
-  }
-  return res.json();
-}
+import { getPendingDeviceRequests, type DeviceAuthResponse } from "../lib/api";
 
 export function Header() {
   const { toggleSidebar, theme, setTheme } = useAppStore();

@@ -15,6 +15,26 @@
     "domain": "dashboard.example.com",
     "authentikIntegration": true
   },
+  "api": {
+    "domain": "api.cig.technology",
+    "region": "us-east-1",
+    "imageRepository": "cig-api-production",
+    "containerPort": 8080,
+    "cpu": 512,
+    "memoryMiB": 1024,
+    "desiredCount": 1,
+    "createPipeline": false,
+    "corsOrigins": ["https://app.cig.lat", "https://cig.lat"],
+    "databaseUrlSecretArn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:cig/prod/api/database-url",
+    "jwtSecretArn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:cig/prod/api/jwt-secret",
+    "authentikSecretRefs": {
+      "issuerUrlSecretArn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:cig/prod/api/authentik-issuer",
+      "jwksUriSecretArn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:cig/prod/api/authentik-jwks",
+      "tokenEndpointSecretArn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:cig/prod/api/authentik-token",
+      "oidcClientIdSecretArn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:cig/prod/api/oidc-client-id",
+      "oidcClientSecretSecretArn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:cig/prod/api/oidc-client-secret"
+    }
+  },
   "iac": {
     "modulesPath": "packages/iac",
     "networkingModule": "networking",

@@ -1,8 +1,8 @@
 # CIG Project Status
 
 Last updated: 2026-03-23  
-Version: 0.1.51  
-Latest released tag: `v0.1.51`  
+Version: 0.1.58  
+Latest released tag: `v0.1.58`  
 Status: Active development
 
 ## Current Snapshot
@@ -19,9 +19,17 @@ The current repository state is aligned around these primary surfaces:
 - `packages/chatbot` plus `packages/agents` provide retrieval, reasoning, and action workflows
 - `packages/cli` is the operator and install surface
 
+The architecture foundation now explicitly treats:
+
+- `packages/api` as the canonical domain API
+- `apps/dashboard` as the protected UI shell with only narrow internal web-session/auth bridge routes
+- `packages/sdk` as the shared typed client foundation for dashboard and CLI
+- `packages/iac` as the owner of AWS API core data such as networking and Neo4j
+- `packages/infra` as the owner of AWS API runtime delivery on ECS/Fargate
+
 ## Release State
 
-The `v0.1.51` patch release completed successfully on 2026-03-23.
+The `v0.1.58` patch release completed successfully on 2026-03-23.
 
 Release verification completed during the release workflow:
 
@@ -45,8 +53,9 @@ Release verification completed during the release workflow:
 ## Partial or Still Evolving
 
 - `apps/wizard-ui` is still a placeholder surface with a minimal "coming soon" page
-- `packages/sdk` remains scaffolded and is not feature-complete
+- `packages/sdk` is now the shared client foundation, but it is not yet feature-complete across the full CIG domain
 - Documentation is active and now synchronized, but still needs ongoing maintenance as the code changes
+- API production infrastructure has a concrete ECS/Fargate + Terraform + GitHub Actions foundation, but it still needs first live deployment validation on AWS
 
 ## Domains and Runtime Roles
 
@@ -54,7 +63,12 @@ Release verification completed during the release workflow:
 | --- | --- | --- |
 | Landing | `https://cig.lat` | Public site, login entry, canonical logout return |
 | Dashboard | `https://app.cig.lat` | Protected application UI |
+| API | `https://api.cig.technology` | Canonical public API origin and AWS provisioning target |
 | Authentik | `https://auth.cig.technology` | Identity provider and social-login broker |
+
+## Optional Follow-Up
+
+An explicit follow-up remains open in architecture and implementation planning: evolve `packages/sdk` into a broader CIG domain client that can eventually encapsulate higher-level business workflows for dashboard, CLI, and future automation surfaces, while keeping authoritative validation and write-side rules in `packages/api`.
 
 ## Linked Documentation
 

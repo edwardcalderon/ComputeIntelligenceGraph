@@ -1,0 +1,57 @@
+name: Bootstrap API native pipelines
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: bootstrap-api-pipelines
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  API_DOMAIN: ${{ vars.API_DOMAIN || 'api.cig.technology' }}
+  API_IMAGE_REPOSITORY: ${{ vars.API_IMAGE_REPOSITORY || 'cig-api-production' }}
+  INFRA_APP_NAME: ${{ vars.INFRA_APP_NAME || 'cig-api' }}
+  INFRA_PIPELINE_REPO: ${{ vars.INFRA_PIPELINE_REPO || 'edwardcalderon/ComputeIntelligenceGraph' }}
+  INFRA_PIPELINE_PREFIX: ${{ vars.INFRA_PIPELINE_PREFIX || 'cig-api' }}
+  INFRA_PROJECT_TAG: ${{ vars.INFRA_PROJECT_TAG || 'cig-api' }}
+  INFRA_PIPELINE_BRANCH_PROD: ${{ vars.INFRA_PIPELINE_BRANCH_PROD || 'main' }}
+  INFRA_PIPELINE_PERMISSIONS_MODE: ${{ vars.INFRA_PIPELINE_PERMISSIONS_MODE || 'admin' }}
+
+jobs:
+  bootstrap:
+    name: Create or update optional AWS-native API pipelines
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.0.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+
+      - name: Bootstrap API pipelines through SST
+        working-directory: packages/infra
+        env:
+          INFRA_API_BOOTSTRAP_ONLY: 'true'
+          INFRA_CREATE_PIPELINES: 'true'
+          API_IMAGE_URI: public.ecr.aws/docker/library/node:20-alpine
+        run: pnpm exec sst deploy --stage production --yes

@@ -152,8 +152,8 @@ resource "aws_iam_role_policy" "secrets" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect   = "Allow"
-      Action   = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
+      Effect = "Allow"
+      Action = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
       Resource = [
         aws_secretsmanager_secret.authentik_secret_key.arn,
         aws_secretsmanager_secret.authentik_admin_password.arn,
@@ -342,7 +342,7 @@ resource "aws_instance" "authentik" {
   key_name               = var.ssh_public_key != "" ? aws_key_pair.authentik[0].key_name : null
 
   user_data                   = local.user_data
-  user_data_replace_on_change = false  # avoid instance replacement on tfvars changes
+  user_data_replace_on_change = false # avoid instance replacement on tfvars changes
 
   root_block_device {
     volume_type           = "gp3"
@@ -356,7 +356,7 @@ resource "aws_instance" "authentik" {
   })
 
   lifecycle {
-    ignore_changes = [ami, user_data]  # don't replace on AMI updates
+    ignore_changes = [ami, user_data] # don't replace on AMI updates
   }
 }
 

@@ -1,0 +1,439 @@
+name: Deploy API -> api.cig.technology
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy (leave blank to build from the current ref)'
+        required: false
+        default: ''
+      apply_core_data:
+        description: 'Run Terraform apply for the API core-data stack'
+        type: boolean
+        default: true
+      dry_run:
+        description: 'Build, validate, and push the API image without running migrations or deploy'
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-api-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  API_DOMAIN: ${{ vars.API_DOMAIN || 'api.cig.technology' }}
+  API_IMAGE_REPOSITORY: ${{ vars.API_IMAGE_REPOSITORY || 'cig-api-production' }}
+  API_HOSTED_ZONE_DOMAIN: ${{ vars.API_HOSTED_ZONE_DOMAIN || 'cig.technology' }}
+  API_CORS_ORIGINS: ${{ vars.CORS_ORIGINS || 'https://app.cig.lat,https://cig.lat' }}
+  INFRA_APP_NAME: ${{ vars.INFRA_APP_NAME || 'cig-api' }}
+  INFRA_PIPELINE_REPO: ${{ vars.INFRA_PIPELINE_REPO || 'edwardcalderon/ComputeIntelligenceGraph' }}
+  INFRA_PIPELINE_PREFIX: ${{ vars.INFRA_PIPELINE_PREFIX || 'cig-api' }}
+  INFRA_PROJECT_TAG: ${{ vars.INFRA_PROJECT_TAG || 'cig-api' }}
+  INFRA_PIPELINE_BRANCH_PROD: ${{ vars.INFRA_PIPELINE_BRANCH_PROD || 'main' }}
+  INFRA_PIPELINE_PERMISSIONS_MODE: ${{ vars.INFRA_PIPELINE_PERMISSIONS_MODE || 'admin' }}
+  TF_IN_AUTOMATION: 'true'
+
+jobs:
+  resolve-tag:
+    name: Resolve image tag
+    runs-on: ubuntu-latest
+    outputs:
+      value: ${{ steps.tag.outputs.value }}
+    steps:
+      - name: Determine tag
+        id: tag
+        run: |
+          if [[ -n "${{ github.event.inputs.image_tag }}" ]]; then
+            echo "value=${{ github.event.inputs.image_tag }}" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.ref_type }}" == "tag" ]]; then
+            TAG="${GITHUB_REF_NAME#v}"
+            TAG="${TAG//+/-}"
+            echo "value=$TAG" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
+
+  validate:
+    name: Validate API deploy inputs
+    runs-on: ubuntu-latest
+    needs: resolve-tag
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.0.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.5
+
+      - name: Lint and test API
+        run: |
+          pnpm --filter @cig/api lint
+          pnpm --filter @cig/api test
+          pnpm --filter @cig/api build
+
+      - name: Lint and test infra wrapper
+        run: |
+          pnpm --filter @cig/infra lint
+          pnpm --filter @cig/infra test
+          pnpm --filter @cig/infra build
+
+      - name: Terraform format check
+        run: terraform -chdir=packages/iac fmt -check -recursive
+
+      - name: Terraform validate
+        run: |
+          terraform -chdir=packages/iac/environments/api-prod init -backend=false
+          terraform -chdir=packages/iac/environments/api-prod validate
+
+      - name: SST diff (bootstrap mode)
+        working-directory: packages/infra
+        env:
+          INFRA_API_BOOTSTRAP_ONLY: 'true'
+          INFRA_CREATE_PIPELINES: 'false'
+          API_IMAGE_URI: public.ecr.aws/docker/library/node:20-alpine
+        run: pnpm exec sst diff --stage production
+
+  build-image:
+    name: Build and push API image
+    runs-on: ubuntu-latest
+    needs: [resolve-tag, validate]
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      image_uri: ${{ steps.meta.outputs.image_uri }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.0.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+
+      - name: Bootstrap ECR repository
+        working-directory: packages/infra
+        env:
+          INFRA_API_BOOTSTRAP_ONLY: 'true'
+          INFRA_CREATE_PIPELINES: 'false'
+          API_IMAGE_URI: public.ecr.aws/docker/library/node:20-alpine
+        run: pnpm exec sst deploy --stage production --yes
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Resolve repository URI
+        id: meta
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          REPOSITORY_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${API_IMAGE_REPOSITORY}"
+          IMAGE_URI="${REPOSITORY_URI}:${{ needs.resolve-tag.outputs.value }}"
+          echo "repository_uri=$REPOSITORY_URI" >> "$GITHUB_OUTPUT"
+          echo "image_uri=$IMAGE_URI" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infra/docker/Dockerfile.api
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.image_uri }}
+            ${{ steps.meta.outputs.repository_uri }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+
+  migrate-db:
+    name: Run API migrations against Supabase Postgres
+    runs-on: ubuntu-latest
+    needs: [resolve-tag, validate, build-image]
+    if: ${{ github.event.inputs.dry_run != 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.0.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+        run: pnpm --filter @cig/api migrate:up
+
+  apply-core-data:
+    name: Apply API core-data infrastructure
+    runs-on: ubuntu-latest
+    needs: [validate]
+    if: ${{ github.event.inputs.dry_run != 'true' && (github.event_name != 'workflow_dispatch' || github.event.inputs.apply_core_data != 'false') }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.5
+
+      - name: Terraform apply
+        run: |
+          terraform -chdir=packages/iac/environments/api-prod init
+          terraform -chdir=packages/iac/environments/api-prod apply -auto-approve -var-file=prod.tfvars
+
+  deploy-api:
+    name: Deploy API runtime to ECS/Fargate
+    runs-on: ubuntu-latest
+    needs: [resolve-tag, build-image, migrate-db, apply-core-data]
+    if: ${{ always() && github.event.inputs.dry_run != 'true' && needs.build-image.result == 'success' && (needs.migrate-db.result == 'success' || needs.migrate-db.result == 'skipped') && (needs.apply-core-data.result == 'success' || needs.apply-core-data.result == 'skipped') }}
+    permissions:
+      contents: read
+      id-token: write
+    environment:
+      name: production
+      url: https://${{ env.API_DOMAIN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.0.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.5
+
+      - name: Read API core-data outputs
+        run: |
+          terraform -chdir=packages/iac/environments/api-prod init
+          terraform -chdir=packages/iac/environments/api-prod output -json > "$RUNNER_TEMP/api-core.json"
+
+          echo "API_VPC_ID=$(jq -r '.vpc_id.value' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
+          echo "API_ALB_SECURITY_GROUP_ID=$(jq -r '.alb_security_group_id.value' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
+          echo "API_SECURITY_GROUP_IDS=$(jq -r '.api_service_security_group_id.value' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
+          echo "API_PUBLIC_SUBNET_IDS=$(jq -r '.public_subnet_ids.value | join(\",\")' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
+          echo "API_PRIVATE_SUBNET_IDS=$(jq -r '.private_subnet_ids.value | join(\",\")' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
+          echo "API_NEO4J_BOLT_URI=$(jq -r '.neo4j_bolt_uri.value' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
+          echo "API_NEO4J_PASSWORD_SECRET_ARN=$(jq -r '.neo4j_password_secret_arn.value' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
+
+      - name: Ensure runtime secrets in AWS Secrets Manager
+        env:
+          DATABASE_URL_VALUE: ${{ secrets.SUPABASE_DATABASE_URL }}
+          SUPABASE_URL_VALUE: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY_VALUE: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          JWT_SECRET_VALUE: ${{ secrets.JWT_SECRET }}
+          AUTHENTIK_ISSUER_URL_VALUE: ${{ secrets.AUTHENTIK_ISSUER_URL }}
+          AUTHENTIK_JWKS_URI_VALUE: ${{ secrets.AUTHENTIK_JWKS_URI }}
+          AUTHENTIK_TOKEN_ENDPOINT_VALUE: ${{ secrets.AUTHENTIK_TOKEN_ENDPOINT }}
+          OIDC_CLIENT_ID_VALUE: ${{ secrets.OIDC_CLIENT_ID }}
+          OIDC_CLIENT_SECRET_VALUE: ${{ secrets.OIDC_CLIENT_SECRET }}
+        run: |
+          ensure_secret() {
+            local secret_name="$1"
+            local secret_value="$2"
+            local output_var="$3"
+
+            if aws secretsmanager describe-secret --secret-id "$secret_name" >/dev/null 2>&1; then
+              aws secretsmanager put-secret-value \
+                --secret-id "$secret_name" \
+                --secret-string "$secret_value" >/dev/null
+              secret_arn=$(aws secretsmanager describe-secret --secret-id "$secret_name" --query ARN --output text)
+            else
+              secret_arn=$(aws secretsmanager create-secret \
+                --name "$secret_name" \
+                --secret-string "$secret_value" \
+                --query ARN \
+                --output text)
+            fi
+
+            echo "${output_var}=${secret_arn}" >> "$GITHUB_ENV"
+          }
+
+          ensure_secret "/cig/prod/api/database-url" "$DATABASE_URL_VALUE" API_DATABASE_URL_SECRET_ARN
+          ensure_secret "/cig/prod/api/supabase-url" "$SUPABASE_URL_VALUE" API_SUPABASE_URL_SECRET_ARN
+          ensure_secret "/cig/prod/api/supabase-service-role-key" "$SUPABASE_SERVICE_ROLE_KEY_VALUE" API_SUPABASE_SERVICE_ROLE_KEY_SECRET_ARN
+          ensure_secret "/cig/prod/api/jwt-secret" "$JWT_SECRET_VALUE" API_JWT_SECRET_ARN
+          ensure_secret "/cig/prod/api/authentik-issuer-url" "$AUTHENTIK_ISSUER_URL_VALUE" API_AUTHENTIK_ISSUER_URL_SECRET_ARN
+          ensure_secret "/cig/prod/api/authentik-jwks-uri" "$AUTHENTIK_JWKS_URI_VALUE" API_AUTHENTIK_JWKS_URI_SECRET_ARN
+          ensure_secret "/cig/prod/api/authentik-token-endpoint" "$AUTHENTIK_TOKEN_ENDPOINT_VALUE" API_AUTHENTIK_TOKEN_ENDPOINT_SECRET_ARN
+          ensure_secret "/cig/prod/api/oidc-client-id" "$OIDC_CLIENT_ID_VALUE" API_OIDC_CLIENT_ID_SECRET_ARN
+          ensure_secret "/cig/prod/api/oidc-client-secret" "$OIDC_CLIENT_SECRET_VALUE" API_OIDC_CLIENT_SECRET_SECRET_ARN
+
+      - name: Deploy API runtime
+        working-directory: packages/infra
+        env:
+          INFRA_CREATE_PIPELINES: 'false'
+          INFRA_API_BOOTSTRAP_ONLY: 'false'
+          API_IMAGE_URI: ${{ needs.build-image.outputs.image_uri }}
+          API_IMAGE_TAG: ${{ needs.resolve-tag.outputs.value }}
+          API_CONTAINER_PORT: '8080'
+          API_CPU: '512'
+          API_MEMORY_MIB: '1024'
+          API_DESIRED_COUNT: '1'
+          API_CORS_ORIGINS: ${{ env.API_CORS_ORIGINS }}
+          API_HOSTED_ZONE_DOMAIN: ${{ env.API_HOSTED_ZONE_DOMAIN }}
+        run: pnpm exec sst deploy --stage production --yes
+
+  smoke-test:
+    name: Smoke test API runtime
+    runs-on: ubuntu-latest
+    needs: [deploy-api]
+    if: ${{ needs.deploy-api.result == 'success' }}
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.0.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Wait for deployment stabilization
+        run: sleep 20
+
+      - name: Health check
+        run: |
+          curl --fail --show-error --silent "https://${API_DOMAIN}/api/v1/health" >/tmp/api-health.json
+          cat /tmp/api-health.json
+
+      - name: Generate smoke-test JWT
+        id: smoke-jwt
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        run: |
+          TOKEN=$(node -e "const jwt = require('jsonwebtoken'); process.stdout.write(jwt.sign({ sub: 'smoke-test', permissions: ['ADMIN'] }, process.env.JWT_SECRET, { expiresIn: '5m' }));")
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Authenticated REST check
+        env:
+          SMOKE_JWT: ${{ steps.smoke-jwt.outputs.token }}
+        run: |
+          curl --fail --show-error --silent \
+            -H "Authorization: Bearer ${SMOKE_JWT}" \
+            "https://${API_DOMAIN}/api/v1/resources?limit=1" >/tmp/api-resources.json
+          cat /tmp/api-resources.json
+
+      - name: GraphQL check
+        run: |
+          curl --fail --show-error --silent \
+            -H "Content-Type: application/json" \
+            -d '{"query":"{ __typename }"}' \
+            "https://${API_DOMAIN}/graphql" >/tmp/api-graphql.json
+          cat /tmp/api-graphql.json
+
+      - name: WebSocket handshake check
+        env:
+          SMOKE_JWT: ${{ steps.smoke-jwt.outputs.token }}
+        run: |
+          node - <<'NODE'
+          const WebSocket = require('ws');
+          const url = `wss://${process.env.API_DOMAIN}/ws?token=${process.env.SMOKE_JWT}`;
+          const ws = new WebSocket(url);
+
+          const timer = setTimeout(() => {
+            console.error('WebSocket handshake timed out');
+            process.exit(1);
+          }, 10000);
+
+          ws.on('open', () => {
+            clearTimeout(timer);
+            console.log('WebSocket handshake succeeded');
+            ws.close();
+          });
+
+          ws.on('close', () => process.exit(0));
+          ws.on('error', (error) => {
+            clearTimeout(timer);
+            console.error(error);
+            process.exit(1);
+          });
+          NODE

@@ -47,6 +47,13 @@ Compute Intelligence Graph is a monorepo for a self-hosted platform focused on:
 - dashboard and API workflows
 - CLI and deployment tooling
 
+### System Foundations
+
+- `packages/api` is the canonical domain API and the target public API surface for `https://api.cig.technology/`
+- `apps/dashboard` is the protected UI shell; internal Next.js routes should stay limited to web-session, auth-relay, and browser-bridge concerns
+- `packages/sdk` is the shared typed client foundation for dashboard and CLI, with an optional follow-up path to absorb higher-level CIG business workflows
+- `packages/iac` owns AWS API core data such as networking and Neo4j, while `packages/infra` owns the ECS/Fargate runtime delivery path
+
 ### Repository Layout
 
 ```text
@@ -65,7 +72,7 @@ packages/
   graph/         Neo4j graph engine
   iac/           Terraform modules
   infra/         AWS deployment wrapper
-  sdk/           SDK scaffold
+  sdk/           Shared typed API client foundation
 services/
   cartography/   Python FastAPI discovery service
 infra/
@@ -144,6 +151,13 @@ Compute Intelligence Graph es un monorepo para una plataforma self-hosted enfoca
 - flujos de trabajo con dashboard y API
 - herramientas de CLI y despliegue
 
+### Fundamentos del Sistema
+
+- `packages/api` es la API de dominio canónica y la superficie pública objetivo para `https://api.cig.technology/`
+- `apps/dashboard` es la interfaz protegida; las rutas internas de Next.js deben limitarse a sesión web, relay de autenticación y puentes del navegador
+- `packages/sdk` es la base compartida del cliente tipado para dashboard y CLI, con un seguimiento opcional para encapsular flujos de negocio de CIG de mayor nivel
+- `packages/iac` es responsable del core data del API en AWS, como networking y Neo4j, mientras `packages/infra` gestiona el runtime en ECS/Fargate
+
 ### Estructura del Repositorio
 
 ```text
@@ -162,7 +176,7 @@ packages/
   graph/         Motor de grafos con Neo4j
   iac/           Módulos Terraform
   infra/         Wrapper de despliegue en AWS
-  sdk/           SDK en estado scaffold
+  sdk/           Base compartida del cliente tipado de API
 services/
   cartography/   Servicio Python FastAPI para discovery
 infra/
@@ -241,6 +255,13 @@ Compute Intelligence Graph 是一个面向自托管基础设施智能平台的 m
 - Dashboard 与 API 工作流
 - CLI 与部署工具
 
+### 系统基础
+
+- `packages/api` 是规范的领域 API，也是 `https://api.cig.technology/` 的目标公共 API 表面
+- `apps/dashboard` 是受保护的 UI 外壳；内部 Next.js 路由应只处理 Web 会话、认证中继和浏览器桥接问题
+- `packages/sdk` 是 Dashboard 与 CLI 共用的强类型客户端基础层，后续可选择继续承载更高层的 CIG 业务工作流
+- `packages/iac` 负责 AWS 中 API 的核心数据基础设施，例如网络层与 Neo4j，`packages/infra` 负责 ECS/Fargate 运行时交付
+
 ### 仓库结构
 
 ```text
@@ -259,7 +280,7 @@ packages/
   graph/         Neo4j 图引擎
   iac/           Terraform 模块
   infra/         AWS 部署封装
-  sdk/           SDK 脚手架
+  sdk/           共享强类型 API 客户端基础层
 services/
   cartography/   Python FastAPI 发现服务
 infra/

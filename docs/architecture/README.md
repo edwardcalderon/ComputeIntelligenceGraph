@@ -2,6 +2,16 @@
 
 Last synchronized with the root README and release state on `2026-03-23`.
 
+## Foundation Decisions
+
+- `packages/api` is the single canonical domain API for CIG. New business endpoints, validation, auth enforcement, metrics, and persistence boundaries belong there.
+- `apps/dashboard` is the protected application shell. Internal Next.js routes are allowed only for browser-specific concerns such as session bridging, auth relays, and server-only web integrations.
+- `packages/sdk` is the shared typed client contract for dashboard and CLI. Client-side consumers should converge on it instead of creating new raw `fetch` helpers per surface.
+- `https://api.cig.technology` is the target canonical public API origin for production provisioning on AWS.
+- `packages/iac` owns stateful API core data on AWS.
+- `packages/infra` owns the AWS runtime stack and deployment orchestration for the API.
+- GitHub Actions is the primary production deployment mechanism; native SST pipelines are optional follow-up infrastructure and remain disabled by default.
+
 ## Current Runtime Roles
 
 | Area | Path | Current role |
@@ -32,20 +42,33 @@ These packages are part of the active repository shape even if they are not the 
 ## Areas Still Evolving
 
 - `apps/wizard-ui` is still a minimal placeholder
-- `packages/sdk` is scaffolded and not feature-complete
+- `packages/sdk` is now the foundation for a shared typed client, but it is still incomplete relative to the full API surface
 - Deployment and operator flows are more mature than the wizard surface
 
 ## High-Level Layout
 
 ```text
 Landing (cig.lat) -> Dashboard auth relay / login callback -> Authentik
-Landing / Dashboard -> API -> Graph / Discovery / Chatbot / Agents
+Landing / Dashboard / CLI -> SDK client layer -> API -> Graph / Discovery / Chatbot / Agents
+Dashboard internal routes -> browser/session/auth bridge only
                                  -> Neo4j
                                  -> Chroma
 Discovery orchestration -> Cartography -> Cloud providers
 CLI -> local config / enrollment / install assets / compose workflows
-Infra wrapper -> Terraform modules / container deployment surfaces
+packages/iac -> AWS networking / Neo4j core data
+packages/infra -> ECS/Fargate runtime / ALB / DNS / deploy orchestration
 ```
+
+## Implementation Boundary Rules
+
+- Add or change business endpoints in `packages/api` first.
+- Add typed request/response support in `packages/sdk` second.
+- Consume those SDK methods from `apps/dashboard` and `packages/cli` instead of introducing new domain-specific `fetch` utilities.
+- Keep dashboard `app/api/*` routes narrow. If a route can live in the standalone API, it should.
+
+## Optional Follow-Up
+
+`packages/sdk` can later grow beyond transport helpers into a higher-level CIG domain client that composes common workflows for dashboard, CLI, and future automation surfaces. The boundary to keep intact is that authoritative validation, permission checks, and write-side business rules still stay in `packages/api`.
 
 ## Related Docs
 

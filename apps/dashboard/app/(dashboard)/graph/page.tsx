@@ -18,7 +18,8 @@ import ReactFlow, {
   BackgroundVariant,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { getResourcesPaged, Resource } from "../../../lib/api";
+import { getRelationships, getResourcesPaged, Resource } from "../../../lib/api";
+import { DASHBOARD_API_URL } from "../../../lib/cigClient";
 import { PROVIDER_COLORS, PROVIDER_LABELS, getProviderColor } from "../../../lib/providers";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -38,8 +39,7 @@ interface ResourceNodeData {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
-const WS_URL = API_URL.replace(/^http/, "ws") + "/ws";
+const WS_URL = DASHBOARD_API_URL.replace(/^http/, "ws") + "/ws";
 
 const TYPE_COLORS: Record<string, { bg: string; border: string; text: string }> = {
   compute:  { bg: "#dbeafe", border: "#3b82f6", text: "#1d4ed8" },
@@ -200,9 +200,7 @@ function GraphContent() {
     queryKey: ["graph", "relationships"],
     queryFn: async () => {
       try {
-        const res = await fetch(`${API_URL}/api/v1/relationships?limit=1000`);
-        if (!res.ok) return { items: [] };
-        return res.json() as Promise<{ items: Relationship[] }>;
+        return await getRelationships(1000);
       } catch {
         return { items: [] };
       }

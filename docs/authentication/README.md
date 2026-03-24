@@ -24,6 +24,12 @@ CIG uses **Authentik** as the primary identity provider and **Supabase** as a fe
 6. Return the tokens to landing through a hash fragment
 7. Use the landing app as the canonical logout orchestrator
 
+### Auth/API boundary rule
+
+- Browser-specific auth bridges can live in dashboard route handlers when they need cookies, server-side secrets, or callback orchestration.
+- Device authorization, session management, token refresh, and general domain endpoints belong in the standalone API package.
+- Client consumers should reach those API capabilities through `packages/sdk` rather than duplicating raw endpoint calls per surface.
+
 ### Current production principals
 
 | Component | Production origin | Role |

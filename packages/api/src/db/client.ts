@@ -30,23 +30,66 @@ type QueryFn = <T extends QueryResultRow = QueryResultRow>(
   params?: unknown[]
 ) => Promise<QueryResult<T>>;
 
-let _query: QueryFn | null = null;
+interface DatabaseDriver {
+  query: QueryFn;
+  withTransaction<T>(fn: (query: QueryFn) => Promise<T>): Promise<T>;
+}
 
-function buildPostgresQuery(): QueryFn {
+let _driver: DatabaseDriver | null = null;
+
+function normalizeQueryResult<T extends QueryResultRow = QueryResultRow>(
+  rows: T[],
+  rowCount?: number | null
+): QueryResult<T> {
+  return { rows, rowCount: rowCount ?? rows.length };
+}
+
+function buildPostgresDriver(): DatabaseDriver {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Pool } = require('pg') as typeof import('pg');
   const pool = new Pool({ connectionString: DATABASE_URL });
 
-  return async <T extends QueryResultRow = QueryResultRow>(
+  const runQuery = async <T extends QueryResultRow = QueryResultRow>(
     sql: string,
     params?: unknown[]
   ): Promise<QueryResult<T>> => {
     const result = await pool.query<T>(sql, params);
-    return { rows: result.rows, rowCount: result.rowCount ?? 0 };
+    return normalizeQueryResult(result.rows, result.rowCount);
+  };
+
+  return {
+    query: runQuery,
+    async withTransaction<T>(fn: (query: QueryFn) => Promise<T>): Promise<T> {
+      const client = await pool.connect();
+
+      const txQuery: QueryFn = async <TRow extends QueryResultRow = QueryResultRow>(
+        sql: string,
+        params?: unknown[]
+      ): Promise<QueryResult<TRow>> => {
+        const result = await client.query<TRow>(sql, params);
+        return normalizeQueryResult(result.rows, result.rowCount);
+      };
+
+      try {
+        await client.query('BEGIN');
+        const result = await fn(txQuery);
+        await client.query('COMMIT');
+        return result;
+      } catch (error) {
+        try {
+          await client.query('ROLLBACK');
+        } catch {
+          // Ignore rollback failures and rethrow the original error.
+        }
+        throw error;
+      } finally {
+        client.release();
+      }
+    },
   };
 }
 
-function buildSqliteQuery(): QueryFn {
+function buildSqliteDriver(): DatabaseDriver {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const Database = require('better-sqlite3') as typeof import('better-sqlite3');
   const dbPath = DATABASE_URL.replace(/^sqlite:\/\//, '') || ':memory:';
@@ -55,27 +98,46 @@ function buildSqliteQuery(): QueryFn {
   // Enable WAL mode for better concurrent read performance
   db.pragma('journal_mode = WAL');
 
-  return async <T extends QueryResultRow = QueryResultRow>(
+  const runQuery = async <T extends QueryResultRow = QueryResultRow>(
     sql: string,
     params?: unknown[]
   ): Promise<QueryResult<T>> => {
     const trimmed = sql.trim().toUpperCase();
-    if (trimmed.startsWith('SELECT') || trimmed.startsWith('WITH')) {
+    if (trimmed.startsWith('SELECT') || trimmed.startsWith('WITH') || trimmed.startsWith('PRAGMA')) {
       const rows = db.prepare(sql).all(...(params ?? [])) as T[];
-      return { rows, rowCount: rows.length };
+      return normalizeQueryResult(rows, rows.length);
     }
     const info = db.prepare(sql).run(...(params ?? []));
-    return { rows: [], rowCount: info.changes };
+    return normalizeQueryResult([], info.changes);
+  };
+
+  return {
+    query: runQuery,
+    async withTransaction<T>(fn: (query: QueryFn) => Promise<T>): Promise<T> {
+      db.prepare('BEGIN').run();
+      try {
+        const result = await fn(runQuery);
+        db.prepare('COMMIT').run();
+        return result;
+      } catch (error) {
+        try {
+          db.prepare('ROLLBACK').run();
+        } catch {
+          // Ignore rollback failures and rethrow the original error.
+        }
+        throw error;
+      }
+    },
   };
 }
 
-function getQuery(): QueryFn {
-  if (!_query) {
-    _query = DATABASE_URL.startsWith('postgres')
-      ? buildPostgresQuery()
-      : buildSqliteQuery();
+function getDriver(): DatabaseDriver {
+  if (!_driver) {
+    _driver = DATABASE_URL.startsWith('postgres')
+      ? buildPostgresDriver()
+      : buildSqliteDriver();
   }
-  return _query;
+  return _driver;
 }
 
 /**
@@ -88,21 +150,76 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
   sql: string,
   params?: unknown[]
 ): Promise<QueryResult<T>> {
-  return getQuery()<T>(sql, params);
+  return getDriver().query<T>(sql, params);
+}
+
+export async function withTransaction<T>(
+  fn: (query: QueryFn) => Promise<T>
+): Promise<T> {
+  return getDriver().withTransaction(fn);
 }
 
 /**
  * Run the SQL migration file against the current database.
  * Reads the file at the given path and executes it as a single statement batch.
  */
-export async function runMigration(sql: string): Promise<void> {
+function splitStatements(sql: string): string[] {
+  const statements: string[] = [];
+  let current = '';
+  let inSingleQuote = false;
+  let inDoubleQuote = false;
+  let inLineComment = false;
+
+  for (let index = 0; index < sql.length; index += 1) {
+    const char = sql[index]!;
+    const next = sql[index + 1] ?? '';
+
+    if (inLineComment) {
+      if (char === '\n') {
+        inLineComment = false;
+      }
+      continue;
+    }
+
+    if (!inSingleQuote && !inDoubleQuote && char === '-' && next === '-') {
+      inLineComment = true;
+      index += 1;
+      continue;
+    }
+
+    if (char === "'" && !inDoubleQuote) {
+      const escaped = sql[index - 1] === '\\';
+      if (!escaped) inSingleQuote = !inSingleQuote;
+    } else if (char === '"' && !inSingleQuote) {
+      const escaped = sql[index - 1] === '\\';
+      if (!escaped) inDoubleQuote = !inDoubleQuote;
+    }
+
+    if (char === ';' && !inSingleQuote && !inDoubleQuote) {
+      const trimmed = current.trim();
+      if (trimmed.length > 0) {
+        statements.push(trimmed);
+      }
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  const finalStatement = current.trim();
+  if (finalStatement.length > 0) {
+    statements.push(finalStatement);
+  }
+
+  return statements;
+}
+
+export async function runMigration(sql: string, executor: QueryFn = query): Promise<void> {
   // Split on statement boundaries and run each non-empty statement
-  const statements = sql
-    .split(';')
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
+  const statements = splitStatements(sql);
 
   for (const stmt of statements) {
-    await query(stmt);
+    await executor(stmt);
   }
 }

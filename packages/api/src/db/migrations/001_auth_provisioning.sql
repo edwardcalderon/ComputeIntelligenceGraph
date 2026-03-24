@@ -1,6 +1,8 @@
 -- Migration: 001_auth_provisioning
 -- Creates all tables required for CIG authentication and provisioning.
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- managed_targets: enrolled target nodes
 CREATE TABLE IF NOT EXISTS managed_targets (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -51,6 +51,17 @@ If you need the whole workspace:
 pnpm dev:all
 ```
 
+## API Development Rule
+
+For scalable and maintainable API work, follow this order:
+
+1. Add or update the business endpoint in `packages/api`
+2. Add the typed client method in `packages/sdk`
+3. Consume that SDK method from `apps/dashboard` or `packages/cli`
+4. Only add a dashboard internal route when the browser needs a server-side bridge for cookies, auth state, or protected secrets
+
+Avoid adding new raw `fetch("${NEXT_PUBLIC_API_URL}/api/v1/...")` calls directly in dashboard pages and components when the same call can be represented once in the shared SDK.
+
 ## Validation
 
 ```bash
@@ -59,6 +70,19 @@ pnpm lint
 pnpm version:validate
 pnpm version:status
 ```
+
+## API Infrastructure Commands
+
+Local and CI validation for the production API delivery foundation now centers on:
+
+```bash
+pnpm --filter @cig/api migrate:up
+pnpm --filter @cig/infra test
+pnpm --filter @cig/infra build
+pnpm --filter @cig/infra diff:api:prod
+```
+
+Terraform-owned API core data lives in `packages/iac/environments/api-prod`, while the AWS runtime stack lives in `packages/infra`.
 
 ## Release Workflow
 

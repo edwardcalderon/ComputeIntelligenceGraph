@@ -72,7 +72,7 @@ export interface DeploymentInfo {
   /** Unique deployment identifier */
   id: string;
   /** Type of deployment */
-  type: 'authentik' | 'dashboard';
+  type: 'authentik' | 'dashboard' | 'api';
   /** Environment name */
   environment: string;
   /** AWS region */
@@ -164,9 +164,11 @@ export interface InfraConfig {
   /** AWS configuration */
   aws: AWSConfig;
   /** Authentik configuration */
-  authentik: AuthentikConfig;
+  authentik?: AuthentikConfig;
   /** Dashboard configuration */
-  dashboard: DashboardConfig;
+  dashboard?: DashboardConfig;
+  /** API runtime configuration */
+  api?: ApiDeploymentConfig;
   /** IAC module configuration */
   iac: IACConfig;
   /** Logging configuration */
@@ -433,4 +435,202 @@ export interface TerraformModuleReference {
   modulePath: string;
   /** Variables to pass to the module */
   variables: Record<string, any>;
+}
+
+/**
+ * Secret references required to connect the API runtime to Authentik.
+ */
+export interface ApiAuthentikSecretRefs {
+  /** Secret ARN containing AUTHENTIK_ISSUER_URL */
+  issuerUrlSecretArn: string;
+  /** Secret ARN containing AUTHENTIK_JWKS_URI */
+  jwksUriSecretArn: string;
+  /** Secret ARN containing AUTHENTIK_TOKEN_ENDPOINT */
+  tokenEndpointSecretArn: string;
+  /** Secret ARN containing OIDC_CLIENT_ID */
+  oidcClientIdSecretArn: string;
+  /** Secret ARN containing OIDC_CLIENT_SECRET */
+  oidcClientSecretSecretArn: string;
+}
+
+/**
+ * Final resolved runtime configuration for the production API stack.
+ *
+ * This shape is intentionally complete: by the time SST deploys the ECS service,
+ * network ids, secret references, and Neo4j outputs must already be known.
+ */
+export interface ApiRuntimeConfig {
+  /** Public API domain, for example `api.cig.technology` */
+  domain: string;
+  /** AWS region used by the runtime */
+  region: string;
+  /** ECR repository name for the API image */
+  imageRepository: string;
+  /** Container port exposed by the API */
+  containerPort: number;
+  /** ECS task CPU units */
+  cpu: number;
+  /** ECS task memory in MiB */
+  memoryMiB: number;
+  /** Desired ECS task count */
+  desiredCount: number;
+  /** VPC id sourced from Terraform core-data outputs */
+  vpcId: string;
+  /** ALB security group id */
+  albSecurityGroupId: string;
+  /** Public subnet ids used by the ALB */
+  publicSubnetIds: string[];
+  /** Private subnet ids used by the ECS service */
+  privateSubnetIds: string[];
+  /** Security group ids attached to the ECS service */
+  securityGroupIds: string[];
+  /** Secret ARN containing DATABASE_URL */
+  databaseUrlSecretArn: string;
+  /** Secret ARN containing JWT_SECRET */
+  jwtSecretArn: string;
+  /** Neo4j Bolt URI */
+  neo4jBoltUri: string;
+  /** Secret ARN containing the Neo4j password */
+  neo4jPasswordSecretArn: string;
+  /** Authentik runtime secret references */
+  authentikSecretRefs: ApiAuthentikSecretRefs;
+  /** Browser origins allowed through CORS */
+  corsOrigins: string[];
+  /** Whether a production deploy may create/update native pipelines */
+  createPipeline: boolean;
+  /** Optional Route53 hosted zone override */
+  hostedZoneDomain?: string;
+  /** Optional existing ACM certificate ARN */
+  certificateArn?: string;
+  /** Health check path for the ALB target group */
+  healthCheckPath?: string;
+  /** Optional fully qualified image URI override */
+  imageUri?: string;
+  /** Optional image tag when imageUri is not provided */
+  imageTag?: string;
+  /** Optional secret ARN containing SUPABASE_URL */
+  supabaseUrlSecretArn?: string;
+  /** Optional secret ARN containing SUPABASE_SERVICE_ROLE_KEY */
+  supabaseServiceRoleKeySecretArn?: string;
+}
+
+/**
+ * Programmatic API deployment input.
+ *
+ * This shape is broader than `ApiRuntimeConfig` because bootstrap-only runs only
+ * need the repository/domain/pipeline inputs, while a full deploy requires the
+ * final runtime fields after Terraform outputs are merged in.
+ */
+export interface ApiDeploymentConfig {
+  /** Public API domain */
+  domain: string;
+  /** AWS region */
+  region: string;
+  /** ECR repository name */
+  imageRepository: string;
+  /** Container port, defaults to 8080 in stack helpers */
+  containerPort?: number;
+  /** ECS task CPU units */
+  cpu?: number;
+  /** ECS task memory in MiB */
+  memoryMiB?: number;
+  /** Desired task count */
+  desiredCount?: number;
+  /** Optional VPC id override */
+  vpcId?: string;
+  /** Optional ALB security group id override */
+  albSecurityGroupId?: string;
+  /** Optional public subnet ids override */
+  publicSubnetIds?: string[];
+  /** Optional private subnet ids override */
+  privateSubnetIds?: string[];
+  /** Optional service security groups override */
+  securityGroupIds?: string[];
+  /** Secret ARN containing DATABASE_URL */
+  databaseUrlSecretArn?: string;
+  /** Secret ARN containing JWT_SECRET */
+  jwtSecretArn?: string;
+  /** Neo4j Bolt URI */
+  neo4jBoltUri?: string;
+  /** Secret ARN containing Neo4j password */
+  neo4jPasswordSecretArn?: string;
+  /** Authentik secret references */
+  authentikSecretRefs?: Partial<ApiAuthentikSecretRefs>;
+  /** Browser CORS origins */
+  corsOrigins?: string[];
+  /** Whether to create or update production pipelines */
+  createPipeline?: boolean;
+  /** Optional Route53 hosted zone override */
+  hostedZoneDomain?: string;
+  /** Optional existing certificate ARN */
+  certificateArn?: string;
+  /** ALB health check path override */
+  healthCheckPath?: string;
+  /** Optional image URI override */
+  imageUri?: string;
+  /** Optional image tag */
+  imageTag?: string;
+  /** Optional stage override for SST */
+  stage?: string;
+  /** Optional SST app name override */
+  appName?: string;
+  /** Optional project tag/prefix override */
+  projectTag?: string;
+  /** Optional pipeline repo in owner/repo format */
+  pipelineRepo?: string;
+  /** Optional pipeline name prefix */
+  pipelinePrefix?: string;
+  /** Optional pipeline permission mode */
+  pipelinePermissionsMode?: 'admin' | 'least-privilege';
+  /** Optional production pipeline branch */
+  pipelineBranchProduction?: string;
+  /** Bootstrap-only mode creates the ECR repo and optional pipelines without the ECS runtime */
+  bootstrapOnly?: boolean;
+  /** Optional secret ARN containing SUPABASE_URL */
+  supabaseUrlSecretArn?: string;
+  /** Optional secret ARN containing SUPABASE_SERVICE_ROLE_KEY */
+  supabaseServiceRoleKeySecretArn?: string;
+}
+
+/**
+ * Result returned after a successful API deployment.
+ */
+export interface ApiDeploymentResult extends DeploymentResult {
+  /** Public API URL */
+  url: string;
+  /** Deployment identifier */
+  resourceId: string;
+  /** API-specific connection details */
+  connectionDetails: {
+    /** Public API base URL */
+    apiUrl: string;
+    /** GraphQL endpoint */
+    graphqlUrl: string;
+    /** WebSocket endpoint */
+    websocketUrl: string;
+    /** ECR repository name */
+    repositoryName: string;
+  };
+}
+
+/**
+ * Terraform outputs produced by the API core-data environment.
+ */
+export interface ApiCoreTerraformOutputs {
+  /** Provisioned VPC id */
+  vpcId: string;
+  /** Public subnet ids for the ALB */
+  publicSubnetIds: string[];
+  /** Private subnet ids for the ECS service */
+  privateSubnetIds: string[];
+  /** ALB security group id */
+  albSecurityGroupId: string;
+  /** API service security group id */
+  apiServiceSecurityGroupId: string;
+  /** Neo4j security group id */
+  neo4jSecurityGroupId: string;
+  /** Neo4j Bolt URI */
+  neo4jBoltUri: string;
+  /** Secret ARN containing the Neo4j password */
+  neo4jPasswordSecretArn: string;
 }

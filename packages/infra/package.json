@@ -29,10 +29,17 @@
     "dev": "tsc --watch",
     "lint": "tsc --noEmit",
     "test": "vitest run",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist .sst",
+    "diff:api:prod": "pnpm exec sst diff --stage production",
+    "deploy:api:prod": "pnpm exec sst deploy --stage production --yes",
+    "bootstrap:api:prod": "INFRA_API_BOOTSTRAP_ONLY=true pnpm exec sst deploy --stage production --yes",
+    "bootstrap:api:pipelines": "INFRA_CREATE_PIPELINES=true pnpm exec sst deploy --stage production --yes"
   },
   "dependencies": {
-    "@lsts_tech/infra": "*"
+    "@lsts_tech/infra": "*",
+    "@pulumi/aws": "^6.83.2",
+    "@pulumi/pulumi": "^3.226.0",
+    "sst": "^3.19.3"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

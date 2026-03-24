@@ -1,23 +1,8 @@
 import type { DataProvider } from "@refinedev/core";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
-
-function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  try { return sessionStorage.getItem("cig_access_token"); } catch { return null; }
-}
+import { DASHBOARD_API_URL, getDashboardClient } from "./cigClient";
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = getToken();
-  const res = await fetch(`${API_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    ...init,
-  });
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
-  return res.json() as Promise<T>;
+  return getDashboardClient().request<T>(path, init);
 }
 
 /**
@@ -91,10 +76,10 @@ export const dataProvider: DataProvider = {
     return { data: data as never };
   },
 
-  getApiUrl: () => API_URL,
+  getApiUrl: () => DASHBOARD_API_URL,
 
   custom: async ({ url, method = "get", payload }) => {
-    const data = await apiFetch<unknown>(url.replace(API_URL, ""), {
+    const data = await apiFetch<unknown>(url.replace(DASHBOARD_API_URL, ""), {
       method: method.toUpperCase(),
       body: payload ? JSON.stringify(payload) : undefined,
     });

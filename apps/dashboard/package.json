@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@cig/auth": "workspace:*",
+    "@cig/sdk": "workspace:*",
     "@cig/ui": "workspace:^",
     "@cig-technology/i18n": "1.0.0",
     "@edcalderon/auth": "^1.4.1",

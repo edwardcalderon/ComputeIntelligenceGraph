@@ -11,6 +11,8 @@ import {
   AWSConfig,
   AuthentikConfig,
   DashboardConfig,
+  ApiDeploymentConfig,
+  ApiAuthentikSecretRefs,
   IACConfig,
   LoggingConfig
 } from '../types';
@@ -36,6 +38,36 @@ import { ConfigValidationError } from '../errors';
  */
 export class ConfigManager {
   private configCache: Map<string, InfraConfig> = new Map();
+
+  private parseCsv(value?: string): string[] | undefined {
+    if (!value) {
+      return undefined;
+    }
+
+    const values = value
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+
+    return values.length > 0 ? values : undefined;
+  }
+
+  private parseNumber(value?: string): number | undefined {
+    if (!value) {
+      return undefined;
+    }
+
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+
+  private parseBoolean(value?: string): boolean | undefined {
+    if (value === undefined) {
+      return undefined;
+    }
+
+    return value === 'true';
+  }
 
   /**
    * Load configuration from multiple sources
@@ -150,6 +182,172 @@ export class ConfigManager {
       }
     }
 
+    // API runtime configuration
+    if (
+      process.env.API_DOMAIN ||
+      process.env.API_REGION ||
+      process.env.API_IMAGE_REPOSITORY ||
+      process.env.API_CONTAINER_PORT ||
+      process.env.API_CPU ||
+      process.env.API_MEMORY_MIB ||
+      process.env.API_DESIRED_COUNT ||
+      process.env.API_VPC_ID ||
+      process.env.API_ALB_SECURITY_GROUP_ID ||
+      process.env.API_PUBLIC_SUBNET_IDS ||
+      process.env.API_PRIVATE_SUBNET_IDS ||
+      process.env.API_SECURITY_GROUP_IDS ||
+      process.env.API_DATABASE_URL_SECRET_ARN ||
+      process.env.API_JWT_SECRET_ARN ||
+      process.env.API_NEO4J_BOLT_URI ||
+      process.env.API_NEO4J_PASSWORD_SECRET_ARN ||
+      process.env.API_AUTHENTIK_ISSUER_URL_SECRET_ARN ||
+      process.env.API_AUTHENTIK_JWKS_URI_SECRET_ARN ||
+      process.env.API_AUTHENTIK_TOKEN_ENDPOINT_SECRET_ARN ||
+      process.env.API_OIDC_CLIENT_ID_SECRET_ARN ||
+      process.env.API_OIDC_CLIENT_SECRET_SECRET_ARN ||
+      process.env.API_CORS_ORIGINS ||
+      process.env.API_CREATE_PIPELINE ||
+      process.env.API_HOSTED_ZONE_DOMAIN ||
+      process.env.API_CERTIFICATE_ARN ||
+      process.env.API_HEALTH_CHECK_PATH ||
+      process.env.API_IMAGE_URI ||
+      process.env.API_IMAGE_TAG ||
+      process.env.API_STAGE ||
+      process.env.API_APP_NAME ||
+      process.env.API_PIPELINE_REPO ||
+      process.env.API_PIPELINE_PREFIX ||
+      process.env.API_PROJECT_TAG ||
+      process.env.API_PIPELINE_PERMISSIONS_MODE ||
+      process.env.API_PIPELINE_BRANCH_PRODUCTION ||
+      process.env.API_BOOTSTRAP_ONLY ||
+      process.env.API_SUPABASE_URL_SECRET_ARN ||
+      process.env.API_SUPABASE_SERVICE_ROLE_KEY_SECRET_ARN
+    ) {
+      config.api = {} as ApiDeploymentConfig;
+      const apiRegion = process.env.API_REGION ?? process.env.AWS_REGION;
+      if (apiRegion) {
+        config.api.region = apiRegion;
+      }
+
+      if (process.env.API_DOMAIN) {
+        config.api.domain = process.env.API_DOMAIN;
+      }
+      if (process.env.API_IMAGE_REPOSITORY) {
+        config.api.imageRepository = process.env.API_IMAGE_REPOSITORY;
+      }
+      if (process.env.API_CONTAINER_PORT) {
+        config.api.containerPort = this.parseNumber(process.env.API_CONTAINER_PORT);
+      }
+      if (process.env.API_CPU) {
+        config.api.cpu = this.parseNumber(process.env.API_CPU);
+      }
+      if (process.env.API_MEMORY_MIB) {
+        config.api.memoryMiB = this.parseNumber(process.env.API_MEMORY_MIB);
+      }
+      if (process.env.API_DESIRED_COUNT) {
+        config.api.desiredCount = this.parseNumber(process.env.API_DESIRED_COUNT);
+      }
+      if (process.env.API_VPC_ID) {
+        config.api.vpcId = process.env.API_VPC_ID;
+      }
+      if (process.env.API_ALB_SECURITY_GROUP_ID) {
+        config.api.albSecurityGroupId = process.env.API_ALB_SECURITY_GROUP_ID;
+      }
+      config.api.publicSubnetIds = this.parseCsv(process.env.API_PUBLIC_SUBNET_IDS);
+      config.api.privateSubnetIds = this.parseCsv(process.env.API_PRIVATE_SUBNET_IDS);
+      config.api.securityGroupIds = this.parseCsv(process.env.API_SECURITY_GROUP_IDS);
+      if (process.env.API_DATABASE_URL_SECRET_ARN) {
+        config.api.databaseUrlSecretArn = process.env.API_DATABASE_URL_SECRET_ARN;
+      }
+      if (process.env.API_JWT_SECRET_ARN) {
+        config.api.jwtSecretArn = process.env.API_JWT_SECRET_ARN;
+      }
+      if (process.env.API_NEO4J_BOLT_URI) {
+        config.api.neo4jBoltUri = process.env.API_NEO4J_BOLT_URI;
+      }
+      if (process.env.API_NEO4J_PASSWORD_SECRET_ARN) {
+        config.api.neo4jPasswordSecretArn = process.env.API_NEO4J_PASSWORD_SECRET_ARN;
+      }
+
+      const authentikRefs: Partial<ApiAuthentikSecretRefs> = {};
+      if (process.env.API_AUTHENTIK_ISSUER_URL_SECRET_ARN) {
+        authentikRefs.issuerUrlSecretArn = process.env.API_AUTHENTIK_ISSUER_URL_SECRET_ARN;
+      }
+      if (process.env.API_AUTHENTIK_JWKS_URI_SECRET_ARN) {
+        authentikRefs.jwksUriSecretArn = process.env.API_AUTHENTIK_JWKS_URI_SECRET_ARN;
+      }
+      if (process.env.API_AUTHENTIK_TOKEN_ENDPOINT_SECRET_ARN) {
+        authentikRefs.tokenEndpointSecretArn =
+          process.env.API_AUTHENTIK_TOKEN_ENDPOINT_SECRET_ARN;
+      }
+      if (process.env.API_OIDC_CLIENT_ID_SECRET_ARN) {
+        authentikRefs.oidcClientIdSecretArn = process.env.API_OIDC_CLIENT_ID_SECRET_ARN;
+      }
+      if (process.env.API_OIDC_CLIENT_SECRET_SECRET_ARN) {
+        authentikRefs.oidcClientSecretSecretArn =
+          process.env.API_OIDC_CLIENT_SECRET_SECRET_ARN;
+      }
+      if (Object.keys(authentikRefs).length > 0) {
+        config.api.authentikSecretRefs = authentikRefs;
+      }
+
+      config.api.corsOrigins = this.parseCsv(process.env.API_CORS_ORIGINS);
+      const createPipeline = this.parseBoolean(process.env.API_CREATE_PIPELINE);
+      if (createPipeline !== undefined) {
+        config.api.createPipeline = createPipeline;
+      }
+      if (process.env.API_HOSTED_ZONE_DOMAIN) {
+        config.api.hostedZoneDomain = process.env.API_HOSTED_ZONE_DOMAIN;
+      }
+      if (process.env.API_CERTIFICATE_ARN) {
+        config.api.certificateArn = process.env.API_CERTIFICATE_ARN;
+      }
+      if (process.env.API_HEALTH_CHECK_PATH) {
+        config.api.healthCheckPath = process.env.API_HEALTH_CHECK_PATH;
+      }
+      if (process.env.API_IMAGE_URI) {
+        config.api.imageUri = process.env.API_IMAGE_URI;
+      }
+      if (process.env.API_IMAGE_TAG) {
+        config.api.imageTag = process.env.API_IMAGE_TAG;
+      }
+      if (process.env.API_STAGE) {
+        config.api.stage = process.env.API_STAGE;
+      }
+      if (process.env.API_APP_NAME) {
+        config.api.appName = process.env.API_APP_NAME;
+      }
+      if (process.env.API_PIPELINE_REPO) {
+        config.api.pipelineRepo = process.env.API_PIPELINE_REPO;
+      }
+      if (process.env.API_PIPELINE_PREFIX) {
+        config.api.pipelinePrefix = process.env.API_PIPELINE_PREFIX;
+      }
+      if (process.env.API_PROJECT_TAG) {
+        config.api.projectTag = process.env.API_PROJECT_TAG;
+      }
+      if (process.env.API_PIPELINE_PERMISSIONS_MODE) {
+        config.api.pipelinePermissionsMode =
+          process.env.API_PIPELINE_PERMISSIONS_MODE === 'least-privilege'
+            ? 'least-privilege'
+            : 'admin';
+      }
+      if (process.env.API_PIPELINE_BRANCH_PRODUCTION) {
+        config.api.pipelineBranchProduction = process.env.API_PIPELINE_BRANCH_PRODUCTION;
+      }
+      const bootstrapOnly = this.parseBoolean(process.env.API_BOOTSTRAP_ONLY);
+      if (bootstrapOnly !== undefined) {
+        config.api.bootstrapOnly = bootstrapOnly;
+      }
+      if (process.env.API_SUPABASE_URL_SECRET_ARN) {
+        config.api.supabaseUrlSecretArn = process.env.API_SUPABASE_URL_SECRET_ARN;
+      }
+      if (process.env.API_SUPABASE_SERVICE_ROLE_KEY_SECRET_ARN) {
+        config.api.supabaseServiceRoleKeySecretArn =
+          process.env.API_SUPABASE_SERVICE_ROLE_KEY_SECRET_ARN;
+      }
+    }
+
     // IAC configuration
     if (
       process.env.IAC_MODULES_PATH ||
@@ -229,17 +427,16 @@ export class ConfigManager {
    * @returns Validation result with list of errors
    * 
    * @remarks
-   * Checks that all required fields are present:
+   * Checks that the shared foundation fields are present:
    * - aws.region (required)
-   * - authentik.domain (required)
-   * - authentik.adminEmail (required)
-   * - dashboard.buildPath (required)
-   * - dashboard.authentikIntegration (required)
    * - iac.modulesPath (required)
    * - iac.networkingModule (required)
    * - iac.computeModule (required)
    * - logging.level (required)
    * - logging.timestamps (required)
+   *
+   * Service sections (`authentik`, `dashboard`, `api`) are optional at the root
+   * level. When present, they are validated for the fields they own.
    */
   validate(config: Partial<InfraConfig>): ValidationResult {
     const errors: string[] = [];
@@ -253,10 +450,8 @@ export class ConfigManager {
       }
     }
 
-    // Validate Authentik configuration
-    if (!config.authentik) {
-      errors.push('authentik configuration is required');
-    } else {
+    // Validate Authentik configuration when present
+    if (config.authentik) {
       if (!config.authentik.domain) {
         errors.push('authentik.domain is required');
       }
@@ -265,15 +460,26 @@ export class ConfigManager {
       }
     }
 
-    // Validate Dashboard configuration
-    if (!config.dashboard) {
-      errors.push('dashboard configuration is required');
-    } else {
+    // Validate Dashboard configuration when present
+    if (config.dashboard) {
       if (!config.dashboard.buildPath) {
         errors.push('dashboard.buildPath is required');
       }
       if (config.dashboard.authentikIntegration === undefined) {
         errors.push('dashboard.authentikIntegration is required');
+      }
+    }
+
+    // Validate API configuration when present
+    if (config.api) {
+      if (!config.api.domain) {
+        errors.push('api.domain is required');
+      }
+      if (!config.api.region) {
+        errors.push('api.region is required');
+      }
+      if (!config.api.imageRepository) {
+        errors.push('api.imageRepository is required');
       }
     }
 
@@ -382,6 +588,9 @@ export class ConfigManager {
       }
       if (config.dashboard) {
         result.dashboard = { ...result.dashboard, ...config.dashboard } as DashboardConfig;
+      }
+      if (config.api) {
+        result.api = { ...result.api, ...config.api } as ApiDeploymentConfig;
       }
       if (config.iac) {
         result.iac = { ...result.iac, ...config.iac } as IACConfig;

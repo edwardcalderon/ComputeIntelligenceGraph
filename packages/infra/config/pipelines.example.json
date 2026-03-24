@@ -1,0 +1,9 @@
+{
+  "pipelines": {
+    "production": {
+      "enabled": true,
+      "branch": "main",
+      "repo": "edwardcalderon/ComputeIntelligenceGraph"
+    }
+  }
+}
