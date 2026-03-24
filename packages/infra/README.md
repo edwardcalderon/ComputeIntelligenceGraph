@@ -25,6 +25,8 @@ This package now owns two related concerns:
 GitHub Actions is the primary production deployment entrypoint. Native SST pipeline creation remains optional and disabled during normal deploys.
 The bootstrap helpers are safe to re-run: if the production SST stage already exists, they only ensure the ECR repository is present and do not prune the runtime stack.
 
+This package is also the canonical translation layer from deploy inputs to the API runtime contract. Workflow callers should treat it as the single source of truth for runtime environment variables, secret ARN mapping, and defaults.
+
 ## Key Files
 
 - `sst.config.ts` — SST app entrypoint
@@ -68,6 +70,8 @@ Core runtime inputs:
 - `API_SMTP_AUTH_ENABLED`
 - `API_SMTP_OTP_SUBJECT`
 - `API_SMTP_PASSWORD_SECRET_ARN`
+
+Any new API runtime variable or secret should be added here first, then mirrored into the workflow and deployment docs. That keeps the runtime contract centralized instead of splitting it across GitHub Actions shell logic.
 
 Bootstrap-only mode uses:
 

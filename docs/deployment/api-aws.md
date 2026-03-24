@@ -1,6 +1,6 @@
 # API on AWS
 
-Last synchronized with the API ECS/Fargate delivery foundation on `2026-03-23`.
+Last synchronized with the API ECS/Fargate delivery foundation on `2026-03-24`.
 
 ## Scope
 
@@ -145,6 +145,50 @@ Notes:
 - `build-image` ensures the ECR repository exists before pushing the API image. If the SST stage is already present, the bootstrap helper avoids pruning the runtime stack.
 - `migrate-db` runs `pnpm --filter @cig/api migrate:up` directly against Supabase Postgres.
 - `deploy-api` reads Terraform outputs, syncs AWS Secrets Manager entries, then runs the full SST deploy.
+
+## Deployment Workflow Review
+
+This workflow is the current production control plane for the API. It typically lands around 12 minutes because the jobs are intentionally sequential and each stage does real work rather than a no-op deploy.
+
+### Current Cost Centers
+
+- `validate`
+  - installs workspace dependencies
+  - lints/tests `@cig/api` and `@cig/infra`
+  - runs Terraform fmt/validate
+  - performs an SST bootstrap diff check
+- `build-image`
+  - installs workspace dependencies again
+  - ensures the ECR repository exists
+  - builds and pushes the API image with Buildx
+- `migrate-db`
+  - pulls the newly built image
+  - runs the API migration entrypoint against Supabase Postgres
+- `apply-core-data`
+  - runs Terraform init/apply for networking and Neo4j
+- `deploy-api`
+  - installs workspace dependencies again
+  - reads Terraform outputs
+  - syncs runtime values into AWS Secrets Manager
+  - runs SST deploy for ECS/Fargate
+- `smoke-test`
+  - validates health, authenticated REST, GraphQL, and WebSocket behavior
+
+### Current Baseline
+
+- Docker Buildx registry cache, plus the `type=gha` fallback, is already enabled for the API image.
+- The workflow already uses `actions/cache` for the pnpm store in each Node job.
+- Terraform plugin caching is already enabled for the Terraform jobs.
+- Runtime values and secret ARNs are already handed off through temporary files rather than `GITHUB_ENV`.
+- The workflow already uses GitHub OIDC to assume AWS roles instead of long-lived static AWS keys.
+
+### Likely Improvements
+
+- Reduce Docker cache invalidation caused by workspace manifest and package version churn.
+- Avoid repeating `pnpm install` across validate, build, and deploy jobs where that work can be shared safely.
+- Push more deploy orchestration into `packages/infra` helpers so the workflow stays mostly orchestration and not shell logic.
+- Keep secrets, ARNs, and runtime metadata out of job metadata and logs.
+- Preserve the current OIDC and Secrets Manager model; do not reintroduce long-lived AWS access keys or plaintext handoffs.
 
 ### Optional native pipeline bootstrap
 

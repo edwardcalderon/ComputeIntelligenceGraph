@@ -1,3 +1,16 @@
+## [0.1.88](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.87...v0.1.88) (2026-03-24)
+
+### Detected changes
+- docs: docs/deployment/api-aws.md
+- packages: packages/infra/README.md
+
+
+## [0.1.88](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.87...v0.1.88) (2026-03-24)
+
+
+
+
+
 ## [0.1.87](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.86...v0.1.87) (2026-03-24)
 
 ### Detected changes
