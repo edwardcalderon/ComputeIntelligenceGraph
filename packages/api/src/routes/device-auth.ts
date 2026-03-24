@@ -369,7 +369,15 @@ export async function deviceAuthRoutes(app: FastifyInstance): Promise<void> {
   // Requirement 12.9 — invalidate session token
   app.post(
     '/api/v1/auth/logout',
-    { preHandler: [authenticate] },
+    {
+      preHandler: [authenticate],
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: '1 minute',
+        },
+      },
+    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const authHeader = request.headers['authorization'];
       const ipAddress = getClientIp(request);
