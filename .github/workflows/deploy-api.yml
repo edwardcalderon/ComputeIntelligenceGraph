@@ -413,20 +413,26 @@ jobs:
             ${{ runner.os }}-terraform-plugin-
 
       - name: Read API core-data outputs
+        env:
+          API_CORE_ENV_FILE: ${{ runner.temp }}/api-core.env
         run: |
           terraform -chdir=packages/iac/environments/api-prod init
           terraform -chdir=packages/iac/environments/api-prod output -json > "$RUNNER_TEMP/api-core.json"
 
-          echo "API_VPC_ID=$(jq -r '.vpc_id.value' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
-          echo "API_ALB_SECURITY_GROUP_ID=$(jq -r '.alb_security_group_id.value' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
-          echo "API_SECURITY_GROUP_IDS=$(jq -r '.api_service_security_group_id.value' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
-          echo "API_PUBLIC_SUBNET_IDS=$(jq -r '.public_subnet_ids.value | join(",")' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
-          echo "API_PRIVATE_SUBNET_IDS=$(jq -r '.private_subnet_ids.value | join(",")' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
-          echo "API_NEO4J_BOLT_URI=$(jq -r '.neo4j_bolt_uri.value' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
-          echo "API_NEO4J_PASSWORD_SECRET_ARN=$(jq -r '.neo4j_password_secret_arn.value' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
+          {
+            echo "API_VPC_ID=$(jq -r '.vpc_id.value' "$RUNNER_TEMP/api-core.json")"
+            echo "API_ALB_SECURITY_GROUP_ID=$(jq -r '.alb_security_group_id.value' "$RUNNER_TEMP/api-core.json")"
+            echo "API_SECURITY_GROUP_IDS=$(jq -r '.api_service_security_group_id.value' "$RUNNER_TEMP/api-core.json")"
+            echo "API_PUBLIC_SUBNET_IDS=$(jq -r '.public_subnet_ids.value | join(",")' "$RUNNER_TEMP/api-core.json")"
+            echo "API_PRIVATE_SUBNET_IDS=$(jq -r '.private_subnet_ids.value | join(",")' "$RUNNER_TEMP/api-core.json")"
+            echo "API_NEO4J_BOLT_URI=$(jq -r '.neo4j_bolt_uri.value' "$RUNNER_TEMP/api-core.json")"
+            echo "API_NEO4J_PASSWORD_SECRET_ARN=$(jq -r '.neo4j_password_secret_arn.value' "$RUNNER_TEMP/api-core.json")"
+          } > "$API_CORE_ENV_FILE"
 
       - name: Resolve Authentik runtime values
         id: authentik
+        env:
+          AUTHENTIK_RUNTIME_ENV_FILE: ${{ runner.temp }}/authentik-runtime.env
         run: |
           DISCOVERY_URL="https://${AUTHENTIK_DOMAIN}/application/o/${AUTHENTIK_OIDC_APP_SLUG}/.well-known/openid-configuration"
           DISCOVERY_JSON=$(curl --fail --silent --show-error "$DISCOVERY_URL")
@@ -438,6 +444,14 @@ jobs:
             --output text)
 
           {
+            printf 'AUTHENTIK_ISSUER_URL=%s\n' "$(jq -r '.issuer' <<<"$DISCOVERY_JSON")"
+            printf 'AUTHENTIK_JWKS_URI=%s\n' "$(jq -r '.jwks_uri' <<<"$DISCOVERY_JSON")"
+            printf 'AUTHENTIK_TOKEN_ENDPOINT=%s\n' "$(jq -r '.token_endpoint' <<<"$DISCOVERY_JSON")"
+            printf 'OIDC_CLIENT_ID=%s\n' "$(jq -r '.client_id' <<<"$OIDC_CLIENT_JSON")"
+            printf 'OIDC_CLIENT_SECRET=%s\n' "$(jq -r '.client_secret' <<<"$OIDC_CLIENT_JSON")"
+          } > "$AUTHENTIK_RUNTIME_ENV_FILE"
+
+          {
             printf 'issuer_url=%s\n' "$(jq -r '.issuer' <<<"$DISCOVERY_JSON")"
             printf 'jwks_uri=%s\n' "$(jq -r '.jwks_uri' <<<"$DISCOVERY_JSON")"
             printf 'token_endpoint=%s\n' "$(jq -r '.token_endpoint' <<<"$DISCOVERY_JSON")"
@@ -447,21 +461,27 @@ jobs:
 
       - name: Ensure runtime secrets in AWS Secrets Manager
         env:
+          API_CORE_ENV_FILE: ${{ runner.temp }}/api-core.env
+          AUTHENTIK_RUNTIME_ENV_FILE: ${{ runner.temp }}/authentik-runtime.env
+          API_SECRET_ARNS_FILE: ${{ runner.temp }}/api-secret-arns.env
           DATABASE_URL_VALUE: ${{ secrets.SUPABASE_DATABASE_URL }}
           SUPABASE_URL_VALUE: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY_VALUE: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           JWT_SECRET_VALUE: ${{ secrets.JWT_SECRET }}
           SMTP_PASSWORD_VALUE: ${{ secrets.SMTP_PASSWORD }}
-          AUTHENTIK_ISSUER_URL_VALUE: ${{ steps.authentik.outputs.issuer_url }}
-          AUTHENTIK_JWKS_URI_VALUE: ${{ steps.authentik.outputs.jwks_uri }}
-          AUTHENTIK_TOKEN_ENDPOINT_VALUE: ${{ steps.authentik.outputs.token_endpoint }}
-          OIDC_CLIENT_ID_VALUE: ${{ steps.authentik.outputs.client_id }}
-          OIDC_CLIENT_SECRET_VALUE: ${{ steps.authentik.outputs.client_secret }}
         run: |
           if [ -z "$SMTP_PASSWORD_VALUE" ]; then
             echo 'SMTP_PASSWORD secret is required.' >&2
             exit 1
           fi
+
+          set -a
+          # Keep runtime values out of GITHUB_ENV so GitHub Actions does not print them in step metadata.
+          source "$API_CORE_ENV_FILE"
+          source "$AUTHENTIK_RUNTIME_ENV_FILE"
+          set +a
+
+          : > "$API_SECRET_ARNS_FILE"
 
           ensure_secret() {
             local secret_name="$1"
@@ -481,23 +501,26 @@ jobs:
                 --output text)
             fi
 
-            echo "${output_var}=${secret_arn}" >> "$GITHUB_ENV"
+            echo "${output_var}=${secret_arn}" >> "$API_SECRET_ARNS_FILE"
           }
 
           ensure_secret "/cig/prod/api/database-url" "$DATABASE_URL_VALUE" API_DATABASE_URL_SECRET_ARN
           ensure_secret "/cig/prod/api/supabase-url" "$SUPABASE_URL_VALUE" API_SUPABASE_URL_SECRET_ARN
           ensure_secret "/cig/prod/api/supabase-service-role-key" "$SUPABASE_SERVICE_ROLE_KEY_VALUE" API_SUPABASE_SERVICE_ROLE_KEY_SECRET_ARN
           ensure_secret "/cig/prod/api/jwt-secret" "$JWT_SECRET_VALUE" API_JWT_SECRET_ARN
-          ensure_secret "/cig/prod/api/authentik-issuer-url" "$AUTHENTIK_ISSUER_URL_VALUE" API_AUTHENTIK_ISSUER_URL_SECRET_ARN
-          ensure_secret "/cig/prod/api/authentik-jwks-uri" "$AUTHENTIK_JWKS_URI_VALUE" API_AUTHENTIK_JWKS_URI_SECRET_ARN
-          ensure_secret "/cig/prod/api/authentik-token-endpoint" "$AUTHENTIK_TOKEN_ENDPOINT_VALUE" API_AUTHENTIK_TOKEN_ENDPOINT_SECRET_ARN
-          ensure_secret "/cig/prod/api/oidc-client-id" "$OIDC_CLIENT_ID_VALUE" API_OIDC_CLIENT_ID_SECRET_ARN
-          ensure_secret "/cig/prod/api/oidc-client-secret" "$OIDC_CLIENT_SECRET_VALUE" API_OIDC_CLIENT_SECRET_SECRET_ARN
+          ensure_secret "/cig/prod/api/authentik-issuer-url" "$AUTHENTIK_ISSUER_URL" API_AUTHENTIK_ISSUER_URL_SECRET_ARN
+          ensure_secret "/cig/prod/api/authentik-jwks-uri" "$AUTHENTIK_JWKS_URI" API_AUTHENTIK_JWKS_URI_SECRET_ARN
+          ensure_secret "/cig/prod/api/authentik-token-endpoint" "$AUTHENTIK_TOKEN_ENDPOINT" API_AUTHENTIK_TOKEN_ENDPOINT_SECRET_ARN
+          ensure_secret "/cig/prod/api/oidc-client-id" "$OIDC_CLIENT_ID" API_OIDC_CLIENT_ID_SECRET_ARN
+          ensure_secret "/cig/prod/api/oidc-client-secret" "$OIDC_CLIENT_SECRET" API_OIDC_CLIENT_SECRET_SECRET_ARN
           ensure_secret "/cig/prod/api/smtp-password" "$SMTP_PASSWORD_VALUE" API_SMTP_PASSWORD_SECRET_ARN
 
       - name: Deploy API runtime
         working-directory: packages/infra
         env:
+          API_CORE_ENV_FILE: ${{ runner.temp }}/api-core.env
+          AUTHENTIK_RUNTIME_ENV_FILE: ${{ runner.temp }}/authentik-runtime.env
+          API_SECRET_ARNS_FILE: ${{ runner.temp }}/api-secret-arns.env
           INFRA_CREATE_PIPELINES: 'false'
           INFRA_API_BOOTSTRAP_ONLY: 'false'
           API_IMAGE_URI: ${{ needs.build-image.outputs.image_uri }}
@@ -508,7 +531,14 @@ jobs:
           API_DESIRED_COUNT: '1'
           API_CORS_ORIGINS: ${{ env.API_CORS_ORIGINS }}
           API_HOSTED_ZONE_DOMAIN: ${{ env.API_HOSTED_ZONE_DOMAIN }}
-        run: pnpm exec sst deploy --stage production --yes
+        run: |
+          set -a
+          source "$API_CORE_ENV_FILE"
+          source "$AUTHENTIK_RUNTIME_ENV_FILE"
+          source "$API_SECRET_ARNS_FILE"
+          set +a
+
+          pnpm exec sst deploy --stage production --yes
 
   smoke-test:
     name: Smoke test API runtime
