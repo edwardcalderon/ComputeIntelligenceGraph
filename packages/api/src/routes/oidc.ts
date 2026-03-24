@@ -74,7 +74,7 @@ async function exchangeCodeForTokens(code: string): Promise<{
 /**
  * Validate the ID token signature against the Authentik JWKS endpoint.
  * Uses jose-based JWKS verification in managed mode, falls back to
- * decode-only for self-hosted mode (local JWTs are signed differently).
+ * local signature verification for self-hosted mode.
  * Returns the decoded payload or throws.
  */
 async function validateIdToken(idToken: string): Promise<Record<string, unknown>> {
@@ -89,14 +89,17 @@ async function validateIdToken(idToken: string): Promise<Record<string, unknown>
     }
   }
 
-  // Self-hosted fallback: decode without JWKS verification
-  // (tokens are validated against local JWT_SECRET in other middleware)
+  // Self-hosted fallback: verify with local JWT secret.
   try {
-    const decoded = jwt.decode(idToken, { complete: true });
-    if (!decoded || typeof decoded === 'string') {
+    const jwtSecret = process.env['JWT_SECRET'];
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET is not configured');
+    }
+    const decoded = jwt.verify(idToken, jwtSecret);
+    if (!decoded || typeof decoded === 'string' || typeof decoded !== 'object') {
       throw new Error('Invalid ID token format');
     }
-    return decoded.payload as Record<string, unknown>;
+    return decoded as Record<string, unknown>;
   } catch (err) {
     throw new Error(`ID token validation failed: ${(err as Error).message}`);
   }
