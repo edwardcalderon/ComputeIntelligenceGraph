@@ -38,6 +38,17 @@ export interface BootstrapToken {
   created_at: Date;
 }
 
+// email_otp_challenges
+export interface EmailOtpChallenge {
+  email: string;
+  code_hash: string;
+  attempts: number;
+  expires_at: Date;
+  consumed_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
 // device_auth_records
 export interface DeviceAuthRecord {
   device_code: string; // 32 hex chars
@@ -135,6 +146,7 @@ export interface AdminAccount {
 export type NewManagedTarget = Omit<ManagedTarget, 'id' | 'created_at' | 'status' | 'last_seen' | 'service_status' | 'system_metrics' | 'cig_version'>;
 export type NewEnrollmentToken = Omit<EnrollmentToken, 'created_at' | 'used'>;
 export type NewBootstrapToken = Omit<BootstrapToken, 'created_at' | 'consumed'>;
+export type NewEmailOtpChallenge = Omit<EmailOtpChallenge, 'created_at' | 'updated_at' | 'consumed_at'>;
 export type NewDeviceAuthRecord = Omit<DeviceAuthRecord, 'created_at' | 'status' | 'user_id' | 'access_token' | 'refresh_token' | 'session_id' | 'last_polled_at'>;
 export type NewAuditEvent = Omit<AuditEvent, 'id' | 'created_at'>;
 export type NewAdminAccount = Omit<AdminAccount, 'id' | 'created_at'>;

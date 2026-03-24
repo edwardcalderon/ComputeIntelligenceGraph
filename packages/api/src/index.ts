@@ -95,7 +95,7 @@ export async function createServer(): Promise<FastifyInstance> {
 }
 
 export async function start(): Promise<void> {
-  const port = parseInt(process.env.PORT ?? '8080', 10);
+  const port = parseInt(process.env.PORT ?? '3003', 10);
   const host = process.env.HOST ?? '0.0.0.0';
 
   const app = await createServer();

@@ -27,6 +27,7 @@ services:
       target: builder
     environment:
       NODE_ENV: development
+      PORT: 3003
       DEBUG: cig:*
       # Disable auth in dev for easier testing (Requirement 35.10)
       DISABLE_AUTH: "true"
@@ -44,7 +45,7 @@ services:
     read_only: false
     tmpfs: []
     ports:
-      - "8080:8080"
+      - "3003:3003"
       - "9229:9229"   # Node.js inspector for debugging (Requirement 35.7)
     deploy:
       resources:
@@ -132,7 +133,7 @@ services:
       target: builder
     environment:
       NODE_ENV: development
-      NEXT_PUBLIC_API_URL: http://localhost:8080
+      NEXT_PUBLIC_API_URL: http://localhost:3003
       # Enable Next.js HMR (Requirement 35.2)
       NEXT_PUBLIC_HOSTNAME: localhost
       NEXT_PUBLIC_PORT: 3000

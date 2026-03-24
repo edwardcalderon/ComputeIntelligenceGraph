@@ -3,11 +3,49 @@
  *
  * POST /api/v1/auth/send-otp        — send OTP code email
  * POST /api/v1/auth/send-magic-link — send magic link email
+ * POST /api/v1/auth/verify-otp      — verify OTP code and issue local email session
  */
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import nodemailer, { type Transporter } from 'nodemailer';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import crypto from 'node:crypto';
+import path from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { query, withTransaction } from '../db/client';
 
 let supabaseClient: SupabaseClient | null = null;
+let smtpTransport: Transporter | null = null;
+let otpTemplatePromise: Promise<string> | null = null;
+
+const OTP_EXPIRY_MS = 10 * 60 * 1000;
+const OTP_MAX_ATTEMPTS = 5;
+const OTP_BCRYPT_ROUNDS = 10;
+const EMAIL_SESSION_EXPIRY_SECONDS = 24 * 60 * 60;
+
+interface AuthEmailBody {
+  email?: string;
+}
+
+interface VerifyOtpBody extends AuthEmailBody {
+  token?: string;
+}
+
+interface OtpChallengeRow {
+  email: string;
+  code_hash: string;
+  attempts: number;
+  expires_at: Date | string;
+  consumed_at: Date | string | null;
+}
+
+interface EmailSessionClaims {
+  sub: string;
+  email: string;
+  name: string;
+  provider: 'email';
+}
 
 function getSupabaseClient(): SupabaseClient {
   if (supabaseClient) {
@@ -45,52 +83,251 @@ function getEmailRedirectTo(): string {
   return new URL('/auth/callback', dashboardUrl).toString();
 }
 
-export async function authEmailRoutes(app: FastifyInstance): Promise<void> {
-  // POST /api/v1/auth/send-otp
-  app.post('/api/v1/auth/send-otp', async (request: FastifyRequest, reply: FastifyReply) => {
-    const { email } = request.body as { email?: string };
-    if (!email || typeof email !== 'string') {
-      return reply.status(400).send({ error: 'Missing or invalid email' });
+function normalizeEmail(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const email = value.trim().toLowerCase();
+  return email.length > 0 ? email : null;
+}
+
+function normalizeToken(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const token = value.trim();
+  return token.length > 0 ? token : null;
+}
+
+function getOtpTemplatePath(): string {
+  return path.resolve(__dirname, '../../../emails/src/templates/otp-only.html');
+}
+
+async function getOtpTemplateHtml(): Promise<string> {
+  if (!otpTemplatePromise) {
+    otpTemplatePromise = readFile(getOtpTemplatePath(), 'utf8');
+  }
+
+  return otpTemplatePromise;
+}
+
+function generateOtpCode(): string {
+  return crypto.randomInt(0, 1_000_000).toString().padStart(6, '0');
+}
+
+function getSmtpTransport(): Transporter {
+  if (smtpTransport) {
+    return smtpTransport;
+  }
+
+  const host = process.env.SMTP_HOST?.trim();
+  const port = Number.parseInt(process.env.SMTP_PORT ?? '587', 10);
+  const secure = (process.env.SMTP_SECURE ?? 'false').toLowerCase() === 'true';
+  const fromEmail = process.env.SMTP_FROM_EMAIL?.trim();
+  const authEnabled = (process.env.SMTP_AUTH_ENABLED ?? 'true').toLowerCase() !== 'false';
+  const user = process.env.SMTP_USER?.trim() || fromEmail;
+  const password = process.env.SMTP_PASSWORD?.trim();
+
+  if (!host || !fromEmail) {
+    throw new Error('SMTP credentials not configured (SMTP_HOST / SMTP_FROM_EMAIL)');
+  }
+
+  smtpTransport = nodemailer.createTransport({
+    host,
+    port,
+    secure,
+    auth: authEnabled
+      ? {
+          user,
+          pass: password,
+        }
+      : undefined,
+  });
+
+  return smtpTransport;
+}
+
+function buildEmailSessionClaims(email: string): EmailSessionClaims {
+  return {
+    sub: email,
+    email,
+    name: email.split('@')[0] ?? email,
+    provider: 'email',
+  };
+}
+
+function issueEmailSessionToken(email: string): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is not set');
+  }
+
+  return jwt.sign(buildEmailSessionClaims(email), secret, {
+    expiresIn: EMAIL_SESSION_EXPIRY_SECONDS,
+  });
+}
+
+function getEmailOtpQueries() {
+  return {
+    upsert:
+      'INSERT INTO email_otp_challenges (email, code_hash, attempts, expires_at, consumed_at, created_at, updated_at) VALUES (?, ?, 0, ?, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) ON CONFLICT(email) DO UPDATE SET code_hash = excluded.code_hash, attempts = 0, expires_at = excluded.expires_at, consumed_at = NULL, updated_at = CURRENT_TIMESTAMP',
+    select:
+      'SELECT email, code_hash, attempts, expires_at, consumed_at FROM email_otp_challenges WHERE email = ?',
+    consume:
+      'UPDATE email_otp_challenges SET consumed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE email = ?',
+    failAttempt:
+      'UPDATE email_otp_challenges SET attempts = attempts + 1, updated_at = CURRENT_TIMESTAMP WHERE email = ?',
+    deleteExpired:
+      'DELETE FROM email_otp_challenges WHERE email = ?',
+  };
+}
+
+async function storeOtpChallenge(email: string, otpCode: string): Promise<void> {
+  const codeHash = await bcrypt.hash(otpCode, OTP_BCRYPT_ROUNDS);
+  const expiresAt = new Date(Date.now() + OTP_EXPIRY_MS);
+  const { upsert } = getEmailOtpQueries();
+  await query(upsert, [email, codeHash, expiresAt.toISOString()]);
+}
+
+async function sendOtpViaSmtp(email: string, otpCode: string): Promise<void> {
+  const transport = getSmtpTransport();
+  const fromEmail = process.env.SMTP_FROM_EMAIL?.trim();
+  const subject = process.env.SMTP_OTP_SUBJECT?.trim() || 'Your CIG one-time code';
+  const htmlTemplate = await getOtpTemplateHtml();
+  const html = htmlTemplate.replace(/\{\{\s*otp_code\s*\}\}/g, otpCode);
+
+  await transport.sendMail({
+    from: fromEmail,
+    to: email,
+    subject,
+    html,
+    text: `Your one-time code is ${otpCode}. It expires in 10 minutes.`,
+  });
+}
+
+async function sendMagicLinkViaSupabase(email: string): Promise<void> {
+  const supabase = getSupabaseClient();
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: true,
+      emailRedirectTo: getEmailRedirectTo(),
+    },
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+async function sendOtpEmail(email: string): Promise<void> {
+  const otpCode = generateOtpCode();
+  await storeOtpChallenge(email, otpCode);
+  await sendOtpViaSmtp(email, otpCode);
+}
+
+async function verifyEmailOtpChallenge(email: string, token: string): Promise<{ accessToken: string; expiresIn: number; socialProvider: 'email' }> {
+  const normalizedEmail = email.toLowerCase();
+  const { select, consume, failAttempt, deleteExpired } = getEmailOtpQueries();
+
+  return withTransaction(async (txQuery) => {
+    const result = await txQuery<OtpChallengeRow>(select, [normalizedEmail]);
+    const challenge = result.rows[0];
+
+    if (!challenge) {
+      throw new Error('Invalid or expired code');
     }
 
-    const normalizedEmail = email.trim();
-    if (!normalizedEmail) {
+    const expiresAt = new Date(challenge.expires_at);
+    if (Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() <= Date.now()) {
+      await txQuery(deleteExpired, [normalizedEmail]);
+      throw new Error('Invalid or expired code');
+    }
+
+    if (challenge.consumed_at) {
+      throw new Error('Invalid or expired code');
+    }
+
+    if (challenge.attempts >= OTP_MAX_ATTEMPTS) {
+      throw new Error('Too many failed attempts. Please request a new code.');
+    }
+
+    const isValid = await bcrypt.compare(token, challenge.code_hash);
+    if (!isValid) {
+      await txQuery(failAttempt, [normalizedEmail]);
+      throw new Error('Invalid or expired code');
+    }
+
+    await txQuery(consume, [normalizedEmail]);
+
+    return {
+      accessToken: issueEmailSessionToken(normalizedEmail),
+      expiresIn: EMAIL_SESSION_EXPIRY_SECONDS,
+      socialProvider: 'email',
+    };
+  });
+}
+
+type AuthEmailAction = 'otp' | 'magic-link';
+
+function createEmailSendHandler(
+  app: FastifyInstance,
+  action: AuthEmailAction,
+  send: (email: string) => Promise<void>
+) {
+  const successMessage = action === 'otp' ? 'OTP email sent' : 'Magic link email sent';
+  const errorMessage = action === 'otp' ? 'Failed to send OTP email' : 'Failed to send magic link email';
+  const errorCode = action === 'otp' ? 'otp_send_failed' : 'magic_link_send_failed';
+
+  return async (request: FastifyRequest, reply: FastifyReply) => {
+    const email = normalizeEmail((request.body as AuthEmailBody | undefined)?.email);
+    if (!email) {
       return reply.status(400).send({ error: 'Missing or invalid email' });
     }
 
     try {
-      const supabase = getSupabaseClient();
-      const { error } = await supabase.auth.signInWithOtp({
-        email: normalizedEmail,
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: getEmailRedirectTo(),
-        },
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      return reply.send({ success: true, message: 'OTP email sent' });
+      await send(email);
+      return reply.send({ success: true, message: successMessage });
     } catch (err) {
-      app.log.error({ err, email: normalizedEmail }, 'Failed to send OTP email');
+      app.log.error({ err, email }, errorMessage);
       return reply.status(502).send({
-        error: 'Failed to send OTP email',
-        code: 'otp_send_failed',
+        error: errorMessage,
+        code: errorCode,
         statusCode: 502,
       });
     }
-  });
+  };
+}
 
-  // POST /api/v1/auth/send-magic-link
-  app.post('/api/v1/auth/send-magic-link', async (request: FastifyRequest, reply: FastifyReply) => {
-    const { email } = request.body as { email?: string };
-    if (!email || typeof email !== 'string') {
-      return reply.status(400).send({ error: 'Missing or invalid email' });
+export async function authEmailRoutes(app: FastifyInstance): Promise<void> {
+  app.post('/api/v1/auth/send-otp', createEmailSendHandler(app, 'otp', sendOtpEmail));
+
+  app.post('/api/v1/auth/send-magic-link', createEmailSendHandler(app, 'magic-link', sendMagicLinkViaSupabase));
+
+  app.post('/api/v1/auth/verify-otp', async (request: FastifyRequest, reply: FastifyReply) => {
+    const email = normalizeEmail((request.body as VerifyOtpBody | undefined)?.email);
+    const token = normalizeToken((request.body as VerifyOtpBody | undefined)?.token);
+
+    if (!email || !token) {
+      return reply.status(400).send({ error: 'Missing or invalid email or token' });
     }
-    // TODO: Generate magic link, store/associate with user, send magic link email
-    // await sendMagicLinkEmail(email, magicLink);
-    return reply.send({ success: true, message: 'Magic link email sent (stub)' });
+
+    try {
+      const result = await verifyEmailOtpChallenge(email, token);
+      return reply.send({
+        success: true,
+        message: 'OTP verified',
+        ...result,
+      });
+    } catch (err) {
+      app.log.error({ err, email }, 'Failed to verify OTP');
+      return reply.status(401).send({
+        error: err instanceof Error ? err.message : 'Invalid or expired code',
+        code: 'otp_verify_failed',
+        statusCode: 401,
+      });
+    }
   });
 }
