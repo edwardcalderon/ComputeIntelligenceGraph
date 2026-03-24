@@ -1,3 +1,15 @@
+## [0.1.84](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.83...v0.1.84) (2026-03-24)
+
+### Detected changes
+- infra: infra/docker/Dockerfile.api
+
+
+## [0.1.84](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.83...v0.1.84) (2026-03-24)
+
+
+
+
+
 ## [0.1.83](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.82...v0.1.83) (2026-03-24)
 
 ### Detected changes
