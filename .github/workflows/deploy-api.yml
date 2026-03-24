@@ -25,6 +25,9 @@ concurrency:
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION || 'us-east-2' }}
+  AUTHENTIK_DOMAIN: ${{ vars.AUTHENTIK_DOMAIN || 'auth.cig.technology' }}
+  AUTHENTIK_AWS_REGION: ${{ vars.AUTHENTIK_AWS_REGION || 'us-east-1' }}
+  AUTHENTIK_OIDC_APP_SLUG: ${{ vars.AUTHENTIK_OIDC_APP_SLUG || 'cig-dashboard' }}
   API_DOMAIN: ${{ vars.API_DOMAIN || 'api.cig.technology' }}
   API_IMAGE_REPOSITORY: ${{ vars.API_IMAGE_REPOSITORY || 'cig-api-production' }}
   DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME || 'cigtechnology' }}
@@ -336,17 +339,37 @@ jobs:
           echo "API_NEO4J_BOLT_URI=$(jq -r '.neo4j_bolt_uri.value' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
           echo "API_NEO4J_PASSWORD_SECRET_ARN=$(jq -r '.neo4j_password_secret_arn.value' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
 
+      - name: Resolve Authentik runtime values
+        id: authentik
+        run: |
+          DISCOVERY_URL="https://${AUTHENTIK_DOMAIN}/application/o/${AUTHENTIK_OIDC_APP_SLUG}/.well-known/openid-configuration"
+          DISCOVERY_JSON=$(curl --fail --silent --show-error "$DISCOVERY_URL")
+
+          OIDC_CLIENT_JSON=$(aws secretsmanager get-secret-value \
+            --secret-id "authentik/${AUTHENTIK_DOMAIN}/oidc-client" \
+            --region "$AUTHENTIK_AWS_REGION" \
+            --query SecretString \
+            --output text)
+
+          {
+            printf 'issuer_url=%s\n' "$(jq -r '.issuer' <<<"$DISCOVERY_JSON")"
+            printf 'jwks_uri=%s\n' "$(jq -r '.jwks_uri' <<<"$DISCOVERY_JSON")"
+            printf 'token_endpoint=%s\n' "$(jq -r '.token_endpoint' <<<"$DISCOVERY_JSON")"
+            printf 'client_id=%s\n' "$(jq -r '.client_id' <<<"$OIDC_CLIENT_JSON")"
+            printf 'client_secret=%s\n' "$(jq -r '.client_secret' <<<"$OIDC_CLIENT_JSON")"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Ensure runtime secrets in AWS Secrets Manager
         env:
           DATABASE_URL_VALUE: ${{ secrets.SUPABASE_DATABASE_URL }}
           SUPABASE_URL_VALUE: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY_VALUE: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           JWT_SECRET_VALUE: ${{ secrets.JWT_SECRET }}
-          AUTHENTIK_ISSUER_URL_VALUE: ${{ secrets.AUTHENTIK_ISSUER_URL }}
-          AUTHENTIK_JWKS_URI_VALUE: ${{ secrets.AUTHENTIK_JWKS_URI }}
-          AUTHENTIK_TOKEN_ENDPOINT_VALUE: ${{ secrets.AUTHENTIK_TOKEN_ENDPOINT }}
-          OIDC_CLIENT_ID_VALUE: ${{ secrets.OIDC_CLIENT_ID }}
-          OIDC_CLIENT_SECRET_VALUE: ${{ secrets.OIDC_CLIENT_SECRET }}
+          AUTHENTIK_ISSUER_URL_VALUE: ${{ steps.authentik.outputs.issuer_url }}
+          AUTHENTIK_JWKS_URI_VALUE: ${{ steps.authentik.outputs.jwks_uri }}
+          AUTHENTIK_TOKEN_ENDPOINT_VALUE: ${{ steps.authentik.outputs.token_endpoint }}
+          OIDC_CLIENT_ID_VALUE: ${{ steps.authentik.outputs.client_id }}
+          OIDC_CLIENT_SECRET_VALUE: ${{ steps.authentik.outputs.client_secret }}
         run: |
           ensure_secret() {
             local secret_name="$1"

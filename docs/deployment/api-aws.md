@@ -117,7 +117,7 @@ Resources created:
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
 
-The GitHub Actions deploy workflow syncs the GitHub secrets into deterministic AWS Secrets Manager names under `/cig/prod/api/*` before the ECS deploy.
+The GitHub Actions deploy workflow resolves the Authentik values from the live tenant in `us-east-1` and its `authentik/auth.cig.technology/oidc-client` secret, then syncs those along with the GitHub-managed Supabase/JWT secrets into deterministic AWS Secrets Manager names under `/cig/prod/api/*` before the ECS deploy.
 
 ## GitHub Actions Pipelines
 
