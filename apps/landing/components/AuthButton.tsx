@@ -765,6 +765,10 @@ function EmailOtpVerifyView({
     try {
       await verifyEmailOtp(email, code);
       onSuccess();
+
+      const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3001";
+      // Keep in sync with AuthenticatedLanding's callback handling.
+      window.location.replace(`${dashboardUrl}/auth/callback?redirect=${encodeURIComponent("/")}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t("auth.otpVerifyError"));
       setCode("");

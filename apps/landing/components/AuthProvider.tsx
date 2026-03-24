@@ -196,6 +196,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 4) Subscribe to Supabase changes even in Authentik mode (hybrid)
     const supabase = getSupabaseClient();
     let unsub: (() => void) | undefined;
+
+    const refreshUser = async () => {
+      const [sb, ak] = await Promise.all([readSupabaseSession(), Promise.resolve(readAuthentikSession())]);
+      if (!cancelled) {
+        setAuthState({ user: sb ?? ak, isHydrated: true, isSigningOut: false });
+      }
+    };
+
+    const onSessionChanged = () => {
+      void refreshUser();
+    };
+
+    window.addEventListener("cig-session-changed", onSessionChanged);
+
     if (supabase) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
         if (session?.user) {
@@ -227,7 +241,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       unsub = () => subscription.unsubscribe();
     }
 
-    return () => { cancelled = true; unsub?.(); };
+    return () => { cancelled = true; unsub?.(); window.removeEventListener("cig-session-changed", onSessionChanged); };
   }, []);
 
   const signOut = useCallback(() => {

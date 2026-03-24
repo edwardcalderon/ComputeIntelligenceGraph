@@ -29,6 +29,12 @@ function persistEmailSession(accessToken: string, expiresIn: number, socialProvi
   sessionStorage.setItem("cig_expires_at", String(expiresAt));
   sessionStorage.setItem("cig_social_provider", socialProvider);
   document.cookie = `cig_has_session=1; path=/; expires=${expiresAtDate}; SameSite=Lax${secure}`;
+
+  try {
+    window.dispatchEvent(new Event("cig-session-changed"));
+  } catch {
+    /* ignore */
+  }
 }
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
