@@ -2,8 +2,9 @@
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
-import { startAuthentikSocialLogin, getSupabaseClient, type AuthentikSocialProvider } from "@cig/auth";
+import { startAuthentikSocialLogin, getSupabaseClient, sendEmailOtp, verifyEmailOtp, type AuthentikSocialProvider } from "@cig/auth";
 import { useCIGAuth } from "./AuthProvider";
+import { PreferencesMenu } from "./PreferencesMenu";
 import { useTranslation } from "@cig-technology/i18n/react";
 
 /* ─── Icons ───────────────────────────────────────────────────────────── */
@@ -61,6 +62,15 @@ function ArrowLeftIcon() {
   );
 }
 
+function MailIcon() {
+  return (
+    <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="20" height="16" x="2" y="4" rx="2" />
+      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+    </svg>
+  );
+}
+
 function CheckIcon() {
   return (
     <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -75,7 +85,7 @@ const methodBtnClass =
   "w-full flex items-center gap-3 rounded-xl border border-zinc-200 dark:border-zinc-700/60 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-3 text-sm font-medium text-zinc-800 dark:text-zinc-200 transition-all hover:border-zinc-300 dark:hover:border-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 disabled:opacity-40 disabled:pointer-events-none";
 
 /* ─── Modal views ─────────────────────────────────────────────────────── */
-type ModalView = "methods" | "cli-code" | "ssh-info";
+type ModalView = "methods" | "cli-code" | "ssh-info" | "email-menu" | "email-otp" | "email-otp-verify" | "email-magic";
 
 /* ─── Authentik config (from env) ─────────────────────────────────────── */
 
@@ -101,6 +111,7 @@ function SignInModal({
 }) {
   const t = useTranslation();
   const [view, setView] = useState<ModalView>("methods");
+  const [otpEmail, setOtpEmail] = useState("");
   const backdropRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -118,6 +129,22 @@ function SignInModal({
     [onClose]
   );
 
+  // Back button destination — email-otp-verify goes back to email-otp, others go to methods
+  const handleBack = useCallback(() => {
+    if (view === "email-otp-verify") setView("email-otp");
+    else setView("methods");
+  }, [view]);
+
+  const headerTitle = (() => {
+    if (view === "methods") return t("auth.signInTitle");
+    if (view === "cli-code") return t("auth.cliAuthTitle");
+    if (view === "ssh-info") return t("auth.sshAuthTitle");
+    if (view === "email-menu") return t("auth.emailTitle");
+    if (view === "email-otp" || view === "email-otp-verify") return t("auth.emailOtpViewTitle");
+    if (view === "email-magic") return t("auth.emailMagicTitle");
+    return t("auth.signInTitle");
+  })();
+
   return (
     <div
       ref={backdropRef}
@@ -126,28 +153,29 @@ function SignInModal({
     >
       <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900 shadow-2xl shadow-black/10 dark:shadow-black/40 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-4 sm:px-6 py-4">
           <div className="flex items-center gap-2">
             {view !== "methods" && (
               <button
-                onClick={() => setView("methods")}
+                onClick={handleBack}
                 className="mr-1 rounded-lg p-1 text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               >
                 <ArrowLeftIcon />
               </button>
             )}
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              {view === "methods" && t("auth.signInTitle")}
-              {view === "cli-code" && t("auth.cliAuthTitle")}
-              {view === "ssh-info" && t("auth.sshAuthTitle")}
+              {headerTitle}
             </h2>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-          >
-            <XIcon />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <PreferencesMenu />
+            <button
+              onClick={onClose}
+              className="rounded-lg p-1.5 text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            >
+              <XIcon />
+            </button>
+          </div>
         </div>
 
         {/* Body */}
@@ -157,6 +185,33 @@ function SignInModal({
           )}
           {view === "cli-code" && <CliCodeView />}
           {view === "ssh-info" && <SshInfoView />}
+          {view === "email-menu" && (
+            <EmailMenuView
+              onPickOtp={() => setView("email-otp")}
+              onPickMagic={() => setView("email-magic")}
+            />
+          )}
+          {view === "email-otp" && (
+            <EmailOtpView
+              initialEmail={otpEmail}
+              onCodeSent={(email) => {
+                setOtpEmail(email);
+                setView("email-otp-verify");
+              }}
+            />
+          )}
+          {view === "email-magic" && (
+            <EmailMagicLinkView
+              initialEmail={otpEmail}
+              onSent={(email) => setOtpEmail(email)}
+            />
+          )}
+          {view === "email-otp-verify" && (
+            <EmailOtpVerifyView
+              email={otpEmail}
+              onSuccess={onClose}
+            />
+          )}
         </div>
       </div>
     </div>
@@ -179,7 +234,16 @@ function MethodsView({
         {t("auth.signInDesc")}
       </p>
 
-      {/* ── SSO — goes directly to Google / GitHub, Authentik handles the backend ─── */}
+      {/* ── Preferred: Email (opens menu with OTP or Magic Link) ─── */}
+      <div className="flex flex-col gap-2">
+        <button onClick={() => goTo("email-menu")} className={methodBtnClass}>
+          <MailIcon />
+          {t("auth.email")}
+          <span className="ml-auto text-xs text-zinc-500">{t("auth.passwordless")}</span>
+        </button>
+      </div>
+
+      {/* ── SSO — goes directly to Google / GitHub ─── */}
       <div className="flex flex-col gap-2">
         <button onClick={() => onSSOSignIn("google")} className={methodBtnClass}>
           <GoogleIcon />
@@ -210,6 +274,410 @@ function MethodsView({
           <span className="ml-auto text-xs text-zinc-500">{t("auth.local")}</span>
         </button>
       </div>
+    </div>
+  );
+}
+
+/* ─── OTP 6-digit code input ─────────────────────────────────────────── */
+
+function OtpCodeInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const length = 6;
+  const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
+
+  const handleChange = useCallback(
+    (idx: number, raw: string) => {
+      const digit = raw.replace(/\D/g, "");
+      if (!digit) return;
+      const chars = value.padEnd(length, " ").split("");
+      chars[idx] = digit[0];
+      onChange(chars.join("").trimEnd().slice(0, length));
+      if (idx < length - 1) inputsRef.current[idx + 1]?.focus();
+    },
+    [value, onChange]
+  );
+
+  const handleKeyDown = useCallback(
+    (idx: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Backspace") {
+        e.preventDefault();
+        const chars = value.padEnd(length, " ").split("");
+        if ((chars[idx] ?? "").trim()) {
+          chars[idx] = "";
+          onChange(chars.join("").trimEnd());
+        } else if (idx > 0) {
+          const prev = inputsRef.current[idx - 1];
+          prev?.focus();
+          chars[idx - 1] = "";
+          onChange(chars.join("").trimEnd());
+        }
+      } else if (e.key === "ArrowLeft" && idx > 0) {
+        inputsRef.current[idx - 1]?.focus();
+      } else if (e.key === "ArrowRight" && idx < length - 1) {
+        inputsRef.current[idx + 1]?.focus();
+      }
+    },
+    [value, onChange]
+  );
+
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent) => {
+      e.preventDefault();
+      const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, length);
+      onChange(pasted);
+      const focusIdx = Math.min(pasted.length, length - 1);
+      inputsRef.current[focusIdx]?.focus();
+    },
+    [onChange]
+  );
+
+  return (
+    <div className="flex gap-2 justify-center">
+      {Array.from({ length }).map((_, i) => (
+        <input
+          key={i}
+          ref={(el) => { inputsRef.current[i] = el; }}
+          type="text"
+          inputMode="numeric"
+          autoComplete={i === 0 ? "one-time-code" : "off"}
+          maxLength={1}
+          value={(value[i] ?? "").trim()}
+          onChange={(e) => handleChange(i, e.target.value)}
+          onKeyDown={(e) => handleKeyDown(i, e)}
+          onPaste={i === 0 ? handlePaste : undefined}
+          className="size-12 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 text-center text-xl font-mono font-semibold text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 dark:focus:border-cyan-400 transition caret-transparent"
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ─── Email Menu — pick OTP vs Magic ────────────────────────────────── */
+
+function EmailMenuView({
+  onPickOtp,
+  onPickMagic,
+}: {
+  onPickOtp: () => void;
+  onPickMagic: () => void;
+}) {
+  const t = useTranslation();
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-1">
+        {t("auth.emailMenuDesc")}
+      </p>
+      <button onClick={onPickOtp} className={methodBtnClass + " items-start"}>
+        <MailIcon />
+        <div className="flex flex-col items-start">
+          <span>{t("auth.emailOtp")}</span>
+          <span className="text-xs text-zinc-500">{t("auth.emailOtpHint")}</span>
+        </div>
+      </button>
+      <button onClick={onPickMagic} className={methodBtnClass + " items-start"}>
+        <MailIcon />
+        <div className="flex flex-col items-start">
+          <span>{t("auth.emailMagic")}</span>
+          <span className="text-xs text-zinc-500">{t("auth.emailMagicHint")}</span>
+        </div>
+      </button>
+    </div>
+  );
+}
+
+/* ─── Email OTP — step 1: enter email ───────────────────────────────── */
+
+function EmailOtpView({
+  initialEmail,
+  onCodeSent,
+}: {
+  initialEmail: string;
+  onCodeSent: (email: string) => void;
+}) {
+  const t = useTranslation();
+  const [email, setEmail] = useState(initialEmail);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSend = useCallback(async () => {
+    const trimmed = email.trim();
+    if (!trimmed) return;
+    setSending(true);
+    setError(null);
+    try {
+      await sendEmailOtp(trimmed);
+      onCodeSent(trimmed);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t("auth.otpSendError"));
+    } finally {
+      setSending(false);
+    }
+  }, [email, onCodeSent, t]);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        {t("auth.emailOtpDesc")}
+      </p>
+
+      <div className="flex flex-col gap-1.5">
+        <label
+          htmlFor="otp-email-input"
+          className="text-xs font-medium text-zinc-600 dark:text-zinc-400"
+        >
+          Email
+        </label>
+        <input
+          id="otp-email-input"
+          type="email"
+          autoComplete="email"
+          autoFocus
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && !sending && handleSend()}
+          placeholder={t("auth.emailPlaceholder")}
+          className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-2.5 text-sm text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 dark:focus:border-cyan-400 transition"
+        />
+      </div>
+
+      {error && (
+        <p className="text-xs text-red-500 dark:text-red-400 rounded-lg bg-red-50 dark:bg-red-950/30 px-3 py-2">
+          {error}
+        </p>
+      )}
+
+      <button
+        onClick={handleSend}
+        disabled={sending || !email.trim()}
+        className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:scale-[1.01] hover:shadow-xl hover:shadow-cyan-500/30 disabled:opacity-50 disabled:scale-100 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-cyan-400"
+      >
+        {sending ? t("auth.sending") : t("auth.sendOtp")}
+      </button>
+    </div>
+  );
+}
+
+/* ─── Email OTP — step 2: enter 6-digit code ────────────────────────── */
+
+function EmailOtpVerifyView({
+  email,
+  onSuccess,
+}: {
+  email: string;
+  onSuccess: () => void;
+}) {
+  const t = useTranslation();
+  const [code, setCode] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(45);
+  const [resentOk, setResentOk] = useState(false);
+  const [resendError, setResendError] = useState<string | null>(null);
+
+  const handleVerify = useCallback(async () => {
+    if (code.length !== 6) return;
+    setVerifying(true);
+    setError(null);
+    try {
+      await verifyEmailOtp(email, code);
+      onSuccess();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t("auth.otpVerifyError"));
+      setCode("");
+    } finally {
+      setVerifying(false);
+    }
+  }, [code, email, onSuccess, t]);
+
+  // Auto-submit when all 6 digits are entered
+  useEffect(() => {
+    if (code.length === 6) handleVerify();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code]);
+
+  // Cooldown timer for resend
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = setInterval(() => setCooldown((c) => (c > 0 ? c - 1 : 0)), 1000);
+    return () => clearInterval(id);
+  }, [cooldown]);
+
+  const handleResend = useCallback(async () => {
+    if (cooldown > 0 || verifying) return;
+    setResentOk(false);
+    setResendError(null);
+    try {
+      await sendEmailOtp(email);
+      setCooldown(45);
+      setResentOk(true);
+      setCode("");
+    } catch (err: unknown) {
+      setResendError(err instanceof Error ? err.message : t("auth.resendError"));
+    }
+  }, [cooldown, verifying, email, t]);
+
+  return (
+    <div className="flex flex-col gap-5">
+      <p className="text-sm text-zinc-600 dark:text-zinc-400 text-center">
+        {t("auth.otpSentTo", { email })}
+      </p>
+
+      <OtpCodeInput value={code} onChange={setCode} />
+
+      {verifying && (
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center animate-pulse">
+          {t("auth.verifying")}
+        </p>
+      )}
+
+      {error && (
+        <p className="text-xs text-red-500 dark:text-red-400 rounded-lg bg-red-50 dark:bg-red-950/30 px-3 py-2 text-center">
+          {error}
+        </p>
+      )}
+
+      {resentOk && (
+        <p className="text-xs text-emerald-500 dark:text-emerald-400 text-center">
+          {t("auth.codeResent")}
+        </p>
+      )}
+      {resendError && (
+        <p className="text-xs text-red-500 dark:text-red-400 text-center">
+          {resendError}
+        </p>
+      )}
+
+      <button
+        onClick={handleVerify}
+        disabled={verifying || code.length !== 6}
+        className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:scale-[1.01] hover:shadow-xl hover:shadow-cyan-500/30 disabled:opacity-50 disabled:scale-100 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-cyan-400"
+      >
+        {verifying ? t("auth.verifying") : t("auth.verifySignIn")}
+      </button>
+
+      {cooldown > 0 ? (
+        <div className="text-xs text-zinc-500 dark:text-zinc-400 text-center select-none">
+          {t("auth.resendIn", { seconds: cooldown })}
+        </div>
+      ) : (
+        <button
+          onClick={handleResend}
+          className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors text-center"
+        >
+          {t("auth.didntReceive")}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ─── Email Magic Link — enter email, send link, cooldown/resend ─────── */
+
+function EmailMagicLinkView({
+  initialEmail,
+  onSent,
+}: {
+  initialEmail: string;
+  onSent: (email: string) => void;
+}) {
+  const t = useTranslation();
+  const [email, setEmail] = useState(initialEmail);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [cooldown, setCooldown] = useState(45);
+  const [okMsg, setOkMsg] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!sent || cooldown <= 0) return;
+    const id = setInterval(() => setCooldown((c) => (c > 0 ? c - 1 : 0)), 1000);
+    return () => clearInterval(id);
+  }, [sent, cooldown]);
+
+  const handleSend = useCallback(async () => {
+    const trimmed = email.trim();
+    if (!trimmed) return;
+    setSending(true);
+    setError(null);
+    try {
+      const supabase = getSupabaseClient();
+      if (!supabase) throw new Error("Supabase client not configured");
+      const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3001";
+      const { error } = await supabase.auth.signInWithOtp({
+        email: trimmed,
+        options: {
+          emailRedirectTo: `${dashboardUrl}/auth/callback`,
+          shouldCreateUser: true,
+        },
+      });
+      if (error) throw new Error(error.message);
+      setSent(true);
+      setCooldown(45);
+      setOkMsg(t("auth.linkSentTo", { email: trimmed }));
+      onSent(trimmed);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t("auth.resendError"));
+    } finally {
+      setSending(false);
+    }
+  }, [email, t, onSent]);
+
+  const handleResend = useCallback(async () => {
+    if (!sent || cooldown > 0) return;
+    await handleSend();
+  }, [sent, cooldown, handleSend]);
+
+  return (
+    <div className="flex flex-col gap-4">
+      {!sent && (
+        <>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            {t("auth.emailMagicDesc")}
+          </p>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="magic-email-input" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Email</label>
+            <input
+              id="magic-email-input"
+              type="email"
+              autoComplete="email"
+              autoFocus
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && !sending && handleSend()}
+              placeholder={t("auth.emailPlaceholder")}
+              className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-2.5 text-sm text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 dark:focus:border-cyan-400 transition"
+            />
+          </div>
+          {error && (
+            <p className="text-xs text-red-500 dark:text-red-400 rounded-lg bg-red-50 dark:bg-red-950/30 px-3 py-2">{error}</p>
+          )}
+          <button
+            onClick={handleSend}
+            disabled={sending || !email.trim()}
+            className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:scale-[1.01] hover:shadow-xl hover:shadow-cyan-500/30 disabled:opacity-50 disabled:scale-100 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-cyan-400"
+          >
+            {sending ? t("auth.linkSending") : t("auth.sendLink")}
+          </button>
+        </>
+      )}
+
+      {sent && (
+        <div className="flex flex-col items-center gap-3 text-center">
+          {okMsg && <p className="text-sm text-zinc-600 dark:text-zinc-400">{okMsg}</p>}
+          {cooldown > 0 ? (
+            <div className="text-xs text-zinc-500 dark:text-zinc-400">{t("auth.resendIn", { seconds: cooldown })}</div>
+          ) : (
+            <button onClick={handleResend} className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
+              {t("auth.didntReceive")}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -3,7 +3,8 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { AuthProvider } from "../components/AuthProvider";
 import { AppUpdateWatcher } from "../components/AppUpdateWatcher";
-import { I18nProvider } from "@cig-technology/i18n/react";
+import { I18nProvider, useLocale } from "@cig-technology/i18n/react";
+import { LOCALE_META } from "@cig-technology/i18n";
 import { initI18n } from "./i18n";
 
 type Theme = "light" | "dark";
@@ -15,6 +16,17 @@ const ThemeCtx = createContext<{
 }>({ theme: "dark", setTheme: () => {}, toggleTheme: () => {} });
 
 export const useTheme = () => useContext(ThemeCtx);
+
+function LocaleSync() {
+  const locale = useLocale();
+
+  useEffect(() => {
+    document.documentElement.lang = locale;
+    document.documentElement.dir = LOCALE_META[locale].dir;
+  }, [locale]);
+
+  return null;
+}
 
 function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("dark");
@@ -49,6 +61,7 @@ initI18n();
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <I18nProvider>
+      <LocaleSync />
       <ThemeProvider>
         <AuthProvider>
           <AppUpdateWatcher />

@@ -8,6 +8,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.broadcastEvent = broadcastEvent;
+exports.broadcastHeartbeat = broadcastHeartbeat;
 exports.registerWebSocket = registerWebSocket;
 const websocket_1 = __importDefault(require("@fastify/websocket"));
 const auth_js_1 = require("./auth.js");
@@ -29,6 +30,12 @@ function broadcastEvent(type, data) {
             client.send(payload);
         }
     }
+}
+/**
+ * Broadcast a `target:heartbeat` event to all connected Dashboard clients.
+ */
+function broadcastHeartbeat(targetId, data) {
+    broadcastEvent('target:heartbeat', { target_id: targetId, ...(data ?? {}) });
 }
 // ─── Plugin registration ──────────────────────────────────────────────────────
 const PING_INTERVAL_MS = 30_000;
