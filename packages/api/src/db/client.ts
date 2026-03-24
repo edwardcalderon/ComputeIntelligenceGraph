@@ -54,6 +54,11 @@ function getDatabaseUrl(): string {
     return databaseUrl;
   }
 
+  const poolerUrl = process.env['SUPABASE_DIRECT_URL_POOLER']?.trim();
+  if (poolerUrl) {
+    return poolerUrl;
+  }
+
   if (isProductionEnvironment()) {
     return '';
   }
@@ -91,8 +96,8 @@ function isSqliteUrl(databaseUrl: string): boolean {
 function resolveDatabaseMode(databaseUrl: string): DatabaseMode {
   if (!databaseUrl) {
     throw new Error(
-      'No database URL configured. Set DATABASE_URL for production, ' +
-        'SUPABASE_DIRECT_URL for local Supabase development, or an explicit sqlite:// URL for offline relay mode.'
+      'No database URL configured. Set DATABASE_URL or SUPABASE_DIRECT_URL_POOLER for production, ' +
+        'SUPABASE_DIRECT_URL or SUPABASE_DIRECT_URL_POOLER for local Supabase development, or an explicit sqlite:// URL for offline relay mode.'
     );
   }
 

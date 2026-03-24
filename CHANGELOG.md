@@ -1,3 +1,21 @@
+## [0.1.97](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.96...v0.1.97) (2026-03-24)
+
+### Detected changes
+- root: .env.example
+- .github: .github/workflows/deploy-api.yml
+- docs: docs/deployment/api-aws.md
+- packages: 3 changed file(s)
+  - packages/api/.env.example
+  - packages/api/src/db/client.test.ts
+  - packages/api/src/db/client.ts
+
+
+## [0.1.97](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.96...v0.1.97) (2026-03-24)
+
+
+
+
+
 ## [0.1.96](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.95...v0.1.96) (2026-03-24)
 
 ### Detected changes

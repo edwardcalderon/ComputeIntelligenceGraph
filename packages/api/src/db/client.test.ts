@@ -95,6 +95,18 @@ describe('database mode resolution', () => {
     expect(isPostgresDatabase()).toBe(true);
   });
 
+  it('uses SUPABASE_DIRECT_URL_POOLER before SUPABASE_DIRECT_URL when DATABASE_URL is not set', async () => {
+    delete process.env['DATABASE_URL'];
+    process.env['SUPABASE_DIRECT_URL_POOLER'] =
+      'postgresql://postgres:secret@aws-0-us-west-2.pooler.supabase.com:5432/postgres';
+    process.env['SUPABASE_DIRECT_URL'] =
+      'postgresql://postgres:secret@localhost:5432/postgres';
+
+    const { isPostgresDatabase } = await loadClient();
+
+    expect(isPostgresDatabase()).toBe(true);
+  });
+
   it('recognizes explicit sqlite URLs outside production', async () => {
     process.env['DATABASE_URL'] = 'sqlite://:memory:';
 
@@ -114,19 +126,20 @@ describe('database mode resolution', () => {
     );
   });
 
-  it('requires DATABASE_URL in production even if SUPABASE_DIRECT_URL is set', async () => {
+  it('uses SUPABASE_DIRECT_URL_POOLER in production when DATABASE_URL is not set', async () => {
     process.env['NODE_ENV'] = 'production';
     delete process.env['DATABASE_URL'];
-    process.env['SUPABASE_DIRECT_URL'] =
-      'postgresql://postgres:secret@localhost:5432/postgres';
+    process.env['SUPABASE_DIRECT_URL_POOLER'] =
+      'postgresql://postgres:secret@aws-0-us-west-2.pooler.supabase.com:5432/postgres';
 
     const { isPostgresDatabase } = await loadClient();
 
-    expect(() => isPostgresDatabase()).toThrow(/No database URL configured/i);
+    expect(isPostgresDatabase()).toBe(true);
   });
 
-  it('requires a configured database URL', async () => {
+  it('requires a configured database URL when no Supabase URL is provided', async () => {
     delete process.env['DATABASE_URL'];
+    delete process.env['SUPABASE_DIRECT_URL_POOLER'];
     delete process.env['SUPABASE_DIRECT_URL'];
 
     const { isPostgresDatabase } = await loadClient();

@@ -112,7 +112,7 @@ Resources created:
 
 ### Secrets injected through AWS Secrets Manager
 
-- `DATABASE_URL`
+- `DATABASE_URL` (populated from the direct Supabase URL or `SUPABASE_DIRECT_URL_POOLER` when present)
 - `JWT_SECRET`
 - `NEO4J_PASSWORD`
 - `AUTHENTIK_ISSUER_URL`
@@ -205,7 +205,7 @@ INFRA_CREATE_PIPELINES=false
 ## Migration Flow
 
 1. GitHub Actions installs workspace dependencies.
-2. `migrate-db` sets `DATABASE_URL` to the production Supabase Postgres connection string.
+2. `migrate-db` sets `DATABASE_URL` to the production Supabase Postgres connection string, preferring the pooler URL when `SUPABASE_DIRECT_URL_POOLER` is configured.
 3. `pnpm --filter @cig/api migrate:up` builds the API package and runs SQL migrations from `packages/api/src/db/migrations`.
 4. Applied files are recorded in `schema_migrations`.
 5. Re-running the migration step is idempotent unless an already-applied file changes checksum.
