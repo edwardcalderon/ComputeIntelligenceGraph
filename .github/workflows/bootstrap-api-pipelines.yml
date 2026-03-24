@@ -32,7 +32,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
@@ -53,5 +53,5 @@ jobs:
         env:
           INFRA_API_BOOTSTRAP_ONLY: 'true'
           INFRA_CREATE_PIPELINES: 'true'
-          API_IMAGE_URI: public.ecr.aws/docker/library/node:20-alpine
+          API_IMAGE_URI: public.ecr.aws/docker/library/node:22-alpine
         run: pnpm exec sst deploy --stage production --yes

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { loadCliEnv } from './env.js';
 import { Command } from 'commander';
 import { login } from './commands/login.js';
 import { logout } from './commands/logout.js';
@@ -14,6 +15,8 @@ import { upgrade } from './commands/upgrade.js';
 import { uninstall } from './commands/uninstall.js';
 import { scan } from './commands/scan.js';
 import { CLI_VERSION } from './version.js';
+
+loadCliEnv();
 
 const program = new Command();
 

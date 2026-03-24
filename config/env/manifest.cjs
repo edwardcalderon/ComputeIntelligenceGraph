@@ -162,12 +162,12 @@ module.exports = {
     LOG_LEVEL: {
       description: 'Application log level',
       example: 'info',
-      targets: { api: 'LOG_LEVEL' },
+      targets: { api: 'LOG_LEVEL', infra: 'LOG_LEVEL' },
     },
     LOG_TIMESTAMPS: {
       description: 'Whether structured logs include timestamps',
       example: 'true',
-      targets: {},
+      targets: { infra: 'LOG_TIMESTAMPS' },
     },
 
     // ── Frontend / Public URLs ─────────────────────────────────────────────
@@ -201,22 +201,22 @@ module.exports = {
     AWS_ACCOUNT_ID: {
       description: 'AWS account ID',
       example: '123456789012',
-      targets: {},
+      targets: { infra: 'AWS_ACCOUNT_ID' },
     },
     AWS_REGION: {
       description: 'AWS region',
       example: 'us-east-2',
-      targets: {},
+      targets: { infra: 'AWS_REGION' },
     },
     AWS_PROFILE: {
       description: 'AWS CLI profile',
       example: 'default',
-      targets: {},
+      targets: { infra: 'AWS_PROFILE' },
     },
     AWS_ROLE_ARN: {
       description: 'AWS role ARN',
       example: 'arn:aws:iam::123456789012:role/cig',
-      targets: {},
+      targets: { infra: 'AWS_ROLE_ARN' },
     },
 
     // ── GCP ────────────────────────────────────────────────────────────────
@@ -243,12 +243,12 @@ module.exports = {
     AUTHENTIK_DOMAIN: {
       description: 'Authentik domain',
       example: '<YOUR_AUTHENTIK_DOMAIN>',
-      targets: {},
+      targets: { infra: 'AUTHENTIK_DOMAIN' },
     },
     AUTHENTIK_ADMIN_EMAIL: {
       description: 'Authentik admin email',
       example: '<YOUR_AUTHENTIK_ADMIN_EMAIL>',
-      targets: {},
+      targets: { infra: 'AUTHENTIK_ADMIN_EMAIL' },
     },
     AUTHENTIK_TOKEN_ENDPOINT: {
       description: 'Authentik OIDC token endpoint',
@@ -284,46 +284,46 @@ module.exports = {
     AUTHENTIK_SUBNET_ID: {
       description: 'Authentik subnet ID',
       example: 'subnet-1234567890',
-      targets: {},
+      targets: { infra: 'AUTHENTIK_SUBNET_ID' },
     },
     AUTHENTIK_VPC_ID: {
       description: 'Authentik VPC ID',
       example: 'vpc-1234567890',
-      targets: {},
+      targets: { infra: 'AUTHENTIK_VPC_ID' },
     },
 
     // ── IaC ────────────────────────────────────────────────────────────────
     IAC_MODULES_PATH: {
       description: 'Terraform modules base path',
       example: './packages/iac/modules',
-      targets: {},
+      targets: { infra: 'IAC_MODULES_PATH' },
     },
     IAC_COMPUTE_MODULE: {
       description: 'Compute module name',
       example: 'compute',
-      targets: {},
+      targets: { infra: 'IAC_COMPUTE_MODULE' },
     },
     IAC_NETWORKING_MODULE: {
       description: 'Networking module name',
       example: 'networking',
-      targets: {},
+      targets: { infra: 'IAC_NETWORKING_MODULE' },
     },
 
     // ── Dashboard config ───────────────────────────────────────────────────
     DASHBOARD_DOMAIN: {
       description: 'Dashboard domain',
       example: 'dashboard.example.com',
-      targets: {},
+      targets: { infra: 'DASHBOARD_DOMAIN' },
     },
     DASHBOARD_BUILD_PATH: {
       description: 'Dashboard build output path',
       example: './apps/dashboard/out',
-      targets: {},
+      targets: { infra: 'DASHBOARD_BUILD_PATH' },
     },
     DASHBOARD_AUTHENTIK_INTEGRATION: {
       description: 'Whether dashboard integrates with Authentik',
       example: 'true',
-      targets: {},
+      targets: { infra: 'DASHBOARD_AUTHENTIK_INTEGRATION' },
     },
   },
 
@@ -369,6 +369,12 @@ module.exports = {
       path: 'packages/graph',
       envFile: '.env',
       exampleFile: '.env.example',
+    },
+    infra: {
+      description: 'packages/infra SST app',
+      path: 'packages/infra',
+      envFile: '.env.local',
+      exampleFile: 'examples/.env.example',
     },
   },
 };

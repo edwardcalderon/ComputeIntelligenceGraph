@@ -1,7 +1,10 @@
 # ─── Builder Stage ────────────────────────────────────────────────────────────
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
+
+# Native modules on Alpine need a small build toolchain.
+RUN apk add --no-cache python3 make g++
 
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
@@ -18,6 +21,7 @@ RUN pnpm install --frozen-lockfile
 
 # Copy source
 COPY packages/api/src ./packages/api/src
+COPY packages/api/scripts ./packages/api/scripts
 COPY packages/api/tsconfig.json ./packages/api/
 COPY packages/config/src ./packages/config/src
 COPY packages/config/tsconfig.json ./packages/config/
@@ -33,13 +37,16 @@ RUN pnpm --filter @cig/graph build
 RUN pnpm --filter @cig/api build
 
 # ─── Production Stage ─────────────────────────────────────────────────────────
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
 # Security: create non-root user
 RUN addgroup -g 1000 node_group || true \
     && adduser -u 1000 -G node_group -s /bin/sh -D nodeuser 2>/dev/null || true
 
 WORKDIR /app
+
+# Native modules on Alpine need a small build toolchain during install.
+RUN apk add --no-cache --virtual .build-deps python3 make g++
 
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 
@@ -52,6 +59,8 @@ COPY packages/discovery/package.json ./packages/discovery/
 
 # Install production deps only
 RUN pnpm install --frozen-lockfile --prod
+
+RUN apk del .build-deps
 
 # Copy compiled output from builder
 COPY --from=builder /app/packages/api/dist ./packages/api/dist

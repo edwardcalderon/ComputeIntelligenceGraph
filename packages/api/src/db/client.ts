@@ -140,6 +140,10 @@ function getDriver(): DatabaseDriver {
   return _driver;
 }
 
+export function isPostgresDatabase(): boolean {
+  return DATABASE_URL.startsWith('postgres');
+}
+
 /**
  * Execute a SQL query against the configured database.
  *

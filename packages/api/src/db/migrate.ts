@@ -1,7 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { QueryResultRow } from 'pg';
-import { query, runMigration, withTransaction } from './client.js';
+import { isPostgresDatabase, query, runMigration, withTransaction } from './client.js';
 
 export interface AppliedMigrationRow extends QueryResultRow {
   name: string;
@@ -58,6 +58,13 @@ export async function applyMigrations(
   const migrationFiles = await listMigrationFiles(migrationsDir);
   const applied: string[] = [];
   const skipped: string[] = [];
+  const usesPostgres = isPostgresDatabase();
+  const selectMigrationSql = usesPostgres
+    ? 'SELECT name, checksum FROM schema_migrations WHERE name = $1'
+    : 'SELECT name, checksum FROM schema_migrations WHERE name = ?';
+  const insertMigrationSql = usesPostgres
+    ? 'INSERT INTO schema_migrations (name, checksum) VALUES ($1, $2)'
+    : 'INSERT INTO schema_migrations (name, checksum) VALUES (?, ?)';
 
   await ensureSchemaMigrationsTable();
 
@@ -66,15 +73,7 @@ export async function applyMigrations(
     const sql = await readFile(fullPath, 'utf8');
     const checksum = buildChecksum(sql);
 
-    const existing = await query<AppliedMigrationRow>(
-      'SELECT name, checksum FROM schema_migrations WHERE name = ?',
-      [fileName]
-    ).catch(async () =>
-      query<AppliedMigrationRow>(
-        'SELECT name, checksum FROM schema_migrations WHERE name = $1',
-        [fileName]
-      )
-    );
+    const existing = await query<AppliedMigrationRow>(selectMigrationSql, [fileName]);
 
     if (existing.rowCount > 0) {
       const appliedMigration = existing.rows[0]!;
@@ -90,15 +89,7 @@ export async function applyMigrations(
     await withTransaction(async (txQuery) => {
       await runMigration(sql, txQuery);
 
-      await txQuery(
-        'INSERT INTO schema_migrations (name, checksum) VALUES (?, ?)',
-        [fileName, checksum]
-      ).catch(async () =>
-        txQuery(
-          'INSERT INTO schema_migrations (name, checksum) VALUES ($1, $2)',
-          [fileName, checksum]
-        )
-      );
+      await txQuery(insertMigrationSql, [fileName, checksum]);
     });
 
     applied.push(fileName);

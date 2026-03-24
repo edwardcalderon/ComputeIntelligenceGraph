@@ -74,7 +74,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
@@ -120,7 +120,7 @@ jobs:
         env:
           INFRA_API_BOOTSTRAP_ONLY: 'true'
           INFRA_CREATE_PIPELINES: 'false'
-          API_IMAGE_URI: public.ecr.aws/docker/library/node:20-alpine
+          API_IMAGE_URI: public.ecr.aws/docker/library/node:22-alpine
         run: |
           # The first bootstrap has no SST stage yet, so treat that as a soft skip.
           set +e
@@ -156,7 +156,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
@@ -177,7 +177,7 @@ jobs:
         env:
           INFRA_API_BOOTSTRAP_ONLY: 'true'
           INFRA_CREATE_PIPELINES: 'false'
-          API_IMAGE_URI: public.ecr.aws/docker/library/node:20-alpine
+          API_IMAGE_URI: public.ecr.aws/docker/library/node:22-alpine
         run: pnpm exec sst deploy --stage production --yes
 
       - name: Login to Amazon ECR
@@ -241,7 +241,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
@@ -302,7 +302,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
@@ -408,7 +408,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v3

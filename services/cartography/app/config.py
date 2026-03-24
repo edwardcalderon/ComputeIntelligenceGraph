@@ -1,5 +1,18 @@
+from pathlib import Path
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings
 from typing import Optional
+
+
+def _find_env_file() -> Path:
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / ".env"
+        if candidate.exists():
+            return candidate
+    return Path(".env")
+
+
+ROOT_ENV_FILE = _find_env_file()
 
 
 class CartographyConfig(BaseSettings):
@@ -8,7 +21,10 @@ class CartographyConfig(BaseSettings):
     neo4j_password: str = "neo4j"
 
     aws_role_arn: Optional[str] = None
-    aws_regions: str = "us-east-2"
+    aws_regions: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("AWS_REGIONS", "AWS_REGION"),
+    )
 
     gcp_enabled: bool = False
     gcp_project_id: Optional[str] = None
@@ -21,7 +37,7 @@ class CartographyConfig(BaseSettings):
     discovery_interval_minutes: int = 5
 
     class Config:
-        env_file = ".env"
+        env_file = ROOT_ENV_FILE
         extra = "ignore"
 
 

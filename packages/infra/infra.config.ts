@@ -3,8 +3,11 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as aws from '@pulumi/aws';
 import { createPipeline } from '@lsts_tech/infra';
+import { loadInfraEnv, resolveAwsRegion } from './src/config/env.js';
 
 type PipelinePermissionsMode = 'admin' | 'least-privilege';
+
+loadInfraEnv();
 
 interface ApiStackConfig {
   appName: string;
@@ -116,7 +119,7 @@ function loadApiStackConfig(): ApiStackConfig {
   return {
     appName: process.env.INFRA_APP_NAME ?? 'cig-api',
     stage,
-    region: process.env.AWS_REGION ?? process.env.API_REGION ?? 'us-east-2',
+    region: resolveAwsRegion(),
     domain,
     hostedZoneDomain:
       optionalEnv('API_HOSTED_ZONE_DOMAIN') ??
@@ -125,7 +128,7 @@ function loadApiStackConfig(): ApiStackConfig {
     imageRepository: requiredEnv('API_IMAGE_REPOSITORY'),
     imageUri:
       optionalEnv('API_IMAGE_URI') ??
-      `public.ecr.aws/docker/library/node:20-alpine`,
+      `public.ecr.aws/docker/library/node:22-alpine`,
     containerPort: numberEnv('API_CONTAINER_PORT', 8080),
     cpu: numberEnv('API_CPU', 512),
     memoryMiB: numberEnv('API_MEMORY_MIB', 1024),

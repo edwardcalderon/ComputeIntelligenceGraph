@@ -1,5 +1,9 @@
 /// <reference path="./sst-env.d.ts" />
 
+import { loadInfraEnv, resolveAwsRegion } from './src/config/env.js';
+
+loadInfraEnv();
+
 export default $config({
   app(input: { stage?: string }) {
     return {
@@ -9,7 +13,7 @@ export default $config({
       home: 'aws',
       providers: {
         aws: {
-          region: process.env.AWS_REGION ?? process.env.API_REGION ?? 'us-east-2',
+          region: resolveAwsRegion(),
         },
       },
     };

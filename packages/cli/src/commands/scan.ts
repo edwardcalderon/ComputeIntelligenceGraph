@@ -15,6 +15,7 @@ import * as path from 'node:path';
 import { execSync } from 'node:child_process';
 import { CredentialManager } from '../credentials.js';
 import { ApiClient } from '../services/api-client.js';
+import { resolveAwsRegion } from '../env.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -195,7 +196,10 @@ function scanCloud(provider?: string): ScanResult {
       asset_type: 'cloud_account',
       provider: 'aws',
       identifier: process.env['AWS_ACCOUNT_ID'] ?? 'unknown',
-      metadata_json: { region: process.env['AWS_REGION'] ?? 'us-east-2', scan_note: 'Stub scan' },
+      metadata_json: {
+        region: resolveAwsRegion() ?? 'unknown',
+        scan_note: 'Stub scan',
+      },
     });
   } else if (targetProvider === 'gcp') {
     const hasCredentials = !!(process.env['GOOGLE_APPLICATION_CREDENTIALS'] || process.env['GCP_PROJECT']);

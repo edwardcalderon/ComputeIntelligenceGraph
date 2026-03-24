@@ -23,6 +23,10 @@ export interface CloudScanResult {
   assets: ScanAsset[];
 }
 
+function resolveAwsRegion(): string | undefined {
+  return process.env['AWS_REGION'] ?? process.env['AWS_REGIONS'] ?? process.env['API_REGION'];
+}
+
 /**
  * Scan AWS resources using saved IAM role credentials.
  * Currently a stub that returns the credential detection status.
@@ -58,7 +62,7 @@ export async function scanAWS(): Promise<CloudScanResult> {
     provider: 'aws',
     identifier: process.env['AWS_ACCOUNT_ID'] ?? 'unknown',
     metadata_json: {
-      region: process.env['AWS_REGION'] ?? 'us-east-2',
+      region: resolveAwsRegion() ?? 'unknown',
       profile: process.env['AWS_PROFILE'] ?? 'default',
       role_arn: process.env['AWS_ROLE_ARN'] ?? null,
       scan_note: 'Stub scan — full enumeration requires AWS SDK integration',
@@ -70,7 +74,7 @@ export async function scanAWS(): Promise<CloudScanResult> {
     provider: 'aws',
     status: 'completed',
     summary_json: {
-      region: process.env['AWS_REGION'] ?? 'us-east-2',
+      region: resolveAwsRegion() ?? 'unknown',
       asset_count: assets.length,
       errors,
     },
