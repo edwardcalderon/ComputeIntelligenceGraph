@@ -7,6 +7,9 @@ import { loadInfraEnv, resolveAwsRegion } from './src/config/env.js';
 
 type PipelinePermissionsMode = 'admin' | 'least-privilege';
 
+const ECS_TASK_EXECUTION_ROLE_POLICY_ARN =
+  'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy';
+
 loadInfraEnv();
 
 interface ApiStackConfig {
@@ -320,7 +323,7 @@ export function createInfrastructure() {
 
   new aws.iam.RolePolicyAttachment(`${namePrefix}-execution-managed-policy`, {
     role: executionRole.name,
-    policyArn: aws.iam.ManagedPolicies.AmazonECSTaskExecutionRolePolicy,
+    policyArn: ECS_TASK_EXECUTION_ROLE_POLICY_ARN,
   });
 
   new aws.iam.RolePolicy(`${namePrefix}-execution-secrets-policy`, {
