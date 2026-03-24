@@ -1,16 +1,17 @@
 /**
  * Database client setup.
  *
- * Detects DATABASE_URL prefix:
- *   - starts with "postgres" → PostgreSQL via `pg` Pool
- *   - otherwise             → SQLite via `better-sqlite3`
+ * Detects the configured database URL:
+ *   - postgres:// / postgresql:// → PostgreSQL via `pg` Pool
+ *   - sqlite://                  → SQLite via `better-sqlite3`
+ *
+ * There is no implicit SQLite fallback in production. SQLite is only used
+ * when it is explicitly configured for offline/local relay mode.
  *
  * Exports a single `query(sql, params?)` function that works for both.
  */
 
 import type { QueryResultRow } from "pg";
-
-const DATABASE_URL = process.env['DATABASE_URL'] ?? '';
 
 // ---------------------------------------------------------------------------
 // Shared query result type
@@ -37,11 +38,65 @@ interface DatabaseDriver {
 
 let _driver: DatabaseDriver | null = null;
 
+type DatabaseMode = 'postgres' | 'sqlite';
+
 function normalizeQueryResult<T extends QueryResultRow = QueryResultRow>(
   rows: T[],
   rowCount?: number | null
 ): QueryResult<T> {
   return { rows, rowCount: rowCount ?? rows.length };
+}
+
+function getDatabaseUrl(): string {
+  const databaseUrl = process.env['DATABASE_URL']?.trim();
+  if (databaseUrl) {
+    return databaseUrl;
+  }
+
+  if (isProductionEnvironment()) {
+    return '';
+  }
+
+  return process.env['SUPABASE_DIRECT_URL']?.trim() ?? '';
+}
+
+function isProductionEnvironment(): boolean {
+  return process.env['NODE_ENV'] === 'production';
+}
+
+function isPostgresUrl(databaseUrl: string): boolean {
+  return /^postgres(?:ql)?:\/\//.test(databaseUrl);
+}
+
+function isSqliteUrl(databaseUrl: string): boolean {
+  return databaseUrl.startsWith('sqlite:');
+}
+
+function resolveDatabaseMode(databaseUrl: string): DatabaseMode {
+  if (!databaseUrl) {
+    throw new Error(
+      'No database URL configured. Set DATABASE_URL for production, ' +
+        'SUPABASE_DIRECT_URL for local Supabase development, or an explicit sqlite:// URL for offline relay mode.'
+    );
+  }
+
+  if (isPostgresUrl(databaseUrl)) {
+    return 'postgres';
+  }
+
+  if (isSqliteUrl(databaseUrl)) {
+    if (isProductionEnvironment()) {
+      throw new Error(
+        'SQLite is not allowed in production. Set DATABASE_URL to the Supabase Postgres connection string.'
+      );
+    }
+    return 'sqlite';
+  }
+
+  const scheme = databaseUrl.split(':', 1)[0] ?? 'unknown';
+  throw new Error(
+    `Unsupported database URL scheme "${scheme}". Use postgresql://... for Supabase or sqlite://... for offline relay mode.`
+  );
 }
 
 export function translatePlaceholdersForPostgres(sql: string): string {
@@ -124,10 +179,10 @@ export function translatePlaceholdersForPostgres(sql: string): string {
   return result;
 }
 
-function buildPostgresDriver(): DatabaseDriver {
+function buildPostgresDriver(databaseUrl: string): DatabaseDriver {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Pool } = require('pg') as typeof import('pg');
-  const pool = new Pool({ connectionString: DATABASE_URL });
+  const pool = new Pool({ connectionString: databaseUrl });
 
   const runQuery = async <T extends QueryResultRow = QueryResultRow>(
     sql: string,
@@ -169,10 +224,10 @@ function buildPostgresDriver(): DatabaseDriver {
   };
 }
 
-function buildSqliteDriver(): DatabaseDriver {
+function buildSqliteDriver(databaseUrl: string): DatabaseDriver {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const Database = require('better-sqlite3') as typeof import('better-sqlite3');
-  const dbPath = DATABASE_URL.replace(/^sqlite:\/\//, '') || ':memory:';
+  const dbPath = databaseUrl.replace(/^sqlite:\/\//, '') || ':memory:';
   const db = new Database(dbPath);
 
   // Enable WAL mode for better concurrent read performance
@@ -213,15 +268,17 @@ function buildSqliteDriver(): DatabaseDriver {
 
 function getDriver(): DatabaseDriver {
   if (!_driver) {
-    _driver = DATABASE_URL.startsWith('postgres')
-      ? buildPostgresDriver()
-      : buildSqliteDriver();
+    const databaseUrl = getDatabaseUrl();
+    const mode = resolveDatabaseMode(databaseUrl);
+    _driver = mode === 'postgres'
+      ? buildPostgresDriver(databaseUrl)
+      : buildSqliteDriver(databaseUrl);
   }
   return _driver;
 }
 
 export function isPostgresDatabase(): boolean {
-  return DATABASE_URL.startsWith('postgres');
+  return resolveDatabaseMode(getDatabaseUrl()) === 'postgres';
 }
 
 /**
