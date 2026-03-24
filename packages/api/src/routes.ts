@@ -25,6 +25,17 @@ const readResources = [authenticate, authorize([Permission.READ_RESOURCES])];
 const manageDiscovery = [authenticate, authorize([Permission.MANAGE_DISCOVERY])];
 const executeActions = [authenticate, authorize([Permission.EXECUTE_ACTIONS])];
 
+function parseInteger(value: unknown, fallback: number): number {
+  if (typeof value !== 'string') return fallback;
+
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function emptyPagedResources() {
+  return { items: [], total: 0, hasMore: false };
+}
+
 export async function registerRoutes(app: FastifyInstance): Promise<void> {
   // ─── Device Authorization (RFC 8628) ────────────────────────────────────────
   await app.register(deviceAuthRoutes);
@@ -67,11 +78,19 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
       if (query['region']) filters.region = query['region'];
       if (query['state']) filters.state = query['state'] as ResourceFilters['state'];
 
-      const limit = query['limit'] ? parseInt(query['limit'], 10) : 50;
-      const offset = query['offset'] ? parseInt(query['offset'], 10) : 0;
+      const limit = parseInteger(query['limit'], 50);
+      const offset = parseInteger(query['offset'], 0);
 
-      const result = await queryEngine.listResourcesPaged(filters, { limit, offset });
-      return reply.send(result);
+      try {
+        const result = await queryEngine.listResourcesPaged(filters, { limit, offset });
+        return reply.send(result);
+      } catch (error) {
+        request.log.error(
+          { err: error, limit, offset, filters },
+          'Failed to list resources; returning an empty result set'
+        );
+        return reply.send(emptyPagedResources());
+      }
     }
   );
 

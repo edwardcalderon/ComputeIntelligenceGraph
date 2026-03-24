@@ -148,6 +148,85 @@ fs.writeFileSync(
   fi
 }
 
+release_changelog_fallback() {
+  local next_version="$1"
+  local previous_version="$2"
+  shift 2
+
+  node - "$next_version" "$previous_version" "$@" <<'NODE'
+const fs = require('node:fs');
+const path = require('node:path');
+
+const [nextVersion, previousVersion, ...changedFiles] = process.argv.slice(2);
+const changelogPath = path.join(process.cwd(), 'CHANGELOG.md');
+
+if (!fs.existsSync(changelogPath)) {
+  process.exit(0);
+}
+
+const currentContent = fs.readFileSync(changelogPath, 'utf8');
+const headingPattern = /^## \[(.+?)\].*$/m;
+const headingMatch = currentContent.match(headingPattern);
+
+if (!headingMatch || headingMatch[1] !== nextVersion) {
+  process.exit(0);
+}
+
+const headingStart = currentContent.indexOf(headingMatch[0]);
+const sectionStart = headingStart + headingMatch[0].length;
+const remainder = currentContent.slice(sectionStart);
+const nextHeadingMatch = remainder.match(/\n## \[/m);
+const sectionBody = nextHeadingMatch ? remainder.slice(0, nextHeadingMatch.index) : remainder;
+
+if (/^\s*[-*]\s+/m.test(sectionBody)) {
+  process.exit(0);
+}
+
+const compareUrl = `https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v${previousVersion}...v${nextVersion}`;
+const releaseDate = new Date().toISOString().slice(0, 10);
+const groupedFiles = new Map();
+
+for (const file of changedFiles) {
+  if (!file) {
+    continue;
+  }
+
+  const topLevel = file.includes('/') ? file.split('/', 1)[0] : 'root';
+  if (!groupedFiles.has(topLevel)) {
+    groupedFiles.set(topLevel, []);
+  }
+
+  groupedFiles.get(topLevel).push(file);
+}
+
+const lines = [
+  `## [${nextVersion}](${compareUrl}) (${releaseDate})`,
+  '',
+  '### Detected changes',
+];
+
+if (changedFiles.length === 0) {
+  lines.push('- No source changes were detected; this release only advances version metadata.');
+} else {
+  for (const [group, files] of groupedFiles.entries()) {
+    if (files.length === 1) {
+      lines.push(`- ${group}: ${files[0]}`);
+    } else {
+      lines.push(`- ${group}: ${files.length} changed file(s)`);
+      for (const file of files) {
+        lines.push(`  - ${file}`);
+      }
+    }
+  }
+}
+
+lines.push('', '');
+
+const updatedContent = `${currentContent.slice(0, headingStart)}${lines.join('\n')}${nextHeadingMatch ? remainder.slice(nextHeadingMatch.index) : ''}`;
+fs.writeFileSync(changelogPath, updatedContent);
+NODE
+}
+
 verify_dashboard_container_build() {
   local app_version="$1"
   local image_tag="cig-dashboard-release-check:${app_version}"
@@ -410,6 +489,8 @@ if $BUILD_RELEASE; then
 else
   if ! $DRY_RUN; then
     pnpm exec versioning changelog 2>&1
+    mapfile -t RELEASE_DIFF_FILES < <(git diff --cached --name-only --diff-filter=ACMRTUXB -- .)
+    release_changelog_fallback "$NEXT_VERSION" "$CURRENT_VERSION" "${RELEASE_DIFF_FILES[@]}"
     success "CHANGELOG.md updated"
   else
     info "[dry-run] Would run: pnpm exec versioning changelog"

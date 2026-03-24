@@ -8,36 +8,44 @@ import type { FastifyInstance } from 'fastify';
 
 // ─── Mock external dependencies before importing routes ───────────────────────
 
+const graphMocks = vi.hoisted(() => ({
+  getResource: vi.fn().mockResolvedValue({
+    id: 'res-1',
+    name: 'my-ec2',
+    type: 'ec2',
+    provider: 'aws',
+    region: 'us-east-1',
+    state: 'running',
+    tags: {},
+    metadata: {},
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    discoveredAt: new Date(),
+  }),
+  listResourcesPaged: vi.fn().mockResolvedValue({
+    items: [
+      { id: 'res-1', name: 'my-ec2', type: 'ec2', provider: 'aws', region: 'us-east-1', state: 'running', tags: {}, metadata: {} },
+      { id: 'res-2', name: 'my-s3', type: 's3', provider: 'aws', region: 'us-east-1', state: 'running', tags: {}, metadata: {} },
+    ],
+    total: 2,
+    hasMore: false,
+  }),
+  searchResources: vi.fn().mockResolvedValue([
+    { id: 'res-1', name: 'test-ec2', type: 'ec2', provider: 'aws', region: 'us-east-1', state: 'running', tags: {}, metadata: {} },
+  ]),
+  getDependencies: vi.fn().mockResolvedValue([]),
+  getDependents: vi.fn().mockResolvedValue([]),
+}));
+
 vi.mock('@cig/graph', () => ({
   GraphEngine: vi.fn().mockImplementation(() => ({
-    getResource: vi.fn().mockResolvedValue({
-      id: 'res-1',
-      name: 'my-ec2',
-      type: 'ec2',
-      provider: 'aws',
-      region: 'us-east-1',
-      state: 'running',
-      tags: {},
-      metadata: {},
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      discoveredAt: new Date(),
-    }),
+    getResource: graphMocks.getResource,
   })),
   GraphQueryEngine: vi.fn().mockImplementation(() => ({
-    listResourcesPaged: vi.fn().mockResolvedValue({
-      items: [
-        { id: 'res-1', name: 'my-ec2', type: 'ec2', provider: 'aws', region: 'us-east-1', state: 'running', tags: {}, metadata: {} },
-        { id: 'res-2', name: 'my-s3', type: 's3', provider: 'aws', region: 'us-east-1', state: 'running', tags: {}, metadata: {} },
-      ],
-      total: 2,
-      hasMore: false,
-    }),
-    searchResources: vi.fn().mockResolvedValue([
-      { id: 'res-1', name: 'test-ec2', type: 'ec2', provider: 'aws', region: 'us-east-1', state: 'running', tags: {}, metadata: {} },
-    ]),
-    getDependencies: vi.fn().mockResolvedValue([]),
-    getDependents: vi.fn().mockResolvedValue([]),
+    listResourcesPaged: graphMocks.listResourcesPaged,
+    searchResources: graphMocks.searchResources,
+    getDependencies: graphMocks.getDependencies,
+    getDependents: graphMocks.getDependents,
   })),
   Resource_Model: {},
 }));
@@ -178,6 +186,21 @@ describe('API Integration Tests', () => {
       expect(response.statusCode).toBe(200);
       const body = response.json();
       expect(Array.isArray(body.items)).toBe(true);
+    });
+
+    it('returns an empty paged response when the graph query fails', async () => {
+      graphMocks.listResourcesPaged.mockRejectedValueOnce(new Error('neo4j unavailable'));
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v1/resources?limit=1',
+        headers: {
+          authorization: makeAuthHeader([Permission.READ_RESOURCES]),
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual({ items: [], total: 0, hasMore: false });
     });
 
     it('returns 401 without authentication', async () => {

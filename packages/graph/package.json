@@ -1,6 +1,6 @@
 {
   "name": "@cig/graph",
-  "version": "0.1.76",
+  "version": "0.1.77",
   "description": "CIG Neo4j graph engine",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

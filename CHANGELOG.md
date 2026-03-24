@@ -1,3 +1,21 @@
+## [0.1.77](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.76...v0.1.77) (2026-03-24)
+
+### Detected changes
+- apps: 2 changed file(s)
+  - apps/dashboard/public/runtime-version.json
+  - apps/dashboard/public/sw.js
+- packages: 2 changed file(s)
+  - packages/api/src/integration.test.ts
+  - packages/api/src/routes.ts
+- scripts: scripts/release.sh
+
+
+## [0.1.77](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.76...v0.1.77) (2026-03-24)
+
+
+
+
+
 ## [0.1.76](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.74...v0.1.76) (2026-03-24)
 
 

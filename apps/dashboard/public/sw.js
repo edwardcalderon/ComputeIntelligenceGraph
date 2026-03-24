@@ -1,4 +1,4 @@
-/* CIG dashboard update worker 0.1.75 v0.1.75 */
+/* CIG dashboard update worker 0.1.76 v0.1.76 */
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
