@@ -375,13 +375,13 @@ describe('POST /api/v1/auth/refresh', () => {
 });
 
 describe('POST /api/v1/auth/logout', () => {
-  it('requires authentication when no token is provided', async () => {
+  it('returns success even without a token', async () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/v1/auth/logout',
     });
-    expect(res.statusCode).toBe(401);
-    expect(res.json()).toMatchObject({ error: 'Authentication required', statusCode: 401 });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ success: true });
   });
 
   it('invalidates the access_token associated with the session', async () => {
