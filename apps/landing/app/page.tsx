@@ -673,48 +673,52 @@ const GetStartedSection: React.FC = () => {
         <>
           <form
             onSubmit={handleSubmit}
-            className="flex w-full max-w-md gap-2.5 items-center justify-center mt-2"
+            className="w-full max-w-xl mt-2"
           >
-            <input
-              ref={inputRef}
-              type="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                if (error) setError("");
-                if (state === "error") setState("idle");
-              }}
-              placeholder={t("cta.placeholder")}
-              disabled={state === "loading"}
-              className={cn(
-                "flex-1 rounded-full border px-5 py-3 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 transition-all duration-300 focus:outline-none shadow bg-white dark:bg-zinc-900 disabled:opacity-50",
-                error || state === "error"
-                  ? "border-red-500 focus:border-red-400"
-                  : "border-zinc-300 dark:border-zinc-700 focus:border-cyan-400"
-              )}
-            />
-            <button
-              type="submit"
-              disabled={!email.trim() || state === "loading"}
-              className={cn(
-                "inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-violet-500 px-7 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-cyan-400",
-                email.trim() && state !== "loading"
-                  ? "hover:scale-105 hover:shadow-xl cursor-pointer opacity-100"
-                  : "opacity-50 cursor-not-allowed"
-              )}
-            >
-              {state === "loading" ? (
-                <>
-                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                  </svg>
-                  {t("cta.subscribing")}
-                </>
-              ) : (
-                t("cta.notifyMe")
-              )}
-            </button>
+            <div className="flex flex-col gap-3 rounded-[1.75rem] border border-white/70 bg-white/80 p-3 shadow-2xl shadow-cyan-950/10 backdrop-blur-md dark:border-white/10 dark:bg-zinc-950/75 sm:flex-row sm:items-stretch">
+              <input
+                ref={inputRef}
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (error) setError("");
+                  if (state === "error") setState("idle");
+                }}
+                placeholder={t("cta.placeholder")}
+                disabled={state === "loading"}
+                className={cn(
+                  "w-full min-w-0 flex-1 rounded-[1.25rem] border bg-white px-5 py-3.5 text-sm text-zinc-900 shadow-sm transition-all duration-300 placeholder:text-zinc-400 focus:outline-none disabled:opacity-50 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500",
+                  error || state === "error"
+                    ? "border-red-500 focus:border-red-400 focus:ring-2 focus:ring-red-500/20"
+                    : "border-zinc-200 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 dark:border-zinc-700"
+                )}
+              />
+              <button
+                type="submit"
+                disabled={!email.trim() || state === "loading"}
+                className={cn(
+                  "inline-flex w-full items-center justify-center gap-2 rounded-[1.25rem] bg-gradient-to-r from-cyan-500 via-blue-500 to-violet-500 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-cyan-950/20 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-cyan-400 sm:w-auto sm:min-w-[11rem]",
+                  email.trim() && state !== "loading"
+                    ? "hover:-translate-y-0.5 hover:shadow-xl cursor-pointer opacity-100"
+                    : "opacity-50 cursor-not-allowed"
+                )}
+              >
+                {state === "loading" ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                    {t("cta.subscribing")}
+                  </>
+                ) : (
+                  t("cta.notifyMe")
+                )}
+              </button>
+            </div>
           </form>
           {error && (
             <span className="text-red-400 text-xs font-medium mt-1 animate-fade-in-fast">
