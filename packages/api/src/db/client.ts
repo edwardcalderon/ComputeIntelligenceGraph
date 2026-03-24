@@ -34,6 +34,7 @@ type QueryFn = <T extends QueryResultRow = QueryResultRow>(
 interface DatabaseDriver {
   query: QueryFn;
   withTransaction<T>(fn: (query: QueryFn) => Promise<T>): Promise<T>;
+  close(): Promise<void>;
 }
 
 let _driver: DatabaseDriver | null = null;
@@ -221,6 +222,9 @@ function buildPostgresDriver(databaseUrl: string): DatabaseDriver {
         client.release();
       }
     },
+    async close(): Promise<void> {
+      await pool.end();
+    },
   };
 }
 
@@ -263,6 +267,9 @@ function buildSqliteDriver(databaseUrl: string): DatabaseDriver {
         throw error;
       }
     },
+    async close(): Promise<void> {
+      db.close();
+    },
   };
 }
 
@@ -279,6 +286,16 @@ function getDriver(): DatabaseDriver {
 
 export function isPostgresDatabase(): boolean {
   return resolveDatabaseMode(getDatabaseUrl()) === 'postgres';
+}
+
+export async function closeDatabase(): Promise<void> {
+  if (!_driver) {
+    return;
+  }
+
+  const driver = _driver;
+  _driver = null;
+  await driver.close();
 }
 
 /**

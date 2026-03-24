@@ -6,6 +6,7 @@ import { registerGraphQL } from './graphql';
 import { registerWebSocket } from './websocket';
 import { getMetrics, recordHttpRequest } from './metrics';
 import { startHeartbeatMonitor } from './jobs/heartbeat-monitor';
+import { closeDatabase } from './db/client';
 
 const VERSION = '0.1.0';
 
@@ -90,6 +91,10 @@ export async function createServer(): Promise<FastifyInstance> {
 
   // Register WebSocket server (Requirement 9.10)
   await registerWebSocket(app);
+
+  app.addHook('onClose', async () => {
+    await closeDatabase();
+  });
 
   return app;
 }

@@ -59,6 +59,18 @@ describe('Property 4: Device authorize response completeness and format', () => 
       )
     `);
 
+    await query(`
+      CREATE TABLE IF NOT EXISTS audit_events (
+        id          TEXT PRIMARY KEY,
+        event_type  TEXT NOT NULL,
+        actor       TEXT NOT NULL,
+        ip_address  TEXT NOT NULL,
+        outcome     TEXT NOT NULL,
+        metadata    TEXT,
+        created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `);
+
     await app.ready();
   });
 

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { closeDatabase } from './client.js';
 
 describe('db migration runner', () => {
   let tempDir: string;
@@ -23,6 +24,7 @@ describe('db migration runner', () => {
   });
 
   afterEach(async () => {
+    await closeDatabase();
     process.env = originalEnv;
     vi.resetModules();
     if (tempDir) {

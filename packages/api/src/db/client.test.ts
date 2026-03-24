@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { translatePlaceholdersForPostgres } from './client.js';
+import { closeDatabase, translatePlaceholdersForPostgres } from './client.js';
 
 const originalEnv = { ...process.env };
 
@@ -19,6 +19,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  void closeDatabase();
   restoreEnv();
   vi.resetModules();
 });

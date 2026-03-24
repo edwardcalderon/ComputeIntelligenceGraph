@@ -98,6 +98,18 @@ beforeAll(async () => {
     )
   `);
 
+  await dbQuery(`
+    CREATE TABLE IF NOT EXISTS audit_events (
+      id          TEXT PRIMARY KEY,
+      event_type  TEXT NOT NULL,
+      actor       TEXT NOT NULL,
+      ip_address  TEXT NOT NULL,
+      outcome     TEXT NOT NULL,
+      metadata    TEXT,
+      created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
   await app.ready();
 });
 
@@ -108,6 +120,7 @@ afterAll(async () => {
 beforeEach(async () => {
   await dbQuery('DELETE FROM enrollment_tokens');
   await dbQuery('DELETE FROM managed_targets');
+  await dbQuery('DELETE FROM audit_events');
 });
 
 // ─── Property 7: Enrollment token single-use invariant ────────────────────────

@@ -1,3 +1,21 @@
+## [0.1.93](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.92...v0.1.93) (2026-03-24)
+
+### Detected changes
+- packages: 6 changed file(s)
+  - packages/api/src/__tests__/device-auth.property.test.ts
+  - packages/api/src/__tests__/enrollment.property.test.ts
+  - packages/api/src/db/client.test.ts
+  - packages/api/src/db/client.ts
+  - packages/api/src/db/migrate.test.ts
+  - packages/api/src/index.ts
+
+
+## [0.1.93](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.92...v0.1.93) (2026-03-24)
+
+
+
+
+
 ## [0.1.92](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.91...v0.1.92) (2026-03-24)
 
 ### Detected changes
