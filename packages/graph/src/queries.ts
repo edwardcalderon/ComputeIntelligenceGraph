@@ -215,19 +215,18 @@ export class GraphQueryEngine {
 
       const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-      // Run count and data queries in parallel
-      const [countResult, dataResult] = await Promise.all([
-        session.run(
-          `MATCH (r:Resource) ${where} RETURN count(r) AS total`,
-          params,
-          { timeout: QUERY_TIMEOUT_MS }
-        ),
-        session.run(
-          `MATCH (r:Resource) ${where} RETURN properties(r) AS r ORDER BY r.name SKIP $offset LIMIT $limit`,
-          params,
-          { timeout: QUERY_TIMEOUT_MS }
-        ),
-      ]);
+      // Neo4j sessions execute queries serially; parallel `session.run()` calls on the
+      // same session can fail in production even when tests mock the driver.
+      const countResult = await session.run(
+        `MATCH (r:Resource) ${where} RETURN count(r) AS total`,
+        params,
+        { timeout: QUERY_TIMEOUT_MS }
+      );
+      const dataResult = await session.run(
+        `MATCH (r:Resource) ${where} RETURN properties(r) AS r ORDER BY r.name SKIP $offset LIMIT $limit`,
+        params,
+        { timeout: QUERY_TIMEOUT_MS }
+      );
 
       const total = (countResult.records[0]?.get('total') as { toNumber?: () => number } | number | undefined);
       const totalCount = typeof total === 'object' && total !== null && 'toNumber' in total
