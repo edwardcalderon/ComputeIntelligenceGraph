@@ -32,8 +32,8 @@
     "clean": "rm -rf dist .sst",
     "diff:api:prod": "pnpm exec sst diff --stage production",
     "deploy:api:prod": "pnpm exec sst deploy --stage production --yes",
-    "bootstrap:api:prod": "INFRA_API_BOOTSTRAP_ONLY=true pnpm exec sst deploy --stage production --yes",
-    "bootstrap:api:pipelines": "INFRA_CREATE_PIPELINES=true pnpm exec sst deploy --stage production --yes"
+    "bootstrap:api:prod": "INFRA_API_BOOTSTRAP_ONLY=true bash scripts/bootstrap-api.sh",
+    "bootstrap:api:pipelines": "INFRA_API_BOOTSTRAP_ONLY=true INFRA_CREATE_PIPELINES=true bash scripts/bootstrap-api.sh"
   },
   "dependencies": {
     "@lsts_tech/infra": "*",
