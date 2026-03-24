@@ -12,13 +12,14 @@
  * Requirement 12: API — Device Authorization Endpoints
  */
 
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { FastifyInstance, FastifyRequest, FastifyReply, FastifyPluginCallback } from 'fastify';
 import crypto from 'crypto';
-import fastifyRateLimit from 'fastify-rate-limit';
 import { revokeAuthentikToken } from '@cig/auth';
 import { query } from '../db/client';
 import { authenticate, generateJwt, Permission } from '../auth';
 import { writeAuditEvent } from '../audit';
+
+const fastifyRateLimit = require('fastify-rate-limit') as FastifyPluginCallback;
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -63,9 +64,9 @@ function getClientIp(request: FastifyRequest): string {
 // ---------------------------------------------------------------------------
 
 export async function deviceAuthRoutes(app: FastifyInstance): Promise<void> {
-  await app.register(fastifyRateLimit, {
+  await app.register(fastifyRateLimit as any, {
     global: false,
-  });
+  } as any);
 
   // ── POST /api/v1/auth/device/authorize ─────────────────────────────────────
   // Requirement 12.1, 12.2
