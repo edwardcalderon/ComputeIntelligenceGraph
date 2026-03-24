@@ -11,6 +11,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.js
 COPY packages/api/package.json ./packages/api/
 COPY packages/config/package.json ./packages/config/
 COPY packages/graph/package.json ./packages/graph/
+COPY packages/discovery/package.json ./packages/discovery/
 
 # Install all dependencies (including devDeps for build)
 RUN pnpm install --frozen-lockfile
@@ -22,9 +23,12 @@ COPY packages/config/src ./packages/config/src
 COPY packages/config/tsconfig.json ./packages/config/
 COPY packages/graph/src ./packages/graph/src
 COPY packages/graph/tsconfig.json ./packages/graph/
+COPY packages/discovery/src ./packages/discovery/src
+COPY packages/discovery/tsconfig.json ./packages/discovery/
 
 # Build
 RUN pnpm --filter @cig/config build
+RUN pnpm --filter @cig/discovery build
 RUN pnpm --filter @cig/graph build
 RUN pnpm --filter @cig/api build
 
@@ -44,6 +48,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/api/package.json ./packages/api/
 COPY packages/config/package.json ./packages/config/
 COPY packages/graph/package.json ./packages/graph/
+COPY packages/discovery/package.json ./packages/discovery/
 
 # Install production deps only
 RUN pnpm install --frozen-lockfile --prod
@@ -52,6 +57,7 @@ RUN pnpm install --frozen-lockfile --prod
 COPY --from=builder /app/packages/api/dist ./packages/api/dist
 COPY --from=builder /app/packages/config/dist ./packages/config/dist
 COPY --from=builder /app/packages/graph/dist ./packages/graph/dist
+COPY --from=builder /app/packages/discovery/dist ./packages/discovery/dist
 
 # Security hardening
 RUN chown -R 1000:1000 /app
