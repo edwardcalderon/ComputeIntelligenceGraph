@@ -107,7 +107,7 @@ jobs:
             ${{ env.IMAGE }}:${{ needs.resolve-tag.outputs.tag }}
             ${{ env.IMAGE }}:latest
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_API_URL=https://api.cig.technology
             NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL || 'https://cig.lat' }}
             NEXT_PUBLIC_DASHBOARD_URL=${{ secrets.NEXT_PUBLIC_DASHBOARD_URL || 'https://app.cig.lat' }}
             NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
