@@ -14,6 +14,7 @@
 
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import crypto from 'crypto';
+import fastifyRateLimit from 'fastify-rate-limit';
 import { revokeAuthentikToken } from '@cig/auth';
 import { query } from '../db/client';
 import { authenticate, generateJwt, Permission } from '../auth';
@@ -62,6 +63,10 @@ function getClientIp(request: FastifyRequest): string {
 // ---------------------------------------------------------------------------
 
 export async function deviceAuthRoutes(app: FastifyInstance): Promise<void> {
+  await app.register(fastifyRateLimit, {
+    global: false,
+  });
+
   // ── POST /api/v1/auth/device/authorize ─────────────────────────────────────
   // Requirement 12.1, 12.2
   app.post(
