@@ -434,6 +434,36 @@ describe('Security Tests', () => {
       });
       expect(response.statusCode).toBe(200);
     });
+
+    it('uses X-Forwarded-For as the client identity behind the trusted proxy', async () => {
+      const proxyIp = '10.0.2.15';
+      const clientA = '198.51.100.10';
+      const clientB = '198.51.100.11';
+
+      for (let i = 0; i < 101; i++) {
+        await app.inject({
+          method: 'GET',
+          url: '/api/v1/resources',
+          headers: {
+            authorization: validToken(),
+            'x-forwarded-for': clientA,
+          },
+          remoteAddress: proxyIp,
+        });
+      }
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v1/resources',
+        headers: {
+          authorization: validToken(),
+          'x-forwarded-for': clientB,
+        },
+        remoteAddress: proxyIp,
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
   });
 
   describe('Operational endpoints are exempt from rate limiting', () => {

@@ -42,6 +42,10 @@ export async function createServer(): Promise<FastifyInstance> {
     logger: {
       level: process.env.LOG_LEVEL ?? 'info',
     },
+    // The API is deployed behind a single public ALB. Trust one proxy hop so
+    // Fastify resolves the real client IP from X-Forwarded-For and rate
+    // limiting does not collapse all traffic into the load balancer address.
+    trustProxy: 1,
   });
 
   // CORS
