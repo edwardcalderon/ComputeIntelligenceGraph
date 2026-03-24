@@ -1,3 +1,60 @@
+## [0.1.72](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.68...v0.1.72) (2026-03-24)
+
+
+### Bug Fixes
+
+* **api:** force clean TypeScript build for migrations ([6e7450e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/6e7450e83cb0c7e33f08382636ba01814935c32b))
+* **graph:** run resource pagination queries serially ([0262732](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/02627324a7e6f53c284be6b1be72d61353d9ef80))
+* **infra:** bootstrap API deploys safely on existing stages ([f92b641](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f92b641e8e282795781615878f6b40366bcf0e86))
+* **landing:** remove legacy pages router to fix Next export build for GH Pages ([723591a](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/723591a5857ddb92466af63fab4c74f9f5415b1f))
+
+
+### Features
+
+* **auth:** split OTP and magic-link flows, custom email templates, frontend integration ([1b6b16d](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/1b6b16d00dc817cf167b839715ef9dfd4b2dd64d))
+
+
+
+
+
+## [0.1.72](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.68...v0.1.72) (2026-03-24)
+
+
+### Bug Fixes
+
+* **api:** force clean TypeScript build for migrations ([6e7450e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/6e7450e83cb0c7e33f08382636ba01814935c32b))
+* **graph:** run resource pagination queries serially ([0262732](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/02627324a7e6f53c284be6b1be72d61353d9ef80))
+* **infra:** bootstrap API deploys safely on existing stages ([f92b641](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f92b641e8e282795781615878f6b40366bcf0e86))
+* **landing:** remove legacy pages router to fix Next export build for GH Pages ([723591a](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/723591a5857ddb92466af63fab4c74f9f5415b1f))
+
+
+### Features
+
+* **auth:** split OTP and magic-link flows, custom email templates, frontend integration ([1b6b16d](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/1b6b16d00dc817cf167b839715ef9dfd4b2dd64d))
+
+
+
+
+
+## [0.1.71](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.68...v0.1.71) (2026-03-24)
+
+
+### Bug Fixes
+
+* **api:** force clean TypeScript build for migrations ([6e7450e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/6e7450e83cb0c7e33f08382636ba01814935c32b))
+* **graph:** run resource pagination queries serially ([0262732](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/02627324a7e6f53c284be6b1be72d61353d9ef80))
+* **infra:** bootstrap API deploys safely on existing stages ([f92b641](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f92b641e8e282795781615878f6b40366bcf0e86))
+* **landing:** remove legacy pages router to fix Next export build for GH Pages ([723591a](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/723591a5857ddb92466af63fab4c74f9f5415b1f))
+
+
+### Features
+
+* **auth:** split OTP and magic-link flows, custom email templates, frontend integration ([1b6b16d](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/1b6b16d00dc817cf167b839715ef9dfd4b2dd64d))
+
+
+
+
+
 ## [0.1.69](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.68...v0.1.69) (2026-03-24)
 
 

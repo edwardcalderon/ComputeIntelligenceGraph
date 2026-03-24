@@ -443,12 +443,12 @@ importers:
         specifier: ^3.22.0
         version: 3.25.76
     devDependencies:
-      '@types/node':
-        specifier: ^20.0.0
-        version: 20.19.37
       '@types/js-yaml':
         specifier: ^4.0.0
         version: 4.0.9
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.37
       fast-check:
         specifier: ^3.23.2
         version: 3.23.2
@@ -473,6 +473,8 @@ importers:
       vitest:
         specifier: ^1.4.0
         version: 1.6.1(@types/node@20.19.37)(jsdom@20.0.3)
+
+  packages/emails: {}
 
   packages/graph:
     dependencies:

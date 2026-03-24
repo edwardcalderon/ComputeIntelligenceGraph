@@ -16,7 +16,7 @@ export { SupabaseClient } from "@edcalderon/auth/supabase";
 export { CIGAuthProvider } from "./provider";
 export { getSupabaseClient } from "./client";
 export { useAuthReady, useAuthAvailable } from "./auth-ready-context";
-export { sendEmailOtp, verifyEmailOtp } from "./otp";
+export { sendEmailOtp, sendMagicLinkEmail, verifyEmailOtp } from "./otp";
 
 // Authentik PKCE helpers (client-safe)
 export {
