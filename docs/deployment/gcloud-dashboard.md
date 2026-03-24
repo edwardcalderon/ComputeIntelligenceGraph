@@ -148,7 +148,7 @@ The script outputs two values. Add them as **GitHub Actions secrets**:
 | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL | Yes |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key | Yes |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service-role key for server-side provisioning | Yes |
-| `NEXT_PUBLIC_API_URL` | Production API URL (e.g. `https://api.cig.lat`) | No |
+| `NEXT_PUBLIC_API_URL` | Production API URL (e.g. `https://api.cig.technology`) | No |
 | `NEXT_PUBLIC_SITE_URL` | `https://cig.lat` | No |
 
 > **Do not add `GCP_SA_KEY`** — the workflow no longer uses it.
@@ -268,7 +268,7 @@ The CI workflow passes them via `--build-arg` during `docker build`:
 
 ```bash
 docker build \
-  --build-arg NEXT_PUBLIC_API_URL=https://api.cig.lat \
+  --build-arg NEXT_PUBLIC_API_URL=https://api.cig.technology \
   --build-arg NEXT_PUBLIC_SITE_URL=https://cig.lat \
   --build-arg NEXT_PUBLIC_SUPABASE_URL=... \
   --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=... \
