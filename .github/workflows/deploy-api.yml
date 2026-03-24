@@ -121,7 +121,21 @@ jobs:
           INFRA_API_BOOTSTRAP_ONLY: 'true'
           INFRA_CREATE_PIPELINES: 'false'
           API_IMAGE_URI: public.ecr.aws/docker/library/node:20-alpine
-        run: pnpm exec sst diff --stage production
+        run: |
+          # The first bootstrap has no SST stage yet, so treat that as a soft skip.
+          OUTPUT=$(pnpm exec sst diff --stage production 2>&1)
+          STATUS=$?
+
+          echo "$OUTPUT"
+
+          if [ "$STATUS" -ne 0 ]; then
+            if printf '%s' "$OUTPUT" | grep -q 'Stage not found'; then
+              echo 'SST stage not found yet; skipping bootstrap diff.'
+              exit 0
+            fi
+
+            exit "$STATUS"
+          fi
 
   build-image:
     name: Build and push API image
