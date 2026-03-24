@@ -454,7 +454,27 @@ jobs:
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
-          TOKEN=$(node -e "const jwt = require('jsonwebtoken'); process.stdout.write(jwt.sign({ sub: 'smoke-test', permissions: ['ADMIN'] }, process.env.JWT_SECRET, { expiresIn: '5m' }));")
+          TOKEN=$(node - <<'NODE'
+          const crypto = require('node:crypto');
+
+          const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+          const now = Math.floor(Date.now() / 1000);
+          const payload = Buffer.from(
+            JSON.stringify({
+              sub: 'smoke-test',
+              permissions: ['ADMIN'],
+              iat: now,
+              exp: now + 300,
+            })
+          ).toString('base64url');
+          const signature = crypto
+            .createHmac('sha256', process.env.JWT_SECRET)
+            .update(`${header}.${payload}`)
+            .digest('base64url');
+
+          process.stdout.write(`${header}.${payload}.${signature}`);
+          NODE
+          )
           echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
 
       - name: Authenticated REST check
@@ -479,7 +499,6 @@ jobs:
           SMOKE_JWT: ${{ steps.smoke-jwt.outputs.token }}
         run: |
           node - <<'NODE'
-          const WebSocket = require('ws');
           const url = `wss://${process.env.API_DOMAIN}/ws?token=${process.env.SMOKE_JWT}`;
           const ws = new WebSocket(url);
 
@@ -488,14 +507,14 @@ jobs:
             process.exit(1);
           }, 10000);
 
-          ws.on('open', () => {
+          ws.addEventListener('open', () => {
             clearTimeout(timer);
             console.log('WebSocket handshake succeeded');
             ws.close();
           });
 
-          ws.on('close', () => process.exit(0));
-          ws.on('error', (error) => {
+          ws.addEventListener('close', () => process.exit(0));
+          ws.addEventListener('error', (error) => {
             clearTimeout(timer);
             console.error(error);
             process.exit(1);
