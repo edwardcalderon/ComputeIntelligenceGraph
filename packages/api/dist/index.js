@@ -12,6 +12,7 @@ const routes_1 = require("./routes");
 const graphql_1 = require("./graphql");
 const websocket_1 = require("./websocket");
 const metrics_1 = require("./metrics");
+const heartbeat_monitor_1 = require("./jobs/heartbeat-monitor");
 const VERSION = '0.1.0';
 function resolveCorsOrigins() {
     const configuredOrigins = process.env.CORS_ORIGINS?.trim();
@@ -89,6 +90,8 @@ async function start() {
     try {
         await app.listen({ port, host });
         app.log.info(`Server listening on ${host}:${port}`);
+        // Start background job for heartbeat status monitoring (Requirement 14.7)
+        (0, heartbeat_monitor_1.startHeartbeatMonitor)();
     }
     catch (err) {
         app.log.error(err);

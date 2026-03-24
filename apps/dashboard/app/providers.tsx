@@ -3,8 +3,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Refine } from "@refinedev/core";
 import routerProvider from "@refinedev/nextjs-router/app";
-import { useState } from "react";
-import { I18nProvider } from "@cig-technology/i18n/react";
+import { useEffect, useState } from "react";
+import { I18nProvider, useLocale } from "@cig-technology/i18n/react";
+import { LOCALE_META } from "@cig-technology/i18n";
 import { initI18n } from "./i18n";
 import { dataProvider } from "../lib/dataProvider";
 import { authProvider } from "../lib/authProvider";
@@ -22,6 +23,17 @@ const resources = [
   { name: "profile",   list: "/profile" },
 ];
 
+function LocaleSync() {
+  const locale = useLocale();
+
+  useEffect(() => {
+    document.documentElement.lang = locale;
+    document.documentElement.dir = LOCALE_META[locale].dir;
+  }, [locale]);
+
+  return null;
+}
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
     () =>
@@ -32,6 +44,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <I18nProvider>
+      <LocaleSync />
       <QueryClientProvider client={queryClient}>
         <Refine
           dataProvider={dataProvider}

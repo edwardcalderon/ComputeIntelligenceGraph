@@ -6,12 +6,10 @@ import { GraphParticleTypography } from "../components/GraphParticleTypography";
 import { SpaceBackground } from "../components/SpaceBackground";
 import { AuthButton } from "../components/AuthButton";
 import { AuthenticatedLanding } from "../components/AuthenticatedLanding";
-import { ThemeToggle } from "../components/ThemeToggle";
-import { LocaleSwitcher } from "../components/LocaleSwitcher";
+import { PreferencesMenu } from "../components/PreferencesMenu";
 import { useCIGAuth } from "../components/AuthProvider";
 import { useTranslation } from "@cig-technology/i18n/react";
-import { DitheringShader } from "../components/DitheringShader";
-import { useTheme } from "./providers";
+import { FooterBar } from "@cig/ui/components";
 import {
   Cloud,
   GitGraph,
@@ -740,34 +738,30 @@ const GetStartedSection: React.FC = () => {
 
 const Footer: React.FC = () => {
   const t = useTranslation();
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
+  const version = process.env.NEXT_PUBLIC_APP_VERSION || "";
+  const build = process.env.NEXT_PUBLIC_APP_BUILD || "";
+
+  const meta = [
+    t("footer.licenseNotice", { year: new Date().getFullYear() }),
+    version ? t("common.version", { version }) : "",
+    build ? t("common.build", { build }) : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <footer className="relative w-full overflow-hidden border-t border-zinc-200 dark:border-zinc-800/50">
-      <div className="absolute inset-0 pointer-events-none" style={{ opacity: isDark ? 0.5 : 0.35 }}>
-        <DitheringShader
-          width={1920}
-          height={80}
-          colorBack={isDark ? "#09090b" : "#fafafa"}
-          colorFront={isDark ? "#22d3ee" : "#06b6d4"}
-          shape="warp"
-          type="8x8"
-          pxSize={3}
-          speed={0.3}
-          style={{ width: "100%", height: "100%" }}
+    <footer className="relative w-full border-t border-zinc-200 dark:border-zinc-800/50 px-4 py-4 sm:px-6">
+      <div className="relative z-10">
+        <FooterBar
+          brandLabel={t("footer.brandTitle")}
+          brandHref="/"
+          subtitle={t("footer.rightsReserved")}
+          links={[
+            { label: t("footer.privacy"), href: "/privacy" },
+            { label: t("footer.terms"), href: "/terms" },
+          ]}
+          meta={meta}
         />
-      </div>
-      <div className="relative z-10 text-center text-xs text-zinc-500 dark:text-zinc-600 pt-8 pb-2">
-        <p>{t("footer.copyright", { year: new Date().getFullYear() })}</p>
-        <p
-          className="mt-1 text-zinc-700"
-          title={process.env.NEXT_PUBLIC_RELEASE_TAG || `v${process.env.NEXT_PUBLIC_APP_VERSION}`}
-        >
-          {t("common.version", { version: process.env.NEXT_PUBLIC_APP_VERSION || "" })}
-          {process.env.NEXT_PUBLIC_APP_BUILD
-            ? ` · ${t("common.build", { build: process.env.NEXT_PUBLIC_APP_BUILD })}`
-            : ""}
-        </p>
       </div>
     </footer>
   );
@@ -792,9 +786,7 @@ const BackToTop: React.FC = () => {
       title={t("hero.backToTop")}
       className={cn(
         "fixed bottom-4 right-4 z-40 rounded-full border border-zinc-200/80 dark:border-zinc-800 bg-white/85 dark:bg-zinc-950/85 px-3 py-3 sm:px-4 shadow-lg shadow-zinc-900/10 backdrop-blur transition-all duration-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:scale-105 hover:border-zinc-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer",
-        show
-          ? "opacity-100 translate-y-0 pointer-events-auto"
-          : "opacity-0 translate-y-4 pointer-events-none"
+        show ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-4 pointer-events-none"
       )}
     >
       <span className="flex items-center gap-2.5 text-zinc-600 dark:text-zinc-300">
@@ -817,8 +809,7 @@ function PublicLanding() {
     <div className="min-h-screen w-full bg-gradient-to-br from-zinc-50 via-white to-zinc-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 text-zinc-900 dark:text-zinc-50 relative overflow-x-hidden">
       {/* Top auth bar */}
       <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
-        <LocaleSwitcher />
-        <ThemeToggle />
+        <PreferencesMenu />
         <AuthButton />
       </div>
 
@@ -862,10 +853,10 @@ function LandingTransitionShell({
         </div>
 
         <div className="space-y-2">
-          <p className="text-sm font-medium uppercase tracking-[0.28em] text-cyan-500/80 dark:text-cyan-300/80">
+          <p className="text-sm font-medium uppercase tracking-[0.28em] text-cyan-500/80 dark:text-cyan-300/80" suppressHydrationWarning>
             {title}
           </p>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400" suppressHydrationWarning>
             {description}
           </p>
         </div>

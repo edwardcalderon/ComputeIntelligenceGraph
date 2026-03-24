@@ -10,6 +10,7 @@ import { AuthButton } from "./AuthButton";
 import { ThemeToggle } from "./ThemeToggle";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { useTheme } from "../app/providers";
+import { FooterBar } from "@cig/ui/components";
 
 const DASHBOARD_URL =
   process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3002";
@@ -862,6 +863,15 @@ export function AuthenticatedLanding() {
   const isDark = theme === "dark";
   const [modalFeature, setModalFeature] = useState<Feature | null>(null);
   const [isConnectingToDashboard, setIsConnectingToDashboard] = useState(false);
+  const version = process.env.NEXT_PUBLIC_APP_VERSION || "";
+  const build = process.env.NEXT_PUBLIC_APP_BUILD || "";
+  const meta = [
+    t("footer.licenseNotice", { year: new Date().getFullYear() }),
+    version ? t("common.version", { version }) : "",
+    build ? t("common.build", { build }) : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   const startDashboardTransition = useCallback((path = "/") => {
     if (isConnectingToDashboard) return;
@@ -987,13 +997,18 @@ export function AuthenticatedLanding() {
       </div>
 
       {/* ── Footer ──────────────────────────────────────────────── */}
-      <footer className="relative z-10 mt-auto w-full text-center text-xs text-zinc-500 dark:text-zinc-600 pt-6 pb-4 border-t border-zinc-200 dark:border-zinc-800/40">
-        <p>{t("footer.copyright", { year: new Date().getFullYear() })}</p>
-        <p className="mt-1 text-zinc-700"
-          title={process.env.NEXT_PUBLIC_RELEASE_TAG || `v${process.env.NEXT_PUBLIC_APP_VERSION}`}>
-          {t("common.version", { version: process.env.NEXT_PUBLIC_APP_VERSION || "" })}
-          {process.env.NEXT_PUBLIC_APP_BUILD ? ` · ${t("common.build", { build: process.env.NEXT_PUBLIC_APP_BUILD })}` : ""}
-        </p>
+      <footer className="relative z-10 mt-auto w-full border-t border-zinc-200/80 px-4 pt-6 pb-4 dark:border-zinc-800/40">
+        <FooterBar
+          brandLabel={t("footer.brandTitle")}
+          brandHref={DASHBOARD_URL}
+          subtitle={t("footer.rightsReserved")}
+          links={[
+            { label: t("nav.dashboard"), href: DASHBOARD_URL },
+            { label: t("footer.privacy"), href: "/privacy" },
+            { label: t("footer.terms"), href: "/terms" },
+          ]}
+          meta={meta}
+        />
       </footer>
 
       {/* ── Feature detail modal ─────────────────────────────── */}

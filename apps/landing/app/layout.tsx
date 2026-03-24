@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
+import { LOCALE_META } from "@cig-technology/i18n";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -33,13 +35,35 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
 };
 
+function getServerPreferredLocale(): keyof typeof LOCALE_META {
+  try {
+    const h = headers();
+    const al = h.get("accept-language") || "";
+    const supported = Object.keys(LOCALE_META) as Array<keyof typeof LOCALE_META>;
+    const candidates = al
+      .split(",")
+      .map((p) => p.trim().split(";")[0])
+      .map((tag) => tag.split("-")[0])
+      .filter(Boolean);
+    for (const c of candidates) {
+      const base = c as keyof typeof LOCALE_META;
+      if (supported.includes(base)) return base;
+    }
+    return "en";
+  } catch {
+    return "en";
+  }
+}
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const initialLocale = getServerPreferredLocale();
+  // Note: Client-side i18n will detect this lang/dir and hydrate accordingly.
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={initialLocale} dir={LOCALE_META[initialLocale].dir} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
