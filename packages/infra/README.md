@@ -23,6 +23,7 @@ This package now owns two related concerns:
   - optional native pipeline scaffolding
 
 GitHub Actions is the primary production deployment entrypoint. Native SST pipeline creation remains optional and disabled during normal deploys.
+The bootstrap helpers are safe to re-run: if the production SST stage already exists, they only ensure the ECR repository is present and do not prune the runtime stack.
 
 ## Key Files
 
@@ -81,7 +82,7 @@ pnpm --filter @cig/infra bootstrap:api:pipelines
 
 1. Terraform in `packages/iac/environments/api-prod` applies networking and Neo4j.
 2. GitHub Actions syncs runtime secrets into AWS Secrets Manager.
-3. GitHub Actions bootstraps the ECR repository through SST.
+3. GitHub Actions ensures the ECR repository exists.
 4. GitHub Actions builds and pushes the API image.
 5. GitHub Actions runs `pnpm --filter @cig/api migrate:up` against Supabase Postgres.
 6. GitHub Actions runs the full SST deploy for the ECS/Fargate runtime.

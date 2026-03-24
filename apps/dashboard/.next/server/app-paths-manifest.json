@@ -1,1 +1,19 @@
-{}
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/auth/sync/route": "app/api/auth/sync/route.js",
+  "/auth/callback/page": "app/auth/callback/page.js",
+  "/auth/login-callback/route": "app/auth/login-callback/route.js",
+  "/auth/login/[provider]/route": "app/auth/login/[provider]/route.js",
+  "/(dashboard)/bootstrap/page": "app/(dashboard)/bootstrap/page.js",
+  "/(dashboard)/devices/page": "app/(dashboard)/devices/page.js",
+  "/(dashboard)/device-approval/page": "app/(dashboard)/device-approval/page.js",
+  "/(dashboard)/graph/page": "app/(dashboard)/graph/page.js",
+  "/(dashboard)/page": "app/(dashboard)/page.js",
+  "/(dashboard)/profile/page": "app/(dashboard)/profile/page.js",
+  "/(dashboard)/resources/[id]/page": "app/(dashboard)/resources/[id]/page.js",
+  "/(dashboard)/resources/page": "app/(dashboard)/resources/page.js",
+  "/(dashboard)/security/page": "app/(dashboard)/security/page.js",
+  "/(dashboard)/settings/page": "app/(dashboard)/settings/page.js",
+  "/(dashboard)/targets/page": "app/(dashboard)/targets/page.js",
+  "/(dashboard)/costs/page": "app/(dashboard)/costs/page.js"
+}

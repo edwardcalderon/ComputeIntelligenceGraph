@@ -20,7 +20,7 @@ env:
 
 jobs:
   bootstrap:
-    name: Create or update optional AWS-native API pipelines
+    name: Bootstrap optional AWS-native API pipelines
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -54,4 +54,4 @@ jobs:
           INFRA_API_BOOTSTRAP_ONLY: 'true'
           INFRA_CREATE_PIPELINES: 'true'
           API_IMAGE_URI: public.ecr.aws/docker/library/node:22-alpine
-        run: pnpm exec sst deploy --stage production --yes
+        run: bash ./scripts/bootstrap-api.sh

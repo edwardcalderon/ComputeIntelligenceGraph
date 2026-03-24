@@ -135,14 +135,14 @@ The GitHub Actions deploy workflow resolves the Authentik values from the live t
 Notes:
 
 - `validate` runs SST in `bootstrap` mode so it can diff the stack without requiring full runtime outputs.
-- `build-image` bootstraps the ECR repository first, then pushes the API image.
+- `build-image` ensures the ECR repository exists before pushing the API image. If the SST stage is already present, the bootstrap helper avoids pruning the runtime stack.
 - `migrate-db` runs `pnpm --filter @cig/api migrate:up` directly against Supabase Postgres.
 - `deploy-api` reads Terraform outputs, syncs AWS Secrets Manager entries, then runs the full SST deploy.
 
 ### Optional native pipeline bootstrap
 
 - Workflow: `.github/workflows/bootstrap-api-pipelines.yml`
-- Purpose: explicitly create/update AWS-native pipeline resources
+- Purpose: bootstrap AWS-native pipeline resources on a fresh SST stage
 - Default behavior: disabled during normal deploys
 
 Normal deploys must keep:

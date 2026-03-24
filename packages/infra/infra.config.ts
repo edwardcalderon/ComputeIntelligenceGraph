@@ -237,6 +237,8 @@ export function createInfrastructure() {
     bootstrapOnly: config.bootstrapOnly,
   };
 
+  // Bootstrap-only deployments are a one-time initialization path for a fresh stage.
+  // Re-running them on an existing runtime stack would delete runtime resources.
   if (config.bootstrapOnly) {
     if (config.stage === 'production' && config.createPipelines && config.pipelineRepo) {
       const pipeline = createPipeline({

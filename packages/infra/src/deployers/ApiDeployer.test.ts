@@ -44,7 +44,7 @@ describe('ApiDeployer', () => {
     expect(env.INFRA_CREATE_PIPELINES).toBe('false');
   });
 
-  it('runs bootstrap deploys without requiring runtime network values', async () => {
+  it('routes bootstrap deploys through the safe bootstrap helper', async () => {
     const commandRunner = vi.fn().mockResolvedValue({ stdout: 'ok', stderr: '' });
     const deployer = new ApiDeployer(
       {} as InfraWrapper,
@@ -64,13 +64,15 @@ describe('ApiDeployer', () => {
     });
 
     expect(commandRunner).toHaveBeenCalledWith(
-      'pnpm',
-      ['exec', 'sst', 'deploy', '--stage', 'production', '--yes'],
+      'bash',
+      ['scripts/bootstrap-api.sh'],
       expect.objectContaining({
         cwd: '/tmp/cig-infra',
         env: expect.objectContaining({
           INFRA_API_BOOTSTRAP_ONLY: 'true',
+          INFRA_CREATE_PIPELINES: 'false',
           API_IMAGE_REPOSITORY: 'cig-api-production',
+          SST_STAGE: 'production',
         }),
       })
     );

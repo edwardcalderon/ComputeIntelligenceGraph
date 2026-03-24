@@ -176,32 +176,41 @@ export class ApiDeployer {
   ): Promise<void> {
     this.validateDeploymentConfig(config);
 
+    const bootstrapOnly = config.bootstrapOnly ?? false;
     const runtimeConfig =
-      config.bootstrapOnly ?? false
-        ? undefined
-        : resolveApiRuntimeConfig(config);
+      bootstrapOnly ? undefined : resolveApiRuntimeConfig(config);
     const env = buildApiSstEnvironment(config, runtimeConfig);
-    const args = ['exec', 'sst', action, '--stage', config.stage ?? 'production'];
-    if (action === 'deploy') {
+    const stage = config.stage ?? 'production';
+    const useBootstrapHelper = action === 'deploy' && bootstrapOnly;
+    const command = useBootstrapHelper ? 'bash' : 'pnpm';
+    const args = useBootstrapHelper
+      ? ['scripts/bootstrap-api.sh']
+      : ['exec', 'sst', action, '--stage', stage];
+    if (action === 'deploy' && !useBootstrapHelper) {
       args.push('--yes');
     }
+    const logPrefix = useBootstrapHelper ? 'bootstrap helper' : `SST ${action}`;
 
-    this.logger.info(`Running SST ${action} for API runtime`, {
-      stage: config.stage ?? 'production',
-      bootstrapOnly: config.bootstrapOnly ?? false,
+    this.logger.info(`Running ${logPrefix} for API runtime`, {
+      stage,
+      bootstrapOnly,
+      helper: useBootstrapHelper ? 'bootstrap-api.sh' : undefined,
       domain: config.domain,
       imageRepository: config.imageRepository,
     });
 
     try {
-      const result = await this.commandRunner('pnpm', args, {
+      const result = await this.commandRunner(command, args, {
         cwd: this.packageRoot,
-        env,
+        env: useBootstrapHelper ? { ...env, SST_STAGE: stage } : env,
       });
 
-      this.logger.info(`SST ${action} completed`, {
-        stdout: result.stdout.trim() || undefined,
-      });
+      this.logger.info(
+        useBootstrapHelper ? 'Bootstrap helper completed' : `SST ${action} completed`,
+        {
+          stdout: result.stdout.trim() || undefined,
+        }
+      );
     } catch (error) {
       throw new DeploymentError(
         `API ${action} failed: ${error instanceof Error ? error.message : String(error)}`,

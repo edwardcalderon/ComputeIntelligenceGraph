@@ -175,13 +175,13 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
 
-      - name: Bootstrap ECR repository
+      - name: Ensure ECR repository exists
         working-directory: packages/infra
         env:
           INFRA_API_BOOTSTRAP_ONLY: 'true'
           INFRA_CREATE_PIPELINES: 'false'
           API_IMAGE_URI: public.ecr.aws/docker/library/node:22-alpine
-        run: pnpm exec sst deploy --stage production --yes
+        run: bash ./scripts/bootstrap-api.sh
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
