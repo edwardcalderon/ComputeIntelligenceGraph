@@ -74,6 +74,15 @@ beforeAll(async () => {
   `);
 
   await dbQuery(`
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
+      token      TEXT PRIMARY KEY,
+      user_id    TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    )
+  `);
+
+  await dbQuery(`
     CREATE TABLE IF NOT EXISTS audit_events (
       id          TEXT PRIMARY KEY,
       event_type  TEXT NOT NULL,
@@ -95,6 +104,7 @@ afterAll(async () => {
 beforeEach(async () => {
   // Clear records between tests
   await dbQuery('DELETE FROM audit_events');
+  await dbQuery('DELETE FROM refresh_tokens');
   await dbQuery('DELETE FROM device_sessions');
   await dbQuery('DELETE FROM device_auth_records');
 });
@@ -277,6 +287,90 @@ describe('Rate limiting', () => {
     });
     expect(poll2.statusCode).toBe(200);
     expect(poll2.json()).toMatchObject({ status: 'slow_down' });
+  });
+});
+
+describe('POST /api/v1/auth/refresh', () => {
+  it('rotates access and refresh tokens for an approved device session', async () => {
+    const authorizeRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/device/authorize',
+    });
+    const { device_code, user_code } = authorizeRes.json<{ device_code: string; user_code: string }>();
+
+    const approveRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/device/approve',
+      headers: { authorization: makeAuthHeader() },
+      payload: { user_code },
+    });
+    expect(approveRes.statusCode).toBe(200);
+
+    const pollRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/device/poll',
+      payload: { device_code },
+    });
+    const pollBody = pollRes.json<{ refresh_token: string }>();
+
+    const refreshRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/refresh',
+      payload: { refresh_token: pollBody.refresh_token },
+    });
+
+    expect(refreshRes.statusCode).toBe(200);
+    const refreshBody = refreshRes.json<{
+      access_token: string;
+      refresh_token: string;
+      token_type: string;
+      expires_in: number;
+    }>();
+    expect(refreshBody.access_token).toBeTruthy();
+    expect(refreshBody.refresh_token).toBeTruthy();
+    expect(refreshBody.refresh_token).not.toBe(pollBody.refresh_token);
+    expect(refreshBody.token_type).toBe('Bearer');
+    expect(refreshBody.expires_in).toBe(86400);
+  });
+
+  it('returns 401 for an invalid refresh token', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/refresh',
+      payload: { refresh_token: 'invalid-token' },
+    });
+
+    expect(res.statusCode).toBe(401);
+    expect(res.json<{ code: string }>().code).toBe('refresh_token_invalid');
+  });
+
+  it('rotates web refresh tokens stored in refresh_tokens table', async () => {
+    const refreshToken = 'web-refresh-token';
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    await dbQuery(
+      `INSERT INTO refresh_tokens (token, user_id, expires_at, created_at)
+       VALUES (?, ?, ?, ?)`,
+      [refreshToken, 'web-user-id', expiresAt, new Date().toISOString()]
+    );
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/refresh',
+      payload: { refresh_token: refreshToken },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = res.json<{ access_token: string; refresh_token: string }>();
+    expect(body.access_token).toBeTruthy();
+    expect(body.refresh_token).toBeTruthy();
+    expect(body.refresh_token).not.toBe(refreshToken);
+
+    const updated = await dbQuery(
+      `SELECT token FROM refresh_tokens WHERE user_id = ?`,
+      ['web-user-id']
+    );
+    const row = updated.rows[0] as { token: string } | undefined;
+    expect(row?.token).toBe(body.refresh_token);
   });
 });
 

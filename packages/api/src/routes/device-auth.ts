@@ -14,6 +14,7 @@
 
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import crypto from 'crypto';
+import { revokeAuthentikToken } from '@cig/auth';
 import { query } from '../db/client';
 import { authenticate, generateJwt, Permission, verifyJwt } from '../auth';
 import { writeAuditEvent } from '../audit';
@@ -393,14 +394,9 @@ export async function deviceAuthRoutes(app: FastifyInstance): Promise<void> {
         if (process.env['CIG_AUTH_MODE'] === 'managed') {
           const issuerUrl = process.env['AUTHENTIK_ISSUER_URL'] ?? '';
           const clientId = process.env['OIDC_CLIENT_ID'] ?? '';
+          const redirectUri = process.env['OIDC_REDIRECT_URI'] ?? '';
           if (issuerUrl && clientId) {
-            const revokeBody = new URLSearchParams({ client_id: clientId, token });
-            fetch(`${issuerUrl}/application/o/revoke/`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: revokeBody.toString(),
-              signal: AbortSignal.timeout(5000),
-            }).catch(() => {/* ignore — best effort revocation */});
+            await revokeAuthentikToken({ issuerUrl, clientId, redirectUri }, token).catch(() => {/* ignore — best effort revocation */});
           }
         }
 
@@ -416,6 +412,145 @@ export async function deviceAuthRoutes(app: FastifyInstance): Promise<void> {
 
       writeAuditEvent(app, 'logout', userId, ipAddress, 'success');
       return reply.send({ success: true });
+    }
+  );
+
+  // ── POST /api/v1/auth/refresh ──────────────────────────────────────────────
+  // Requirement 12.10 — refresh access token from refresh token
+  app.post(
+    '/api/v1/auth/refresh',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const body = request.body as { refresh_token?: string };
+      const refreshToken = body?.refresh_token;
+      const ipAddress = getClientIp(request);
+
+      if (!refreshToken) {
+        return reply.status(400).send({
+          error: 'Missing required field: refresh_token',
+          code: 'missing_refresh_token',
+          statusCode: 400,
+        });
+      }
+
+      // Managed mode: refresh against Authentik directly
+      if (process.env['CIG_AUTH_MODE'] === 'managed') {
+        try {
+          const tokenEndpoint = process.env['AUTHENTIK_TOKEN_ENDPOINT'] ?? '';
+          const clientId = process.env['OIDC_CLIENT_ID'] ?? '';
+          const clientSecret = process.env['OIDC_CLIENT_SECRET'] ?? '';
+
+          if (!tokenEndpoint || !clientId || !clientSecret) {
+            throw new Error('Managed refresh is not configured');
+          }
+
+          const params = new URLSearchParams({
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken,
+            client_id: clientId,
+            client_secret: clientSecret,
+          });
+
+          const refreshResponse = await fetch(tokenEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params.toString(),
+          });
+
+          if (!refreshResponse.ok) {
+            writeAuditEvent(app, 'token_refresh', 'unknown', ipAddress, 'failure', {
+              reason: 'upstream_refresh_rejected',
+              status: refreshResponse.status,
+            });
+            return reply.status(401).send({
+              error: 'Invalid or expired refresh token',
+              code: 'refresh_token_invalid',
+              statusCode: 401,
+            });
+          }
+
+          const refreshed = await refreshResponse.json() as {
+            access_token: string;
+            refresh_token?: string;
+            token_type?: string;
+            expires_in?: number;
+          };
+
+          writeAuditEvent(app, 'token_refresh', 'unknown', ipAddress, 'success', { mode: 'managed' });
+          return reply.send({
+            access_token: refreshed.access_token,
+            refresh_token: refreshed.refresh_token ?? refreshToken,
+            token_type: refreshed.token_type ?? 'Bearer',
+            expires_in: refreshed.expires_in ?? 3600,
+          });
+        } catch {
+          writeAuditEvent(app, 'token_refresh', 'unknown', ipAddress, 'failure', { reason: 'managed_refresh_error' });
+          return reply.status(500).send({
+            error: 'Failed to refresh token',
+            code: 'refresh_failed',
+            statusCode: 500,
+          });
+        }
+      }
+
+      // Self-hosted mode: refresh local sessions (web refresh_tokens or device_auth_records).
+      const refreshTokenRecord = await query<{ user_id: string }>(
+        `SELECT user_id
+           FROM refresh_tokens
+          WHERE token = ?
+            AND expires_at > ?`,
+        [refreshToken, new Date().toISOString()]
+      ).catch(() => ({ rows: [], rowCount: 0 }));
+
+      const deviceTokenRecord = await query<{ user_id: string }>(
+        `SELECT user_id
+           FROM device_auth_records
+          WHERE refresh_token = ?
+            AND status = 'approved'
+            AND expires_at > ?`,
+        [refreshToken, new Date().toISOString()]
+      ).catch(() => ({ rows: [], rowCount: 0 }));
+
+      const userId = refreshTokenRecord.rows[0]?.user_id ?? deviceTokenRecord.rows[0]?.user_id;
+      if (!userId) {
+        writeAuditEvent(app, 'token_refresh', 'unknown', ipAddress, 'failure', { reason: 'refresh_token_not_found' });
+        return reply.status(401).send({
+          error: 'Invalid or expired refresh token',
+          code: 'refresh_token_invalid',
+          statusCode: 401,
+        });
+      }
+
+      const newAccessToken = generateJwt({
+        sub: userId,
+        permissions: [Permission.READ_RESOURCES],
+      });
+      const newRefreshToken = crypto.randomBytes(32).toString('hex');
+
+      if (refreshTokenRecord.rows.length > 0) {
+        await query(
+          `UPDATE refresh_tokens
+              SET token = ?
+            WHERE token = ?`,
+          [newRefreshToken, refreshToken]
+        );
+      }
+
+      if (deviceTokenRecord.rows.length > 0) {
+        await query(
+          `UPDATE device_auth_records
+              SET access_token = ?, refresh_token = ?
+            WHERE refresh_token = ?`,
+          [newAccessToken, newRefreshToken, refreshToken]
+        );
+      }
+
+      writeAuditEvent(app, 'token_refresh', userId, ipAddress, 'success', { mode: 'self-hosted' });
+      return reply.send({
+        access_token: newAccessToken,
+        refresh_token: newRefreshToken,
+        token_type: 'Bearer',
+        expires_in: 86400,
+      });
     }
   );
 }
