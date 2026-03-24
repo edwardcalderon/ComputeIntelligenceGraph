@@ -281,6 +281,7 @@ export type TranslationKey =
   | "hero.descHighlight"
   | "hero.description"
   | "hero.getStarted"
+  | "hero.backToTop"
   | "hero.scroll"
   | "hero.title.compute"
   | "hero.title.graph"

@@ -23,8 +23,8 @@ import {
   BookOpen,
   ArrowRight,
   ChevronRight,
-  ChevronDown,
-  ArrowUp,
+  ChevronsDown,
+  ChevronsUp,
   Terminal,
   Server,
   Monitor,
@@ -136,9 +136,26 @@ const PHASES = [
   { word: "all",           icon: "cig" },
 ] as const;
 
+const HeroPhaseIcon: React.FC<{ phase: number }> = ({ phase }) => {
+  const cls = "size-14 transition-all duration-500";
+  switch (PHASES[Math.min(Math.max(phase, 0), PHASES.length - 1)]?.icon) {
+    case "monitor":
+      return <Monitor className={cn(cls, "text-cyan-400")} strokeWidth={1.5} />;
+    case "brain":
+      return <BrainCircuit className={cn(cls, "text-emerald-400")} strokeWidth={1.5} />;
+    case "graph":
+      return <GitGraph className={cn(cls, "text-blue-400")} strokeWidth={1.5} />;
+    case "cig":
+      return <CigIconSvg className="size-24" />;
+    default:
+      return <Monitor className={cn(cls, "text-zinc-500")} strokeWidth={1.5} />;
+  }
+};
+
 const HeroSection: React.FC = () => {
   const t = useTranslation();
   const [phase, setPhase] = useState(-1); // -1 = initial idle
+  const [showScrollHint, setShowScrollHint] = useState(true);
 
   useEffect(() => {
     // Start sequence after a short entrance delay
@@ -154,24 +171,15 @@ const HeroSection: React.FC = () => {
     return () => clearTimeout(timer);
   }, [phase]);
 
-  const activePhase = phase >= PHASES.length ? PHASES.length - 1 : phase;
+  useEffect(() => {
+    const onScroll = () => setShowScrollHint(window.scrollY < 120);
 
-  // Icon to show in the circle
-  const renderIcon = () => {
-    const cls = "size-14 transition-all duration-500";
-    switch (PHASES[Math.min(Math.max(activePhase, 0), PHASES.length - 1)]?.icon) {
-      case "monitor":
-        return <Monitor className={cn(cls, "text-cyan-400")} strokeWidth={1.5} />;
-      case "brain":
-        return <BrainCircuit className={cn(cls, "text-emerald-400")} strokeWidth={1.5} />;
-      case "graph":
-        return <GitGraph className={cn(cls, "text-blue-400")} strokeWidth={1.5} />;
-      case "cig":
-        return <CigIconSvg className="size-24" />;
-      default:
-        return <Monitor className={cn(cls, "text-zinc-500")} strokeWidth={1.5} />;
-    }
-  };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const activePhase = phase >= PHASES.length ? PHASES.length - 1 : phase;
 
   // Highlight color for each word (index-based for i18n)
   const wordColor = (idx: number) => {
@@ -195,7 +203,7 @@ const HeroSection: React.FC = () => {
         <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-cyan-500 via-blue-500 to-violet-500 opacity-50 blur-2xl animate-glow" />
         <div className="relative flex items-center justify-center size-28 rounded-full border-2 border-zinc-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-900 shadow-2xl z-10 overflow-hidden">
           <div key={activePhase} className="animate-fade-in-fast">
-            {renderIcon()}
+            <HeroPhaseIcon phase={activePhase} />
           </div>
         </div>
       </div>
@@ -299,12 +307,24 @@ const HeroSection: React.FC = () => {
     {/* Scroll down indicator */}
     <button
       onClick={() => smoothScrollTo("how-it-works")}
-      className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors duration-300 cursor-pointer animate-fade-in"
+      className={cn(
+        "fixed bottom-4 left-1/2 z-40 -translate-x-1/2 rounded-full border border-zinc-200/80 dark:border-zinc-800 bg-white/85 dark:bg-zinc-950/85 px-4 py-3 shadow-lg shadow-zinc-900/10 backdrop-blur transition-all duration-500 cursor-pointer",
+        showScrollHint
+          ? "pointer-events-auto opacity-100 translate-y-0"
+          : "pointer-events-none opacity-0 translate-y-4"
+      )}
       style={{ animationDelay: "1s" }}
-      aria-label="Scroll down"
+      aria-label={t("hero.scroll")}
+      title={t("hero.scroll")}
     >
-      <span className="text-xs font-medium tracking-widest uppercase">{t("hero.scroll")}</span>
-      <ChevronDown size={20} className="animate-bounce-gentle" />
+      <span className="flex items-center gap-2.5 text-zinc-600 dark:text-zinc-300">
+        <span className="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500/15 via-blue-500/15 to-violet-500/15 ring-1 ring-zinc-200/80 dark:ring-zinc-700/70">
+          <ChevronsDown size={18} className="animate-bounce-gentle text-cyan-500 dark:text-cyan-300" />
+        </span>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.35em] whitespace-nowrap">
+          {t("hero.scroll")}
+        </span>
+      </span>
     </button>
   </section>
   );
@@ -442,6 +462,15 @@ const FeaturesSection: React.FC = () => {
 const ArchitectureBlock: React.FC = () => {
   const t = useTranslation();
   const { ref, visible } = useReveal<HTMLElement>();
+  const flow = [
+    { id: "setup", label: t("architecture.setupWizard"), color: "border-cyan-500/40" },
+    { id: "setup-arrow", label: "→" },
+    { id: "discovery", label: t("architecture.discoveryEngine"), color: "border-blue-500/40" },
+    { id: "discovery-arrow", label: "→" },
+    { id: "graph", label: t("architecture.graphDB"), color: "border-violet-500/40" },
+    { id: "graph-arrow", label: "→" },
+    { id: "dashboard", label: t("architecture.dashboardChatbot"), color: "border-emerald-500/40" },
+  ] as const;
   return (
     <section
       ref={ref}
@@ -452,18 +481,10 @@ const ArchitectureBlock: React.FC = () => {
     >
       <h2 className="text-2xl font-bold mb-6">{t("architecture.title")}</h2>
       <div className="flex flex-wrap items-center justify-center gap-3 text-sm font-mono text-zinc-700 dark:text-zinc-300">
-        {[
-          { label: t("architecture.setupWizard"), color: "border-cyan-500/40" },
-          { label: "→" },
-          { label: t("architecture.discoveryEngine"), color: "border-blue-500/40" },
-          { label: "→" },
-          { label: t("architecture.graphDB"), color: "border-violet-500/40" },
-          { label: "→" },
-          { label: t("architecture.dashboardChatbot"), color: "border-emerald-500/40" },
-        ].map((item, i) =>
-          item.color ? (
+        {flow.map((item, i) =>
+          "color" in item ? (
             <span
-              key={i}
+              key={item.id}
               className={cn(
                 "rounded-lg border bg-zinc-100/60 dark:bg-zinc-800/60 px-4 py-2 transition-all duration-500 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/60",
                 item.color,
@@ -475,7 +496,7 @@ const ArchitectureBlock: React.FC = () => {
             </span>
           ) : (
             <span
-              key={i}
+              key={item.id}
               className={cn(
                 "text-zinc-400 dark:text-zinc-600 mx-1 transition-opacity duration-500",
                 visible ? "opacity-100" : "opacity-0"
@@ -751,6 +772,7 @@ const Footer: React.FC = () => {
 /* ─── Back to Top ─────────────────────────────────────────────────────── */
 
 const BackToTop: React.FC = () => {
+  const t = useTranslation();
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -762,15 +784,23 @@ const BackToTop: React.FC = () => {
   return (
     <button
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      aria-label="Back to top"
+      aria-label={t("hero.backToTop")}
+      title={t("hero.backToTop")}
       className={cn(
-        "fixed bottom-6 right-6 z-40 flex items-center justify-center size-11 rounded-full border border-zinc-300 dark:border-zinc-700 bg-white/90 dark:bg-zinc-900/90 text-zinc-600 dark:text-zinc-300 shadow-lg backdrop-blur transition-all duration-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white hover:scale-110 hover:border-zinc-400 dark:hover:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer",
+        "fixed bottom-4 right-4 z-40 rounded-full border border-zinc-200/80 dark:border-zinc-800 bg-white/85 dark:bg-zinc-950/85 px-3 py-3 sm:px-4 shadow-lg shadow-zinc-900/10 backdrop-blur transition-all duration-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:scale-105 hover:border-zinc-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer",
         show
           ? "opacity-100 translate-y-0 pointer-events-auto"
           : "opacity-0 translate-y-4 pointer-events-none"
       )}
     >
-      <ArrowUp size={18} />
+      <span className="flex items-center gap-2.5 text-zinc-600 dark:text-zinc-300">
+        <span className="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500/15 via-blue-500/15 to-violet-500/15 ring-1 ring-zinc-200/80 dark:ring-zinc-700/70">
+          <ChevronsUp size={18} className="text-cyan-500 dark:text-cyan-300" />
+        </span>
+        <span className="hidden text-[10px] font-semibold uppercase tracking-[0.35em] whitespace-nowrap sm:inline">
+          {t("hero.backToTop")}
+        </span>
+      </span>
     </button>
   );
 };

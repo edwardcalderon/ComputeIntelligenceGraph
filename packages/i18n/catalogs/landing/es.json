@@ -7,7 +7,8 @@
   "hero.descHighlight": "interfaz conversacional",
   "hero.getStarted": "Comenzar",
   "hero.viewOnGithub": "Ver en GitHub",
-  "hero.scroll": "Desplazar",
+  "hero.scroll": "Desplázate hacia abajo",
+  "hero.backToTop": "Volver arriba",
 
   "howItWorks.title": "Cómo funciona",
   "howItWorks.step1.title": "Desplegar",

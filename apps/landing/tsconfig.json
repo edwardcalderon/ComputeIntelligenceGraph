@@ -26,7 +26,8 @@
     "declarationMap": false,
     "allowJs": true,
     "noEmit": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "strictNullChecks": true
   },
   "include": [
     "next-env.d.ts",

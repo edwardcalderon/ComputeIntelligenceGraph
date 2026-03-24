@@ -7,7 +7,8 @@
   "hero.descHighlight": "对话式界面",
   "hero.getStarted": "开始使用",
   "hero.viewOnGithub": "在 GitHub 上查看",
-  "hero.scroll": "滚动",
+  "hero.scroll": "向下滚动",
+  "hero.backToTop": "回到顶部",
 
   "howItWorks.title": "工作原理",
   "howItWorks.step1.title": "部署",

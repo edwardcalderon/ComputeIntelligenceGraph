@@ -7,7 +7,8 @@
   "hero.descHighlight": "conversational interface",
   "hero.getStarted": "Get Started",
   "hero.viewOnGithub": "View on GitHub",
-  "hero.scroll": "Scroll",
+  "hero.scroll": "Scroll down",
+  "hero.backToTop": "Back to top",
 
   "howItWorks.title": "How It Works",
   "howItWorks.step1.title": "Deploy",
