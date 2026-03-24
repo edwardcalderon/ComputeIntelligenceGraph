@@ -71,6 +71,12 @@ locals {
       --query SecretString \
       --output text)
 
+    TOKEN=$(curl -fsX PUT "http://169.254.169.254/latest/api/token" \
+      -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+    INSTANCE_PRIVATE_IP=$(curl -fsS \
+      -H "X-aws-ec2-metadata-token: $${TOKEN}" \
+      http://169.254.169.254/latest/meta-data/local-ipv4)
+
     docker pull neo4j:${var.neo4j_version}
     docker rm -f neo4j || true
     docker run -d \
@@ -78,8 +84,8 @@ locals {
       --restart unless-stopped \
       -p 7687:7687 \
       -e NEO4J_AUTH=neo4j/$${NEO4J_PASSWORD} \
-      -e NEO4J_server_default__advertised__address=${aws_instance.neo4j.private_ip} \
-      -e NEO4J_server_bolt_advertised__address=${aws_instance.neo4j.private_ip}:7687 \
+      -e NEO4J_server_default__advertised__address=$${INSTANCE_PRIVATE_IP} \
+      -e NEO4J_server_bolt_advertised__address=$${INSTANCE_PRIVATE_IP}:7687 \
       -v "$MOUNT_POINT/data:/data" \
       -v "$MOUNT_POINT/logs:/logs" \
       neo4j:${var.neo4j_version}
