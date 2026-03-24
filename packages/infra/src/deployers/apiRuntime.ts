@@ -45,6 +45,14 @@ function requireNumber(value: number | undefined, name: string): number {
   return value;
 }
 
+function requireBoolean(value: boolean | undefined, name: string): boolean {
+  if (value === undefined) {
+    throw new DeploymentError(`${name} is required`, 'api', 'validation');
+  }
+
+  return value;
+}
+
 function resolveAuthentikSecretRefs(
   refs: Partial<ApiAuthentikSecretRefs> | undefined
 ): ApiAuthentikSecretRefs {
@@ -144,6 +152,16 @@ export function resolveApiRuntimeConfig(
       'neo4jPasswordSecretArn'
     ),
     authentikSecretRefs: resolveAuthentikSecretRefs(config.authentikSecretRefs),
+    smtpHost: requireString(config.smtpHost, 'smtpHost'),
+    smtpPort: requireNumber(config.smtpPort, 'smtpPort'),
+    smtpSecure: requireBoolean(config.smtpSecure, 'smtpSecure'),
+    smtpFromEmail: requireString(config.smtpFromEmail, 'smtpFromEmail'),
+    smtpAuthEnabled: requireBoolean(config.smtpAuthEnabled, 'smtpAuthEnabled'),
+    smtpUser: config.smtpUser?.trim() || undefined,
+    smtpOtpSubject: config.smtpOtpSubject?.trim() || undefined,
+    smtpPasswordSecretArn: config.smtpAuthEnabled === false
+      ? config.smtpPasswordSecretArn?.trim() || undefined
+      : requireString(config.smtpPasswordSecretArn, 'smtpPasswordSecretArn'),
     corsOrigins: requireStringArray(config.corsOrigins, 'corsOrigins'),
     createPipeline: config.createPipeline ?? false,
     hostedZoneDomain: config.hostedZoneDomain,

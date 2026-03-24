@@ -103,6 +103,12 @@ Resources created:
 - `NEO4J_URI`
 - `NEO4J_USER=neo4j`
 - `NEO4J_DATABASE=neo4j`
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_SECURE`
+- `SMTP_FROM_EMAIL`
+- `SMTP_AUTH_ENABLED`
+- `SMTP_OTP_SUBJECT`
 
 ### Secrets injected through AWS Secrets Manager
 
@@ -116,8 +122,9 @@ Resources created:
 - `OIDC_CLIENT_SECRET`
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `SMTP_PASSWORD`
 
-The GitHub Actions deploy workflow resolves the Authentik values from the live tenant in `us-east-1` and its `authentik/auth.cig.technology/oidc-client` secret, then syncs those along with the GitHub-managed Supabase/JWT secrets into deterministic AWS Secrets Manager names under `/cig/prod/api/*` before the ECS deploy.
+The GitHub Actions deploy workflow resolves the Authentik values from the live tenant in `us-east-1` and its `authentik/auth.cig.technology/oidc-client` secret, then syncs those along with the GitHub-managed Supabase/JWT and SMTP password secrets into deterministic AWS Secrets Manager names under `/cig/prod/api/*` before the ECS deploy.
 
 ## GitHub Actions Pipelines
 

@@ -50,6 +50,14 @@ describe('api runtime helpers', () => {
           oidcClientIdSecretArn: 'arn:aws:secretsmanager:::client-id',
           oidcClientSecretSecretArn: 'arn:aws:secretsmanager:::client-secret',
         },
+        smtpHost: 'mail.example.com',
+        smtpPort: 587,
+        smtpSecure: true,
+        smtpFromEmail: 'notifications@example.com',
+        smtpAuthEnabled: true,
+        smtpUser: 'notifications@example.com',
+        smtpOtpSubject: 'Your one-time code',
+        smtpPasswordSecretArn: 'arn:aws:secretsmanager:::smtp-password',
         corsOrigins: ['https://app.cig.lat'],
       },
       {
@@ -61,6 +69,14 @@ describe('api runtime helpers', () => {
         neo4jSecurityGroupId: 'sg-neo4j',
         neo4jBoltUri: 'bolt://10.0.2.10:7687',
         neo4jPasswordSecretArn: 'arn:aws:secretsmanager:::neo4j',
+        smtpHost: 'mail.example.com',
+        smtpPort: 587,
+        smtpSecure: true,
+        smtpFromEmail: 'notifications@example.com',
+        smtpAuthEnabled: true,
+        smtpUser: 'notifications@example.com',
+        smtpOtpSubject: 'Your one-time code',
+        smtpPasswordSecretArn: 'arn:aws:secretsmanager:::smtp-password',
       }
     );
 
@@ -69,6 +85,14 @@ describe('api runtime helpers', () => {
     expect(runtime.securityGroupIds).toEqual(['sg-api']);
     expect(runtime.neo4jBoltUri).toBe('bolt://10.0.2.10:7687');
     expect(runtime.neo4jPasswordSecretArn).toBe('arn:aws:secretsmanager:::neo4j');
+    expect(runtime.smtpHost).toBe('mail.example.com');
+    expect(runtime.smtpPort).toBe(587);
+    expect(runtime.smtpSecure).toBe(true);
+    expect(runtime.smtpFromEmail).toBe('notifications@example.com');
+    expect(runtime.smtpAuthEnabled).toBe(true);
+    expect(runtime.smtpUser).toBe('notifications@example.com');
+    expect(runtime.smtpOtpSubject).toBe('Your one-time code');
+    expect(runtime.smtpPasswordSecretArn).toBe('arn:aws:secretsmanager:::smtp-password');
     expect(runtime.corsOrigins).toEqual(['https://app.cig.lat']);
   });
 });

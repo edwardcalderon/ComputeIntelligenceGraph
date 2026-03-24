@@ -12,6 +12,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'node:crypto';
 import path from 'node:path';
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { query, withTransaction } from '../db/client';
 
@@ -104,7 +105,17 @@ function normalizeToken(value: unknown): string | null {
 function getOtpTemplatePath(): string {
   // The template is copied into dist/emails/ by the build script (copy-migrations.mjs).
   // This path works both in the monorepo dev environment and in the production container.
-  return path.resolve(__dirname, '../emails/otp-only.html');
+  const candidates = [
+    path.resolve(__dirname, '../emails/otp-only.html'),
+    path.resolve(__dirname, '../../../../packages/emails/src/templates/otp-only.html'),
+  ];
+
+  const templatePath = candidates.find((candidate) => existsSync(candidate));
+  if (!templatePath) {
+    throw new Error(`OTP email template not found. Looked in: ${candidates.join(', ')}`);
+  }
+
+  return templatePath;
 }
 
 async function getOtpTemplateHtml(): Promise<string> {
@@ -134,6 +145,10 @@ function getSmtpTransport(): Transporter {
 
   if (!host || !fromEmail) {
     throw new Error('SMTP credentials not configured (SMTP_HOST / SMTP_FROM_EMAIL)');
+  }
+
+  if (authEnabled && !password) {
+    throw new Error('SMTP credentials not configured (SMTP_PASSWORD)');
   }
 
   smtpTransport = nodemailer.createTransport({

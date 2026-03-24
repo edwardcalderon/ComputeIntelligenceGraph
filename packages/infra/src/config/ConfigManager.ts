@@ -221,7 +221,15 @@ export class ConfigManager {
       process.env.API_PIPELINE_BRANCH_PRODUCTION ||
       process.env.API_BOOTSTRAP_ONLY ||
       process.env.API_SUPABASE_URL_SECRET_ARN ||
-      process.env.API_SUPABASE_SERVICE_ROLE_KEY_SECRET_ARN
+      process.env.API_SUPABASE_SERVICE_ROLE_KEY_SECRET_ARN ||
+      process.env.API_SMTP_HOST ||
+      process.env.API_SMTP_PORT ||
+      process.env.API_SMTP_SECURE ||
+      process.env.API_SMTP_FROM_EMAIL ||
+      process.env.API_SMTP_AUTH_ENABLED ||
+      process.env.API_SMTP_USER ||
+      process.env.API_SMTP_OTP_SUBJECT ||
+      process.env.API_SMTP_PASSWORD_SECRET_ARN
     ) {
       config.api = {} as ApiDeploymentConfig;
       const apiRegion = process.env.API_REGION ?? process.env.AWS_REGION;
@@ -345,6 +353,30 @@ export class ConfigManager {
       if (process.env.API_SUPABASE_SERVICE_ROLE_KEY_SECRET_ARN) {
         config.api.supabaseServiceRoleKeySecretArn =
           process.env.API_SUPABASE_SERVICE_ROLE_KEY_SECRET_ARN;
+      }
+      if (process.env.API_SMTP_HOST) {
+        config.api.smtpHost = process.env.API_SMTP_HOST.trim();
+      }
+      if (process.env.API_SMTP_PORT) {
+        config.api.smtpPort = this.parseNumber(process.env.API_SMTP_PORT);
+      }
+      if (process.env.API_SMTP_SECURE) {
+        config.api.smtpSecure = process.env.API_SMTP_SECURE === 'true';
+      }
+      if (process.env.API_SMTP_FROM_EMAIL) {
+        config.api.smtpFromEmail = process.env.API_SMTP_FROM_EMAIL.trim();
+      }
+      if (process.env.API_SMTP_AUTH_ENABLED) {
+        config.api.smtpAuthEnabled = process.env.API_SMTP_AUTH_ENABLED === 'true';
+      }
+      if (process.env.API_SMTP_USER) {
+        config.api.smtpUser = process.env.API_SMTP_USER.trim();
+      }
+      if (process.env.API_SMTP_OTP_SUBJECT) {
+        config.api.smtpOtpSubject = process.env.API_SMTP_OTP_SUBJECT.trim();
+      }
+      if (process.env.API_SMTP_PASSWORD_SECRET_ARN) {
+        config.api.smtpPasswordSecretArn = process.env.API_SMTP_PASSWORD_SECRET_ARN.trim();
       }
     }
 

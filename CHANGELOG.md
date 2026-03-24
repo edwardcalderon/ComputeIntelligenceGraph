@@ -1,3 +1,28 @@
+## [0.1.82](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.81...v0.1.82) (2026-03-24)
+
+### Detected changes
+- .github: .github/workflows/deploy-api.yml
+- docs: docs/deployment/api-aws.md
+- packages: 11 changed file(s)
+  - packages/api/src/__tests__/auth-email.test.ts
+  - packages/api/src/routes/auth-email.ts
+  - packages/infra/README.md
+  - packages/infra/infra.config.ts
+  - packages/infra/src/config/ConfigManager.test.ts
+  - packages/infra/src/config/ConfigManager.ts
+  - packages/infra/src/deployers/ApiDeployer.test.ts
+  - packages/infra/src/deployers/ApiDeployer.ts
+  - packages/infra/src/deployers/apiRuntime.test.ts
+  - packages/infra/src/deployers/apiRuntime.ts
+  - packages/infra/src/types.ts
+
+
+## [0.1.82](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.81...v0.1.82) (2026-03-24)
+
+
+
+
+
 ## [0.1.81](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.80...v0.1.81) (2026-03-24)
 
 ### Detected changes

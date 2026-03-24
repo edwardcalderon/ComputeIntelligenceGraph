@@ -29,6 +29,14 @@ describe('ApiDeployer', () => {
         oidcClientIdSecretArn: 'arn:aws:secretsmanager:::client-id',
         oidcClientSecretSecretArn: 'arn:aws:secretsmanager:::client-secret',
       },
+      smtpHost: 'mail.example.com',
+      smtpPort: 587,
+      smtpSecure: true,
+      smtpFromEmail: 'notifications@example.com',
+      smtpAuthEnabled: true,
+      smtpUser: 'notifications@example.com',
+      smtpOtpSubject: 'Your one-time code',
+      smtpPasswordSecretArn: 'arn:aws:secretsmanager:::smtp-password',
       corsOrigins: ['https://app.cig.lat'],
       createPipeline: false,
       imageUri: '123456789012.dkr.ecr.us-east-2.amazonaws.com/cig-api-production:v0.1.58',
@@ -41,6 +49,14 @@ describe('ApiDeployer', () => {
     expect(env.API_PRIVATE_SUBNET_IDS).toBe('subnet-private-a,subnet-private-b');
     expect(env.API_SECURITY_GROUP_IDS).toBe('sg-api');
     expect(env.API_CORS_ORIGINS).toBe('https://app.cig.lat');
+    expect(env.API_SMTP_HOST).toBe('mail.example.com');
+    expect(env.API_SMTP_PORT).toBe('587');
+    expect(env.API_SMTP_SECURE).toBe('true');
+    expect(env.API_SMTP_FROM_EMAIL).toBe('notifications@example.com');
+    expect(env.API_SMTP_AUTH_ENABLED).toBe('true');
+    expect(env.API_SMTP_USER).toBe('notifications@example.com');
+    expect(env.API_SMTP_OTP_SUBJECT).toBe('Your one-time code');
+    expect(env.API_SMTP_PASSWORD_SECRET_ARN).toBe('arn:aws:secretsmanager:::smtp-password');
     expect(env.INFRA_CREATE_PIPELINES).toBe('false');
   });
 
@@ -55,13 +71,19 @@ describe('ApiDeployer', () => {
       }
     );
 
-    await deployer.deploy({
-      domain: 'api.cig.technology',
-      region: 'us-east-2',
-      imageRepository: 'cig-api-production',
-      bootstrapOnly: true,
-      createPipeline: false,
-    });
+      await deployer.deploy({
+        domain: 'api.cig.technology',
+        region: 'us-east-2',
+        imageRepository: 'cig-api-production',
+        smtpHost: 'mail.example.com',
+        smtpPort: 587,
+        smtpSecure: true,
+        smtpFromEmail: 'notifications@example.com',
+        smtpAuthEnabled: true,
+        smtpPasswordSecretArn: 'arn:aws:secretsmanager:::smtp-password',
+        bootstrapOnly: true,
+        createPipeline: false,
+      });
 
     expect(commandRunner).toHaveBeenCalledWith(
       'bash',
@@ -72,6 +94,12 @@ describe('ApiDeployer', () => {
           INFRA_API_BOOTSTRAP_ONLY: 'true',
           INFRA_CREATE_PIPELINES: 'false',
           API_IMAGE_REPOSITORY: 'cig-api-production',
+          API_SMTP_HOST: 'mail.example.com',
+          API_SMTP_PORT: '587',
+          API_SMTP_SECURE: 'true',
+          API_SMTP_FROM_EMAIL: 'notifications@example.com',
+          API_SMTP_AUTH_ENABLED: 'true',
+          API_SMTP_PASSWORD_SECRET_ARN: 'arn:aws:secretsmanager:::smtp-password',
           SST_STAGE: 'production',
         }),
       })

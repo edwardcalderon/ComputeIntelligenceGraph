@@ -494,6 +494,22 @@ export interface ApiRuntimeConfig {
   neo4jPasswordSecretArn: string;
   /** Authentik runtime secret references */
   authentikSecretRefs: ApiAuthentikSecretRefs;
+  /** SMTP host used by the OTP backend */
+  smtpHost: string;
+  /** SMTP port used by the OTP backend */
+  smtpPort: number;
+  /** Whether the SMTP connection must use TLS */
+  smtpSecure: boolean;
+  /** From address used by the OTP backend */
+  smtpFromEmail: string;
+  /** Whether SMTP authentication is enabled */
+  smtpAuthEnabled: boolean;
+  /** Optional SMTP username, when different from the from address */
+  smtpUser?: string;
+  /** Optional OTP email subject */
+  smtpOtpSubject?: string;
+  /** Optional secret ARN containing the SMTP password */
+  smtpPasswordSecretArn?: string;
   /** Browser origins allowed through CORS */
   corsOrigins: string[];
   /** Whether a production deploy may create/update native pipelines */
@@ -556,6 +572,20 @@ export interface ApiDeploymentConfig {
   neo4jPasswordSecretArn?: string;
   /** Authentik secret references */
   authentikSecretRefs?: Partial<ApiAuthentikSecretRefs>;
+  /** SMTP host used by the OTP backend */
+  smtpHost?: string;
+  /** SMTP port used by the OTP backend */
+  smtpPort?: number;
+  /** Whether the SMTP connection must use TLS */
+  smtpSecure?: boolean;
+  /** From address used by the OTP backend */
+  smtpFromEmail?: string;
+  /** Whether SMTP authentication is enabled */
+  smtpAuthEnabled?: boolean;
+  /** Optional SMTP username, when different from the from address */
+  smtpUser?: string;
+  /** Optional OTP email subject */
+  smtpOtpSubject?: string;
   /** Browser CORS origins */
   corsOrigins?: string[];
   /** Whether to create or update production pipelines */
@@ -570,6 +600,8 @@ export interface ApiDeploymentConfig {
   imageUri?: string;
   /** Optional image tag */
   imageTag?: string;
+  /** Optional secret ARN containing the SMTP password */
+  smtpPasswordSecretArn?: string;
   /** Optional stage override for SST */
   stage?: string;
   /** Optional SST app name override */

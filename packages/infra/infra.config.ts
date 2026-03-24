@@ -403,6 +403,13 @@ export function createInfrastructure() {
               { name: 'NEO4J_URI', value: config.neo4jBoltUri },
               { name: 'NEO4J_USER', value: 'neo4j' },
               { name: 'NEO4J_DATABASE', value: 'neo4j' },
+              { name: 'SMTP_HOST', value: config.smtpHost },
+              { name: 'SMTP_PORT', value: String(config.smtpPort) },
+              { name: 'SMTP_SECURE', value: String(config.smtpSecure) },
+              { name: 'SMTP_FROM_EMAIL', value: config.smtpFromEmail },
+              { name: 'SMTP_AUTH_ENABLED', value: String(config.smtpAuthEnabled) },
+              ...(config.smtpUser ? [{ name: 'SMTP_USER', value: config.smtpUser }] : []),
+              ...(config.smtpOtpSubject ? [{ name: 'SMTP_OTP_SUBJECT', value: config.smtpOtpSubject }] : []),
             ],
             secrets: [
               { name: 'DATABASE_URL', valueFrom: config.databaseUrlSecretArn },
@@ -438,6 +445,9 @@ export function createInfrastructure() {
                       valueFrom: config.supabaseServiceRoleKeySecretArn,
                     },
                   ]
+                : []),
+              ...(config.smtpPasswordSecretArn
+                ? [{ name: 'SMTP_PASSWORD', valueFrom: config.smtpPasswordSecretArn }]
                 : []),
             ],
             logConfiguration: {

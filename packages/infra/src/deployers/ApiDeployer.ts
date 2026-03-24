@@ -111,6 +111,17 @@ export function buildApiSstEnvironment(
       resolved?.supabaseServiceRoleKeySecretArn ??
       config.supabaseServiceRoleKeySecretArn ??
       '',
+    API_SMTP_HOST: resolved?.smtpHost ?? config.smtpHost ?? '',
+    API_SMTP_PORT: String(resolved?.smtpPort ?? config.smtpPort ?? ''),
+    API_SMTP_SECURE: String(resolved?.smtpSecure ?? config.smtpSecure ?? ''),
+    API_SMTP_FROM_EMAIL: resolved?.smtpFromEmail ?? config.smtpFromEmail ?? '',
+    API_SMTP_AUTH_ENABLED: String(
+      resolved?.smtpAuthEnabled ?? config.smtpAuthEnabled ?? ''
+    ),
+    API_SMTP_USER: resolved?.smtpUser ?? config.smtpUser ?? '',
+    API_SMTP_OTP_SUBJECT: resolved?.smtpOtpSubject ?? config.smtpOtpSubject ?? '',
+    API_SMTP_PASSWORD_SECRET_ARN:
+      resolved?.smtpPasswordSecretArn ?? config.smtpPasswordSecretArn ?? '',
   };
 }
 

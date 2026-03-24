@@ -56,6 +56,14 @@ const ENV_KEYS_USED_BY_CONFIG_MANAGER = [
   'API_BOOTSTRAP_ONLY',
   'API_SUPABASE_URL_SECRET_ARN',
   'API_SUPABASE_SERVICE_ROLE_KEY_SECRET_ARN',
+  'API_SMTP_HOST',
+  'API_SMTP_PORT',
+  'API_SMTP_SECURE',
+  'API_SMTP_FROM_EMAIL',
+  'API_SMTP_AUTH_ENABLED',
+  'API_SMTP_USER',
+  'API_SMTP_OTP_SUBJECT',
+  'API_SMTP_PASSWORD_SECRET_ARN',
   'IAC_MODULES_PATH',
   'IAC_NETWORKING_MODULE',
   'IAC_COMPUTE_MODULE',
@@ -161,6 +169,14 @@ describe('ConfigManager', () => {
       process.env.API_OIDC_CLIENT_ID_SECRET_ARN = 'arn:aws:secretsmanager:::client-id';
       process.env.API_OIDC_CLIENT_SECRET_SECRET_ARN = 'arn:aws:secretsmanager:::client-secret';
       process.env.API_CORS_ORIGINS = 'https://app.cig.lat,https://cig.lat';
+      process.env.API_SMTP_HOST = 'mail.example.com';
+      process.env.API_SMTP_PORT = '587';
+      process.env.API_SMTP_SECURE = 'true';
+      process.env.API_SMTP_FROM_EMAIL = 'notifications@example.com';
+      process.env.API_SMTP_AUTH_ENABLED = 'true';
+      process.env.API_SMTP_USER = 'notifications@example.com';
+      process.env.API_SMTP_OTP_SUBJECT = 'Your one-time code';
+      process.env.API_SMTP_PASSWORD_SECRET_ARN = 'arn:aws:secretsmanager:::smtp-password';
       process.env.API_CREATE_PIPELINE = 'false';
 
       const config = configManager.loadFromEnv();
@@ -184,6 +200,14 @@ describe('ConfigManager', () => {
         oidcClientIdSecretArn: 'arn:aws:secretsmanager:::client-id',
         oidcClientSecretSecretArn: 'arn:aws:secretsmanager:::client-secret'
       });
+      expect(config.api?.smtpHost).toBe('mail.example.com');
+      expect(config.api?.smtpPort).toBe(587);
+      expect(config.api?.smtpSecure).toBe(true);
+      expect(config.api?.smtpFromEmail).toBe('notifications@example.com');
+      expect(config.api?.smtpAuthEnabled).toBe(true);
+      expect(config.api?.smtpUser).toBe('notifications@example.com');
+      expect(config.api?.smtpOtpSubject).toBe('Your one-time code');
+      expect(config.api?.smtpPasswordSecretArn).toBe('arn:aws:secretsmanager:::smtp-password');
       expect(config.api?.corsOrigins).toEqual(['https://app.cig.lat', 'https://cig.lat']);
       expect(config.api?.createPipeline).toBe(false);
     });
