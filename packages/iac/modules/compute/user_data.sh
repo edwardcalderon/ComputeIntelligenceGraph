@@ -43,7 +43,7 @@ services:
       retries: 5
 
   api:
-    image: ghcr.io/cig/api:latest
+    image: docker.io/cigtechnology/cig-api:latest
     restart: unless-stopped
     ports:
       - "8080:8080"
