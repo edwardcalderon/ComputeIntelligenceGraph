@@ -370,7 +370,6 @@ export async function deviceAuthRoutes(app: FastifyInstance): Promise<void> {
   app.post(
     '/api/v1/auth/logout',
     {
-      preHandler: [authenticate],
       config: {
         rateLimit: {
           max: 10,
@@ -381,8 +380,7 @@ export async function deviceAuthRoutes(app: FastifyInstance): Promise<void> {
     async (request: FastifyRequest, reply: FastifyReply) => {
       const authHeader = request.headers['authorization'];
       const ipAddress = getClientIp(request);
-      const user = (request as any).user as { sub?: string } | undefined;
-      const userId = user?.sub ?? 'unknown';
+      const userId = 'unknown';
 
       if (authHeader?.startsWith('Bearer ')) {
         const token = authHeader.slice(7);
