@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.7
+
 # ─── Builder Stage ────────────────────────────────────────────────────────────
 FROM node:22-alpine AS builder
 
@@ -17,21 +19,28 @@ COPY packages/config/package.json ./packages/config/
 COPY packages/graph/package.json ./packages/graph/
 COPY packages/discovery/package.json ./packages/discovery/
 
-# Install all dependencies (including devDeps for build)
-RUN pnpm install --frozen-lockfile
+# Install only the API workspace tree needed for the runtime image.
+# The cache mount keeps pnpm's store warm across workflow runs.
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+    pnpm install --frozen-lockfile --store-dir /pnpm/store --filter @cig/api...
 
 # Copy source
 COPY packages/api/src ./packages/api/src
 COPY packages/api/scripts ./packages/api/scripts
 COPY packages/api/tsconfig.json ./packages/api/
+COPY packages/api/tsconfig.tsbuildinfo ./packages/api/
 COPY packages/auth/src ./packages/auth/src
 COPY packages/auth/tsconfig.json ./packages/auth/
+COPY packages/auth/tsconfig.tsbuildinfo ./packages/auth/
 COPY packages/config/src ./packages/config/src
 COPY packages/config/tsconfig.json ./packages/config/
+COPY packages/config/tsconfig.tsbuildinfo ./packages/config/
 COPY packages/graph/src ./packages/graph/src
 COPY packages/graph/tsconfig.json ./packages/graph/
+COPY packages/graph/tsconfig.tsbuildinfo ./packages/graph/
 COPY packages/discovery/src ./packages/discovery/src
 COPY packages/discovery/tsconfig.json ./packages/discovery/
+COPY packages/discovery/tsconfig.tsbuildinfo ./packages/discovery/
 COPY packages/emails/src/templates ./packages/emails/src/templates
 
 # Build

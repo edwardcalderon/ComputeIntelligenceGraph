@@ -1,6 +1,6 @@
 {
   "name": "@cig/api",
-  "version": "0.1.82",
+  "version": "0.1.83",
   "description": "CIG REST/GraphQL API server",
   "files": [
     "dist"
@@ -8,7 +8,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc --build --force && node scripts/copy-migrations.mjs",
+    "build": "tsc --build && node scripts/copy-migrations.mjs",
     "dev": "pnpm build && concurrently --names \"tsc,api\" --prefix-colors \"cyan.bold,green.bold\" \"tsc --watch\" \"node --watch --env-file=../../.env dist/index.js\"",
     "start": "node dist/index.js",
     "migrate:up": "pnpm build && node dist/migrate.js",

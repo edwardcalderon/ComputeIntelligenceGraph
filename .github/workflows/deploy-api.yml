@@ -128,7 +128,6 @@ jobs:
         run: |
           pnpm --filter @cig/api lint
           pnpm --filter @cig/api test
-          pnpm --filter @cig/api build
 
       - name: Lint and test infra wrapper
         run: |
@@ -257,8 +256,10 @@ jobs:
             ${{ steps.meta.outputs.repository_uri }}:latest
             ${{ steps.meta.outputs.dockerhub_image_uri }}
             ${{ steps.meta.outputs.dockerhub_image }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: |
+            type=registry,ref=${{ steps.meta.outputs.repository_uri }}:buildcache
+            type=gha
+          cache-to: type=registry,ref=${{ steps.meta.outputs.repository_uri }}:buildcache,mode=max
           provenance: false
 
       - name: Summarize published images
