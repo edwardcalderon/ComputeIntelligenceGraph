@@ -123,8 +123,10 @@ jobs:
           API_IMAGE_URI: public.ecr.aws/docker/library/node:20-alpine
         run: |
           # The first bootstrap has no SST stage yet, so treat that as a soft skip.
+          set +e
           OUTPUT=$(pnpm exec sst diff --stage production 2>&1)
           STATUS=$?
+          set -e
 
           echo "$OUTPUT"
 
