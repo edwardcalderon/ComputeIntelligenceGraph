@@ -79,14 +79,14 @@ describe('ConfigManager', () => {
 
   describe('loadFromEnv', () => {
     it('should load AWS configuration from environment variables', () => {
-      process.env.AWS_REGION = 'us-east-1';
+      process.env.AWS_REGION = 'us-east-2';
       process.env.AWS_ACCOUNT_ID = '123456789012';
       process.env.AWS_PROFILE = 'default';
 
       const config = configManager.loadFromEnv();
 
       expect(config.aws).toBeDefined();
-      expect(config.aws?.region).toBe('us-east-1');
+      expect(config.aws?.region).toBe('us-east-2');
       expect(config.aws?.accountId).toBe('123456789012');
       expect(config.aws?.profile).toBe('default');
     });
@@ -144,7 +144,7 @@ describe('ConfigManager', () => {
     });
 
     it('should load API deployment configuration from environment variables', () => {
-      process.env.AWS_REGION = 'us-east-1';
+      process.env.AWS_REGION = 'us-east-2';
       process.env.API_DOMAIN = 'api.cig.technology';
       process.env.API_IMAGE_REPOSITORY = 'cig-api-production';
       process.env.API_CONTAINER_PORT = '8080';
@@ -166,7 +166,7 @@ describe('ConfigManager', () => {
       const config = configManager.loadFromEnv();
 
       expect(config.api).toBeDefined();
-      expect(config.api?.region).toBe('us-east-1');
+      expect(config.api?.region).toBe('us-east-2');
       expect(config.api?.domain).toBe('api.cig.technology');
       expect(config.api?.imageRepository).toBe('cig-api-production');
       expect(config.api?.containerPort).toBe(8080);
@@ -216,7 +216,7 @@ describe('ConfigManager', () => {
     it('should return valid for complete configuration', () => {
       const config: InfraConfig = {
         aws: {
-          region: 'us-east-1'
+          region: 'us-east-2'
         },
         authentik: {
           domain: 'auth.example.com',
@@ -228,7 +228,7 @@ describe('ConfigManager', () => {
         },
         api: {
           domain: 'api.cig.technology',
-          region: 'us-east-1',
+          region: 'us-east-2',
           imageRepository: 'cig-api-production'
         },
         iac: {
@@ -277,7 +277,7 @@ describe('ConfigManager', () => {
     it('should return errors for missing Authentik domain', () => {
       const config = {
         aws: {
-          region: 'us-east-1'
+          region: 'us-east-2'
         },
         authentik: {
           adminEmail: 'admin@example.com'
@@ -305,7 +305,7 @@ describe('ConfigManager', () => {
     it('should return errors for missing Dashboard buildPath', () => {
       const config = {
         aws: {
-          region: 'us-east-1'
+          region: 'us-east-2'
         },
         authentik: {
           domain: 'auth.example.com',
@@ -333,10 +333,10 @@ describe('ConfigManager', () => {
     it('should validate API configuration when present', () => {
       const config = {
         aws: {
-          region: 'us-east-1'
+          region: 'us-east-2'
         },
         api: {
-          region: 'us-east-1'
+          region: 'us-east-2'
         },
         iac: {
           modulesPath: '../iac',

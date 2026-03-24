@@ -8,7 +8,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-2' }}
   API_DOMAIN: ${{ vars.API_DOMAIN || 'api.cig.technology' }}
   API_IMAGE_REPOSITORY: ${{ vars.API_IMAGE_REPOSITORY || 'cig-api-production' }}
   INFRA_APP_NAME: ${{ vars.INFRA_APP_NAME || 'cig-api' }}

@@ -38,7 +38,7 @@ import { DeploymentError, LSTSInfraError } from '../errors';
  * 
  * const result = await deployer.deploy({
  *   buildPath: './apps/dashboard/.next',
- *   region: 'us-east-1',
+ *   region: 'us-east-2',
  *   authentikUrl: 'https://auth.example.com',
  *   authentikClientId: 'oauth-client-123'
  * });
@@ -100,7 +100,7 @@ export class DashboardDeployer {
    * const result = await deployer.deploy({
    *   buildPath: './apps/dashboard/.next',
    *   domain: 'dashboard.example.com',
-   *   region: 'us-east-1',
+   *   region: 'us-east-2',
    *   authentikUrl: 'https://auth.example.com',
    *   authentikClientId: 'oauth-client-123'
    * });

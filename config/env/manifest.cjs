@@ -205,7 +205,7 @@ module.exports = {
     },
     AWS_REGION: {
       description: 'AWS region',
-      example: 'us-east-1',
+      example: 'us-east-2',
       targets: {},
     },
     AWS_PROFILE: {

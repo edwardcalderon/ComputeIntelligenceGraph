@@ -15,7 +15,7 @@ describe('api runtime helpers', () => {
       neo4j_security_group_id: { value: 'sg-neo4j' },
       neo4j_bolt_uri: { value: 'bolt://10.0.2.10:7687' },
       neo4j_password_secret_arn: {
-        value: 'arn:aws:secretsmanager:us-east-1:123456789012:secret:neo4j',
+        value: 'arn:aws:secretsmanager:us-east-2:123456789012:secret:neo4j',
       },
     });
 
@@ -27,7 +27,7 @@ describe('api runtime helpers', () => {
       apiServiceSecurityGroupId: 'sg-api',
       neo4jSecurityGroupId: 'sg-neo4j',
       neo4jBoltUri: 'bolt://10.0.2.10:7687',
-      neo4jPasswordSecretArn: 'arn:aws:secretsmanager:us-east-1:123456789012:secret:neo4j',
+      neo4jPasswordSecretArn: 'arn:aws:secretsmanager:us-east-2:123456789012:secret:neo4j',
     });
   });
 
@@ -35,7 +35,7 @@ describe('api runtime helpers', () => {
     const runtime = resolveApiRuntimeConfig(
       {
         domain: 'api.cig.technology',
-        region: 'us-east-1',
+        region: 'us-east-2',
         imageRepository: 'cig-api-production',
         containerPort: 8080,
         cpu: 512,

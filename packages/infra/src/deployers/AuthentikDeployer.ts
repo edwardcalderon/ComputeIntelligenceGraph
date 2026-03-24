@@ -39,7 +39,7 @@ import { DeploymentError, LSTSInfraError } from '../errors';
  * const result = await deployer.deploy({
  *   domain: 'auth.example.com',
  *   adminEmail: 'admin@example.com',
- *   region: 'us-east-1'
+ *   region: 'us-east-2'
  * });
  * 
  * console.log(`Authentik deployed: ${result.connectionDetails?.url}`);
@@ -100,7 +100,7 @@ export class AuthentikDeployer {
    * const result = await deployer.deploy({
    *   domain: 'auth.example.com',
    *   adminEmail: 'admin@example.com',
-   *   region: 'us-east-1',
+   *   region: 'us-east-2',
    *   vpcId: 'vpc-12345678'
    * });
    * 

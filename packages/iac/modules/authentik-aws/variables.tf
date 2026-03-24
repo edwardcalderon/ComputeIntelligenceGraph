@@ -6,7 +6,7 @@ variable "domain" {
 variable "region" {
   description = "AWS region"
   type        = string
-  default     = "us-east-1"
+  default     = "us-east-2"
 }
 
 variable "route53_zone_id" {

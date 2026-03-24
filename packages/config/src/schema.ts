@@ -24,7 +24,7 @@ export const CigConfigSchema = z.object({
     model: z.string().default('gpt-4o-mini'),
   }).default({}),
   aws: z.object({
-    region: z.string().default('us-east-1'),
+    region: z.string().default('us-east-2'),
     roleArn: z.string().optional(),
   }).default({}),
   gcp: z.object({

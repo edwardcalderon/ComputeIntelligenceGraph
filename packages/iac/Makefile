@@ -70,11 +70,11 @@ restart:
 	@CLUSTER=$$($(TF) output -raw ecs_cluster_name 2>/dev/null); \
 	SERVICE=$$($(TF) output -raw ecs_service_name 2>/dev/null); \
 	echo "Force-restarting $$SERVICE in $$CLUSTER"; \
-	aws ecs update-service --cluster $$CLUSTER --service $$SERVICE --force-new-deployment --region us-east-1
+	aws ecs update-service --cluster $$CLUSTER --service $$SERVICE --force-new-deployment --region us-east-2
 
 # Retrieve the admin password from Secrets Manager
 admin-password:
 	@aws secretsmanager get-secret-value \
 	  --secret-id "authentik/auth.cig.technology/admin-password" \
-	  --region us-east-1 \
+	  --region us-east-2 \
 	  --query SecretString --output text

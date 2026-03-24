@@ -32,7 +32,7 @@ describe('CigConfigSchema', () => {
     expect(result.discovery.cartographyUrl).toBe('http://localhost:8001');
     expect(result.chatbot.chromaUrl).toBe('http://localhost:8000');
     expect(result.chatbot.model).toBe('gpt-4o-mini');
-    expect(result.aws.region).toBe('us-east-1');
+    expect(result.aws.region).toBe('us-east-2');
     expect(result.gcp.region).toBe('us-central1');
     expect(result.observability.metricsEnabled).toBe(true);
     expect(result.observability.logLevel).toBe('info');

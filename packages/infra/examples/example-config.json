@@ -1,6 +1,6 @@
 {
   "aws": {
-    "region": "us-east-1",
+    "region": "us-east-2",
     "accountId": "123456789012",
     "profile": "default"
   },
@@ -17,7 +17,7 @@
   },
   "api": {
     "domain": "api.cig.technology",
-    "region": "us-east-1",
+    "region": "us-east-2",
     "imageRepository": "cig-api-production",
     "containerPort": 8080,
     "cpu": 512,
@@ -25,14 +25,14 @@
     "desiredCount": 1,
     "createPipeline": false,
     "corsOrigins": ["https://app.cig.lat", "https://cig.lat"],
-    "databaseUrlSecretArn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:cig/prod/api/database-url",
-    "jwtSecretArn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:cig/prod/api/jwt-secret",
+    "databaseUrlSecretArn": "arn:aws:secretsmanager:us-east-2:123456789012:secret:cig/prod/api/database-url",
+    "jwtSecretArn": "arn:aws:secretsmanager:us-east-2:123456789012:secret:cig/prod/api/jwt-secret",
     "authentikSecretRefs": {
-      "issuerUrlSecretArn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:cig/prod/api/authentik-issuer",
-      "jwksUriSecretArn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:cig/prod/api/authentik-jwks",
-      "tokenEndpointSecretArn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:cig/prod/api/authentik-token",
-      "oidcClientIdSecretArn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:cig/prod/api/oidc-client-id",
-      "oidcClientSecretSecretArn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:cig/prod/api/oidc-client-secret"
+      "issuerUrlSecretArn": "arn:aws:secretsmanager:us-east-2:123456789012:secret:cig/prod/api/authentik-issuer",
+      "jwksUriSecretArn": "arn:aws:secretsmanager:us-east-2:123456789012:secret:cig/prod/api/authentik-jwks",
+      "tokenEndpointSecretArn": "arn:aws:secretsmanager:us-east-2:123456789012:secret:cig/prod/api/authentik-token",
+      "oidcClientIdSecretArn": "arn:aws:secretsmanager:us-east-2:123456789012:secret:cig/prod/api/oidc-client-id",
+      "oidcClientSecretSecretArn": "arn:aws:secretsmanager:us-east-2:123456789012:secret:cig/prod/api/oidc-client-secret"
     }
   },
   "iac": {

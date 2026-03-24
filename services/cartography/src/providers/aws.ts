@@ -58,7 +58,7 @@ export async function scanAWS(): Promise<CloudScanResult> {
     provider: 'aws',
     identifier: process.env['AWS_ACCOUNT_ID'] ?? 'unknown',
     metadata_json: {
-      region: process.env['AWS_REGION'] ?? 'us-east-1',
+      region: process.env['AWS_REGION'] ?? 'us-east-2',
       profile: process.env['AWS_PROFILE'] ?? 'default',
       role_arn: process.env['AWS_ROLE_ARN'] ?? null,
       scan_note: 'Stub scan — full enumeration requires AWS SDK integration',
@@ -70,7 +70,7 @@ export async function scanAWS(): Promise<CloudScanResult> {
     provider: 'aws',
     status: 'completed',
     summary_json: {
-      region: process.env['AWS_REGION'] ?? 'us-east-1',
+      region: process.env['AWS_REGION'] ?? 'us-east-2',
       asset_count: assets.length,
       errors,
     },

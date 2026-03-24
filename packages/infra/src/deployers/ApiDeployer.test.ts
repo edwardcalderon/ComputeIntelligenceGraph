@@ -7,7 +7,7 @@ describe('ApiDeployer', () => {
   it('builds SST environment variables for a full API deploy', () => {
     const env = buildApiSstEnvironment({
       domain: 'api.cig.technology',
-      region: 'us-east-1',
+      region: 'us-east-2',
       imageRepository: 'cig-api-production',
       containerPort: 8080,
       cpu: 512,
@@ -31,7 +31,7 @@ describe('ApiDeployer', () => {
       },
       corsOrigins: ['https://app.cig.lat'],
       createPipeline: false,
-      imageUri: '123456789012.dkr.ecr.us-east-1.amazonaws.com/cig-api-production:v0.1.58',
+      imageUri: '123456789012.dkr.ecr.us-east-2.amazonaws.com/cig-api-production:v0.1.58',
     });
 
     expect(env.API_DOMAIN).toBe('api.cig.technology');
@@ -57,7 +57,7 @@ describe('ApiDeployer', () => {
 
     await deployer.deploy({
       domain: 'api.cig.technology',
-      region: 'us-east-1',
+      region: 'us-east-2',
       imageRepository: 'cig-api-production',
       bootstrapOnly: true,
       createPipeline: false,

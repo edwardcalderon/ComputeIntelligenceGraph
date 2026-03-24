@@ -56,7 +56,7 @@ export class IACIntegration {
    * ```typescript
    * const networkingModule = iacIntegration.getNetworkingModule({
    *   vpc_cidr: '10.0.0.0/16',
-   *   availability_zones: ['us-east-1a', 'us-east-1b']
+   *   availability_zones: ['us-east-2a', 'us-east-2b']
    * });
    * ```
    */
@@ -78,7 +78,7 @@ export class IACIntegration {
    * @remarks
    * The compute module provides EC2 instance infrastructure.
    * Common configuration parameters include:
-   * - region: AWS region (e.g., 'us-east-1')
+   * - region: AWS region (e.g., 'us-east-2')
    * - instance_type: EC2 instance type (e.g., 't3.micro')
    * - vpc_id: VPC ID where the instance will be deployed
    * - subnet_id: Subnet ID where the instance will be deployed
@@ -88,7 +88,7 @@ export class IACIntegration {
    * @example
    * ```typescript
    * const computeModule = iacIntegration.getComputeModule({
-   *   region: 'us-east-1',
+   *   region: 'us-east-2',
    *   instance_type: 't3.micro',
    *   vpc_id: 'vpc-12345678',
    *   subnet_id: 'subnet-12345678'

@@ -8,7 +8,7 @@ class CartographyConfig(BaseSettings):
     neo4j_password: str = "neo4j"
 
     aws_role_arn: Optional[str] = None
-    aws_regions: str = "us-east-1"
+    aws_regions: str = "us-east-2"
 
     gcp_enabled: bool = False
     gcp_project_id: Optional[str] = None
@@ -22,6 +22,7 @@ class CartographyConfig(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 
 config = CartographyConfig()

@@ -30,7 +30,7 @@ import { LSTSInfraError } from './errors';
  * // Deploy Authentik
  * const result = await wrapper.deployAuthentik({
  *   environment: 'production',
- *   region: 'us-east-1'
+ *   region: 'us-east-2'
  * });
  * 
  * console.log(`Deployed to: ${result.url}`);
@@ -77,7 +77,7 @@ export class InfraWrapper {
    * ```typescript
    * const result = await wrapper.deployAuthentik({
    *   environment: 'production',
-   *   region: 'us-east-1',
+   *   region: 'us-east-2',
    *   config: { vpcId: 'vpc-12345' }
    * });
    * 
@@ -160,7 +160,7 @@ export class InfraWrapper {
    * ```typescript
    * const result = await wrapper.deployDashboard({
    *   environment: 'production',
-   *   region: 'us-east-1'
+   *   region: 'us-east-2'
    * });
    * 
    * if (result.success) {

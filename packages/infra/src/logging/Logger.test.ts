@@ -113,14 +113,14 @@ describe('Logger', () => {
       const config: LoggingConfig = { level: 'info', timestamps: false };
       const logger = new Logger(config);
 
-      logger.info('deployment started', { environment: 'production', region: 'us-east-1' });
+      logger.info('deployment started', { environment: 'production', region: 'us-east-2' });
 
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
       const logOutput = consoleLogSpy.mock.calls[0][0];
       
       expect(logOutput).toContain('[INFO] deployment started');
       expect(logOutput).toContain('"environment":"production"');
-      expect(logOutput).toContain('"region":"us-east-1"');
+      expect(logOutput).toContain('"region":"us-east-2"');
     });
 
     it('should merge constructor context with log context', () => {

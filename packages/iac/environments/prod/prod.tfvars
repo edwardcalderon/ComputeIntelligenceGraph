@@ -3,7 +3,7 @@
 # Stack: EC2 t3.small | 30 GB gp3 | ALB | ACM | Route53
 
 domain          = "auth.cig.technology"
-region          = "us-east-1"
+region          = "us-east-2"
 route53_zone_id = "Z0810853438OE5M2AKZP"
 
 # Authentik — 2026.2.1 (no Redis required)

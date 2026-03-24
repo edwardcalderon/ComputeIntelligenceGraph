@@ -47,7 +47,7 @@ export interface DeploymentResult {
  * ```typescript
  * const options: DeploymentOptions = {
  *   environment: 'production',
- *   region: 'us-east-1',
+ *   region: 'us-east-2',
  *   config: { enableBackups: true }
  * };
  * ```
@@ -137,7 +137,7 @@ export interface ResourceInfo {
  * ```typescript
  * const config: InfraConfig = {
  *   aws: {
- *     region: 'us-east-1',
+ *     region: 'us-east-2',
  *     profile: 'default'
  *   },
  *   authentik: {
@@ -191,7 +191,7 @@ export interface InfraConfig {
  * ```
  */
 export interface AWSConfig {
-  /** AWS region (e.g., 'us-east-1') */
+  /** AWS region (e.g., 'us-east-2') */
   region: string;
   /** AWS account ID (optional, can be detected) */
   accountId?: string;
@@ -425,7 +425,7 @@ export interface DashboardDeploymentResult extends DeploymentResult {
  *   modulePath: 'packages/iac/modules/networking',
  *   variables: {
  *     vpc_cidr: '10.0.0.0/16',
- *     availability_zones: ['us-east-1a', 'us-east-1b']
+ *     availability_zones: ['us-east-2a', 'us-east-2b']
  *   }
  * };
  * ```

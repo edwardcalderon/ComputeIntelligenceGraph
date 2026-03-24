@@ -116,7 +116,7 @@ function loadApiStackConfig(): ApiStackConfig {
   return {
     appName: process.env.INFRA_APP_NAME ?? 'cig-api',
     stage,
-    region: process.env.AWS_REGION ?? process.env.API_REGION ?? 'us-east-1',
+    region: process.env.AWS_REGION ?? process.env.API_REGION ?? 'us-east-2',
     domain,
     hostedZoneDomain:
       optionalEnv('API_HOSTED_ZONE_DOMAIN') ??

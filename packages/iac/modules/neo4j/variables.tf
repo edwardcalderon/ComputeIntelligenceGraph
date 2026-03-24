@@ -1,7 +1,7 @@
 variable "region" {
   description = "AWS region for the Neo4j instance"
   type        = string
-  default     = "us-east-1"
+  default     = "us-east-2"
 }
 
 variable "name_prefix" {

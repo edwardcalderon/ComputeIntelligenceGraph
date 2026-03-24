@@ -26,11 +26,11 @@ describe('InfraWrapper', () => {
     it('should accept deployment options and log operation', async () => {
       const options: DeploymentOptions = {
         environment: 'test',
-        region: 'us-east-1'
+        region: 'us-east-2'
       };
 
       const mockConfig: InfraConfig = {
-        aws: { region: 'us-east-1' },
+        aws: { region: 'us-east-2' },
         authentik: {
           domain: 'auth.test.com',
           adminEmail: 'admin@test.com'
@@ -65,11 +65,11 @@ describe('InfraWrapper', () => {
     it('should accept deployment options and log operation', async () => {
       const options: DeploymentOptions = {
         environment: 'test',
-        region: 'us-east-1'
+        region: 'us-east-2'
       };
 
       const mockConfig: InfraConfig = {
-        aws: { region: 'us-east-1' },
+        aws: { region: 'us-east-2' },
         authentik: {
           domain: 'auth.test.com',
           adminEmail: 'admin@test.com'
@@ -103,7 +103,7 @@ describe('InfraWrapper', () => {
   describe('listDeployments', () => {
     it('should accept environment parameter and return deployments', async () => {
       const mockConfig: InfraConfig = {
-        aws: { region: 'us-east-1' },
+        aws: { region: 'us-east-2' },
         authentik: {
           domain: 'auth.test.com',
           adminEmail: 'admin@test.com'
