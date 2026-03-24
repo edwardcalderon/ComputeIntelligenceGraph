@@ -1,3 +1,23 @@
+## [0.1.64](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.63...v0.1.64) (2026-03-24)
+
+
+### Bug Fixes
+
+* **api:** add explicit logout route rate-limit config ([775b147](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/775b14752dd4ebd3c831503faefcc4843d10161c))
+* **api:** harden logout auth and unblock PR9 lint checks ([e8c9720](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/e8c972070896ec4d2022a04b393b8a52ba0ca87e))
+* **api:** relax logout auth gate and keep explicit rate-limit metadata ([a0d441d](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/a0d441dfd0686dc02c0af03d0f059a55546dbc9a))
+* **api:** use codeql-modeled fastify rate limiter on logout ([d0cead0](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/d0cead01efcbc16d0cefa4be20dad779b94cd842))
+* **release:** ignore build metadata tags in prod workflows ([04c3a7e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/04c3a7e349e8f95a7ac92d20b2297708280253f6))
+
+
+### Features
+
+* **api:** add token refresh endpoint and coverage ([4cdc329](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/4cdc329551fd39e5d2b2047a7604eb5514bce246))
+
+
+
+
+
 ## [0.1.63](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.62...v0.1.63) (2026-03-24)
 
 
