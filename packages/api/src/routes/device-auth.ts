@@ -16,7 +16,7 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import crypto from 'crypto';
 import { revokeAuthentikToken } from '@cig/auth';
 import { query } from '../db/client';
-import { authenticate, generateJwt, Permission, verifyJwt } from '../auth';
+import { authenticate, generateJwt, Permission } from '../auth';
 import { writeAuditEvent } from '../audit';
 
 // ---------------------------------------------------------------------------
@@ -369,18 +369,15 @@ export async function deviceAuthRoutes(app: FastifyInstance): Promise<void> {
   // Requirement 12.9 — invalidate session token
   app.post(
     '/api/v1/auth/logout',
+    { preHandler: [authenticate] },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const authHeader = request.headers['authorization'];
       const ipAddress = getClientIp(request);
-      let userId = 'unknown';
+      const user = (request as any).user as { sub?: string } | undefined;
+      const userId = user?.sub ?? 'unknown';
 
       if (authHeader?.startsWith('Bearer ')) {
         const token = authHeader.slice(7);
-        try {
-          userId = verifyJwt(token).sub;
-        } catch {
-          userId = 'unknown';
-        }
 
         // Mark any device_auth_record whose access_token matches as expired
         await query(
