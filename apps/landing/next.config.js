@@ -77,7 +77,27 @@ function writeRuntimeVersionAsset() {
   fs.writeFileSync(outPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
 }
 
+function writeServiceWorkerAsset() {
+  const signature = [version, releaseTag, buildNumber].filter(Boolean).join(' ');
+  const source = `/* CIG landing update worker ${signature} */
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
+`;
+  const outDir = path.join(__dirname, 'public');
+  const outPath = path.join(outDir, 'sw.js');
+  fs.mkdirSync(outDir, { recursive: true });
+  fs.writeFileSync(outPath, source, 'utf8');
+}
+
 writeRuntimeVersionAsset();
+writeServiceWorkerAsset();
 
 const nextConfig = {
   transpilePackages: ['@cig/auth', '@cig/ui', '@edcalderon/auth'],
@@ -89,6 +109,7 @@ const nextConfig = {
   basePath: useLegacyBasePath ? legacyBasePath : '',
   assetPrefix: useLegacyBasePath ? legacyBasePath : '',
   env: {
+    NEXT_PUBLIC_BASE_PATH: useLegacyBasePath ? legacyBasePath : '',
     NEXT_PUBLIC_APP_VERSION: version,
     NEXT_PUBLIC_APP_BUILD: buildNumber,
     NEXT_PUBLIC_RELEASE_TAG: releaseTag,

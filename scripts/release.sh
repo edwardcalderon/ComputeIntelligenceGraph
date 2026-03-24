@@ -355,25 +355,6 @@ else
   fi
 fi
 
-# ── Step 4b: Verify production builds ─────────────────────────────────────
-if $SKIP_BUILD; then
-  warn "Build verification skipped (--no-build)"
-else
-  step "4b/8 Verifying production builds (landing, dashboard container, wizard-ui)"
-  if ! $DRY_RUN; then
-    pnpm --filter @cig/landing build 2>&1 || { error "Landing build failed. Fix it before releasing."; exit 1; }
-    success "Landing build OK"
-    verify_dashboard_container_build "${CURRENT_VERSION}" || { error "Dashboard container build failed. Fix it before releasing."; exit 1; }
-    success "Dashboard container build OK"
-    pnpm --filter @cig/wizard-ui build 2>&1 || { error "Wizard-UI build failed. Fix it before releasing."; exit 1; }
-    success "Wizard-UI build OK"
-  else
-    info "[dry-run] Would run: pnpm --filter @cig/landing build"
-    info "[dry-run] Would run: docker build -f infra/docker/Dockerfile.dashboard ..."
-    info "[dry-run] Would run: pnpm --filter @cig/wizard-ui build"
-  fi
-fi
-
 # ── Step 5: Bump version across all packages ───────────────────────────────
 if $BUILD_RELEASE; then
   step "5/8 Preparing build release"
@@ -398,8 +379,32 @@ else
   write_release_metadata "${NEXT_VERSION}" "${RELEASE_TAG}" "${BUMP_TYPE}"
 fi
 
-# ── Step 6: Generate changelog ──────────────────────────────────────────────
-step "6/8 Generating changelog"
+# ── Step 6: Verify production builds ──────────────────────────────────────
+if $SKIP_BUILD; then
+  warn "Build verification skipped (--no-build)"
+else
+  step "6/8 Verifying production builds (landing, dashboard container, wizard-ui)"
+  if ! $DRY_RUN; then
+    BUILD_VERSION="$CURRENT_VERSION"
+    if ! $BUILD_RELEASE; then
+      BUILD_VERSION="$NEXT_VERSION"
+    fi
+
+    pnpm --filter @cig/landing build 2>&1 || { error "Landing build failed. Fix it before releasing."; exit 1; }
+    success "Landing build OK"
+    verify_dashboard_container_build "${BUILD_VERSION}" || { error "Dashboard container build failed. Fix it before releasing."; exit 1; }
+    success "Dashboard container build OK"
+    pnpm --filter @cig/wizard-ui build 2>&1 || { error "Wizard-UI build failed. Fix it before releasing."; exit 1; }
+    success "Wizard-UI build OK"
+  else
+    info "[dry-run] Would run: pnpm --filter @cig/landing build"
+    info "[dry-run] Would run: docker build -f infra/docker/Dockerfile.dashboard ..."
+    info "[dry-run] Would run: pnpm --filter @cig/wizard-ui build"
+  fi
+fi
+
+# ── Step 7: Generate changelog ──────────────────────────────────────────────
+step "7/8 Generating changelog"
 if $BUILD_RELEASE; then
   info "Skipping changelog update for build-only release"
 else
@@ -411,8 +416,8 @@ else
   fi
 fi
 
-# ── Step 7: Update README ──────────────────────────────────────────────────
-step "7/8 Updating README"
+# ── Step 8: Update README ──────────────────────────────────────────────────
+step "8/8 Updating README"
 if $BUILD_RELEASE; then
   info "Skipping README version update for build-only release"
 else
@@ -431,8 +436,8 @@ else
   fi
 fi
 
-# ── Step 8: Commit & tag ──────────────────────────────────────────────────
-step "8/8 Committing, tagging, and pushing"
+# ── Step 9: Commit & tag ──────────────────────────────────────────────────
+step "9/9 Committing, tagging, and pushing"
 if $BUILD_RELEASE; then
   COMMIT_MSG="chore(release): ${RELEASE_TAG}
 

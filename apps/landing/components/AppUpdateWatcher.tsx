@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { UpdateDialog } from "@cig/ui";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type RuntimeVersionPayload = {
   version?: string;
@@ -11,11 +12,18 @@ type RuntimeVersionPayload = {
 const POLL_INTERVAL_MS = 60_000;
 const DISMISS_PREFIX = "cig:landing-update-dismissed:";
 
+function resolveAppPath(pathname: string): string {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim().replace(/\/$/, "") || "";
+  const normalizedPath = pathname.startsWith("/") ? pathname : `/${pathname}`;
+  return basePath ? `${basePath}${normalizedPath}` : normalizedPath;
+}
+
 function normalizeVersion(v: RuntimeVersionPayload | null): string {
   if (!v) return "";
   const release = typeof v.releaseTag === "string" ? v.releaseTag.trim() : "";
   const version = typeof v.version === "string" ? v.version.trim() : "";
-  return release || version;
+  const build = v.buildNumber == null ? "" : String(v.buildNumber).trim();
+  return release || version || build;
 }
 
 function currentRuntimeVersion(): RuntimeVersionPayload {
@@ -28,15 +36,14 @@ function currentRuntimeVersion(): RuntimeVersionPayload {
 
 async function fetchRuntimeVersion(): Promise<RuntimeVersionPayload | null> {
   try {
-    const res = await fetch(`/runtime-version.json?ts=${Date.now()}`, {
+    const res = await fetch(`${resolveAppPath("/runtime-version.json")}?ts=${Date.now()}`, {
       cache: "no-store",
       headers: {
         "cache-control": "no-cache",
       },
     });
     if (!res.ok) return null;
-    const data = (await res.json()) as RuntimeVersionPayload;
-    return data;
+    return (await res.json()) as RuntimeVersionPayload;
   } catch {
     return null;
   }
@@ -45,13 +52,18 @@ async function fetchRuntimeVersion(): Promise<RuntimeVersionPayload | null> {
 export function AppUpdateWatcher() {
   const current = useMemo(() => currentRuntimeVersion(), []);
   const [latest, setLatest] = useState<RuntimeVersionPayload | null>(null);
+  const latestVersionRef = useRef("");
+  const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
+  const reloadRequestedRef = useRef(false);
 
   useEffect(() => {
     let stopped = false;
     const currentVersion = normalizeVersion(current);
+    const swUrl = resolveAppPath("/sw.js");
+    const swScope = resolveAppPath("/");
 
-    async function check() {
-      if (document.visibilityState === "hidden") return;
+    async function check({ respectVisibility = true }: { respectVisibility?: boolean } = {}) {
+      if (respectVisibility && document.visibilityState === "hidden") return;
       const remote = await fetchRuntimeVersion();
       if (stopped || !remote) return;
 
@@ -60,17 +72,65 @@ export function AppUpdateWatcher() {
 
       const dismissalKey = `${DISMISS_PREFIX}${currentVersion}->${remoteVersion}`;
       if (sessionStorage.getItem(dismissalKey) === "1") return;
+      if (latestVersionRef.current === remoteVersion) return;
 
+      latestVersionRef.current = remoteVersion;
       setLatest(remote);
     }
 
+    async function registerServiceWorker() {
+      if (!("serviceWorker" in navigator)) return;
+
+      try {
+        const workerRegistration = await navigator.serviceWorker.register(swUrl, {
+          scope: swScope,
+        });
+
+        if (stopped) return;
+
+        registrationRef.current = workerRegistration;
+
+        const handleUpdateFound = () => {
+          const installingWorker = workerRegistration.installing;
+          if (!installingWorker) return;
+
+          installingWorker.addEventListener("statechange", () => {
+            if (installingWorker.state === "installed" && navigator.serviceWorker.controller) {
+              void check({ respectVisibility: false });
+            }
+          });
+        };
+
+        workerRegistration.addEventListener("updatefound", handleUpdateFound);
+
+        if (workerRegistration.waiting && navigator.serviceWorker.controller) {
+          void check({ respectVisibility: false });
+        }
+      } catch {
+        // Runtime-version polling remains the fallback if service workers are unavailable.
+      }
+    }
+
+    const handleControllerChange = () => {
+      if (reloadRequestedRef.current) {
+        window.location.reload();
+      }
+    };
+
+    void registerServiceWorker();
+    navigator.serviceWorker?.addEventListener("controllerchange", handleControllerChange);
+
     void check();
     const id = window.setInterval(() => {
+      if (registrationRef.current) {
+        void registrationRef.current.update().catch(() => {});
+      }
       void check();
     }, POLL_INTERVAL_MS);
 
     return () => {
       stopped = true;
+      navigator.serviceWorker?.removeEventListener("controllerchange", handleControllerChange);
       window.clearInterval(id);
     };
   }, [current]);
@@ -81,32 +141,35 @@ export function AppUpdateWatcher() {
   if (!latest || !latestVersion || latestVersion === currentVersion) return null;
 
   const dismissalKey = `${DISMISS_PREFIX}${currentVersion}->${latestVersion}`;
+  const reload = () => {
+    const worker = registrationRef.current?.waiting;
+
+    if (worker) {
+      reloadRequestedRef.current = true;
+      worker.postMessage({ type: "SKIP_WAITING" });
+      return;
+    }
+
+    window.location.reload();
+  };
 
   return (
-    <div className="fixed right-4 top-16 z-[90] w-[min(420px,calc(100vw-2rem))] rounded-xl border border-cyan-500/30 bg-white/95 p-4 shadow-2xl backdrop-blur dark:bg-zinc-900/95">
-      <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Update available</p>
-      <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-        Current {currentVersion || "unknown"} - latest {latestVersion}
-      </p>
-      <div className="mt-3 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => window.location.reload()}
-          className="rounded-md bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-cyan-500 transition-colors"
-        >
-          Reload now
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            sessionStorage.setItem(dismissalKey, "1");
-            setLatest(null);
-          }}
-          className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 transition-colors dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-        >
-          Later
-        </button>
-      </div>
-    </div>
+    <UpdateDialog
+      open
+      title="Update available"
+      description="A newer build is ready. Reload now to pick up the latest files and service worker."
+      currentLabel="Current"
+      latestLabel="Latest"
+      currentVersion={currentVersion || "unknown"}
+      latestVersion={latestVersion || "unknown"}
+      reloadLabel="Reload now"
+      laterLabel="Later"
+      onReload={reload}
+      onDismiss={() => {
+        sessionStorage.setItem(dismissalKey, "1");
+        latestVersionRef.current = "";
+        setLatest(null);
+      }}
+    />
   );
 }

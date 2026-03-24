@@ -87,16 +87,15 @@ export function ThemeProvider({ theme, children, className }: ThemeProviderProps
     .map(([k, v]) => `${k}:${v}`)
     .join(";");
 
-  return (
-    <div
-      data-cig-theme={resolved.name}
-      className={className}
-      style={resolved.vars as React.CSSProperties}
-    >
-      {/* Inline style block so vars cascade to portals/fixed elements too */}
-      <style>{`[data-cig-theme="${resolved.name}"]{${cssVars}}`}</style>
-      {children}
-    </div>
+  return React.createElement(
+    "div",
+    {
+      "data-cig-theme": resolved.name,
+      className,
+      style: resolved.vars as React.CSSProperties,
+    },
+    React.createElement("style", null, `[data-cig-theme="${resolved.name}"]{${cssVars}}`),
+    children
   );
 }
 
