@@ -44,6 +44,86 @@ function normalizeQueryResult<T extends QueryResultRow = QueryResultRow>(
   return { rows, rowCount: rowCount ?? rows.length };
 }
 
+export function translatePlaceholdersForPostgres(sql: string): string {
+  let result = '';
+  let placeholderIndex = 1;
+  let inSingleQuote = false;
+  let inDoubleQuote = false;
+  let inLineComment = false;
+  let inBlockComment = false;
+
+  for (let index = 0; index < sql.length; index += 1) {
+    const char = sql[index]!;
+    const next = sql[index + 1] ?? '';
+
+    if (inLineComment) {
+      result += char;
+      if (char === '\n') {
+        inLineComment = false;
+      }
+      continue;
+    }
+
+    if (inBlockComment) {
+      result += char;
+      if (char === '*' && next === '/') {
+        result += next;
+        index += 1;
+        inBlockComment = false;
+      }
+      continue;
+    }
+
+    if (!inSingleQuote && !inDoubleQuote && char === '-' && next === '-') {
+      result += char + next;
+      index += 1;
+      inLineComment = true;
+      continue;
+    }
+
+    if (!inSingleQuote && !inDoubleQuote && char === '/' && next === '*') {
+      result += char + next;
+      index += 1;
+      inBlockComment = true;
+      continue;
+    }
+
+    if (char === "'" && !inDoubleQuote) {
+      result += char;
+      if (inSingleQuote && next === "'") {
+        result += next;
+        index += 1;
+        continue;
+      }
+
+      inSingleQuote = !inSingleQuote;
+      continue;
+    }
+
+    if (char === '"' && !inSingleQuote) {
+      result += char;
+      if (inDoubleQuote && next === '"') {
+        result += next;
+        index += 1;
+        continue;
+      }
+
+      inDoubleQuote = !inDoubleQuote;
+      continue;
+    }
+
+    if (!inSingleQuote && !inDoubleQuote && char === '?') {
+      result += `$${placeholderIndex}`;
+      placeholderIndex += 1;
+      continue;
+    }
+
+    result += char;
+  }
+
+  return result;
+}
+
 function buildPostgresDriver(): DatabaseDriver {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Pool } = require('pg') as typeof import('pg');
@@ -53,7 +133,7 @@ function buildPostgresDriver(): DatabaseDriver {
     sql: string,
     params?: unknown[]
   ): Promise<QueryResult<T>> => {
-    const result = await pool.query<T>(sql, params);
+    const result = await pool.query<T>(translatePlaceholdersForPostgres(sql), params);
     return normalizeQueryResult(result.rows, result.rowCount);
   };
 
@@ -66,7 +146,7 @@ function buildPostgresDriver(): DatabaseDriver {
         sql: string,
         params?: unknown[]
       ): Promise<QueryResult<TRow>> => {
-        const result = await client.query<TRow>(sql, params);
+        const result = await client.query<TRow>(translatePlaceholdersForPostgres(sql), params);
         return normalizeQueryResult(result.rows, result.rowCount);
       };
 

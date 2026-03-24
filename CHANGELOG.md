@@ -1,3 +1,17 @@
+## [0.1.89](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.88...v0.1.89) (2026-03-24)
+
+### Detected changes
+- packages: 2 changed file(s)
+  - packages/api/src/db/client.test.ts
+  - packages/api/src/db/client.ts
+
+
+## [0.1.89](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.88...v0.1.89) (2026-03-24)
+
+
+
+
+
 ## [0.1.88](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.87...v0.1.88) (2026-03-24)
 
 ### Detected changes
