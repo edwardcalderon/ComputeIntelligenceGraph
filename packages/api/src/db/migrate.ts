@@ -51,6 +51,27 @@ function buildChecksum(sql: string): string {
   return hash.toString(16).padStart(8, '0');
 }
 
+async function prepareLegacyUsersTableIfNeeded(
+  executor: typeof query
+): Promise<void> {
+  if (!isPostgresDatabase()) {
+    return;
+  }
+
+  const legacyUsersTable = await executor<{ exists: boolean }>(
+    "SELECT to_regclass('public.users') IS NOT NULL AS exists"
+  );
+
+  if (!legacyUsersTable.rows[0]?.exists) {
+    return;
+  }
+
+  await executor('ALTER TABLE users ADD COLUMN IF NOT EXISTS oidc_sub TEXT');
+  await executor('ALTER TABLE users ADD COLUMN IF NOT EXISTS groups TEXT');
+  await executor('UPDATE users SET oidc_sub = sub WHERE oidc_sub IS NULL AND sub IS NOT NULL');
+  await executor("UPDATE users SET groups = '[]' WHERE groups IS NULL");
+}
+
 export async function applyMigrations(
   options: ApplyMigrationsOptions = {}
 ): Promise<MigrationRunResult> {
@@ -87,6 +108,10 @@ export async function applyMigrations(
     }
 
     await withTransaction(async (txQuery) => {
+      if (fileName === '001_auth_provisioning.sql') {
+        await prepareLegacyUsersTableIfNeeded(txQuery);
+      }
+
       await runMigration(sql, txQuery);
 
       await txQuery(insertMigrationSql, [fileName, checksum]);
