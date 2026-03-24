@@ -157,14 +157,13 @@ jobs:
           STATUS=$?
           set -e
 
-          echo "$OUTPUT"
-
           if [ "$STATUS" -ne 0 ]; then
             if printf '%s' "$OUTPUT" | grep -q 'Stage not found'; then
               echo 'SST stage not found yet; skipping bootstrap diff.'
               exit 0
             fi
 
+            echo 'SST diff failed; rerun locally for details.' >&2
             exit "$STATUS"
           fi
 

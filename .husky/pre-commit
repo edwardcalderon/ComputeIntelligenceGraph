@@ -2,5 +2,8 @@
 
 # === secrets-check: start ===
 echo "🔒 Running secrets check…"
-npx versioning check-secrets 2>/dev/null
+if ! pnpm exec versioning check-secrets >/dev/null 2>&1; then
+  echo "Secrets check failed."
+  exit 1
+fi
 # === secrets-check: end ===

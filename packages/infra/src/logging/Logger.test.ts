@@ -123,6 +123,30 @@ describe('Logger', () => {
       expect(logOutput).toContain('"region":"us-east-2"');
     });
 
+    it('should redact secret-bearing fields in structured context', () => {
+      const config: LoggingConfig = { level: 'info', timestamps: false };
+      const logger = new Logger(config);
+
+      logger.info('deployment started', {
+        tokenEndpoint: 'https://auth.example.com/application/o/token/',
+        oidcClientId: 'client-id-123',
+        oidcClientSecret: 'client-secret-456',
+        connectionString: 'postgresql://dbuser:dbpassword@db.example.com/app',
+        publicUrl: 'https://auth.cig.technology',
+      });
+
+      expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+      const logOutput = consoleLogSpy.mock.calls[0][0];
+
+      expect(logOutput).toContain('"tokenEndpoint":"[REDACTED]"');
+      expect(logOutput).toContain('"oidcClientId":"[REDACTED]"');
+      expect(logOutput).toContain('"oidcClientSecret":"[REDACTED]"');
+      expect(logOutput).toContain(
+        '"connectionString":"postgresql://dbuser:[REDACTED]@db.example.com/app"'
+      );
+      expect(logOutput).toContain('"publicUrl":"https://auth.cig.technology"');
+    });
+
     it('should merge constructor context with log context', () => {
       const config: LoggingConfig = { level: 'info', timestamps: false };
       const logger = new Logger(config, { operation: 'deploy' });

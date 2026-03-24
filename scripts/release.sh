@@ -535,7 +535,10 @@ fi
 
 if ! $DRY_RUN; then
   stage_release_changes
-  pnpm exec versioning check-secrets 2>&1
+  if ! pnpm exec versioning check-secrets >/dev/null 2>&1; then
+    error "Secrets check failed. Review staged changes locally."
+    exit 1
+  fi
   success "Staged release changes passed secrets check"
   if git diff --cached --quiet --ignore-submodules --; then
     warn "No releasable source changes staged; tagging current HEAD"

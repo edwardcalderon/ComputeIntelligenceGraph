@@ -5,6 +5,76 @@
 
 import { LoggingConfig } from '../types';
 
+const SENSITIVE_KEY_SEGMENTS = [
+  'secret',
+  'password',
+  'token',
+  'clientsecret',
+  'clientid',
+  'apikey',
+  'accesskey',
+  'privatekey',
+  'databaseurl',
+  'anonkey',
+  'servicerolekey',
+];
+
+const SENSITIVE_TEXT_PATTERNS: RegExp[] = [
+  /(\b[a-z][a-z0-9+.-]*:\/\/[^:\s/]+:)([^@\s/]+)@/gi,
+  /([?&](?:token|secret|password|client_id|client_secret|api_key|access_key|private_key)=)([^&\s]+)/gi,
+  /([A-Za-z0-9._-]*(?:secret|password|token|clientsecret|clientid|apikey|accesskey|privatekey|databaseurl|anonkey|servicerolekey)[A-Za-z0-9._-]*\s*[:=]\s*)([^\s,;'"`]+)/gi,
+];
+
+function normalizeKey(key: string): string {
+  return key.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function isSensitiveKey(key: string): boolean {
+  const normalized = normalizeKey(key);
+  return SENSITIVE_KEY_SEGMENTS.some((segment) => normalized.includes(segment));
+}
+
+function redactText(value: string): string {
+  return SENSITIVE_TEXT_PATTERNS.reduce((current, pattern) => {
+    const replacement = pattern === SENSITIVE_TEXT_PATTERNS[0] ? '$1[REDACTED]@' : '$1[REDACTED]';
+    return current.replace(pattern, replacement);
+  }, value);
+}
+
+function sanitizeLogValue(
+  value: unknown,
+  key?: string,
+  seen = new WeakSet<object>()
+): unknown {
+  if (key && isSensitiveKey(key)) {
+    return '[REDACTED]';
+  }
+
+  if (typeof value === 'string') {
+    return redactText(value);
+  }
+
+  if (value === null || typeof value !== 'object') {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => sanitizeLogValue(entry, undefined, seen));
+  }
+
+  if (seen.has(value)) {
+    return '[Circular]';
+  }
+  seen.add(value);
+
+  const redacted: Record<string, unknown> = {};
+  for (const [childKey, childValue] of Object.entries(value as Record<string, unknown>)) {
+    redacted[childKey] = sanitizeLogValue(childValue, childKey, seen);
+  }
+
+  return redacted;
+}
+
 /**
  * Log level enumeration
  */
@@ -118,14 +188,14 @@ export class Logger {
     parts.push(`[${this.getLevelName(level).toUpperCase()}]`);
 
     // Add message
-    parts.push(message);
+    parts.push(redactText(message));
 
     // Merge contexts
     const mergedContext = { ...this.context, ...context };
 
     // Add context if present
     if (Object.keys(mergedContext).length > 0) {
-      parts.push(JSON.stringify(mergedContext));
+      parts.push(JSON.stringify(sanitizeLogValue(mergedContext)));
     }
 
     // Output to appropriate stream

@@ -44,5 +44,4 @@ if grep -qi 'Stage not found' <<<"$diff_output"; then
 fi
 
 echo "Failed to inspect SST stage '$STAGE'." >&2
-echo "$diff_output" >&2
 exit 1

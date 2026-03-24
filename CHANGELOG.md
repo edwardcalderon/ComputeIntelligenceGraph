@@ -1,3 +1,21 @@
+## [0.1.81](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.80...v0.1.81) (2026-03-24)
+
+### Detected changes
+- .github: .github/workflows/deploy-api.yml
+- .husky: .husky/pre-commit
+- packages: 3 changed file(s)
+  - packages/infra/scripts/bootstrap-api.sh
+  - packages/infra/src/logging/Logger.test.ts
+  - packages/infra/src/logging/Logger.ts
+- scripts: scripts/release.sh
+
+
+## [0.1.81](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.80...v0.1.81) (2026-03-24)
+
+
+
+
+
 ## [0.1.80](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.79...v0.1.80) (2026-03-24)
 
 ### Detected changes
