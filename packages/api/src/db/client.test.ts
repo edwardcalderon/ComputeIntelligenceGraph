@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { closeDatabase, translatePlaceholdersForPostgres } from './client.js';
+import {
+  closeDatabase,
+  resolvePostgresPoolOptions,
+  translatePlaceholdersForPostgres,
+} from './client.js';
 
 const originalEnv = { ...process.env };
 
@@ -55,6 +59,20 @@ describe('translatePlaceholdersForPostgres', () => {
     ).toBe(
       "SELECT 'it''s ?' AS literal, \"col\"\"?name\" AS identifier WHERE status = $1 AND note = $2"
     );
+  });
+});
+
+describe('resolvePostgresPoolOptions', () => {
+  it('pins pg to IPv4 for Supabase-hosted connections', () => {
+    expect(
+      resolvePostgresPoolOptions(
+        'postgresql://postgres:secret@db.example.supabase.co:5432/postgres'
+      )
+    ).toEqual({
+      connectionString:
+        'postgresql://postgres:secret@db.example.supabase.co:5432/postgres',
+      family: 4,
+    });
   });
 });
 

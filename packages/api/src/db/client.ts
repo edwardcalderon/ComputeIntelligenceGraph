@@ -69,6 +69,21 @@ function isPostgresUrl(databaseUrl: string): boolean {
   return /^postgres(?:ql)?:\/\//.test(databaseUrl);
 }
 
+export interface PostgresPoolOptions {
+  connectionString: string;
+  family: 4;
+}
+
+export function resolvePostgresPoolOptions(databaseUrl: string): PostgresPoolOptions {
+  return {
+    connectionString: databaseUrl,
+    // Supabase exposes AAAA records for direct Postgres hosts. Some runners and
+    // local networks do not have IPv6 routing enabled, so pinning pg to IPv4
+    // avoids ENETUNREACH while keeping Supabase as the primary database.
+    family: 4,
+  };
+}
+
 function isSqliteUrl(databaseUrl: string): boolean {
   return databaseUrl.startsWith('sqlite:');
 }
@@ -183,7 +198,7 @@ export function translatePlaceholdersForPostgres(sql: string): string {
 function buildPostgresDriver(databaseUrl: string): DatabaseDriver {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Pool } = require('pg') as typeof import('pg');
-  const pool = new Pool({ connectionString: databaseUrl });
+  const pool = new Pool(resolvePostgresPoolOptions(databaseUrl));
 
   const runQuery = async <T extends QueryResultRow = QueryResultRow>(
     sql: string,
