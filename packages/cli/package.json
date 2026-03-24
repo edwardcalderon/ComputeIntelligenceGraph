@@ -1,6 +1,6 @@
 {
   "name": "@cig-technology/cli",
-  "version": "0.1.93",
+  "version": "0.1.94",
   "description": "Production-oriented CLI for bootstrapping and operating CIG nodes and self-hosted installs",
   "keywords": [
     "cig",
