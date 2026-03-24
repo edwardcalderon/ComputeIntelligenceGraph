@@ -7,6 +7,62 @@ import { ConfigManager } from './ConfigManager';
 import { ConfigValidationError } from '../errors';
 import type { InfraConfig } from '../types';
 
+const ENV_KEYS_USED_BY_CONFIG_MANAGER = [
+  'AWS_REGION',
+  'AWS_ACCOUNT_ID',
+  'AWS_PROFILE',
+  'AUTHENTIK_DOMAIN',
+  'AUTHENTIK_ADMIN_EMAIL',
+  'AUTHENTIK_VPC_ID',
+  'AUTHENTIK_SUBNET_ID',
+  'DASHBOARD_DOMAIN',
+  'DASHBOARD_BUILD_PATH',
+  'DASHBOARD_AUTHENTIK_INTEGRATION',
+  'API_DOMAIN',
+  'API_REGION',
+  'API_IMAGE_REPOSITORY',
+  'API_CONTAINER_PORT',
+  'API_CPU',
+  'API_MEMORY_MIB',
+  'API_DESIRED_COUNT',
+  'API_VPC_ID',
+  'API_ALB_SECURITY_GROUP_ID',
+  'API_PUBLIC_SUBNET_IDS',
+  'API_PRIVATE_SUBNET_IDS',
+  'API_SECURITY_GROUP_IDS',
+  'API_DATABASE_URL_SECRET_ARN',
+  'API_JWT_SECRET_ARN',
+  'API_NEO4J_BOLT_URI',
+  'API_NEO4J_PASSWORD_SECRET_ARN',
+  'API_AUTHENTIK_ISSUER_URL_SECRET_ARN',
+  'API_AUTHENTIK_JWKS_URI_SECRET_ARN',
+  'API_AUTHENTIK_TOKEN_ENDPOINT_SECRET_ARN',
+  'API_OIDC_CLIENT_ID_SECRET_ARN',
+  'API_OIDC_CLIENT_SECRET_SECRET_ARN',
+  'API_CORS_ORIGINS',
+  'API_CREATE_PIPELINE',
+  'API_HOSTED_ZONE_DOMAIN',
+  'API_CERTIFICATE_ARN',
+  'API_HEALTH_CHECK_PATH',
+  'API_IMAGE_URI',
+  'API_IMAGE_TAG',
+  'API_STAGE',
+  'API_APP_NAME',
+  'API_PIPELINE_REPO',
+  'API_PIPELINE_PREFIX',
+  'API_PROJECT_TAG',
+  'API_PIPELINE_PERMISSIONS_MODE',
+  'API_PIPELINE_BRANCH_PRODUCTION',
+  'API_BOOTSTRAP_ONLY',
+  'API_SUPABASE_URL_SECRET_ARN',
+  'API_SUPABASE_SERVICE_ROLE_KEY_SECRET_ARN',
+  'IAC_MODULES_PATH',
+  'IAC_NETWORKING_MODULE',
+  'IAC_COMPUTE_MODULE',
+  'LOG_LEVEL',
+  'LOG_TIMESTAMPS'
+] as const;
+
 describe('ConfigManager', () => {
   let configManager: ConfigManager;
   let originalEnv: NodeJS.ProcessEnv;
@@ -133,6 +189,10 @@ describe('ConfigManager', () => {
     });
 
     it('should return empty object when no environment variables are set', () => {
+      for (const key of ENV_KEYS_USED_BY_CONFIG_MANAGER) {
+        delete process.env[key];
+      }
+
       const config = configManager.loadFromEnv();
       expect(config).toEqual({});
     });
