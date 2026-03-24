@@ -214,6 +214,7 @@ export function createInfrastructure() {
             description: 'Keep the most recent 20 tagged images',
             selection: {
               tagStatus: 'tagged',
+              tagPatternList: ['*'],
               countType: 'imageCountMoreThan',
               countNumber: 20,
             },
