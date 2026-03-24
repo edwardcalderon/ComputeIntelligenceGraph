@@ -28,17 +28,14 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
 COPY packages/api/src ./packages/api/src
 COPY packages/api/scripts ./packages/api/scripts
 COPY packages/api/tsconfig.json ./packages/api/
-COPY packages/api/tsconfig.tsbuildinfo ./packages/api/
 COPY packages/auth/src ./packages/auth/src
 COPY packages/auth/tsconfig.json ./packages/auth/
 COPY packages/config/src ./packages/config/src
 COPY packages/config/tsconfig.json ./packages/config/
 COPY packages/graph/src ./packages/graph/src
 COPY packages/graph/tsconfig.json ./packages/graph/
-COPY packages/graph/tsconfig.tsbuildinfo ./packages/graph/
 COPY packages/discovery/src ./packages/discovery/src
 COPY packages/discovery/tsconfig.json ./packages/discovery/
-COPY packages/discovery/tsconfig.tsbuildinfo ./packages/discovery/
 COPY packages/emails/src/templates ./packages/emails/src/templates
 
 # Build

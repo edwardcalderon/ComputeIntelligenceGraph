@@ -1,3 +1,25 @@
+## [0.1.85](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.84...v0.1.85) (2026-03-24)
+
+
+### Bug Fixes
+
+* validate email with zod and i18n invalidEmail message ([3f90b0f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/3f90b0faa78450947777a528afd9cfffbcd2d242))
+
+
+
+
+
+## [0.1.85](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.84...v0.1.85) (2026-03-24)
+
+
+### Bug Fixes
+
+* validate email with zod and i18n invalidEmail message ([3f90b0f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/3f90b0faa78450947777a528afd9cfffbcd2d242))
+
+
+
+
+
 ## [0.1.84](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.83...v0.1.84) (2026-03-24)
 
 ### Detected changes
