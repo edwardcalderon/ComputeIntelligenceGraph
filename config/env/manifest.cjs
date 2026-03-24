@@ -137,6 +137,12 @@ module.exports = {
       secret: true,
       targets: {},
     },
+    SUPABASE_DIRECT_URL_POOLER: {
+      description: 'IPv4-only pooler connection string (avoids ENETUNREACH on IPv6-unreachable networks)',
+      example: 'postgresql://postgres.ref:password@aws-0-us-west-2.pooler.supabase.com:5432/postgres',
+      secret: true,
+      targets: {},
+    },
 
     // ── AI / LLM ───────────────────────────────────────────────────────────
     OPENAI_API_KEY: {

@@ -144,11 +144,20 @@ function getSmtpTransport(): Transporter {
 
   const host = process.env.SMTP_HOST?.trim();
   const port = Number.parseInt(process.env.SMTP_PORT ?? '587', 10);
-  const secure = (process.env.SMTP_SECURE ?? 'false').toLowerCase() === 'true';
+  const secureEnv = process.env.SMTP_SECURE?.trim().toLowerCase();
+  let secure = secureEnv === 'true' || (secureEnv !== 'false' && port === 465);
+  const requireTLS = (process.env.SMTP_REQUIRE_TLS ?? 'true').toLowerCase() !== 'false';
   const fromEmail = process.env.SMTP_FROM_EMAIL?.trim();
   const authEnabled = (process.env.SMTP_AUTH_ENABLED ?? 'true').toLowerCase() !== 'false';
   const user = process.env.SMTP_USER?.trim() || fromEmail;
   const password = process.env.SMTP_PASSWORD?.trim();
+
+  if (port === 587 && secure) {
+    // Port 587 is usually STARTTLS (explicit TLS), not implicit TLS.
+    // nodemailer expects secure=false and then starts TLS (requireTLS=true).
+    secure = false;
+  }
+
 
   if (!host || !fromEmail) {
     throw new Error('SMTP credentials not configured (SMTP_HOST / SMTP_FROM_EMAIL)');
@@ -168,6 +177,11 @@ function getSmtpTransport(): Transporter {
           pass: password,
         }
       : undefined,
+    tls: {
+      // Prefer TLS where supported and avoid obsolete/weak protocols.
+      rejectUnauthorized: (process.env.SMTP_TLS_REJECT_UNAUTHORIZED ?? 'true').toLowerCase() !== 'false',
+    },
+    ...(secure ? {} : { requireTLS }),
   });
 
   return smtpTransport;

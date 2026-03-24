@@ -13,7 +13,9 @@ const graphql_1 = require("./graphql");
 const websocket_1 = require("./websocket");
 const metrics_1 = require("./metrics");
 const heartbeat_monitor_1 = require("./jobs/heartbeat-monitor");
+const client_1 = require("./db/client");
 const VERSION = '0.1.0';
+const RATE_LIMIT_EXEMPT_ROUTES = new Set(['GET /api/v1/health', 'GET /metrics']);
 function resolveCorsOrigins() {
     const configuredOrigins = process.env.CORS_ORIGINS?.trim();
     if (configuredOrigins === '*') {
@@ -40,13 +42,27 @@ async function createServer() {
         logger: {
             level: process.env.LOG_LEVEL ?? 'info',
         },
+        // The API is deployed behind a single public ALB. Trust one proxy hop so
+        // Fastify resolves the real client IP from X-Forwarded-For and rate
+        // limiting does not collapse all traffic into the load balancer address.
+        trustProxy: 1,
     });
     // CORS
     await app.register(cors_1.default, {
         origin: resolveCorsOrigins(),
     });
     // Rate limiting (100 req/min per client, Requirement 16.9)
-    app.addHook('preHandler', (0, rate_limit_1.createRateLimiter)());
+    // Operational endpoints stay exempt so health checks and metrics scraping
+    // cannot be throttled by normal client traffic.
+    const rateLimit = (0, rate_limit_1.createRateLimiter)();
+    app.addHook('preHandler', async (request, reply) => {
+        const route = request.routeOptions?.url ?? request.url;
+        const routeKey = `${request.method.toUpperCase()} ${route}`;
+        if (RATE_LIMIT_EXEMPT_ROUTES.has(routeKey)) {
+            return;
+        }
+        await rateLimit(request, reply);
+    });
     // Record HTTP metrics on every response (Requirement 25.1–25.4)
     app.addHook('onResponse', (request, reply, done) => {
         const route = request.routerPath ?? request.url;
@@ -81,6 +97,9 @@ async function createServer() {
     await (0, graphql_1.registerGraphQL)(app);
     // Register WebSocket server (Requirement 9.10)
     await (0, websocket_1.registerWebSocket)(app);
+    app.addHook('onClose', async () => {
+        await (0, client_1.closeDatabase)();
+    });
     return app;
 }
 async function start() {
