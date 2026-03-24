@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const env_js_1 = require("./env.js");
 const commander_1 = require("commander");
 const login_js_1 = require("./commands/login.js");
 const logout_js_1 = require("./commands/logout.js");
@@ -16,6 +17,7 @@ const upgrade_js_1 = require("./commands/upgrade.js");
 const uninstall_js_1 = require("./commands/uninstall.js");
 const scan_js_1 = require("./commands/scan.js");
 const version_js_1 = require("./version.js");
+(0, env_js_1.loadCliEnv)();
 const program = new commander_1.Command();
 program.name('cig').description('Compute Intelligence Graph CLI').version(version_js_1.CLI_VERSION);
 program
