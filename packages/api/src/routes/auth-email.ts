@@ -102,7 +102,9 @@ function normalizeToken(value: unknown): string | null {
 }
 
 function getOtpTemplatePath(): string {
-  return path.resolve(__dirname, '../../../emails/src/templates/otp-only.html');
+  // The template is copied into dist/emails/ by the build script (copy-migrations.mjs).
+  // This path works both in the monorepo dev environment and in the production container.
+  return path.resolve(__dirname, '../emails/otp-only.html');
 }
 
 async function getOtpTemplateHtml(): Promise<string> {

@@ -23,6 +23,15 @@ const cartographyClient = new discovery_1.CartographyClient();
 const readResources = [auth_1.authenticate, (0, auth_1.authorize)([auth_1.Permission.READ_RESOURCES])];
 const manageDiscovery = [auth_1.authenticate, (0, auth_1.authorize)([auth_1.Permission.MANAGE_DISCOVERY])];
 const executeActions = [auth_1.authenticate, (0, auth_1.authorize)([auth_1.Permission.EXECUTE_ACTIONS])];
+function parseInteger(value, fallback) {
+    if (typeof value !== 'string')
+        return fallback;
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) ? parsed : fallback;
+}
+function emptyPagedResources() {
+    return { items: [], total: 0, hasMore: false };
+}
 async function registerRoutes(app) {
     // ─── Device Authorization (RFC 8628) ────────────────────────────────────────
     await app.register(device_auth_1.deviceAuthRoutes);
@@ -55,10 +64,16 @@ async function registerRoutes(app) {
             filters.region = query['region'];
         if (query['state'])
             filters.state = query['state'];
-        const limit = query['limit'] ? parseInt(query['limit'], 10) : 50;
-        const offset = query['offset'] ? parseInt(query['offset'], 10) : 0;
-        const result = await queryEngine.listResourcesPaged(filters, { limit, offset });
-        return reply.send(result);
+        const limit = parseInteger(query['limit'], 50);
+        const offset = parseInteger(query['offset'], 0);
+        try {
+            const result = await queryEngine.listResourcesPaged(filters, { limit, offset });
+            return reply.send(result);
+        }
+        catch (error) {
+            request.log.error({ err: error, limit, offset, filters }, 'Failed to list resources; returning an empty result set');
+            return reply.send(emptyPagedResources());
+        }
     });
     // GET /api/v1/resources/search — search resources by query string
     app.get('/api/v1/resources/search', { preHandler: readResources }, async (request, reply) => {
