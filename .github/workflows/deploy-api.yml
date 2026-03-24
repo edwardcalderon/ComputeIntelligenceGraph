@@ -334,8 +334,8 @@ jobs:
           echo "API_VPC_ID=$(jq -r '.vpc_id.value' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
           echo "API_ALB_SECURITY_GROUP_ID=$(jq -r '.alb_security_group_id.value' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
           echo "API_SECURITY_GROUP_IDS=$(jq -r '.api_service_security_group_id.value' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
-          echo "API_PUBLIC_SUBNET_IDS=$(jq -r '.public_subnet_ids.value | join(\",\")' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
-          echo "API_PRIVATE_SUBNET_IDS=$(jq -r '.private_subnet_ids.value | join(\",\")' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
+          echo "API_PUBLIC_SUBNET_IDS=$(jq -r '.public_subnet_ids.value | join(",")' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
+          echo "API_PRIVATE_SUBNET_IDS=$(jq -r '.private_subnet_ids.value | join(",")' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
           echo "API_NEO4J_BOLT_URI=$(jq -r '.neo4j_bolt_uri.value' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
           echo "API_NEO4J_PASSWORD_SECRET_ARN=$(jq -r '.neo4j_password_secret_arn.value' "$RUNNER_TEMP/api-core.json")" >> "$GITHUB_ENV"
 
