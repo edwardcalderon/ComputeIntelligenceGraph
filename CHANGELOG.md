@@ -1,3 +1,25 @@
+## [0.1.76](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.74...v0.1.76) (2026-03-24)
+
+
+### Bug Fixes
+
+* **deploy:** pin production API origin ([287a64c](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/287a64c34739c785342fd3c51716f01501cb0811))
+
+
+
+
+
+## [0.1.76](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.74...v0.1.76) (2026-03-24)
+
+
+### Bug Fixes
+
+* **deploy:** pin production API origin ([287a64c](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/287a64c34739c785342fd3c51716f01501cb0811))
+
+
+
+
+
 ## [0.1.75](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.74...v0.1.75) (2026-03-24)
 
 
