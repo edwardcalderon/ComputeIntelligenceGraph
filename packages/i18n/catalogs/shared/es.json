@@ -96,6 +96,7 @@
   "auth.resendIn": "Reenviar en {seconds}s",
   "auth.codeResent": "Se envió un nuevo código.",
   "auth.resendError": "Error al reenviar el código. Inténtalo de nuevo.",
+  "auth.invalidEmail": "Por favor, introduce una dirección de correo válida.",
   "auth.otpSendError": "Error al enviar el código. Verifica la dirección de correo e inténtalo de nuevo.",
   "auth.otpVerifyError": "Código inválido o expirado. Por favor, inténtalo de nuevo.",
   "auth.via": "vía {provider}",

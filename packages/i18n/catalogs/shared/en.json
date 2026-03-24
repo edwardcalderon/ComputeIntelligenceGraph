@@ -96,6 +96,7 @@
   "auth.resendIn": "Resend in {seconds}s",
   "auth.codeResent": "A new code was sent.",
   "auth.resendError": "Failed to resend code. Please try again.",
+  "auth.invalidEmail": "Please enter a valid email address.",
   "auth.otpSendError": "Failed to send code. Please check the email address and try again.",
   "auth.otpVerifyError": "Invalid or expired code. Please try again.",
   "auth.via": "via {provider}",

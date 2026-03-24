@@ -10,6 +10,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import nodemailer, { type Transporter } from 'nodemailer';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { z } from 'zod';
 import crypto from 'node:crypto';
 import path from 'node:path';
 import { existsSync } from 'node:fs';
@@ -84,13 +85,19 @@ function getEmailRedirectTo(): string {
   return new URL('/auth/callback', dashboardUrl).toString();
 }
 
+const emailSchema = z.string().trim().email();
+
 function normalizeEmail(value: unknown): string | null {
   if (typeof value !== 'string') {
     return null;
   }
 
-  const email = value.trim().toLowerCase();
-  return email.length > 0 ? email : null;
+  const parsed = emailSchema.safeParse(value);
+  if (!parsed.success) {
+    return null;
+  }
+
+  return parsed.data.toLowerCase();
 }
 
 function normalizeToken(value: unknown): string | null {

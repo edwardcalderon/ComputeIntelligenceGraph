@@ -1,5 +1,9 @@
 "use client";
 
+import { z } from 'zod';
+
+const emailSchema = z.string().trim().email();
+
 interface VerifyOtpResponse {
   accessToken: string;
   expiresIn: number;
@@ -45,15 +49,26 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
 /**
  * Send OTP-only email via custom backend endpoint.
  */
+function normalizeEmail(email: string): string {
+  const result = emailSchema.safeParse(email);
+  if (!result.success) {
+    throw new Error('Invalid email');
+  }
+
+  return result.data;
+}
+
 export async function sendEmailOtp(email: string): Promise<void> {
-  await postJson<{ success: true }>("/api/v1/auth/send-otp", { email });
+  const normalizedEmail = normalizeEmail(email);
+  await postJson<{ success: true }>("/api/v1/auth/send-otp", { email: normalizedEmail });
 }
 
 /**
  * Send magic-link-only email via custom backend endpoint.
  */
 export async function sendMagicLinkEmail(email: string): Promise<void> {
-  await postJson<{ success: true }>("/api/v1/auth/send-magic-link", { email });
+  const normalizedEmail = normalizeEmail(email);
+  await postJson<{ success: true }>("/api/v1/auth/send-magic-link", { email: normalizedEmail });
 }
 
 

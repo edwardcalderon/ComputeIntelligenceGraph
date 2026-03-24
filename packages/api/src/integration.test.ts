@@ -427,4 +427,34 @@ describe('API Integration Tests', () => {
       expect(response.statusCode).toBe(401);
     });
   });
+
+  // ── Auth Email ───────────────────────────────────────────────────────────
+
+  describe('POST /api/v1/auth/send-otp', () => {
+    it('returns 400 for invalid email', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/v1/auth/send-otp',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: 'invalid-email,' }),
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual({ error: 'Missing or invalid email' });
+    });
+  });
+
+  describe('POST /api/v1/auth/send-magic-link', () => {
+    it('returns 400 for invalid email', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/v1/auth/send-magic-link',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: 'not-an-email@' }),
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual({ error: 'Missing or invalid email' });
+    });
+  });
 });

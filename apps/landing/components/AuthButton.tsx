@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
+import { z } from "zod";
 import { startAuthentikSocialLogin, getSupabaseClient, sendEmailOtp, sendMagicLinkEmail, verifyEmailOtp, type AuthentikSocialProvider } from "@cig/auth";
 import { useCIGAuth } from "./AuthProvider";
 import { PreferencesMenu } from "./PreferencesMenu";
@@ -41,6 +42,8 @@ function EyeOffIcon() {
 }
 
 /* ─── Email + Password — sign up / sign in ──────────────────────────── */
+
+const emailSchema = z.string().trim().email();
 
 function EmailPasswordView({ onSuccess }: { onSuccess: () => void }) {
   const t = useTranslation();
@@ -662,9 +665,18 @@ function EmailOtpView({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const emailParsable = emailSchema.safeParse(email.trim());
+  const isEmailValid = email.trim().length > 0 && emailParsable.success;
+
   const handleSend = useCallback(async () => {
     const trimmed = email.trim();
     if (!trimmed) return;
+
+    if (!emailSchema.safeParse(trimmed).success) {
+      setError(t("auth.invalidEmail") || "Invalid email address");
+      return;
+    }
+
     setSending(true);
     setError(null);
     try {
@@ -696,11 +708,20 @@ function EmailOtpView({
           autoComplete="email"
           autoFocus
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (error) setError(null);
+          }}
           onKeyDown={(e) => e.key === "Enter" && !sending && handleSend()}
           placeholder={t("auth.emailPlaceholder")}
           className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-2.5 text-sm text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 dark:focus:border-cyan-400 transition"
         />
+
+        {email.trim().length > 0 && !isEmailValid && (
+          <p className="text-xs text-red-500 dark:text-red-400">
+            {t("auth.invalidEmail") || "Please enter a valid email address."}
+          </p>
+        )}
       </div>
 
       {error && (
@@ -711,7 +732,7 @@ function EmailOtpView({
 
       <button
         onClick={handleSend}
-        disabled={sending || !email.trim()}
+        disabled={sending || !isEmailValid}
         className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:scale-[1.01] hover:shadow-xl hover:shadow-cyan-500/30 disabled:opacity-50 disabled:scale-100 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-cyan-400"
       >
         {sending ? t("auth.sending") : t("auth.sendOtp")}
@@ -861,9 +882,16 @@ function EmailMagicLinkView({
     return () => clearInterval(id);
   }, [sent, cooldown]);
 
+  const emailParsable = emailSchema.safeParse(email.trim());
+  const isEmailValid = email.trim().length > 0 && emailParsable.success;
+
   const handleSend = useCallback(async () => {
     const trimmed = email.trim();
     if (!trimmed) return;
+    if (!isEmailValid) {
+      setError(t("auth.invalidEmail") || "Invalid email address");
+      return;
+    }
     setSending(true);
     setError(null);
     try {
@@ -877,7 +905,7 @@ function EmailMagicLinkView({
     } finally {
       setSending(false);
     }
-  }, [email, t, onSent]);
+  }, [email, isEmailValid, t, onSent]);
 
   const handleResend = useCallback(async () => {
     if (!sent || cooldown > 0) return;
@@ -899,18 +927,26 @@ function EmailMagicLinkView({
               autoComplete="email"
               autoFocus
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (error) setError(null);
+              }}
               onKeyDown={(e) => e.key === "Enter" && !sending && handleSend()}
               placeholder={t("auth.emailPlaceholder")}
               className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-2.5 text-sm text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 dark:focus:border-cyan-400 transition"
             />
+            {email.trim().length > 0 && !isEmailValid && (
+              <p className="text-xs text-red-500 dark:text-red-400">
+                {t("auth.invalidEmail") || "Please enter a valid email address."}
+              </p>
+            )}
           </div>
           {error && (
             <p className="text-xs text-red-500 dark:text-red-400 rounded-lg bg-red-50 dark:bg-red-950/30 px-3 py-2">{error}</p>
           )}
           <button
             onClick={handleSend}
-            disabled={sending || !email.trim()}
+            disabled={sending || !isEmailValid}
             className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:scale-[1.01] hover:shadow-xl hover:shadow-cyan-500/30 disabled:opacity-50 disabled:scale-100 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-cyan-400"
           >
             {sending ? t("auth.linkSending") : t("auth.sendLink")}

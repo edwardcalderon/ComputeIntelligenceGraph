@@ -40,6 +40,7 @@ export type TranslationKey =
   | "auth.emailPlaceholder"
   | "auth.emailTitle"
   | "auth.hidePassword"
+  | "auth.invalidEmail"
   | "auth.linkSending"
   | "auth.linkSentTo"
   | "auth.local"
