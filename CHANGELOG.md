@@ -1,3 +1,84 @@
+## [0.1.68](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.65...v0.1.68) (2026-03-24)
+
+
+### Bug Fixes
+
+* align node 22 runtime and api migration packaging ([6928976](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/69289764d47b0660eb064beff09c6c288fd372fc))
+* **api:** backfill legacy Supabase users schema ([b95c064](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/b95c0649485414d8c3f50e9071ead7bae68b25ee))
+* **api:** pass subnet outputs into runtime deploy ([3195db9](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/3195db9b0098ee7f3a70d405726ff2cdd10a4edd))
+* **api:** source auth inputs from live tenant ([2382f7d](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/2382f7da2746404c3efbed0832f7e7f489b685a0))
+* **api:** unify publish and deploy pipeline ([e58848b](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/e58848b5fb5172ed9df9214217edbd7f10a14311))
+* **ci:** handle missing sst stage in bootstrap diff ([f659714](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f659714ad7dd26c72170f97982b5baa1589d361f))
+* **ci:** remove browser auth dependency from api image ([6d01ad8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/6d01ad82e4367d55f0b89d2601747fddc74d5acd))
+* **ci:** remove workflow package resolution assumptions ([f73ac73](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f73ac73be473a1080c96d8ef420996368f344bfd))
+* **ci:** skip bootstrap diff when SST stage is absent ([55c649f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/55c649f0e09fcef7a6adbc372348f4d894d727ce))
+* **config:** add node types for docker builds ([25f0595](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/25f05956abc71adcbcd59fb54180d13dad6ae09c))
+* **iac:** break neo4j terraform cycle ([8aadde3](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/8aadde311268cf45738cb2d8d31dee088fa89ea0))
+* **iac:** raise ec2 root volumes for al2023 snapshots ([ea363d0](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/ea363d03a0fe96658979a8ab68a7d09d40fc2c2a))
+* **infra:** attach ecs execution role policy by arn ([1806e36](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/1806e360e6e75c2e630324ca47b9c4aa669244b3))
+* **infra:** clear workflow env in config test ([b634afc](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/b634afc01c175734bb21f5f839ec53cb85fad8a9))
+* **infra:** make ecr lifecycle policy valid ([62acc47](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/62acc478c9340adb543d1db9e03f20f85752175d))
+* **infra:** make sst config loader-safe ([66d99ad](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/66d99ad3ad44b42e80fa596bf4254e4f602af1c3))
+* **infra:** move aws defaults to us-east-2 ([d3f01e9](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/d3f01e901d93582432370d11ad1e597b28a25c4c))
+
+
+
+
+
+## [0.1.68](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.65...v0.1.68) (2026-03-24)
+
+
+### Bug Fixes
+
+* align node 22 runtime and api migration packaging ([6928976](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/69289764d47b0660eb064beff09c6c288fd372fc))
+* **api:** backfill legacy Supabase users schema ([b95c064](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/b95c0649485414d8c3f50e9071ead7bae68b25ee))
+* **api:** pass subnet outputs into runtime deploy ([3195db9](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/3195db9b0098ee7f3a70d405726ff2cdd10a4edd))
+* **api:** source auth inputs from live tenant ([2382f7d](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/2382f7da2746404c3efbed0832f7e7f489b685a0))
+* **api:** unify publish and deploy pipeline ([e58848b](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/e58848b5fb5172ed9df9214217edbd7f10a14311))
+* **ci:** handle missing sst stage in bootstrap diff ([f659714](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f659714ad7dd26c72170f97982b5baa1589d361f))
+* **ci:** remove browser auth dependency from api image ([6d01ad8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/6d01ad82e4367d55f0b89d2601747fddc74d5acd))
+* **ci:** remove workflow package resolution assumptions ([f73ac73](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f73ac73be473a1080c96d8ef420996368f344bfd))
+* **ci:** skip bootstrap diff when SST stage is absent ([55c649f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/55c649f0e09fcef7a6adbc372348f4d894d727ce))
+* **config:** add node types for docker builds ([25f0595](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/25f05956abc71adcbcd59fb54180d13dad6ae09c))
+* **iac:** break neo4j terraform cycle ([8aadde3](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/8aadde311268cf45738cb2d8d31dee088fa89ea0))
+* **iac:** raise ec2 root volumes for al2023 snapshots ([ea363d0](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/ea363d03a0fe96658979a8ab68a7d09d40fc2c2a))
+* **infra:** attach ecs execution role policy by arn ([1806e36](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/1806e360e6e75c2e630324ca47b9c4aa669244b3))
+* **infra:** clear workflow env in config test ([b634afc](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/b634afc01c175734bb21f5f839ec53cb85fad8a9))
+* **infra:** make ecr lifecycle policy valid ([62acc47](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/62acc478c9340adb543d1db9e03f20f85752175d))
+* **infra:** make sst config loader-safe ([66d99ad](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/66d99ad3ad44b42e80fa596bf4254e4f602af1c3))
+* **infra:** move aws defaults to us-east-2 ([d3f01e9](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/d3f01e901d93582432370d11ad1e597b28a25c4c))
+
+
+
+
+
+## [0.1.67](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.65...v0.1.67) (2026-03-24)
+
+
+### Bug Fixes
+
+* align node 22 runtime and api migration packaging ([6928976](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/69289764d47b0660eb064beff09c6c288fd372fc))
+* **api:** backfill legacy Supabase users schema ([b95c064](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/b95c0649485414d8c3f50e9071ead7bae68b25ee))
+* **api:** pass subnet outputs into runtime deploy ([3195db9](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/3195db9b0098ee7f3a70d405726ff2cdd10a4edd))
+* **api:** source auth inputs from live tenant ([2382f7d](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/2382f7da2746404c3efbed0832f7e7f489b685a0))
+* **api:** unify publish and deploy pipeline ([e58848b](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/e58848b5fb5172ed9df9214217edbd7f10a14311))
+* **ci:** handle missing sst stage in bootstrap diff ([f659714](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f659714ad7dd26c72170f97982b5baa1589d361f))
+* **ci:** remove browser auth dependency from api image ([6d01ad8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/6d01ad82e4367d55f0b89d2601747fddc74d5acd))
+* **ci:** remove workflow package resolution assumptions ([f73ac73](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f73ac73be473a1080c96d8ef420996368f344bfd))
+* **ci:** skip bootstrap diff when SST stage is absent ([55c649f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/55c649f0e09fcef7a6adbc372348f4d894d727ce))
+* **config:** add node types for docker builds ([25f0595](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/25f05956abc71adcbcd59fb54180d13dad6ae09c))
+* **iac:** break neo4j terraform cycle ([8aadde3](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/8aadde311268cf45738cb2d8d31dee088fa89ea0))
+* **iac:** raise ec2 root volumes for al2023 snapshots ([ea363d0](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/ea363d03a0fe96658979a8ab68a7d09d40fc2c2a))
+* **infra:** attach ecs execution role policy by arn ([1806e36](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/1806e360e6e75c2e630324ca47b9c4aa669244b3))
+* **infra:** clear workflow env in config test ([b634afc](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/b634afc01c175734bb21f5f839ec53cb85fad8a9))
+* **infra:** make ecr lifecycle policy valid ([62acc47](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/62acc478c9340adb543d1db9e03f20f85752175d))
+* **infra:** make sst config loader-safe ([66d99ad](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/66d99ad3ad44b42e80fa596bf4254e4f602af1c3))
+* **infra:** move aws defaults to us-east-2 ([d3f01e9](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/d3f01e901d93582432370d11ad1e597b28a25c4c))
+
+
+
+
+
 ## [0.1.66](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.65...v0.1.66) (2026-03-24)
 
 

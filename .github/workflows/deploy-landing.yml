@@ -1,15 +1,13 @@
-name: Deploy Landing Page to GitHub Pages
+name: Deploy Landing Page → GitHub Pages
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'apps/landing/**'
-      - 'packages/auth/**'
-      - 'packages/ui/**'
-      - 'release-metadata.json'
-      - '.github/workflows/deploy-landing.yml'
+    branches: [ main ]
+    tags:
+      - "v*.*.*"
+      - "v*.*.*+build.*"
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -22,7 +20,97 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  # Detect if relevant paths changed on main branch pushes
+  changes:
+    name: Detect landing changes (branch pushes)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      landing: ${{ steps.filter.outputs.landing }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Paths filter
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            landing:
+              - 'apps/landing/**'
+              - 'packages/auth/**'
+              - 'packages/ui/**'
+              - 'release-metadata.json'
+              - '.github/workflows/deploy-landing.yml'
+
+  # Deploy on branch push when landing-related files changed
+  deploy-on-branch:
+    name: Build & Deploy (branch push)
+    if: |
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.changes.outputs.landing == 'true'
+    runs-on: ubuntu-latest
+    needs: [changes]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build landing page
+        run: pnpm --filter @cig/landing build
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_SITE_URL: https://cig.lat
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_DASHBOARD_URL: ${{ secrets.NEXT_PUBLIC_DASHBOARD_URL }}
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./apps/landing/out
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # Deploy on tags or GitHub Release regardless of path changes
+  deploy-on-release:
+    name: Build & Deploy (tag/release)
+    if: |
+      github.event_name == 'release' ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) ||
+      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -73,13 +161,6 @@ jobs:
         with:
           path: ./apps/landing/out
 
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
