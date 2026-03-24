@@ -1,3 +1,25 @@
+## [0.1.79](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.78...v0.1.79) (2026-03-24)
+
+
+### Bug Fixes
+
+* **api:** add @cig/auth to Dockerfile and fix OTP email template path ([7f4a3c8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/7f4a3c852656268d37e768aae162d6aff86f1563))
+
+
+
+
+
+## [0.1.79](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.78...v0.1.79) (2026-03-24)
+
+
+### Bug Fixes
+
+* **api:** add @cig/auth to Dockerfile and fix OTP email template path ([7f4a3c8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/7f4a3c852656268d37e768aae162d6aff86f1563))
+
+
+
+
+
 ## [0.1.78](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.77...v0.1.78) (2026-03-24)
 
 ### Detected changes
