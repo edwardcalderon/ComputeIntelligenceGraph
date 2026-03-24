@@ -32,6 +32,7 @@ COPY packages/graph/src ./packages/graph/src
 COPY packages/graph/tsconfig.json ./packages/graph/
 COPY packages/discovery/src ./packages/discovery/src
 COPY packages/discovery/tsconfig.json ./packages/discovery/
+COPY packages/emails/src/templates ./packages/emails/src/templates
 
 # Build
 RUN pnpm --filter @cig/config build
