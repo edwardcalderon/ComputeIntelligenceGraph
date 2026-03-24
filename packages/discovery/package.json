@@ -1,7 +1,10 @@
 {
   "name": "@cig/discovery",
-  "version": "0.1.77",
+  "version": "0.1.78",
   "description": "CIG infrastructure discovery orchestrator",
+  "files": [
+    "dist"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

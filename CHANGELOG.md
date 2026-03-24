@@ -1,3 +1,21 @@
+## [0.1.78](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.77...v0.1.78) (2026-03-24)
+
+### Detected changes
+- .github: .github/workflows/deploy-api.yml
+- infra: infra/docker/Dockerfile.api
+- packages: 4 changed file(s)
+  - packages/api/package.json
+  - packages/config/package.json
+  - packages/discovery/package.json
+  - packages/graph/package.json
+
+
+## [0.1.78](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.77...v0.1.78) (2026-03-24)
+
+
+
+
+
 ## [0.1.77](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.76...v0.1.77) (2026-03-24)
 
 ### Detected changes

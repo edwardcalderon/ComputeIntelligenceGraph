@@ -36,6 +36,9 @@ RUN pnpm --filter @cig/discovery build
 RUN pnpm --filter @cig/graph build
 RUN pnpm --filter @cig/api build
 
+# Create a portable production tree for the API runtime.
+RUN npm_config_force_legacy_deploy=true pnpm --filter @cig/api --prod deploy /app/deploy
+
 # ─── Production Stage ─────────────────────────────────────────────────────────
 FROM node:22-alpine AS production
 
@@ -45,31 +48,10 @@ RUN addgroup -g 1000 node_group || true \
 
 WORKDIR /app
 
-# Native modules on Alpine need a small build toolchain during install.
-RUN apk add --no-cache --virtual .build-deps python3 make g++
+ENV NODE_ENV=production
 
-RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
-
-# Copy workspace manifests for production install
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY packages/api/package.json ./packages/api/
-COPY packages/config/package.json ./packages/config/
-COPY packages/graph/package.json ./packages/graph/
-COPY packages/discovery/package.json ./packages/discovery/
-
-# Install production deps only
-RUN pnpm install --frozen-lockfile --prod
-
-RUN apk del .build-deps
-
-# Copy compiled output from builder
-COPY --from=builder /app/packages/api/dist ./packages/api/dist
-COPY --from=builder /app/packages/config/dist ./packages/config/dist
-COPY --from=builder /app/packages/graph/dist ./packages/graph/dist
-COPY --from=builder /app/packages/discovery/dist ./packages/discovery/dist
-
-# Security hardening
-RUN chown -R 1000:1000 /app
+# Copy the pruned API runtime tree.
+COPY --chown=1000:1000 --from=builder /app/deploy/. ./
 
 USER 1000
 
@@ -78,4 +60,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
     CMD wget -qO- http://localhost:8080/api/v1/health || exit 1
 
-CMD ["node", "packages/api/dist/index.js"]
+CMD ["node", "dist/index.js"]
