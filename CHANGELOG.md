@@ -1,3 +1,25 @@
+## [0.1.65](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.64...v0.1.65) (2026-03-24)
+
+
+### Bug Fixes
+
+* **dashboard:** include sdk in container build ([0365213](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/0365213aa8618f166a30218a840c6f315bc306b7))
+
+
+
+
+
+## [0.1.65](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.64...v0.1.65) (2026-03-24)
+
+
+### Bug Fixes
+
+* **dashboard:** include sdk in container build ([0365213](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/0365213aa8618f166a30218a840c6f315bc306b7))
+
+
+
+
+
 ## [0.1.64](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.63...v0.1.64) (2026-03-24)
 
 
