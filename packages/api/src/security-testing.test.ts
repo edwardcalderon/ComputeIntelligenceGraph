@@ -375,15 +375,16 @@ describe('Security Tests', () => {
   // ── 6. Rate Limiting ─────────────────────────────────────────────────────────
 
   describe('Rate limiting — 429 returned after exceeding limit', () => {
-    it('returns 429 after exceeding 100 requests per minute from same IP', async () => {
+    it('returns 429 after exceeding 100 requests per minute from same IP on protected routes', async () => {
       // The rate limiter allows 100 req/min. We send 101 requests from the same IP.
-      // Fastify inject uses '127.0.0.1' as the default IP.
+      // Use an authenticated endpoint so the health check stays exempt.
       let lastStatus = 200;
 
       for (let i = 0; i < 101; i++) {
         const response = await app.inject({
           method: 'GET',
-          url: '/api/v1/health',
+          url: '/api/v1/resources',
+          headers: { authorization: validToken() },
           remoteAddress: '10.0.0.99', // isolated IP to avoid polluting other tests
         });
         lastStatus = response.statusCode;
@@ -399,7 +400,8 @@ describe('Security Tests', () => {
       for (let i = 0; i < 102; i++) {
         const response = await app.inject({
           method: 'GET',
-          url: '/api/v1/health',
+          url: '/api/v1/resources',
+          headers: { authorization: validToken() },
           remoteAddress: '10.0.0.98',
         });
         if (response.statusCode === 429) {
@@ -417,7 +419,8 @@ describe('Security Tests', () => {
       for (let i = 0; i < 50; i++) {
         await app.inject({
           method: 'GET',
-          url: '/api/v1/health',
+          url: '/api/v1/resources',
+          headers: { authorization: validToken() },
           remoteAddress: '10.0.1.1',
         });
       }
@@ -425,10 +428,37 @@ describe('Security Tests', () => {
       // IP B should still get 200
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/health',
+        url: '/api/v1/resources',
+        headers: { authorization: validToken() },
         remoteAddress: '10.0.1.2',
       });
       expect(response.statusCode).toBe(200);
+    });
+  });
+
+  describe('Operational endpoints are exempt from rate limiting', () => {
+    it('GET /api/v1/health stays available after repeated requests', async () => {
+      for (let i = 0; i < 101; i++) {
+        const response = await app.inject({
+          method: 'GET',
+          url: '/api/v1/health',
+          remoteAddress: '10.0.0.97',
+        });
+
+        expect(response.statusCode).toBe(200);
+      }
+    });
+
+    it('GET /metrics stays available after repeated requests', async () => {
+      for (let i = 0; i < 101; i++) {
+        const response = await app.inject({
+          method: 'GET',
+          url: '/metrics',
+          remoteAddress: '10.0.0.96',
+        });
+
+        expect(response.statusCode).toBe(200);
+      }
     });
   });
 

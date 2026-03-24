@@ -1,3 +1,17 @@
+## [0.1.95](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.94...v0.1.95) (2026-03-24)
+
+### Detected changes
+- packages: 2 changed file(s)
+  - packages/api/src/index.ts
+  - packages/api/src/security-testing.test.ts
+
+
+## [0.1.95](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.94...v0.1.95) (2026-03-24)
+
+
+
+
+
 ## [0.1.94](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.93...v0.1.94) (2026-03-24)
 
 ### Detected changes

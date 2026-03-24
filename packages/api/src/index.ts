@@ -9,6 +9,7 @@ import { startHeartbeatMonitor } from './jobs/heartbeat-monitor';
 import { closeDatabase } from './db/client';
 
 const VERSION = '0.1.0';
+const RATE_LIMIT_EXEMPT_ROUTES = new Set(['GET /api/v1/health', 'GET /metrics']);
 
 function resolveCorsOrigins(): true | string[] {
   const configuredOrigins = process.env.CORS_ORIGINS?.trim();
@@ -49,7 +50,19 @@ export async function createServer(): Promise<FastifyInstance> {
   });
 
   // Rate limiting (100 req/min per client, Requirement 16.9)
-  app.addHook('preHandler', createRateLimiter());
+  // Operational endpoints stay exempt so health checks and metrics scraping
+  // cannot be throttled by normal client traffic.
+  const rateLimit = createRateLimiter();
+  app.addHook('preHandler', async (request: FastifyRequest, reply: FastifyReply) => {
+    const route = request.routeOptions?.url ?? request.url;
+    const routeKey = `${request.method.toUpperCase()} ${route}`;
+
+    if (RATE_LIMIT_EXEMPT_ROUTES.has(routeKey)) {
+      return;
+    }
+
+    await rateLimit(request, reply);
+  });
 
   // Record HTTP metrics on every response (Requirement 25.1–25.4)
   app.addHook('onResponse', (request: FastifyRequest, reply: FastifyReply, done) => {
