@@ -1,4 +1,6 @@
 const { execSync } = require('node:child_process');
+const fs = require('node:fs');
+const path = require('node:path');
 
 /** @type {import('next').NextConfig} */
 const legacyBasePath = '/ComputeIntelligenceGraph';
@@ -61,6 +63,21 @@ function resolveReleaseMetadata() {
 const { releaseTag, buildNumber } = resolveReleaseMetadata();
 // Local builds should stay on localhost; the deploy workflow sets production explicitly.
 const defaultSiteUrl = 'http://localhost:3000';
+
+function writeRuntimeVersionAsset() {
+  const payload = {
+    version,
+    releaseTag,
+    buildNumber,
+    generatedAt: new Date().toISOString(),
+  };
+  const outDir = path.join(__dirname, 'public');
+  const outPath = path.join(outDir, 'runtime-version.json');
+  fs.mkdirSync(outDir, { recursive: true });
+  fs.writeFileSync(outPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+}
+
+writeRuntimeVersionAsset();
 
 const nextConfig = {
   transpilePackages: ['@cig/auth', '@cig/ui', '@edcalderon/auth'],

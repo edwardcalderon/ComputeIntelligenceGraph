@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { AuthProvider } from "../components/AuthProvider";
+import { AppUpdateWatcher } from "../components/AppUpdateWatcher";
 import { I18nProvider } from "@cig-technology/i18n/react";
 import { initI18n } from "./i18n";
 
@@ -49,7 +50,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <I18nProvider>
       <ThemeProvider>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <AppUpdateWatcher />
+          {children}
+        </AuthProvider>
       </ThemeProvider>
     </I18nProvider>
   );

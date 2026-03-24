@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const { version } = require('../../package.json');
+const fs = require('node:fs');
+const path = require('node:path');
 
 function loadReleaseMetadata() {
   try { return require('../../release-metadata.json'); } catch { return null; }
@@ -11,6 +13,21 @@ const buildNumber = process.env.NEXT_PUBLIC_APP_BUILD
   || (metaOk && meta.buildNumber != null ? String(meta.buildNumber) : '');
 const releaseTag = process.env.NEXT_PUBLIC_RELEASE_TAG
   || (metaOk ? meta.releaseTag : `v${version}`);
+
+function writeRuntimeVersionAsset() {
+  const payload = {
+    version,
+    releaseTag,
+    buildNumber,
+    generatedAt: new Date().toISOString(),
+  };
+  const outDir = path.join(__dirname, 'public');
+  const outPath = path.join(outDir, 'runtime-version.json');
+  fs.mkdirSync(outDir, { recursive: true });
+  fs.writeFileSync(outPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+}
+
+writeRuntimeVersionAsset();
 
 const nextConfig = {
   // Standalone output bundles server.js + node_modules into .next/standalone/
