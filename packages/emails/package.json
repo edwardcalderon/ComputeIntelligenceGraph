@@ -1,0 +1,16 @@
+{
+  "name": "@cig/emails",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Versioned email templates for CIG (Supabase Auth, notifications).",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "README.md",
+    "src/templates/*"
+  ],
+  "scripts": {
+    "preview:sign-in": "node ./scripts/preview-sign-in.mjs"
+  },
+  "devDependencies": {}
+}

@@ -14,6 +14,8 @@ import { auditRoutes } from './routes/audit';
 import { sessionRoutes } from './routes/sessions';
 import { scanRoutes } from './routes/scans';
 
+import { authEmailRoutes } from './routes/auth-email';
+
 // Shared instances
 const graphEngine = new GraphEngine();
 const queryEngine = new GraphQueryEngine();
@@ -47,6 +49,9 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── Scan Results (Phase 3.2) ────────────────────────────────────────────────
   await app.register(scanRoutes);
+
+  // ─── Custom Auth Email Endpoints ─────────────────────────────────────────────
+  await app.register(authEmailRoutes);
 
   // ─── Resources ──────────────────────────────────────────────────────────────
 

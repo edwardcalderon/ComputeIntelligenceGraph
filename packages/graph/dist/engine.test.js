@@ -650,6 +650,29 @@ function makeSession(runResult = {}) {
             (0, vitest_1.expect)(result.total).toBe(10);
             (0, vitest_1.expect)(result.hasMore).toBe(true);
         });
+        (0, vitest_1.it)('runs count and data queries serially on the same session', async () => {
+            let activeRuns = 0;
+            mockReadSession.run.mockImplementation(async (query) => {
+                if (activeRuns > 0) {
+                    throw new Error('session.run called concurrently');
+                }
+                activeRuns += 1;
+                try {
+                    await Promise.resolve();
+                    if (query.includes('count(r)')) {
+                        return { records: [makeCountRecord(1)] };
+                    }
+                    return { records: [makeDataRecord('r1')] };
+                }
+                finally {
+                    activeRuns -= 1;
+                }
+            });
+            const result = await queryEngine.listResourcesPaged(undefined, { limit: 1, offset: 0 });
+            (0, vitest_1.expect)(result.items).toHaveLength(1);
+            (0, vitest_1.expect)(result.total).toBe(1);
+            (0, vitest_1.expect)(mockReadSession.run).toHaveBeenCalledTimes(2);
+        });
         (0, vitest_1.it)('hasMore is false when all items returned', async () => {
             mockReadSession.run
                 .mockResolvedValueOnce({ records: [makeCountRecord(2)] })

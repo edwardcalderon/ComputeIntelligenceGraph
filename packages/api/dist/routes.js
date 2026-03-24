@@ -15,6 +15,7 @@ const oidc_1 = require("./routes/oidc");
 const audit_1 = require("./routes/audit");
 const sessions_1 = require("./routes/sessions");
 const scans_1 = require("./routes/scans");
+const auth_email_1 = require("./routes/auth-email");
 // Shared instances
 const graphEngine = new graph_1.GraphEngine();
 const queryEngine = new graph_1.GraphQueryEngine();
@@ -39,6 +40,8 @@ async function registerRoutes(app) {
     await app.register(sessions_1.sessionRoutes);
     // ─── Scan Results (Phase 3.2) ────────────────────────────────────────────────
     await app.register(scans_1.scanRoutes);
+    // ─── Custom Auth Email Endpoints ─────────────────────────────────────────────
+    await app.register(auth_email_1.authEmailRoutes);
     // ─── Resources ──────────────────────────────────────────────────────────────
     // GET /api/v1/resources — list all resources with optional filtering
     app.get('/api/v1/resources', { preHandler: readResources }, async (request, reply) => {

@@ -1,36 +1,8 @@
-## [0.1.70](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.68...v0.1.70) (2026-03-24)
-
-
-### Bug Fixes
-
-* **api:** force clean TypeScript build for migrations ([6e7450e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/6e7450e83cb0c7e33f08382636ba01814935c32b))
-* **infra:** bootstrap API deploys safely on existing stages ([f92b641](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f92b641e8e282795781615878f6b40366bcf0e86))
-* **landing:** remove legacy pages router to fix Next export build for GH Pages ([723591a](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/723591a5857ddb92466af63fab4c74f9f5415b1f))
-
-
-
-
-
-## [0.1.70](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.68...v0.1.70) (2026-03-24)
-
-
-### Bug Fixes
-
-* **api:** force clean TypeScript build for migrations ([6e7450e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/6e7450e83cb0c7e33f08382636ba01814935c32b))
-* **infra:** bootstrap API deploys safely on existing stages ([f92b641](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f92b641e8e282795781615878f6b40366bcf0e86))
-* **landing:** remove legacy pages router to fix Next export build for GH Pages ([723591a](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/723591a5857ddb92466af63fab4c74f9f5415b1f))
-
-
-
-
-
 ## [0.1.69](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.68...v0.1.69) (2026-03-24)
 
 
 ### Bug Fixes
 
-* **api:** force clean TypeScript build for migrations ([6e7450e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/6e7450e83cb0c7e33f08382636ba01814935c32b))
-* **infra:** bootstrap API deploys safely on existing stages ([f92b641](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f92b641e8e282795781615878f6b40366bcf0e86))
 * **landing:** remove legacy pages router to fix Next export build for GH Pages ([723591a](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/723591a5857ddb92466af63fab4c74f9f5415b1f))
 
 

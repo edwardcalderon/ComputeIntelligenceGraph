@@ -390,6 +390,32 @@ When Authentik remains the primary IdP, Supabase acts as a mirrored local regist
 - `public.users` holds the app-owned user registry keyed by Authentik `sub` + `iss`
 - the login-callback route is the bridge that keeps both in sync
 
+### Passwordless: OTP and Magic Link together
+
+Supabase can send either a 6-digit OTP code or a magic link using the same `signInWithOtp()` call. Which one is sent is controlled by the email template variables, not by the client code.
+
+- Rule: If the template contains `{{ .Token }}`, the email includes a one‑time code.
+- Rule: If the template contains `{{ .ConfirmationURL }}`, the email includes a magic link.
+- If you include both variables in the "Sign in" email template, users receive both the code and a clickable link in a single email, and both flows in the UI work concurrently.
+
+How to enable both at once:
+- In Supabase Dashboard → Authentication → Email Templates → "Sign in".
+- Edit the body to include both variables, for example:
+
+  Your sign-in code: {{ .Token }}
+
+  Or click to sign in: {{ .ConfirmationURL }}
+
+- Ensure your Redirect URLs allow the dashboard callback (e.g. `https://app.cig.lat/auth/callback` and `http://localhost:3001/auth/callback`).
+- Keep the client calls as implemented:
+  - OTP flow: `signInWithOtp({ email, options: { shouldCreateUser: true } })` then `verifyOtp({ email, token, type: 'email' })`.
+  - Magic link flow: `signInWithOtp({ email, options: { emailRedirectTo: '<dashboard>/auth/callback', shouldCreateUser: true } })`.
+
+Notes:
+- You do not need to flip a project-wide toggle to switch between OTP and magic link if the template includes both tokens; the single email will support either action.
+- If you only see magic links (no code), your template likely lacks `{{ .Token }}`.
+- If you only see codes (no link), your template likely lacks `{{ .ConfirmationURL }}`.
+
 ## Security and failure-mode notes
 
 | Measure | Implementation |

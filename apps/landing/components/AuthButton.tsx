@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
-import { startAuthentikSocialLogin, getSupabaseClient, sendEmailOtp, verifyEmailOtp, type AuthentikSocialProvider } from "@cig/auth";
+import { startAuthentikSocialLogin, getSupabaseClient, sendEmailOtp, sendMagicLinkEmail, verifyEmailOtp, type AuthentikSocialProvider } from "@cig/auth";
 import { useCIGAuth } from "./AuthProvider";
 import { PreferencesMenu } from "./PreferencesMenu";
 import { useTranslation } from "@cig-technology/i18n/react";
@@ -17,6 +17,249 @@ function GoogleIcon() {
       <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
       <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
     </svg>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M2.06 12C3.2 7.94 7.03 5 12 5s8.8 2.94 9.94 7c-1.14 4.06-4.97 7-9.94 7s-8.8-2.94-9.94-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function EyeOffIcon() {
+  return (
+    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" />
+      <path d="M9.88 5.09A10.94 10.94 0 0 1 12 5c4.97 0 8.8 2.94 9.94 7a10.96 10.96 0 0 1-4.3 5.53" />
+      <path d="M6.61 6.61A10.95 10.95 0 0 0 2.06 12c1.14 4.06 4.97 7 9.94 7 1.68 0 3.27-.33 4.72-.92" />
+      <line x1="2" x2="22" y1="2" y2="22" />
+    </svg>
+  );
+}
+
+/* ─── Email + Password — sign up / sign in ──────────────────────────── */
+
+function EmailPasswordView({ onSuccess }: { onSuccess: () => void }) {
+  const t = useTranslation();
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [password2, setPassword2] = useState("");
+  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword2, setShowPassword2] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = useCallback(async () => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      setError(t("auth.passwordClientNotConfigured"));
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const trimmedEmail = email.trim();
+      if (!trimmedEmail || !password) {
+        setError(t("auth.passwordEmailRequired"));
+        return;
+      }
+      if (mode === "signup") {
+        if (password.length < 8) {
+          setError(t("auth.passwordMinLength"));
+          return;
+        }
+        if (password !== password2) {
+          setError(t("auth.passwordMismatch"));
+          return;
+        }
+        const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3001";
+        const { data, error } = await supabase.auth.signUp({
+          email: trimmedEmail,
+          password,
+          options: {
+            emailRedirectTo: `${dashboardUrl}/auth/callback`,
+          },
+        });
+        if (error) throw error;
+        if (data && (data as any).session) {
+          onSuccess();
+        } else {
+          setSubmittedEmail(trimmedEmail);
+          setPassword("");
+          setPassword2("");
+          setShowPassword(false);
+          setShowPassword2(false);
+          setMessage(null);
+        }
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: trimmedEmail,
+          password,
+        });
+        if (error) throw error;
+        onSuccess();
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t("auth.passwordAuthFailed"));
+    } finally {
+      setLoading(false);
+    }
+  }, [email, password, password2, mode, onSuccess, t]);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-zinc-200 dark:text-zinc-100">
+            {mode === "signin" ? t("auth.passwordSignInTitle") : t("auth.passwordSignUpTitle")}
+          </p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            {mode === "signin" ? t("auth.passwordSignInHint") : t("auth.passwordSignUpHint")}
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            setMode((m) => (m === "signin" ? "signup" : "signin"));
+            setSubmittedEmail(null);
+            setMessage(null);
+            setError(null);
+          }}
+          className="self-start text-xs font-medium leading-tight text-cyan-600 dark:text-cyan-400 hover:underline sm:text-right"
+        >
+          {mode === "signin" ? (
+            t("auth.passwordSwitchToSignup")
+          ) : (
+            <span className="flex flex-col items-start sm:items-end">
+              <span>{t("auth.passwordSwitchQuestion")}</span>
+              <span>{t("auth.passwordSwitchActionSignin")}</span>
+            </span>
+          )}
+        </button>
+      </div>
+
+      {submittedEmail && mode === "signup" ? (
+        <div className="rounded-2xl border border-emerald-500/25 bg-emerald-950/20 px-4 py-4">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 rounded-full bg-emerald-500/15 p-2 text-emerald-400">
+              <CheckIcon />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-emerald-300 dark:text-emerald-200">
+                {t("auth.passwordVerifyEmailTitle")}
+              </p>
+              <p className="mt-1 text-sm text-emerald-100/85 dark:text-emerald-100/80 break-words">
+                {t("auth.passwordVerifyEmailBody", { email: submittedEmail })}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("signin");
+                  setSubmittedEmail(null);
+                  setError(null);
+                }}
+                className="mt-3 text-xs font-medium text-cyan-300 hover:text-cyan-200 hover:underline"
+              >
+                {t("auth.passwordBackToSignin")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="pw-email-input" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">{t("auth.email")}</label>
+            <input
+              id="pw-email-input"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t("auth.emailPlaceholder")}
+              className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-2.5 text-sm text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 dark:focus:border-cyan-400 transition"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="pw-password-input" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">{t("auth.passwordLabel")}</label>
+            <div className="relative">
+              <input
+                id="pw-password-input"
+                type={showPassword ? "text" : "password"}
+                autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={mode === "signin" ? t("auth.passwordPlaceholderSignin") : t("auth.passwordPlaceholderSignup")}
+                className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-2.5 pr-12 text-sm text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 dark:focus:border-cyan-400 transition"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+                className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-zinc-500 transition hover:text-cyan-500"
+                aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
+                title={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
+              >
+                {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+              </button>
+            </div>
+          </div>
+
+          {mode === "signup" && (
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="pw-password2-input" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">{t("auth.passwordConfirmLabel")}</label>
+              <div className="relative">
+                <input
+                  id="pw-password2-input"
+                  type={showPassword2 ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={password2}
+                  onChange={(e) => setPassword2(e.target.value)}
+                  placeholder={t("auth.passwordConfirmPlaceholder")}
+                  className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-2.5 pr-12 text-sm text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500 dark:focus:border-cyan-400 transition"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword2((value) => !value)}
+                  className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-zinc-500 transition hover:text-cyan-500"
+                  aria-label={showPassword2 ? t("auth.hidePassword") : t("auth.showPassword")}
+                  title={showPassword2 ? t("auth.hidePassword") : t("auth.showPassword")}
+                >
+                  {showPassword2 ? <EyeOffIcon /> : <EyeIcon />}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <p className="text-xs text-red-500 dark:text-red-400 rounded-lg bg-red-50 dark:bg-red-950/30 px-3 py-2">{error}</p>
+          )}
+          {message && (
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 px-3 py-2">{message}</p>
+          )}
+
+          <button
+            onClick={handleSubmit}
+            disabled={loading || !email.trim() || !password}
+            className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:scale-[1.01] hover:shadow-xl hover:shadow-cyan-500/30 disabled:opacity-50 disabled:scale-100 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-cyan-400"
+          >
+            {loading
+              ? mode === "signin"
+                ? t("auth.passwordSigningIn")
+                : t("auth.passwordCreatingAccount")
+              : mode === "signin"
+                ? t("common.signIn")
+                : t("auth.passwordCreateAccount")}
+          </button>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -85,7 +328,7 @@ const methodBtnClass =
   "w-full flex items-center gap-3 rounded-xl border border-zinc-200 dark:border-zinc-700/60 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-3 text-sm font-medium text-zinc-800 dark:text-zinc-200 transition-all hover:border-zinc-300 dark:hover:border-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 disabled:opacity-40 disabled:pointer-events-none";
 
 /* ─── Modal views ─────────────────────────────────────────────────────── */
-type ModalView = "methods" | "cli-code" | "ssh-info" | "email-menu" | "email-otp" | "email-otp-verify" | "email-magic";
+type ModalView = "methods" | "cli-code" | "ssh-info" | "email-menu" | "email-otp" | "email-otp-verify" | "email-magic" | "email-password";
 
 /* ─── Authentik config (from env) ─────────────────────────────────────── */
 
@@ -112,6 +355,7 @@ function SignInModal({
   const t = useTranslation();
   const [view, setView] = useState<ModalView>("methods");
   const [otpEmail, setOtpEmail] = useState("");
+  const [magicEmail, setMagicEmail] = useState("");
   const backdropRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -142,6 +386,7 @@ function SignInModal({
     if (view === "email-menu") return t("auth.emailTitle");
     if (view === "email-otp" || view === "email-otp-verify") return t("auth.emailOtpViewTitle");
     if (view === "email-magic") return t("auth.emailMagicTitle");
+    if (view === "email-password") return t("auth.emailPassword");
     return t("auth.signInTitle");
   })();
 
@@ -151,7 +396,7 @@ function SignInModal({
       onClick={handleBackdrop}
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm animate-fade-in-fast p-4"
     >
-      <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900 shadow-2xl shadow-black/10 dark:shadow-black/40 overflow-hidden">
+      <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 dark:border-zinc-700/50 bg-white dark:bg-zinc-900 shadow-2xl shadow-black/10 dark:shadow-black/40 overflow-visible">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-4 sm:px-6 py-4">
           <div className="flex items-center gap-2">
@@ -189,6 +434,7 @@ function SignInModal({
             <EmailMenuView
               onPickOtp={() => setView("email-otp")}
               onPickMagic={() => setView("email-magic")}
+              onPickPassword={() => setView("email-password")}
             />
           )}
           {view === "email-otp" && (
@@ -202,8 +448,8 @@ function SignInModal({
           )}
           {view === "email-magic" && (
             <EmailMagicLinkView
-              initialEmail={otpEmail}
-              onSent={(email) => setOtpEmail(email)}
+              initialEmail={magicEmail}
+              onSent={(email) => setMagicEmail(email)}
             />
           )}
           {view === "email-otp-verify" && (
@@ -211,6 +457,9 @@ function SignInModal({
               email={otpEmail}
               onSuccess={onClose}
             />
+          )}
+          {view === "email-password" && (
+            <EmailPasswordView onSuccess={onClose} />
           )}
         </div>
       </div>
@@ -239,7 +488,7 @@ function MethodsView({
         <button onClick={() => goTo("email-menu")} className={methodBtnClass}>
           <MailIcon />
           {t("auth.email")}
-          <span className="ml-auto text-xs text-zinc-500">{t("auth.passwordless")}</span>
+          <span className="ml-auto text-xs text-zinc-500">{t("auth.passwordAndPasswordless")}</span>
         </button>
       </div>
 
@@ -362,9 +611,11 @@ function OtpCodeInput({
 function EmailMenuView({
   onPickOtp,
   onPickMagic,
+  onPickPassword,
 }: {
   onPickOtp: () => void;
   onPickMagic: () => void;
+  onPickPassword: () => void;
 }) {
   const t = useTranslation();
   return (
@@ -384,6 +635,13 @@ function EmailMenuView({
         <div className="flex flex-col items-start">
           <span>{t("auth.emailMagic")}</span>
           <span className="text-xs text-zinc-500">{t("auth.emailMagicHint")}</span>
+        </div>
+      </button>
+      <button onClick={onPickPassword} className={methodBtnClass + " items-start"}>
+        <MailIcon />
+        <div className="flex flex-col items-start">
+          <span>{t("auth.emailPassword")}</span>
+          <span className="text-xs text-zinc-500">{t("auth.emailPasswordHint")}</span>
         </div>
       </button>
     </div>
@@ -529,6 +787,10 @@ function EmailOtpVerifyView({
 
       <OtpCodeInput value={code} onChange={setCode} />
 
+      <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center">
+        {t("auth.emailMagicSignInHint")}
+      </p>
+
       {verifying && (
         <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center animate-pulse">
           {t("auth.verifying")}
@@ -605,17 +867,7 @@ function EmailMagicLinkView({
     setSending(true);
     setError(null);
     try {
-      const supabase = getSupabaseClient();
-      if (!supabase) throw new Error("Supabase client not configured");
-      const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3001";
-      const { error } = await supabase.auth.signInWithOtp({
-        email: trimmed,
-        options: {
-          emailRedirectTo: `${dashboardUrl}/auth/callback`,
-          shouldCreateUser: true,
-        },
-      });
-      if (error) throw new Error(error.message);
+      await sendMagicLinkEmail(trimmed);
       setSent(true);
       setCooldown(45);
       setOkMsg(t("auth.linkSentTo", { email: trimmed }));
@@ -640,7 +892,7 @@ function EmailMagicLinkView({
             {t("auth.emailMagicDesc")}
           </p>
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="magic-email-input" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Email</label>
+            <label htmlFor="magic-email-input" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">{t("auth.email")}</label>
             <input
               id="magic-email-input"
               type="email"

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" style="margin:0;padding:0;" xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CIG Sign in</title>
+    <style>
+      /* Basic, client-safe styles */
+      body { margin:0; padding:0; background:#f6f7f9; color:#0f172a; }
+      a { color:#0ea5e9; text-decoration:none; }
+      .container { max-width:600px; margin:0 auto; padding:24px 16px; }
+      .card { background:#ffffff; border-radius:12px; padding:24px; border:1px solid #e5e7eb; }
+      .h1 { font-size:20px; line-height:28px; margin:0 0 8px 0; font-weight:700; }
+      .p { font-size:14px; line-height:20px; margin:0 0 12px 0; color:#334155; }
+      .btn { display:inline-block; background:linear-gradient(90deg,#06b6d4,#3b82f6); color:#fff; padding:12px 18px; border-radius:10px; font-weight:600; }
+      .code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:22px; letter-spacing:4px; display:inline-block; padding:10px 14px; border-radius:10px; background:#f1f5f9; border:1px solid #e2e8f0; color:#0f172a; }
+      .muted { color:#64748b; font-size:12px; }
+      .divider { height:1px; background:#e5e7eb; margin:20px 0; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <div class="h1">Sign in to CIG</div>
+        <p class="p">Use whichever is more convenient:</p>
+
+        <!-- Magic link button -->
+        <p style="margin:16px 0 20px 0;">
+          <a class="btn" href="{{ .ConfirmationURL }}">Continue with magic link</a>
+        </p>
+
+        <div class="divider"></div>
+
+        <!-- OTP code -->
+        <p class="p">Or enter this 6‑digit code in the app:</p>
+        <p style="text-align:center; margin:10px 0 18px 0;">
+          <span class="code">{{ .Token }}</span>
+        </p>
+
+        <p class="muted">
+          If the button above doesn’t work, copy and paste this link into your browser:<br/>
+          <span style="word-break:break-all;">{{ .ConfirmationURL }}</span>
+        </p>
+      </div>
+
+      <p class="muted" style="text-align:center; margin-top:12px;">This link and code will expire after a short time for your security.</p>
+    </div>
+  </body>
+  </html>
