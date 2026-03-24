@@ -1,3 +1,15 @@
+## [0.1.92](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.91...v0.1.92) (2026-03-24)
+
+### Detected changes
+- .github: .github/workflows/deploy-api.yml
+
+
+## [0.1.92](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.91...v0.1.92) (2026-03-24)
+
+
+
+
+
 ## [0.1.91](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.90...v0.1.91) (2026-03-24)
 
 ### Detected changes

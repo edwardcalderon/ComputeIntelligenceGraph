@@ -475,6 +475,26 @@ jobs:
             exit 1
           fi
 
+          if [ -z "$DATABASE_URL_VALUE" ]; then
+            echo 'SUPABASE_DATABASE_URL secret is required.' >&2
+            exit 1
+          fi
+
+          if [[ ! "$DATABASE_URL_VALUE" =~ ^postgres(ql)?:// ]]; then
+            echo 'SUPABASE_DATABASE_URL must be a PostgreSQL connection string.' >&2
+            exit 1
+          fi
+
+          database_host="${DATABASE_URL_VALUE#*://}"
+          database_host="${database_host#*@}"
+          database_host="${database_host%%/*}"
+          database_host="${database_host%%:*}"
+
+          if [ -z "$database_host" ] || [[ "$database_host" != *supabase.co* ]]; then
+            echo 'SUPABASE_DATABASE_URL must point to a Supabase host.' >&2
+            exit 1
+          fi
+
           set -a
           # Keep runtime values out of GITHUB_ENV so GitHub Actions does not print them in step metadata.
           source "$API_CORE_ENV_FILE"
