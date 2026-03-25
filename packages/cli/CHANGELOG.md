@@ -1,12 +1,6 @@
 ## [0.1.4](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.3...cli-v0.1.4) (2026-03-25)
 
 
-
-
-
-## [0.1.4](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.3...cli-v0.1.4) (2026-03-25)
-
-
 ### Features
 
 - detect Docker when it is installed but the daemon is stopped, then offer to start or initialize it during setup

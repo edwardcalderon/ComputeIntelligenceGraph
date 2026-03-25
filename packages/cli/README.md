@@ -35,19 +35,18 @@ same binaries and provenance data.
 - Package: https://www.npmjs.com/package/@cig-technology/cli
 - GitHub releases: https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases
 
-## 📋 Latest Changes (v0.1.3)
+## 📋 Latest Changes (v0.1.4)
 
 ### Features
 
-- add a public `curl -fsSL https://cig.lat/install.sh | bash` install path to the CLI README
-- make the public installer resolve `@cig-technology/cli` from the npm registry first
-- add registry, dashboard, and install-guide links to the package README
+- detect Docker when it is installed but the daemon is stopped, then offer to start or initialize it during setup
+- add explicit remediation flows for Docker daemon start, package installation, and manual prereq issues
+- keep the CLI installer wizard responsible for host remediation instead of failing early on Docker startup state
 
 ### Release
 
-- keep the web installer aligned with the published npm package so remote installs use the same binaries and provenance
-- keep the package-local `cli-v*` release line independent from the monorepo root semver line
-- keep `bash ./install.sh` as the local checkout fallback for contributors
+- bump `@cig-technology/cli` to `0.1.4` for the Docker daemon auto-init flow
+- keep package-local release tags on the `cli-v*` line independent from the monorepo root semver line
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 
