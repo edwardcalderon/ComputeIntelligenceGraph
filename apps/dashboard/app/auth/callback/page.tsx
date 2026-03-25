@@ -296,6 +296,7 @@ function storeSession(
     sessionStorage.removeItem("cig_refresh_token");
     sessionStorage.removeItem("cig_expires_in");
     sessionStorage.removeItem("cig_expires_at");
+    sessionStorage.removeItem("cig_auth_source");
     sessionStorage.removeItem("cig_social_provider");
 
     const expiresAtMs = Date.now() + expiresIn * 1000;
@@ -303,6 +304,7 @@ function storeSession(
     if (idToken) sessionStorage.setItem("cig_id_token", idToken);
     if (refreshToken) sessionStorage.setItem("cig_refresh_token", refreshToken);
     if (socialProvider) sessionStorage.setItem("cig_social_provider", socialProvider);
+    sessionStorage.setItem("cig_auth_source", "authentik");
     sessionStorage.setItem("cig_expires_in", String(expiresIn));
     sessionStorage.setItem("cig_expires_at", String(expiresAtMs));
     const expiresAtDate = new Date(expiresAtMs).toUTCString();
@@ -323,6 +325,7 @@ function clearStoredSession() {
     sessionStorage.removeItem("cig_refresh_token");
     sessionStorage.removeItem("cig_expires_in");
     sessionStorage.removeItem("cig_expires_at");
+    sessionStorage.removeItem("cig_auth_source");
     sessionStorage.removeItem("cig_social_provider");
     document.cookie = "cig_has_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
   } catch {

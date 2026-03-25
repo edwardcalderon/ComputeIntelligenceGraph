@@ -3,6 +3,7 @@ import {
   discoverEndpoints,
   orchestrateLogout,
 } from "@edcalderon/auth/authentik";
+import { getSupabaseClient } from "@cig/auth";
 import {
   resolveLandingLoggedOutUrl,
   resolveLandingUrl,
@@ -17,7 +18,8 @@ function getSession() {
     if (expiresAt && Date.now() > parseInt(expiresAt, 10)) return null;
     const idToken = sessionStorage.getItem("cig_id_token") ?? undefined;
     const refreshToken = sessionStorage.getItem("cig_refresh_token") ?? undefined;
-    return { token, idToken, refreshToken, expiresAt };
+    const authSource = (sessionStorage.getItem("cig_auth_source") as "authentik" | "supabase" | null) ?? null;
+    return { token, idToken, refreshToken, expiresAt, authSource };
   } catch {
     return null;
   }
@@ -30,6 +32,7 @@ function clearSession() {
     sessionStorage.removeItem("cig_refresh_token");
     sessionStorage.removeItem("cig_expires_in");
     sessionStorage.removeItem("cig_expires_at");
+    sessionStorage.removeItem("cig_auth_source");
     // Expire the middleware cookie immediately
     document.cookie = "cig_has_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
   } catch { /* ignore */ }
@@ -119,12 +122,20 @@ export const authProvider: AuthProvider = {
 
   logout: async () => {
     const session = getSession();
+    const sessionSource = session?.authSource ?? null;
     clearSession();
 
-    if (getAuthBackend() !== "authentik") {
+    if (sessionSource === "supabase" || getAuthBackend() !== "authentik") {
+      const supabase = getSupabaseClient();
+      try {
+        await supabase?.auth.signOut();
+      } catch {
+        // Ignore Supabase sign-out failures and still clear the app session.
+      }
+
       return {
         success: true,
-        redirectTo: resolveLandingLoggedOutUrl(),
+        redirectTo: resolveLandingUrl(),
       };
     }
 

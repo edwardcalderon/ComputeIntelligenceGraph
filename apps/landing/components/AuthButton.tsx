@@ -758,17 +758,21 @@ function EmailOtpVerifyView({
   const [resentOk, setResentOk] = useState(false);
   const [resendError, setResendError] = useState<string | null>(null);
 
+  const [verified, setVerified] = useState(false);
+
   const handleVerify = useCallback(async () => {
     if (code.length !== 6) return;
     setVerifying(true);
     setError(null);
     try {
       await verifyEmailOtp(email, code);
+      setVerified(true);
       onSuccess();
 
-      const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3001";
-      // Keep in sync with AuthenticatedLanding's callback handling.
-      window.location.replace(`${dashboardUrl}/auth/callback?redirect=${encodeURIComponent("/")}`);
+      // We intentionally avoid forcing an immediate dashboard redirect
+      // so users can stay on the landing path and confirm auth state.
+      // Dashboard navigation is handled by the explicit CTA in the
+      // authenticated landing UI.
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t("auth.otpVerifyError"));
       setCode("");
@@ -819,6 +823,12 @@ function EmailOtpVerifyView({
       {verifying && (
         <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center animate-pulse">
           {t("auth.verifying")}
+        </p>
+      )}
+
+      {verified && !verifying && (
+        <p className="text-xs text-emerald-500 dark:text-emerald-400 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 px-3 py-2 text-center">
+          {t("auth.otpVerified") || "OTP verified. You are signed in."}
         </p>
       )}
 

@@ -27,6 +27,7 @@ function persistEmailSession(accessToken: string, expiresIn: number, socialProvi
   sessionStorage.setItem("cig_id_token", accessToken);
   sessionStorage.setItem("cig_expires_in", String(expiresIn));
   sessionStorage.setItem("cig_expires_at", String(expiresAt));
+  sessionStorage.setItem("cig_auth_source", "supabase");
   sessionStorage.setItem("cig_social_provider", socialProvider);
   document.cookie = `cig_has_session=1; path=/; expires=${expiresAtDate}; SameSite=Lax${secure}`;
 

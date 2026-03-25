@@ -14,6 +14,8 @@ export interface CIGUser {
   name: string;
   avatarUrl?: string;
   sub: string;
+  /** Which auth backend created the session */
+  authSource: "authentik" | "supabase";
   /** Social provider the user signed in with (e.g. "google", "github") */
   socialProvider: string;
 }
@@ -86,6 +88,7 @@ function readAuthentikSession(): CIGUser | null {
       email,
       name:      (payload.name as string) ?? (payload.preferred_username as string) ?? email.split("@")[0] ?? "",
       avatarUrl,
+      authSource: "authentik",
       socialProvider: socialProvider || "sso",
     };
   } catch {
@@ -100,6 +103,7 @@ function clearAuthentikSession() {
     sessionStorage.removeItem("cig_refresh_token");
     sessionStorage.removeItem("cig_expires_in");
     sessionStorage.removeItem("cig_expires_at");
+    sessionStorage.removeItem("cig_auth_source");
     sessionStorage.removeItem("cig_social_provider");
     document.cookie = "cig_has_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
   } catch { /* ignore */ }
@@ -123,6 +127,7 @@ async function readSupabaseSession(): Promise<CIGUser | null> {
       email:     u.email ?? "",
       name:      u.user_metadata?.full_name ?? u.user_metadata?.name ?? u.email?.split("@")[0] ?? "",
       avatarUrl: u.user_metadata?.avatar_url ?? undefined,
+      authSource: "supabase",
       socialProvider: detectedProvider,
     };
   } catch {
@@ -173,6 +178,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (idToken) sessionStorage.setItem("cig_id_token", idToken);
           sessionStorage.setItem("cig_expires_in", String(expiresIn));
           sessionStorage.setItem("cig_expires_at", String(expiresAtMs));
+          sessionStorage.setItem("cig_auth_source", "authentik");
           if (socialProv) sessionStorage.setItem("cig_social_provider", socialProv);
           const expiresAtDate = new Date(expiresAtMs).toUTCString();
           const secure = window.location.protocol === 'https:' ? '; Secure' : '';
@@ -224,6 +230,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               email: u.email ?? "",
               name: u.user_metadata?.full_name ?? u.user_metadata?.name ?? u.email?.split("@")[0] ?? "",
               avatarUrl: u.user_metadata?.avatar_url ?? undefined,
+              authSource: "supabase",
               socialProvider: detectedProvider,
             },
             isHydrated: true,
@@ -245,12 +252,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(() => {
-    // If current session is Supabase email (or any Supabase provider), sign out Supabase only
-    const provider = authState.user?.socialProvider?.toLowerCase();
-    if (provider === "email") {
+    const sessionSource = (() => {
+      try {
+        return (sessionStorage.getItem("cig_auth_source") as "authentik" | "supabase" | null) ?? authState.user?.authSource ?? null;
+      } catch {
+        return authState.user?.authSource ?? null;
+      }
+    })();
+
+    if (sessionSource === "supabase") {
       const supabase = getSupabaseClient();
-      void supabase?.auth.signOut();
-      setAuthState({ user: null, isHydrated: true, isSigningOut: false });
+      void (async () => {
+        try {
+          await supabase?.auth.signOut();
+        } catch { /* ignore */ }
+        try {
+          sessionStorage.removeItem("cig_auth_source");
+        } catch { /* ignore */ }
+        setAuthState({ user: null, isHydrated: true, isSigningOut: false });
+      })();
       return;
     }
 
@@ -309,7 +329,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         window.location.replace(result.endSessionUrl);
       }
     })();
-  }, []);
+  }, [authState.user?.authSource]);
 
   return (
     <AuthContext.Provider

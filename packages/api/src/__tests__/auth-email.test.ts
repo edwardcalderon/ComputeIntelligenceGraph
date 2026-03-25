@@ -68,10 +68,14 @@ describe('auth email routes', () => {
     expect(mailerMocks.createTransport).toHaveBeenCalledWith({
       host: 'mail.example.com',
       port: 587,
-      secure: true,
+      secure: false,
       auth: {
         user: 'notifications@example.com',
         pass: 'smtp-password',
+      },
+      requireTLS: true,
+      tls: {
+        rejectUnauthorized: true,
       },
     });
     expect(mailerMocks.sendMail).toHaveBeenCalledTimes(1);

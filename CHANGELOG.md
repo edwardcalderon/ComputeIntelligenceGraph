@@ -1,4 +1,30 @@
+## [0.1.100](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.99...v0.1.100) (2026-03-25)
+
+
+### Bug Fixes
+
+* **auth:** improved OTP flow redirect, auth auto-sync event, and upgraded OTP email template with full CIG branding ([32d7e1f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/32d7e1f109468c70f020b465699658eaf220b5ed))
+
+
+
+
+
+## [0.1.100](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.99...v0.1.100) (2026-03-25)
+
+
+### Bug Fixes
+
+* **auth:** improved OTP flow redirect, auth auto-sync event, and upgraded OTP email template with full CIG branding ([32d7e1f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/32d7e1f109468c70f020b465699658eaf220b5ed))
+
+
+
+
+
 ## [0.1.99](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.98...v0.1.99) (2026-03-24)
+
+### Bug Fixes
+- ensure logout completes on the first click for Supabase sessions and preserves Authentik RP-initiated logout for OIDC sessions
+- keep logout routing aligned with the session source stored by landing and dashboard auth flows
 
 
 
