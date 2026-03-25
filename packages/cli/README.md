@@ -36,18 +36,12 @@ binaries and provenance data.
 - Package: https://www.npmjs.com/package/@cig-technology/cli
 - GitHub releases: https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases
 
-## 📋 Latest Changes (v0.1.6)
+## 📋 Latest Changes (v0.1.7)
 
-### Features
+### Bug Fixes
 
-- display the actual CLI package version in the setup/install banner
-- derive the CLI version from the package manifest instead of a stale hardcoded constant
-- harden the public bash installer so `curl | bash` does not trip over `BASH_SOURCE` when no script file is present
-
-### Release
-
-- ensure the installation banner reflects the published `@cig-technology/cli` version
-- keep the public installer safe in both file-based and piped execution modes
+* **cli:** keep setup wizard interactive ([78e9f74](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/78e9f746a3d9911ac1b31e3a0c6ac16daa5b548e))
+* **cli:** resolve public installer versioning ([de7be3c](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/de7be3cf6d6b72967bef772c708ca50eb5c87e2b))
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 

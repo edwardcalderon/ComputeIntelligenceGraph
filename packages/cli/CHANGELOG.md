@@ -1,3 +1,15 @@
+## [0.1.7](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.6...cli-v0.1.7) (2026-03-25)
+
+
+### Bug Fixes
+
+* **cli:** keep setup wizard interactive ([78e9f74](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/78e9f746a3d9911ac1b31e3a0c6ac16daa5b548e))
+* **cli:** resolve public installer versioning ([de7be3c](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/de7be3cf6d6b72967bef772c708ca50eb5c87e2b))
+
+
+
+
+
 ## [0.1.6](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.5...cli-v0.1.6) (2026-03-25)
 
 
