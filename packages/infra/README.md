@@ -22,7 +22,7 @@ This package now owns two related concerns:
   - Route53
   - optional native pipeline scaffolding
 
-GitHub Actions is the primary production deployment entrypoint. Native SST pipeline creation remains optional and disabled during normal deploys.
+GitHub Actions is the primary production deployment entrypoint. Release tags and `release-metadata.json` are bookkeeping only; they do not decide whether the API is rebuilt or redeployed. Native SST pipeline creation remains optional and disabled during normal deploys.
 The bootstrap helpers are safe to re-run: if the production SST stage already exists, they only ensure the ECR repository is present and do not prune the runtime stack.
 
 This package is also the canonical translation layer from deploy inputs to the API runtime contract. Workflow callers should treat it as the single source of truth for runtime environment variables, secret ARN mapping, and defaults.
@@ -93,11 +93,13 @@ pnpm --filter @cig/infra bootstrap:api:pipelines
 
 1. Terraform in `packages/iac/environments/api-prod` applies networking and Neo4j.
 2. GitHub Actions syncs runtime secrets into AWS Secrets Manager.
-3. GitHub Actions ensures the ECR repository exists.
-4. GitHub Actions builds and pushes the API image.
-5. GitHub Actions runs `pnpm --filter @cig/api migrate:up` against Supabase Postgres.
-6. GitHub Actions runs the full SST deploy for the ECS/Fargate runtime.
-7. GitHub Actions runs health, authenticated REST, GraphQL, and WebSocket smoke checks.
+3. GitHub Actions detects API impact from the tagged commit and skips release-noise-only tags entirely.
+4. If the API source changed, GitHub Actions resolves an existing `api-src-<hash>` digest or builds and pushes that immutable image once with `sha-<commit>` and `api-src-<hash>` tags.
+5. If only runtime wiring changed, GitHub Actions reuses the last published digest for that source fingerprint and skips rebuilding.
+6. If the API source changed, GitHub Actions runs `pnpm --filter @cig/api migrate:up` against Supabase Postgres.
+7. If deploy wiring changed, GitHub Actions applies the API core-data Terraform stack.
+8. GitHub Actions runs the full SST deploy for the ECS/Fargate runtime using the resolved ECR digest.
+9. GitHub Actions runs health, authenticated REST, GraphQL, and WebSocket smoke checks.
 
 ## Related Docs
 

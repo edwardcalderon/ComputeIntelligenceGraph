@@ -9,6 +9,9 @@ describe('ApiDeployer', () => {
       domain: 'api.cig.technology',
       region: 'us-east-2',
       imageRepository: 'cig-api-production',
+      imageUri:
+        '123456789012.dkr.ecr.us-east-2.amazonaws.com/cig-api-production@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+      imageTag: 'v0.1.58',
       containerPort: 8080,
       cpu: 512,
       memoryMiB: 1024,
@@ -39,7 +42,6 @@ describe('ApiDeployer', () => {
       smtpPasswordSecretArn: 'arn:aws:secretsmanager:::smtp-password',
       corsOrigins: ['https://app.cig.lat'],
       createPipeline: false,
-      imageUri: '123456789012.dkr.ecr.us-east-2.amazonaws.com/cig-api-production:v0.1.58',
     });
 
     expect(env.API_DOMAIN).toBe('api.cig.technology');
@@ -58,6 +60,9 @@ describe('ApiDeployer', () => {
     expect(env.API_SMTP_OTP_SUBJECT).toBe('Your one-time code');
     expect(env.API_SMTP_PASSWORD_SECRET_ARN).toBe('arn:aws:secretsmanager:::smtp-password');
     expect(env.INFRA_CREATE_PIPELINES).toBe('false');
+    expect(env.API_IMAGE_URI).toBe(
+      '123456789012.dkr.ecr.us-east-2.amazonaws.com/cig-api-production@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+    );
   });
 
   it('routes bootstrap deploys through the safe bootstrap helper', async () => {
@@ -71,19 +76,19 @@ describe('ApiDeployer', () => {
       }
     );
 
-      await deployer.deploy({
-        domain: 'api.cig.technology',
-        region: 'us-east-2',
-        imageRepository: 'cig-api-production',
-        smtpHost: 'mail.example.com',
-        smtpPort: 587,
-        smtpSecure: true,
-        smtpFromEmail: 'notifications@example.com',
-        smtpAuthEnabled: true,
-        smtpPasswordSecretArn: 'arn:aws:secretsmanager:::smtp-password',
-        bootstrapOnly: true,
-        createPipeline: false,
-      });
+    await deployer.deploy({
+      domain: 'api.cig.technology',
+      region: 'us-east-2',
+      imageRepository: 'cig-api-production',
+      smtpHost: 'mail.example.com',
+      smtpPort: 587,
+      smtpSecure: true,
+      smtpFromEmail: 'notifications@example.com',
+      smtpAuthEnabled: true,
+      smtpPasswordSecretArn: 'arn:aws:secretsmanager:::smtp-password',
+      bootstrapOnly: true,
+      createPipeline: false,
+    });
 
     expect(commandRunner).toHaveBeenCalledWith(
       'bash',

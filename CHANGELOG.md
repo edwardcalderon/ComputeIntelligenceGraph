@@ -1,3 +1,25 @@
+## [0.1.107](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.106...v0.1.107) (2026-03-25)
+
+### Detected changes
+- .github: .github/workflows/deploy-api.yml
+- docs: docs/deployment/api-aws.md
+- root: package.json
+- packages: 3 changed file(s)
+  - packages/infra/README.md
+  - packages/infra/src/config/ConfigManager.test.ts
+  - packages/infra/src/deployers/ApiDeployer.test.ts
+- scripts: 3 changed file(s)
+  - scripts/api-impact.mjs
+  - scripts/api-impact.test.mjs
+  - scripts/detect-api-impact.mjs
+
+
+## [0.1.107](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.106...v0.1.107) (2026-03-25)
+
+
+
+
+
 ## [0.1.106](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.105...v0.1.106) (2026-03-25)
 
 ### Detected changes

@@ -155,6 +155,9 @@ describe('ConfigManager', () => {
       process.env.AWS_REGION = 'us-east-2';
       process.env.API_DOMAIN = 'api.cig.technology';
       process.env.API_IMAGE_REPOSITORY = 'cig-api-production';
+      process.env.API_IMAGE_URI =
+        '123456789012.dkr.ecr.us-east-2.amazonaws.com/cig-api-production@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+      process.env.API_IMAGE_TAG = 'v0.1.58';
       process.env.API_CONTAINER_PORT = '8080';
       process.env.API_CPU = '512';
       process.env.API_MEMORY_MIB = '1024';
@@ -185,6 +188,10 @@ describe('ConfigManager', () => {
       expect(config.api?.region).toBe('us-east-2');
       expect(config.api?.domain).toBe('api.cig.technology');
       expect(config.api?.imageRepository).toBe('cig-api-production');
+      expect(config.api?.imageUri).toBe(
+        '123456789012.dkr.ecr.us-east-2.amazonaws.com/cig-api-production@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+      );
+      expect(config.api?.imageTag).toBe('v0.1.58');
       expect(config.api?.containerPort).toBe(8080);
       expect(config.api?.cpu).toBe(512);
       expect(config.api?.memoryMiB).toBe(1024);

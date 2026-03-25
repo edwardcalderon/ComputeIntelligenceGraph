@@ -19,8 +19,10 @@ This document covers the first real production delivery path for `packages/api` 
 flowchart TD
   GH[GitHub Actions] --> TF[Terraform apply<br/>packages/iac/environments/api-prod]
   GH --> SM[AWS Secrets Manager sync]
+  GH --> DET[Detect API impact]
+  DET --> VAL[Validate relevant inputs]
+  DET --> IMG[Resolve existing digest<br/>or build once]
   GH --> SST[SST deploy<br/>packages/infra]
-  GH --> IMG[Build + push API image to ECR]
 
   TF --> VPC[VPC + public/private subnets]
   TF --> SG[ALB / API / Neo4j security groups]
@@ -37,6 +39,8 @@ flowchart TD
   ALB --> ECS
   DNS --> ALB
 ```
+
+Release tags are workflow triggers and bookkeeping only. The detector decides whether a commit is source change, runtime change, or release noise, and the API image is promoted by digest.
 
 ## Ownership Split
 
@@ -132,6 +136,7 @@ The GitHub Actions deploy workflow resolves the Authentik values from the live t
 
 - Workflow: `.github/workflows/deploy-api.yml`
 - Jobs:
+  - `detect-api-impact`
   - `validate`
   - `build-image`
   - `migrate-db`
@@ -141,10 +146,12 @@ The GitHub Actions deploy workflow resolves the Authentik values from the live t
 
 Notes:
 
-- `validate` runs SST in `bootstrap` mode so it can diff the stack without requiring full runtime outputs.
-- `build-image` ensures the ECR repository exists before pushing the API image. If the SST stage is already present, the bootstrap helper avoids pruning the runtime stack.
-- `migrate-db` runs `pnpm --filter @cig/api migrate:up` directly against Supabase Postgres.
-- `deploy-api` reads Terraform outputs, syncs AWS Secrets Manager entries, then runs the full SST deploy.
+- `detect-api-impact` hashes the real API build inputs and skips release-noise-only tags.
+- `validate` runs only when the detector finds source or runtime changes. It still uses SST in `bootstrap` mode so it can diff the stack without requiring full runtime outputs.
+- `build-image` resolves an existing `api-src-<hash>` digest or builds and pushes that immutable image once. Manual dispatch is promotion-only and never rebuilds from the tag itself.
+- `migrate-db` runs `pnpm --filter @cig/api migrate:up` directly against Supabase Postgres when the API source changed.
+- `apply-core-data` applies the API core-data Terraform stack when deploy wiring changed.
+- `deploy-api` reads Terraform outputs, syncs AWS Secrets Manager entries, then runs the full SST deploy with the resolved digest URI.
 
 ## Deployment Workflow Review
 
@@ -152,17 +159,22 @@ This workflow is the current production control plane for the API. It typically 
 
 ### Current Cost Centers
 
+- `detect-api-impact`
+  - hashes the actual API build inputs
+  - ignores version-only package manifest churn
+  - treats release-metadata-only tags as no-op deploys
 - `validate`
   - installs workspace dependencies
-  - lints/tests `@cig/api` and `@cig/infra`
+  - lints/tests `@cig/api` only when API source changed
+  - lints/tests/builds `@cig/infra` only when runtime wiring changed
   - runs Terraform fmt/validate
   - performs an SST bootstrap diff check
 - `build-image`
-  - installs workspace dependencies again
-  - ensures the ECR repository exists
-  - builds and pushes the API image with Buildx
+  - resolves an existing digest by `api-src-<hash>` or a provided `image_tag`
+  - ensures the ECR repository exists only when a new image must be pushed
+  - builds and pushes the API image with Buildx only on API source changes
 - `migrate-db`
-  - pulls the newly built image
+  - pulls the resolved image digest
   - runs the API migration entrypoint against Supabase Postgres
 - `apply-core-data`
   - runs Terraform init/apply for networking and Neo4j
@@ -181,6 +193,7 @@ This workflow is the current production control plane for the API. It typically 
 - Terraform plugin caching is already enabled for the Terraform jobs.
 - Runtime values and secret ARNs are already handed off through temporary files rather than `GITHUB_ENV`.
 - The workflow already uses GitHub OIDC to assume AWS roles instead of long-lived static AWS keys.
+- Release metadata such as root version bumps and `release-metadata.json` does not influence deployment decisions.
 
 ### Likely Improvements
 
@@ -214,7 +227,7 @@ INFRA_CREATE_PIPELINES=false
 
 ### Runtime rollback
 
-1. Re-run `.github/workflows/deploy-api.yml` with a previous `image_tag`.
+1. Re-run `.github/workflows/deploy-api.yml` with a previous published tag, preferably an `api-src-<hash>` or `sha-<commit>` tag.
 2. Keep Terraform unchanged unless the issue is infrastructure-specific.
 3. Re-run smoke tests against the rolled-back image.
 

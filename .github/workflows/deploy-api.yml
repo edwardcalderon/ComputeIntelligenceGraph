@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: 'Docker image tag to deploy (leave blank to build from the current ref)'
+        description: 'Existing Docker image tag to deploy (leave blank to promote the current source fingerprint if already published)'
         required: false
         default: ''
       apply_core_data:
@@ -15,7 +15,7 @@ on:
         type: boolean
         default: true
       dry_run:
-        description: 'Build, validate, and push the API image without running migrations or deploy'
+        description: 'Resolve the target image and validate inputs without running migrations or deploy'
         type: boolean
         default: false
 
@@ -43,30 +43,45 @@ env:
   TF_IN_AUTOMATION: 'true'
 
 jobs:
-  resolve-tag:
-    name: Resolve image tag
-    if: ${{ github.event_name != 'push' || !startsWith(github.ref, 'refs/tags/') || !contains(github.ref_name, '+') }}
+  detect-api-impact:
+    name: Detect API impact
     runs-on: ubuntu-latest
     outputs:
-      value: ${{ steps.tag.outputs.value }}
+      api_source_changed: ${{ steps.detect.outputs.api_source_changed }}
+      api_runtime_changed: ${{ steps.detect.outputs.api_runtime_changed }}
+      release_metadata_only: ${{ steps.detect.outputs.release_metadata_only }}
+      has_relevant_changes: ${{ steps.detect.outputs.has_relevant_changes }}
+      api_source_fingerprint: ${{ steps.detect.outputs.api_source_fingerprint }}
+      api_source_tag: ${{ steps.detect.outputs.api_source_tag }}
     steps:
-      - name: Determine tag
-        id: tag
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Detect API impact
+        id: detect
         run: |
-          if [[ -n "${{ github.event.inputs.image_tag }}" ]]; then
-            echo "value=${{ github.event.inputs.image_tag }}" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.ref_type }}" == "tag" ]]; then
-            TAG="${GITHUB_REF_NAME#v}"
-            TAG="${TAG//+/-}"
-            echo "value=$TAG" >> "$GITHUB_OUTPUT"
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            BASE="$(git rev-parse "${GITHUB_SHA}^" 2>/dev/null || true)"
+            if [[ -z "$BASE" ]]; then
+              BASE="$(git hash-object -t tree /dev/null)"
+            fi
+            node scripts/detect-api-impact.mjs --base "$BASE" --head "$GITHUB_SHA"
           else
-            echo "value=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+            node scripts/detect-api-impact.mjs --head "$GITHUB_SHA"
           fi
 
   validate:
     name: Validate API deploy inputs
     runs-on: ubuntu-latest
-    needs: resolve-tag
+    needs: detect-api-impact
+    if: ${{ github.event_name == 'push' && needs.detect-api-impact.outputs.has_relevant_changes == 'true' }}
     permissions:
       contents: read
       id-token: write
@@ -102,21 +117,31 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Lint and test API
+        if: ${{ needs.detect-api-impact.outputs.api_source_changed == 'true' }}
+        run: |
+          pnpm --filter @cig/api lint
+          pnpm --filter @cig/api test
+
       - name: Configure AWS credentials
+        if: ${{ needs.detect-api-impact.outputs.api_runtime_changed == 'true' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
 
       - name: Setup Terraform
+        if: ${{ needs.detect-api-impact.outputs.api_runtime_changed == 'true' }}
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.8.5
 
       - name: Prepare Terraform plugin cache
+        if: ${{ needs.detect-api-impact.outputs.api_runtime_changed == 'true' }}
         run: mkdir -p "$TF_PLUGIN_CACHE_DIR"
 
       - name: Cache Terraform plugins
+        if: ${{ needs.detect-api-impact.outputs.api_runtime_changed == 'true' }}
         uses: actions/cache@v4
         with:
           path: ${{ env.TF_PLUGIN_CACHE_DIR }}
@@ -124,26 +149,25 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-terraform-plugin-
 
-      - name: Lint and test API
-        run: |
-          pnpm --filter @cig/api lint
-          pnpm --filter @cig/api test
-
       - name: Lint and test infra wrapper
+        if: ${{ needs.detect-api-impact.outputs.api_runtime_changed == 'true' }}
         run: |
           pnpm --filter @cig/infra lint
           pnpm --filter @cig/infra test
           pnpm --filter @cig/infra build
 
       - name: Terraform format check
+        if: ${{ needs.detect-api-impact.outputs.api_runtime_changed == 'true' }}
         run: terraform -chdir=packages/iac fmt -check -recursive
 
       - name: Terraform validate
+        if: ${{ needs.detect-api-impact.outputs.api_runtime_changed == 'true' }}
         run: |
           terraform -chdir=packages/iac/environments/api-prod init -backend=false
           terraform -chdir=packages/iac/environments/api-prod validate
 
       - name: SST diff (bootstrap mode)
+        if: ${{ needs.detect-api-impact.outputs.api_runtime_changed == 'true' }}
         working-directory: packages/infra
         env:
           INFRA_API_BOOTSTRAP_ONLY: 'true'
@@ -167,44 +191,21 @@ jobs:
           fi
 
   build-image:
-    name: Build and push API image
+    name: Resolve or build API image
     runs-on: ubuntu-latest
-    needs: [resolve-tag, validate]
+    needs: [detect-api-impact, validate]
+    if: ${{ always() && needs.detect-api-impact.result == 'success' && (github.event_name == 'workflow_dispatch' || needs.detect-api-impact.outputs.has_relevant_changes == 'true') && (needs.validate.result == 'success' || needs.validate.result == 'skipped') }}
     permissions:
       contents: read
       id-token: write
     outputs:
-      image_uri: ${{ steps.meta.outputs.image_uri }}
-      dockerhub_image_uri: ${{ steps.meta.outputs.dockerhub_image_uri }}
+      image_uri: ${{ steps.finalize.outputs.image_uri }}
+      image_digest: ${{ steps.finalize.outputs.image_digest }}
+      source_tag: ${{ steps.finalize.outputs.source_tag }}
+      lookup_tag: ${{ steps.finalize.outputs.lookup_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9.0.0
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -212,70 +213,137 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
 
-      - name: Ensure ECR repository exists
-        working-directory: packages/infra
-        env:
-          INFRA_API_BOOTSTRAP_ONLY: 'true'
-          INFRA_CREATE_PIPELINES: 'false'
-          API_IMAGE_URI: public.ecr.aws/docker/library/node:22-alpine
-        run: bash ./scripts/bootstrap-api.sh
-
-      - name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ env.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       - name: Resolve repository URI
         id: meta
         run: |
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           REPOSITORY_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${API_IMAGE_REPOSITORY}"
-          IMAGE_URI="${REPOSITORY_URI}:${{ needs.resolve-tag.outputs.value }}"
           DOCKERHUB_IMAGE="${DOCKERHUB_USERNAME}/${DOCKERHUB_API_IMAGE}"
-          DOCKERHUB_IMAGE_URI="${DOCKERHUB_IMAGE}:${{ needs.resolve-tag.outputs.value }}"
+          SOURCE_TAG="${{ needs.detect-api-impact.outputs.api_source_tag }}"
+          LOOKUP_TAG="$SOURCE_TAG"
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.image_tag }}" ]]; then
+            LOOKUP_TAG="${{ github.event.inputs.image_tag }}"
+          fi
+
+          SHA_TAG="sha-${GITHUB_SHA::7}"
           echo "repository_uri=$REPOSITORY_URI" >> "$GITHUB_OUTPUT"
-          echo "image_uri=$IMAGE_URI" >> "$GITHUB_OUTPUT"
           echo "dockerhub_image=$DOCKERHUB_IMAGE" >> "$GITHUB_OUTPUT"
-          echo "dockerhub_image_uri=$DOCKERHUB_IMAGE_URI" >> "$GITHUB_OUTPUT"
+          echo "source_tag=$SOURCE_TAG" >> "$GITHUB_OUTPUT"
+          echo "sha_tag=$SHA_TAG" >> "$GITHUB_OUTPUT"
+          echo "lookup_tag=$LOOKUP_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve existing digest
+        id: lookup
+        shell: bash
+        run: |
+          set +e
+          DIGEST=$(aws ecr describe-images \
+            --repository-name "$API_IMAGE_REPOSITORY" \
+            --image-ids imageTag="${{ steps.meta.outputs.lookup_tag }}" \
+            --query 'imageDetails[0].imageDigest' \
+            --output text 2>/dev/null)
+          STATUS=$?
+          set -e
+
+          if [ "$STATUS" -eq 0 ] && [ -n "$DIGEST" ] && [ "$DIGEST" != "None" ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "image_digest=$DIGEST" >> "$GITHUB_OUTPUT"
+            echo "image_uri=${{ steps.meta.outputs.repository_uri }}@$DIGEST" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Resolve build policy
+        id: policy
+        run: |
+          if [[ "${{ github.event_name }}" == "push" && "${{ needs.detect-api-impact.outputs.api_source_changed }}" == "true" ]]; then
+            echo "build_allowed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "build_allowed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Ensure ECR repository exists
+        if: ${{ steps.lookup.outputs.found != 'true' && steps.policy.outputs.build_allowed == 'true' }}
+        shell: bash
+        run: |
+          if ! aws ecr describe-repositories --repository-names "$API_IMAGE_REPOSITORY" >/dev/null 2>&1; then
+            aws ecr create-repository \
+              --repository-name "$API_IMAGE_REPOSITORY" \
+              --image-scanning-configuration scanOnPush=true \
+              --image-tag-mutability MUTABLE >/dev/null
+          fi
+
+      - name: Login to Amazon ECR
+        if: ${{ steps.lookup.outputs.found != 'true' && steps.policy.outputs.build_allowed == 'true' }}
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Login to Docker Hub
+        if: ${{ steps.lookup.outputs.found != 'true' && steps.policy.outputs.build_allowed == 'true' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
+        if: ${{ steps.lookup.outputs.found != 'true' && steps.policy.outputs.build_allowed == 'true' }}
         uses: docker/setup-buildx-action@v3
 
       - name: Build and push image
+        id: build
+        if: ${{ steps.lookup.outputs.found != 'true' && steps.policy.outputs.build_allowed == 'true' }}
         uses: docker/build-push-action@v5
         with:
           context: .
           file: infra/docker/Dockerfile.api
           push: true
           tags: |
-            ${{ steps.meta.outputs.image_uri }}
-            ${{ steps.meta.outputs.repository_uri }}:latest
-            ${{ steps.meta.outputs.dockerhub_image_uri }}
-            ${{ steps.meta.outputs.dockerhub_image }}:latest
+            ${{ steps.meta.outputs.repository_uri }}:${{ steps.meta.outputs.sha_tag }}
+            ${{ steps.meta.outputs.repository_uri }}:${{ steps.meta.outputs.source_tag }}
+            ${{ steps.meta.outputs.dockerhub_image }}:${{ steps.meta.outputs.sha_tag }}
+            ${{ steps.meta.outputs.dockerhub_image }}:${{ steps.meta.outputs.source_tag }}
           cache-from: |
             type=registry,ref=${{ steps.meta.outputs.repository_uri }}:buildcache
             type=gha
           cache-to: type=registry,ref=${{ steps.meta.outputs.repository_uri }}:buildcache,mode=max
           provenance: false
 
-      - name: Summarize published images
+      - name: Finalize resolved image
+        id: finalize
+        shell: bash
         run: |
-          echo "### API image publish" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "${{ steps.lookup.outputs.found }}" == "true" ]]; then
+            echo "image_uri=${{ steps.lookup.outputs.image_uri }}" >> "$GITHUB_OUTPUT"
+            echo "image_digest=${{ steps.lookup.outputs.image_digest }}" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ steps.policy.outputs.build_allowed }}" == "true" ]]; then
+            DIGEST="${{ steps.build.outputs.digest }}"
+            IMAGE_URI="${{ steps.meta.outputs.repository_uri }}@$DIGEST"
+            echo "image_uri=$IMAGE_URI" >> "$GITHUB_OUTPUT"
+            echo "image_digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          else
+            echo "No published image exists for '${{ steps.meta.outputs.lookup_tag }}', and this run is not allowed to build a new one." >&2
+            exit 1
+          fi
+
+          echo "source_tag=${{ steps.meta.outputs.source_tag }}" >> "$GITHUB_OUTPUT"
+          echo "lookup_tag=${{ steps.meta.outputs.lookup_tag }}" >> "$GITHUB_OUTPUT"
+
+      - name: Summarize resolved image
+        run: |
+          echo "### API image resolution" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Target | Image |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Field | Value |" >> "$GITHUB_STEP_SUMMARY"
           echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| AWS ECR | \`${{ steps.meta.outputs.image_uri }}\` |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Docker Hub | \`${{ steps.meta.outputs.dockerhub_image_uri }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Lookup tag | \`${{ steps.meta.outputs.lookup_tag }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Source tag | \`${{ steps.finalize.outputs.source_tag }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| ECR image | \`${{ steps.finalize.outputs.image_uri }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Mode | ${{ steps.lookup.outputs.found == 'true' && 'reused existing digest' || 'built new digest' }} |" >> "$GITHUB_STEP_SUMMARY"
 
   migrate-db:
     name: Run API migrations against Supabase Postgres
     runs-on: ubuntu-latest
-    needs: [resolve-tag, validate, build-image]
-    if: ${{ github.event.inputs.dry_run != 'true' }}
+    needs: [detect-api-impact, build-image]
+    if: ${{ github.event_name == 'push' && needs.detect-api-impact.outputs.api_source_changed == 'true' && github.event.inputs.dry_run != 'true' }}
     permissions:
       contents: read
       id-token: write
@@ -303,8 +371,8 @@ jobs:
   apply-core-data:
     name: Apply API core-data infrastructure
     runs-on: ubuntu-latest
-    needs: [validate]
-    if: ${{ github.event.inputs.dry_run != 'true' && (github.event_name != 'workflow_dispatch' || github.event.inputs.apply_core_data != 'false') }}
+    needs: [detect-api-impact, build-image]
+    if: ${{ github.event.inputs.dry_run != 'true' && needs.detect-api-impact.result == 'success' && ((github.event_name == 'workflow_dispatch' && github.event.inputs.apply_core_data != 'false') || (github.event_name == 'push' && needs.detect-api-impact.outputs.api_runtime_changed == 'true')) && needs.build-image.result == 'success' }}
     permissions:
       contents: read
       id-token: write
@@ -344,7 +412,7 @@ jobs:
   deploy-api:
     name: Deploy API runtime to ECS/Fargate
     runs-on: ubuntu-latest
-    needs: [resolve-tag, build-image, migrate-db, apply-core-data]
+    needs: [build-image, migrate-db, apply-core-data]
     if: ${{ always() && github.event.inputs.dry_run != 'true' && needs.build-image.result == 'success' && (needs.migrate-db.result == 'success' || needs.migrate-db.result == 'skipped') && (needs.apply-core-data.result == 'success' || needs.apply-core-data.result == 'skipped') }}
     permissions:
       contents: read
@@ -555,7 +623,6 @@ jobs:
           INFRA_CREATE_PIPELINES: 'false'
           INFRA_API_BOOTSTRAP_ONLY: 'false'
           API_IMAGE_URI: ${{ needs.build-image.outputs.image_uri }}
-          API_IMAGE_TAG: ${{ needs.resolve-tag.outputs.value }}
           API_CONTAINER_PORT: '8080'
           API_CPU: '512'
           API_MEMORY_MIB: '1024'

@@ -1,6 +1,6 @@
 {
   "name": "cig-monorepo",
-  "version": "0.1.106",
+  "version": "0.1.107",
   "private": true,
   "license": "MIT",
   "description": "Compute Intelligence Graph - monorepo root",
@@ -21,6 +21,7 @@
     "version:bump:major": "versioning major",
     "version:changelog": "versioning changelog",
     "check:secrets": "versioning check-secrets",
+    "test:api-impact": "node --test scripts/api-impact.test.mjs",
     "release": "./scripts/release.sh release",
     "release:build": "./scripts/release.sh release",
     "release:patch": "./scripts/release.sh patch",
