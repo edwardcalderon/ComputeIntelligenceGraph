@@ -67,11 +67,14 @@ Core runtime inputs:
 - `API_SMTP_PORT`
 - `API_SMTP_SECURE`
 - `API_SMTP_FROM_EMAIL`
+- `API_SMTP_USER`
 - `API_SMTP_AUTH_ENABLED`
 - `API_SMTP_OTP_SUBJECT`
 - `API_SMTP_PASSWORD_SECRET_ARN`
 
 Any new API runtime variable or secret should be added here first, then mirrored into the workflow and deployment docs. That keeps the runtime contract centralized instead of splitting it across GitHub Actions shell logic.
+
+`API_SMTP_USER` mirrors `API_SMTP_FROM_EMAIL` in production. The repository uses a placeholder example address, not the production mailbox, and the application still falls back to `API_SMTP_FROM_EMAIL` if `API_SMTP_USER` is omitted.
 
 Bootstrap-only mode uses:
 

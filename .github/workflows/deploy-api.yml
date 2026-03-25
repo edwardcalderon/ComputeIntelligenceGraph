@@ -425,7 +425,8 @@ jobs:
       API_SMTP_HOST: ${{ vars.SMTP_HOST || 'mail.xn--tlo-fla.com' }}
       API_SMTP_PORT: ${{ vars.SMTP_PORT || '587' }}
       API_SMTP_SECURE: ${{ vars.SMTP_SECURE || 'true' }}
-      API_SMTP_FROM_EMAIL: ${{ vars.SMTP_FROM_EMAIL || 'notifications@cig.technology' }}
+      API_SMTP_FROM_EMAIL: ${{ vars.SMTP_FROM_EMAIL || 'smtp-login@example.com' }}
+      API_SMTP_USER: ${{ vars.SMTP_FROM_EMAIL || 'smtp-login@example.com' }}
       API_SMTP_AUTH_ENABLED: ${{ vars.SMTP_AUTH_ENABLED || 'true' }}
       API_SMTP_OTP_SUBJECT: ${{ vars.SMTP_OTP_SUBJECT || 'Your CIG one-time code' }}
     steps:

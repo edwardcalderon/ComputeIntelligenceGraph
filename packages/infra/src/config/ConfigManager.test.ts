@@ -175,9 +175,9 @@ describe('ConfigManager', () => {
       process.env.API_SMTP_HOST = 'mail.example.com';
       process.env.API_SMTP_PORT = '587';
       process.env.API_SMTP_SECURE = 'true';
-      process.env.API_SMTP_FROM_EMAIL = 'notifications@cig.technology';
+      process.env.API_SMTP_FROM_EMAIL = 'smtp-login@example.com';
       process.env.API_SMTP_AUTH_ENABLED = 'true';
-      process.env.API_SMTP_USER = 'notifications@cig.technology';
+      process.env.API_SMTP_USER = 'smtp-login@example.com';
       process.env.API_SMTP_OTP_SUBJECT = 'Your one-time code';
       process.env.API_SMTP_PASSWORD_SECRET_ARN = 'arn:aws:secretsmanager:::smtp-password';
       process.env.API_CREATE_PIPELINE = 'false';
@@ -210,9 +210,9 @@ describe('ConfigManager', () => {
       expect(config.api?.smtpHost).toBe('mail.example.com');
       expect(config.api?.smtpPort).toBe(587);
       expect(config.api?.smtpSecure).toBe(true);
-      expect(config.api?.smtpFromEmail).toBe('notifications@cig.technology');
+      expect(config.api?.smtpFromEmail).toBe('smtp-login@example.com');
       expect(config.api?.smtpAuthEnabled).toBe(true);
-      expect(config.api?.smtpUser).toBe('notifications@cig.technology');
+      expect(config.api?.smtpUser).toBe('smtp-login@example.com');
       expect(config.api?.smtpOtpSubject).toBe('Your one-time code');
       expect(config.api?.smtpPasswordSecretArn).toBe('arn:aws:secretsmanager:::smtp-password');
       expect(config.api?.corsOrigins).toEqual(['https://app.cig.lat', 'https://cig.lat']);

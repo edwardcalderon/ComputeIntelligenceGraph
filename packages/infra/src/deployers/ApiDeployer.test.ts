@@ -35,9 +35,9 @@ describe('ApiDeployer', () => {
       smtpHost: 'mail.example.com',
       smtpPort: 587,
       smtpSecure: true,
-      smtpFromEmail: 'notifications@cig.technology',
+      smtpFromEmail: 'smtp-login@example.com',
       smtpAuthEnabled: true,
-      smtpUser: 'notifications@cig.technology',
+      smtpUser: 'smtp-login@example.com',
       smtpOtpSubject: 'Your one-time code',
       smtpPasswordSecretArn: 'arn:aws:secretsmanager:::smtp-password',
       corsOrigins: ['https://app.cig.lat'],
@@ -54,9 +54,9 @@ describe('ApiDeployer', () => {
     expect(env.API_SMTP_HOST).toBe('mail.example.com');
     expect(env.API_SMTP_PORT).toBe('587');
     expect(env.API_SMTP_SECURE).toBe('true');
-    expect(env.API_SMTP_FROM_EMAIL).toBe('notifications@cig.technology');
+    expect(env.API_SMTP_FROM_EMAIL).toBe('smtp-login@example.com');
     expect(env.API_SMTP_AUTH_ENABLED).toBe('true');
-    expect(env.API_SMTP_USER).toBe('notifications@cig.technology');
+    expect(env.API_SMTP_USER).toBe('smtp-login@example.com');
     expect(env.API_SMTP_OTP_SUBJECT).toBe('Your one-time code');
     expect(env.API_SMTP_PASSWORD_SECRET_ARN).toBe('arn:aws:secretsmanager:::smtp-password');
     expect(env.INFRA_CREATE_PIPELINES).toBe('false');
@@ -83,7 +83,7 @@ describe('ApiDeployer', () => {
       smtpHost: 'mail.example.com',
       smtpPort: 587,
       smtpSecure: true,
-      smtpFromEmail: 'notifications@cig.technology',
+      smtpFromEmail: 'smtp-login@example.com',
       smtpAuthEnabled: true,
       smtpPasswordSecretArn: 'arn:aws:secretsmanager:::smtp-password',
       bootstrapOnly: true,
@@ -102,7 +102,7 @@ describe('ApiDeployer', () => {
           API_SMTP_HOST: 'mail.example.com',
           API_SMTP_PORT: '587',
           API_SMTP_SECURE: 'true',
-          API_SMTP_FROM_EMAIL: 'notifications@cig.technology',
+          API_SMTP_FROM_EMAIL: 'smtp-login@example.com',
           API_SMTP_AUTH_ENABLED: 'true',
           API_SMTP_PASSWORD_SECRET_ARN: 'arn:aws:secretsmanager:::smtp-password',
           SST_STAGE: 'production',

@@ -1,6 +1,6 @@
 # API on AWS
 
-Last synchronized with the API ECS/Fargate delivery foundation on `2026-03-24`.
+Last synchronized with the API ECS/Fargate delivery foundation on `2026-03-25`.
 
 ## Scope
 
@@ -111,8 +111,11 @@ Resources created:
 - `SMTP_PORT`
 - `SMTP_SECURE`
 - `SMTP_FROM_EMAIL`
+- `SMTP_USER`
 - `SMTP_AUTH_ENABLED`
 - `SMTP_OTP_SUBJECT`
+
+`SMTP_USER` mirrors `SMTP_FROM_EMAIL` in production. The repository uses a placeholder example address, not the production mailbox, and the application still falls back to `SMTP_FROM_EMAIL` if `SMTP_USER` is omitted.
 
 ### Secrets injected through AWS Secrets Manager
 

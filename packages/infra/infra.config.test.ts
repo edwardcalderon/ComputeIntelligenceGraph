@@ -36,9 +36,9 @@ beforeEach(() => {
   process.env.API_SMTP_HOST = 'mail.example.com';
   process.env.API_SMTP_PORT = '587';
   process.env.API_SMTP_SECURE = 'true';
-  process.env.API_SMTP_FROM_EMAIL = 'notifications@cig.technology';
+  process.env.API_SMTP_FROM_EMAIL = 'smtp-login@example.com';
   process.env.API_SMTP_AUTH_ENABLED = 'true';
-  process.env.API_SMTP_USER = 'notifications@cig.technology';
+  process.env.API_SMTP_USER = 'smtp-login@example.com';
   process.env.API_SMTP_OTP_SUBJECT = 'Your one-time code';
   process.env.API_SMTP_PASSWORD_SECRET_ARN = 'arn:aws:secretsmanager:::smtp-password';
 });
@@ -57,9 +57,9 @@ describe('infra config', () => {
     expect(config.smtpHost).toBe('mail.example.com');
     expect(config.smtpPort).toBe(587);
     expect(config.smtpSecure).toBe(true);
-    expect(config.smtpFromEmail).toBe('notifications@cig.technology');
+    expect(config.smtpFromEmail).toBe('smtp-login@example.com');
     expect(config.smtpAuthEnabled).toBe(true);
-    expect(config.smtpUser).toBe('notifications@cig.technology');
+    expect(config.smtpUser).toBe('smtp-login@example.com');
     expect(config.smtpOtpSubject).toBe('Your one-time code');
     expect(config.smtpPasswordSecretArn).toBe('arn:aws:secretsmanager:::smtp-password');
     expect(secretArns(config)).toContain('arn:aws:secretsmanager:::smtp-password');

@@ -1,3 +1,23 @@
+## [0.1.110](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.109...v0.1.110) (2026-03-25)
+
+### Detected changes
+- .github: .github/workflows/deploy-api.yml
+- docs: docs/deployment/api-aws.md
+- packages: 6 changed file(s)
+  - packages/api/src/__tests__/auth-email.test.ts
+  - packages/infra/README.md
+  - packages/infra/infra.config.test.ts
+  - packages/infra/src/config/ConfigManager.test.ts
+  - packages/infra/src/deployers/ApiDeployer.test.ts
+  - packages/infra/src/deployers/apiRuntime.test.ts
+
+
+## [0.1.110](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.109...v0.1.110) (2026-03-25)
+
+
+
+
+
 ## [0.1.109](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.107...v0.1.109) (2026-03-25)
 
 
