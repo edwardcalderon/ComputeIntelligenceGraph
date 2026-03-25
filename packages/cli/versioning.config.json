@@ -3,6 +3,11 @@
   "packages": [],
   "changelogFile": "CHANGELOG.md",
   "conventionalCommits": true,
+  "changelog": {
+    "preset": "angular",
+    "releaseCount": 0,
+    "tagPrefix": "cli-v"
+  },
   "syncDependencies": false,
   "ignorePackages": [],
   "branchAwareness": {
