@@ -33,6 +33,7 @@ async function goToDashboard(path = "/") {
             refresh_token: session.refresh_token ?? "",
             token_type: "bearer",
             expires_in: String(session.expires_in ?? 3600),
+            auth_source: "supabase",
           }).toString();
           window.location.replace(`${DASHBOARD_URL}/auth/callback?redirect=${encodeURIComponent(path)}#${hash}`);
           return;
@@ -50,6 +51,7 @@ async function goToDashboard(path = "/") {
           access_token: accessToken,
           ...(idToken && { id_token: idToken }),
           expires_in: expiresIn,
+          auth_source: "authentik",
         }).toString();
         window.location.replace(`${DASHBOARD_URL}/auth/callback?redirect=${encodeURIComponent(path)}#${hash}`);
         return;

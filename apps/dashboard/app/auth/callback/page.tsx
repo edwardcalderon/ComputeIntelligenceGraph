@@ -14,6 +14,7 @@ import {
   type ProvisioningPayload,
   type ProvisioningResult,
 } from "@edcalderon/auth/authentik";
+import { resolveDashboardAuthSource } from "../../../lib/sessionAuth";
 
 const AUTH_SYNC_TIMEOUT_MS = 10_000;
 const AUTH_SYNC_MAX_ATTEMPTS = 2;
@@ -110,6 +111,7 @@ export default function AuthCallback() {
             tokens.refresh_token,
             tokens.expires_in ?? 3600,
             relayState.provider,
+            "authentik",
           );
           clearRelayStorage(window.sessionStorage);
         } catch (err: unknown) {
@@ -125,8 +127,14 @@ export default function AuthCallback() {
         const refreshToken = hashParams.get("refresh_token") ?? undefined;
         const expiresIn = parseInt(hashParams.get("expires_in") ?? "3600", 10);
         const socialProvider = hashParams.get("social_provider") ?? undefined;
+        const idToken = hashParams.get("id_token") ?? undefined;
         if (accessToken) {
-          storeSession(accessToken, undefined, refreshToken, expiresIn, socialProvider);
+          const authSource = resolveDashboardAuthSource({
+            explicitAuthSource: hashParams.get("auth_source"),
+            accessToken,
+            idToken,
+          });
+          storeSession(accessToken, idToken, refreshToken, expiresIn, socialProvider, authSource);
         }
       }
 
@@ -137,11 +145,13 @@ export default function AuthCallback() {
         const idTok = sessionStorage.getItem("cig_id_token") ?? "";
         const expIn = sessionStorage.getItem("cig_expires_in") ?? "3600";
         const socialProvider = sessionStorage.getItem("cig_social_provider") ?? "";
+        const authSource = sessionStorage.getItem("cig_auth_source") ?? "";
         const hashParams = new URLSearchParams({
           access_token: token,
           ...(idTok && { id_token: idTok }),
           expires_in: expIn,
           ...(socialProvider && { social_provider: socialProvider }),
+          ...(authSource && { auth_source: authSource }),
         });
         window.location.replace(`${redirect}#${hashParams}`);
       } else {
@@ -288,6 +298,7 @@ function storeSession(
   refreshToken: string | undefined,
   expiresIn: number,
   socialProvider?: string,
+  authSource: "authentik" | "supabase" = "authentik",
 ) {
   try {
     // Clear stale tokens first to prevent showing a previous user's info
@@ -304,7 +315,7 @@ function storeSession(
     if (idToken) sessionStorage.setItem("cig_id_token", idToken);
     if (refreshToken) sessionStorage.setItem("cig_refresh_token", refreshToken);
     if (socialProvider) sessionStorage.setItem("cig_social_provider", socialProvider);
-    sessionStorage.setItem("cig_auth_source", "authentik");
+    sessionStorage.setItem("cig_auth_source", authSource);
     sessionStorage.setItem("cig_expires_in", String(expiresIn));
     sessionStorage.setItem("cig_expires_at", String(expiresAtMs));
     const expiresAtDate = new Date(expiresAtMs).toUTCString();

@@ -1,3 +1,20 @@
+## [0.1.104](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.103...v0.1.104) (2026-03-25)
+
+### Detected changes
+- apps: 5 changed file(s)
+  - apps/dashboard/app/auth/callback/page.tsx
+  - apps/dashboard/lib/__tests__/authProvider.test.ts
+  - apps/dashboard/lib/authProvider.ts
+  - apps/dashboard/lib/sessionAuth.ts
+  - apps/landing/components/AuthenticatedLanding.tsx
+
+
+## [0.1.104](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.103...v0.1.104) (2026-03-25)
+
+
+
+
+
 ## [0.1.103](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.102...v0.1.103) (2026-03-25)
 
 ### Detected changes

@@ -4,6 +4,7 @@ import {
   orchestrateLogout,
 } from "@edcalderon/auth/authentik";
 import { getSupabaseClient } from "@cig/auth";
+import { resolveDashboardAuthSource } from "./sessionAuth";
 import {
   resolveLandingLoggedOutUrl,
   resolveLandingUrl,
@@ -18,7 +19,11 @@ function getSession() {
     if (expiresAt && Date.now() > parseInt(expiresAt, 10)) return null;
     const idToken = sessionStorage.getItem("cig_id_token") ?? undefined;
     const refreshToken = sessionStorage.getItem("cig_refresh_token") ?? undefined;
-    const authSource = (sessionStorage.getItem("cig_auth_source") as "authentik" | "supabase" | null) ?? null;
+    const authSource = resolveDashboardAuthSource({
+      explicitAuthSource: sessionStorage.getItem("cig_auth_source"),
+      accessToken: token,
+      idToken,
+    });
     return { token, idToken, refreshToken, expiresAt, authSource };
   } catch {
     return null;
@@ -196,7 +201,9 @@ export const authProvider: AuthProvider = {
     const avatar = (payload.picture as string) ?? null;
 
     // Detect auth provider and social provider for profile display
-    const authBackend = (process.env.NEXT_PUBLIC_AUTH_PROVIDER as string) || "authentik";
+    const authBackend = session.authSource === "supabase"
+      ? "supabase"
+      : (process.env.NEXT_PUBLIC_AUTH_PROVIDER as string) || "authentik";
     const socialProvider = (() => {
       try { return sessionStorage.getItem("cig_social_provider") ?? ""; } catch { return ""; }
     })();

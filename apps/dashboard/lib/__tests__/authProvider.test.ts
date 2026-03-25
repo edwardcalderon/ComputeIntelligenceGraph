@@ -7,6 +7,11 @@ jest.mock("@cig/auth", () => ({
 
 const mockGetSupabaseClient = getSupabaseClient as jest.MockedFunction<typeof getSupabaseClient>;
 
+function makeJwt(issuer: string): string {
+  const payload = Buffer.from(JSON.stringify({ iss: issuer }), "utf8").toString("base64url");
+  return `header.${payload}.signature`;
+}
+
 describe("dashboard authProvider.logout", () => {
   const originalAuthProvider = process.env.NEXT_PUBLIC_AUTH_PROVIDER;
 
@@ -47,5 +52,26 @@ describe("dashboard authProvider.logout", () => {
     });
     expect(sessionStorage.getItem("cig_access_token")).toBeNull();
     expect(sessionStorage.getItem("cig_auth_source")).toBeNull();
+  });
+
+  it("infers Supabase sessions from the token issuer even when the auth source tag is missing", async () => {
+    const supabaseSignOut = jest.fn().mockResolvedValue({ error: null });
+    mockGetSupabaseClient.mockReturnValue({
+      auth: {
+        signOut: supabaseSignOut,
+      },
+    } as never);
+
+    sessionStorage.setItem("cig_access_token", makeJwt("https://project.supabase.co/auth/v1"));
+    sessionStorage.setItem("cig_expires_at", String(Date.now() + 60_000));
+
+    const result = await authProvider.logout();
+
+    expect(supabaseSignOut).toHaveBeenCalledTimes(1);
+    expect(supabaseSignOut).toHaveBeenCalledWith({ scope: "local" });
+    expect(result).toEqual({
+      success: true,
+      redirectTo: "http://localhost:3000",
+    });
   });
 });
