@@ -1,12 +1,6 @@
 ## [0.1.6](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.5...cli-v0.1.6) (2026-03-25)
 
 
-
-
-
-## [0.1.6](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.5...cli-v0.1.6) (2026-03-25)
-
-
 ### Features
 
 - display the actual CLI package version in the setup/install banner

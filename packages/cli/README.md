@@ -35,18 +35,18 @@ same binaries and provenance data.
 - Package: https://www.npmjs.com/package/@cig-technology/cli
 - GitHub releases: https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases
 
-## 📋 Latest Changes (v0.1.4)
+## 📋 Latest Changes (v0.1.6)
 
 ### Features
 
-- detect Docker when it is installed but the daemon is stopped, then offer to start or initialize it during setup
-- add explicit remediation flows for Docker daemon start, package installation, and manual prereq issues
-- keep the CLI installer wizard responsible for host remediation instead of failing early on Docker startup state
+- display the actual CLI package version in the setup/install banner
+- derive the CLI version from the package manifest instead of a stale hardcoded constant
+- harden the public bash installer so `curl | bash` does not trip over `BASH_SOURCE` when no script file is present
 
 ### Release
 
-- bump `@cig-technology/cli` to `0.1.4` for the Docker daemon auto-init flow
-- keep package-local release tags on the `cli-v*` line independent from the monorepo root semver line
+- ensure the installation banner reflects the published `@cig-technology/cli` version
+- keep the public installer safe in both file-based and piped execution modes
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 
