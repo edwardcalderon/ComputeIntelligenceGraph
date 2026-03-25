@@ -1,3 +1,14 @@
+## [0.1.108](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.107...v0.1.108) (2026-03-25)
+
+
+### Bug Fixes
+
+* **emails:** improve font contrast for spam filter compatibility ([ef52ba0](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/ef52ba031c599cecc63fbe019c7ab798f6129441)), closes [#a1a1](https://github.com/edwardcalderon/ComputeIntelligenceGraph/issues/a1a1) [#b8b8c0](https://github.com/edwardcalderon/ComputeIntelligenceGraph/issues/b8b8c0)
+
+
+
+
+
 ## [0.1.107](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.106...v0.1.107) (2026-03-25)
 
 ### Detected changes
