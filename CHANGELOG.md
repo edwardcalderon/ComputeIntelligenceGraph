@@ -1,3 +1,18 @@
+## [0.1.101](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.100...v0.1.101) (2026-03-25)
+
+### Detected changes
+- apps: 2 changed file(s)
+  - apps/dashboard/public/runtime-version.json
+  - apps/landing/public/runtime-version.json
+- packages: packages/emails/src/templates/sign-in.html
+
+
+## [0.1.101](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.100...v0.1.101) (2026-03-25)
+
+
+
+
+
 ## [0.1.100](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.99...v0.1.100) (2026-03-25)
 
 

@@ -1,0 +1,89 @@
+<!-- Magic-link-only email template — matches CIG OTP style -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>Your Magic Sign-In Link</title>
+  </head>
+  <body style="margin:0;padding:0;background-color:#050b14;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#050b14;padding:40px 0;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background-color:#070d1a;border-radius:16px;border:1px solid rgba(255,255,255,0.08);overflow:hidden;">
+            <tr>
+              <td style="height:4px;background:linear-gradient(90deg,#06b6d4,#3b82f6,#8b5cf6);"></td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:32px 40px 16px;">
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="width:48px;height:48px;background:linear-gradient(135deg,#06b6d4,#3b82f6);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" fill="#0c263f" stroke="#ffffff" stroke-width="1" opacity="0.85"/>
+                        <path d="M8 12C8 9.79086 9.79086 8 12 8C14.2091 8 16 9.79086 16 12C16 14.2091 14.2091 16 12 16C10.3431 16 9.00753 15.0067 8.39752 13.6456" stroke="#06b6d4" stroke-width="1.8" stroke-linecap="round" />
+                        <path d="M8 12H10.5" stroke="#06b6d4" stroke-width="1.8" stroke-linecap="round" />
+                      </svg>
+                    </td>
+                    <td style="padding-left:12px;font-size:20px;font-weight:600;color:#e4e4e7;letter-spacing:-0.02em;">CIG - Computer Intelligence Graph</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:8px 40px 4px;">
+                <h1 style="margin:0;font-size:22px;font-weight:600;color:#f4f4f5;letter-spacing:-0.01em;">Magic Sign-In Link</h1>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:4px 40px 24px;">
+                <p style="margin:0;font-size:14px;line-height:1.6;color:#a1a1aa;">Click the button below to sign in to your CIG account.</p>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:0 40px 14px;">
+                <a href="{{ .ConfirmationURL }}" style="display:inline-block;font-size:16px;font-weight:700;color:#ffffff;background:linear-gradient(90deg,#06b6d4,#3b82f6);padding:12px 26px;border-radius:12px;text-decoration:none;">Sign In</a>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:0 40px 10px;">
+                <p style="margin:0;font-size:12px;line-height:1.4;color:#9ca3af;">If the button doesn't work, paste this link into your browser:</p>
+                <p style="margin:8px 0 0;word-break:break-word;font-size:12px;line-height:1.4;color:#93c5fd;">{{ .ConfirmationURL }}</p>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:0 40px 8px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" style="background-color:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.15);border-radius:8px;padding:10px 16px;">
+                  <tr>
+                    <td style="font-size:13px;color:#6ee7b7;">&#9200; Link expires in <strong style="color:#34d399;">10 minutes</strong></td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:0 40px 12px;">
+                <p style="margin:0;font-size:13px;color:#a1a1aa;">This link can only be used once.</p>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:0 40px 20px;">
+                <p style="margin:0;font-size:12px;color:#71717a;">If you didn’t request this, you can ignore this email.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 40px 0;">
+                <div style="height:1px;background-color:rgba(255,255,255,0.06);"></div>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:20px 40px 32px;font-size:11px;color:#3f3f46;">
+                &copy; 2026 CIG - Computer Intelligence Graph
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
