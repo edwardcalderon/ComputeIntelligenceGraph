@@ -1,6 +1,6 @@
 {
   "name": "@cig/graph",
-  "version": "0.1.110",
+  "version": "0.1.111",
   "description": "CIG Neo4j graph engine",
   "files": [
     "dist"

@@ -1,6 +1,6 @@
 {
   "name": "@cig/config",
-  "version": "0.1.110",
+  "version": "0.1.111",
   "description": "CIG configuration management",
   "files": [
     "dist"

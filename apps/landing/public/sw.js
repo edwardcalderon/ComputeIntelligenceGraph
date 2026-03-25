@@ -1,4 +1,4 @@
-/* CIG landing update worker 0.1.110 v0.1.110 */
+/* CIG landing update worker 0.1.111 v0.1.111 */
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
