@@ -21,29 +21,37 @@ import {
 } from '../services/dependency-installer.js';
 import { CLI_VERSION } from '../version.js';
 
+function abortInstall(message: string): never {
+  throw new Error(message);
+}
+
 async function promptChoice(question: string, options: string[]): Promise<string> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   });
 
-  return new Promise((resolve) => {
-    console.log(`\n${question}`);
-    options.forEach((option, index) => {
-      console.log(`  ${index + 1}. ${option}`);
-    });
+  try {
+    while (true) {
+      console.log(`\n${question}`);
+      options.forEach((option, index) => {
+        console.log(`  ${index + 1}. ${option}`);
+      });
 
-    rl.question(`Enter your choice (1-${options.length}): `, (answer) => {
-      rl.close();
+      const answer = await new Promise<string>((resolve) => {
+        rl.question(`Enter your choice (1-${options.length}): `, resolve);
+      });
+
       const selectedIndex = parseInt(answer, 10) - 1;
-      if (selectedIndex < 0 || selectedIndex >= options.length) {
-        console.error('Invalid selection');
-        process.exit(1);
+      if (selectedIndex >= 0 && selectedIndex < options.length) {
+        return options[selectedIndex]!;
       }
 
-      resolve(options[selectedIndex]);
-    });
-  });
+      console.error(`Invalid selection. Choose a number from 1 to ${options.length}.`);
+    }
+  } finally {
+    rl.close();
+  }
 }
 
 async function promptYesNo(question: string): Promise<boolean> {
@@ -148,13 +156,13 @@ export async function install(
 
     if (groups.admin.length > 0) {
       printAdminAccessGuidance('Docker is installed, but this user cannot access the daemon.');
-      process.exit(1);
+      abortInstall('Docker daemon access requires administrator privileges in this environment.');
     }
 
     if (groups.startable.length > 0) {
       const shouldStartDocker = await promptYesNo(buildDockerDaemonStartPrompt(groups));
       if (!shouldStartDocker) {
-        process.exit(1);
+        abortInstall('Docker daemon startup was skipped by the operator.');
       }
 
       const startResult = await startDockerDaemon();
@@ -166,7 +174,7 @@ export async function install(
         if (startResult.error) {
           console.error(startResult.error);
         }
-        process.exit(1);
+        abortInstall('Docker daemon startup did not complete.');
       }
 
       console.log(startResult.summary);
@@ -177,7 +185,7 @@ export async function install(
         printPrereqFailures(failedChecks);
         if (groups.startable.length > 0) {
           console.error('Docker is still not running after the automatic start attempt.');
-          process.exit(1);
+          abortInstall('Prerequisite checks still failed after attempting to start Docker.');
         }
       }
     }
@@ -185,7 +193,7 @@ export async function install(
     if (groups.installable.length > 0) {
       const shouldTryInstall = await promptYesNo(buildDependencyInstallPrompt(groups));
       if (!shouldTryInstall) {
-        process.exit(1);
+        abortInstall('Automatic Docker prerequisite installation was skipped by the operator.');
       }
 
       const installResult = await installMissingDependencies();
@@ -197,7 +205,7 @@ export async function install(
         if (installResult.error) {
           console.error(installResult.error);
         }
-        process.exit(1);
+        abortInstall('Automatic Docker prerequisite installation did not complete.');
       }
 
       console.log(installResult.summary);
@@ -211,18 +219,18 @@ export async function install(
         if (groups.startable.length > 0) {
           console.error('Docker is still not running after the automatic install attempt.');
         }
-        process.exit(1);
+        abortInstall('Prerequisite checks still failed after attempting automatic remediation.');
       }
     }
 
     if (groups.startable.length > 0) {
       console.error('Docker is still not running. Start it manually and try again.');
-      process.exit(1);
+      abortInstall('Docker daemon is not running.');
     }
 
     if (groups.manual.length > 0) {
       console.error('Some prerequisites require manual remediation before installation can continue.');
-      process.exit(1);
+      abortInstall('Manual prerequisite remediation is required before installation can continue.');
     }
   }
 
