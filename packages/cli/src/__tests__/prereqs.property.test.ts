@@ -18,6 +18,8 @@ import {
   checkPorts,
   setFreeMemProvider,
   resetFreeMemProvider,
+  setExecSyncProvider,
+  resetExecSyncProvider,
   PrereqCheckResult,
 } from '../prereqs.js';
 
@@ -54,6 +56,30 @@ describe('Property 12: Prerequisite check correctness', () => {
       expect(result.message.length).toBeGreaterThan(0);
     });
 
+    it('returns start remediation when Docker is installed but the daemon is stopped', async () => {
+      setExecSyncProvider((command: string) => {
+        if (command === 'docker --version') {
+          return Buffer.from('Docker version 27.0.0');
+        }
+
+        if (command === 'docker ps') {
+          throw new Error('permission denied while trying to connect to the Docker daemon');
+        }
+
+        return Buffer.from('');
+      });
+
+      try {
+        const result = await checkDockerEngine();
+
+        expect(result.passed).toBe(false);
+        expect(result.remediationKind).toBe('start');
+        expect(result.message).toContain('Docker is installed, but the daemon is not running');
+      } finally {
+        resetExecSyncProvider();
+      }
+    });
+
     it('returns remediation message when check fails', async () => {
       /**
        * Validates: Requirements 7.1
@@ -62,8 +88,7 @@ describe('Property 12: Prerequisite check correctness', () => {
        * a remediation message.
        */
       // Mock execSync to simulate Docker not being available
-      const originalExecSync = require('child_process').execSync;
-      require('child_process').execSync = vi.fn(() => {
+      setExecSyncProvider(() => {
         throw new Error('docker: command not found');
       });
 
@@ -74,9 +99,10 @@ describe('Property 12: Prerequisite check correctness', () => {
           expect(result.remediation).toBeDefined();
           expect(typeof result.remediation).toBe('string');
           expect(result.remediation!.length).toBeGreaterThan(0);
+          expect(result.remediationKind).toBe('install');
         }
       } finally {
-        require('child_process').execSync = originalExecSync;
+        resetExecSyncProvider();
       }
     });
   });

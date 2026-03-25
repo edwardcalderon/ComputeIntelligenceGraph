@@ -63,6 +63,12 @@ That public installer resolves `@cig-technology/cli` from the npm registry
 first, so the web install path and the direct npm path use the same published
 binaries and provenance.
 
+If Docker Engine or Docker Compose is missing, the installer can offer to
+install the Docker prerequisites automatically on supported Linux and macOS
+package managers before continuing.
+If Docker is already installed but the daemon is stopped, the installer can
+offer to start or initialize it automatically before retrying the checks.
+
 If you prefer a direct npm install:
 
 ```bash
@@ -122,6 +128,10 @@ you intend to use managed mode only.
 - The web installer is a thin bash wrapper; it does not embed a separate
   runtime. It resolves the published npm package so the installed bits are
   reproducible.
+- When Docker prerequisites are missing, the installer can offer to install
+  them automatically on supported Linux and macOS package managers.
+- When Docker is installed but not running, the installer can offer to start
+  or initialize the daemon before retrying the checks.
 - Managed mode stages the runtime bundle and node identity locally until the
   host service path is activated.
 - Self-hosted mode writes compose assets into the install directory and boots

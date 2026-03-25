@@ -4,6 +4,7 @@ import * as readline from 'node:readline';
 import { runAllChecks } from '../prereqs.js';
 import { generateCompose, InstallManifest } from '../compose-generator.js';
 import { CredentialManager } from '../credentials.js';
+import type { PrereqCheckResult } from '../prereqs.js';
 import { enrollmentFlow } from './enrollment.js';
 import { bootstrapFlow } from './bootstrap.js';
 import { StateManager } from '../managers/state-manager.js';
@@ -11,6 +12,13 @@ import { InstallPlanner } from '../services/install-planner.js';
 import { NodeBundleInstaller } from '../services/node-bundle-installer.js';
 import { ConnectionProfileStore } from '../stores/connection-profile-store.js';
 import { seedInitialGraph } from '../services/initial-graph.js';
+import {
+  buildDependencyInstallPrompt,
+  buildDockerDaemonStartPrompt,
+  installMissingDependencies,
+  startDockerDaemon,
+  splitPrereqFailures,
+} from '../services/dependency-installer.js';
 import { CLI_VERSION } from '../version.js';
 
 async function promptChoice(question: string, options: string[]): Promise<string> {
@@ -35,6 +43,20 @@ async function promptChoice(question: string, options: string[]): Promise<string
 
       resolve(options[selectedIndex]);
     });
+  });
+}
+
+async function promptYesNo(question: string): Promise<boolean> {
+  const answer = await promptChoice(question, ['Yes', 'No']);
+  return answer === 'Yes';
+}
+
+function printPrereqFailures(results: PrereqCheckResult[]): void {
+  results.forEach((result) => {
+    console.error(`✗ ${result.message}`);
+    if (result.remediation) {
+      console.error(`  ${result.remediation}`);
+    }
   });
 }
 
@@ -113,16 +135,79 @@ export async function install(
 
   console.log('\nCIG installation');
 
-  const prereqResults = await runAllChecks();
-  const failedChecks = prereqResults.filter((result) => !result.passed);
+  let prereqResults = await runAllChecks();
+  let failedChecks = prereqResults.filter((result) => !result.passed);
   if (failedChecks.length > 0) {
-    failedChecks.forEach((result) => {
-      console.error(`✗ ${result.message}`);
-      if (result.remediation) {
-        console.error(`  ${result.remediation}`);
+    let groups = splitPrereqFailures(failedChecks);
+    printPrereqFailures(failedChecks);
+
+    if (groups.startable.length > 0) {
+      const shouldStartDocker = await promptYesNo(buildDockerDaemonStartPrompt(groups));
+      if (!shouldStartDocker) {
+        process.exit(1);
       }
-    });
-    process.exit(1);
+
+      const startResult = await startDockerDaemon();
+      if (!startResult.succeeded) {
+        console.error(startResult.summary);
+        if (startResult.error) {
+          console.error(startResult.error);
+        }
+        process.exit(1);
+      }
+
+      console.log(startResult.summary);
+      prereqResults = await runAllChecks();
+      failedChecks = prereqResults.filter((result) => !result.passed);
+      groups = splitPrereqFailures(failedChecks);
+      if (failedChecks.length > 0) {
+        printPrereqFailures(failedChecks);
+        if (groups.startable.length > 0) {
+          console.error('Docker is still not running after the automatic start attempt.');
+          process.exit(1);
+        }
+      }
+    }
+
+    if (groups.installable.length > 0) {
+      const shouldTryInstall = await promptYesNo(buildDependencyInstallPrompt(groups));
+      if (!shouldTryInstall) {
+        process.exit(1);
+      }
+
+      const installResult = await installMissingDependencies();
+      if (!installResult.succeeded) {
+        console.error(installResult.summary);
+        if (installResult.error) {
+          console.error(installResult.error);
+        }
+        process.exit(1);
+      }
+
+      console.log(installResult.summary);
+
+      const retryResults = await runAllChecks();
+      const remainingFailures = retryResults.filter((result) => !result.passed);
+      groups = splitPrereqFailures(remainingFailures);
+      if (remainingFailures.length > 0) {
+        console.error('Some prerequisites are still missing after the automatic install attempt:');
+        printPrereqFailures(remainingFailures);
+        if (groups.startable.length > 0) {
+          console.error('Docker is still not running after the automatic install attempt.');
+        }
+        process.exit(1);
+      }
+    }
+
+    if (groups.startable.length > 0) {
+      console.error('Docker is still not running. Start it manually and try again.');
+      process.exit(1);
+    }
+
+    if (groups.manual.length > 0) {
+      console.error('Some prerequisites require manual remediation before installation can continue.');
+      process.exit(1);
+    }
   }
 
   if (!mode) {

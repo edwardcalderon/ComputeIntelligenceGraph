@@ -22,10 +22,13 @@ export interface PrereqCheckResult {
   passed: boolean;
   message: string;
   remediation?: string;
+  installGroup?: 'docker';
+  remediationKind?: 'install' | 'start' | 'manual';
 }
 
 // Allow injection for testing
 let getFreeMem = () => os.freemem();
+let runCommand = execSync;
 
 export function setFreeMemProvider(provider: () => number): void {
   getFreeMem = provider;
@@ -35,23 +38,49 @@ export function resetFreeMemProvider(): void {
   getFreeMem = () => os.freemem();
 }
 
+export function setExecSyncProvider(provider: typeof execSync): void {
+  runCommand = provider;
+}
+
+export function resetExecSyncProvider(): void {
+  runCommand = execSync;
+}
+
 /**
  * Check if Docker Engine is installed and the daemon is running.
  * Runs `docker ps` to verify both installation and daemon status.
  */
 export async function checkDockerEngine(): Promise<PrereqCheckResult> {
   try {
-    execSync('docker ps', { stdio: 'pipe' });
-    return {
-      passed: true,
-      message: 'Docker Engine is installed and running',
-    };
+    runCommand('docker --version', { stdio: 'pipe' });
   } catch (err) {
     return {
       passed: false,
-      message: 'Docker Engine is not installed or daemon is not running',
+      message: 'Docker Engine is not installed',
       remediation:
         'Install Docker Desktop or Docker Engine from https://docs.docker.com/get-docker/ and ensure the daemon is running.',
+      installGroup: 'docker',
+      remediationKind: 'install',
+    };
+  }
+
+  try {
+    runCommand('docker ps', { stdio: 'pipe' });
+    return {
+      passed: true,
+      message: 'Docker Engine is installed and running',
+      installGroup: 'docker',
+      remediationKind: 'manual',
+    };
+  } catch (err) {
+    const stderr = err instanceof Error ? err.message : String(err);
+    return {
+      passed: false,
+      message: `Docker is installed, but the daemon is not running${stderr ? ` (${stderr})` : ''}`,
+      remediation:
+        'Start Docker Desktop or initialize the Docker daemon automatically, then try again.',
+      installGroup: 'docker',
+      remediationKind: 'start',
     };
   }
 }
@@ -62,37 +91,44 @@ export async function checkDockerEngine(): Promise<PrereqCheckResult> {
  */
 export async function checkDockerCompose(): Promise<PrereqCheckResult> {
   try {
-    const output = execSync('docker compose version', { encoding: 'utf-8' });
+    const output = runCommand('docker compose version', { encoding: 'utf-8' });
     // Output format: "Docker Compose version v2.x.x"
     const versionMatch = output.match(/v(\d+)\.(\d+)\.(\d+)/);
     if (!versionMatch) {
-      return {
-        passed: false,
-        message: 'Docker Compose version could not be determined',
-        remediation: 'Ensure Docker Compose v2.0 or later is installed.',
-      };
-    }
+    return {
+      passed: false,
+      message: 'Docker Compose version could not be determined',
+      remediation: 'Ensure Docker Compose v2.0 or later is installed.',
+      installGroup: 'docker',
+      remediationKind: 'install',
+    };
+  }
 
     const [, major] = versionMatch;
     const majorVersion = parseInt(major, 10);
 
     if (majorVersion < 2) {
-      return {
-        passed: false,
-        message: `Docker Compose v${majorVersion} is installed, but v2.0 or later is required`,
-        remediation: 'Upgrade Docker Compose to v2.0 or later from https://docs.docker.com/compose/install/',
-      };
-    }
+    return {
+      passed: false,
+      message: `Docker Compose v${majorVersion} is installed, but v2.0 or later is required`,
+      remediation: 'Upgrade Docker Compose to v2.0 or later from https://docs.docker.com/compose/install/',
+      installGroup: 'docker',
+      remediationKind: 'install',
+    };
+  }
 
     return {
       passed: true,
       message: `Docker Compose v${majorVersion} is installed`,
+      installGroup: 'docker',
     };
   } catch (err) {
     return {
       passed: false,
       message: 'Docker Compose is not installed or not accessible',
       remediation: 'Install Docker Compose v2.0 or later from https://docs.docker.com/compose/install/',
+      installGroup: 'docker',
+      remediationKind: 'install',
     };
   }
 }
@@ -127,7 +163,7 @@ export async function checkMemory(): Promise<PrereqCheckResult> {
 export async function checkDiskSpace(): Promise<PrereqCheckResult> {
   try {
     const homeDir = os.homedir();
-    const output = execSync(`df -B1 "${homeDir}"`, { encoding: 'utf-8' });
+    const output = runCommand(`df -B1 "${homeDir}"`, { encoding: 'utf-8' });
     const lines = output.trim().split('\n');
     if (lines.length < 2) {
       return {
@@ -207,6 +243,7 @@ export async function checkPorts(): Promise<PrereqCheckResult> {
     passed: false,
     message: `The following ports are in use: ${unavailablePorts.join(', ')}`,
     remediation: `Stop the services using these ports or configure CIG to use different ports. Use 'lsof -i :PORT' to identify the process using each port.`,
+    remediationKind: 'manual',
   };
 }
 
