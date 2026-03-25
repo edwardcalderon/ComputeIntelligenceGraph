@@ -42,6 +42,7 @@ AUTO_CONFIRM=false
 BUILD_RELEASE=false
 COMMIT_CREATED=false
 RELEASE_METADATA_FILE="release-metadata.json"
+RELEASE_TEST_CONCURRENCY="${RELEASE_TEST_CONCURRENCY:-1}"
 
 RELEASE_EXCLUDE_PATTERNS=(
   ".vscode/**"
@@ -427,10 +428,14 @@ if $SKIP_TESTS; then
   warn "Tests skipped (--no-tests)"
 else
   if ! $DRY_RUN; then
-    pnpm test 2>&1 || { error "Tests failed. Fix them before releasing."; exit 1; }
+    # Run the API suite in isolation, then the rest of the monorepo serially.
+    pnpm --filter @cig/api test 2>&1 || { error "API tests failed. Fix them before releasing."; exit 1; }
+    success "API tests passed"
+    pnpm exec turbo run test --concurrency="${RELEASE_TEST_CONCURRENCY}" --filter='!@cig/api' 2>&1 || { error "Tests failed. Fix them before releasing."; exit 1; }
     success "All tests passed"
   else
-    info "[dry-run] Would run: pnpm test"
+    info "[dry-run] Would run: pnpm --filter @cig/api test"
+    info "[dry-run] Would run: pnpm exec turbo run test --concurrency=${RELEASE_TEST_CONCURRENCY} --filter='!@cig/api'"
   fi
 fi
 
@@ -456,6 +461,16 @@ else
     info "[dry-run] Would run: pnpm exec versioning ${BUMP_TYPE} --no-commit --no-tag"
   fi
   write_release_metadata "${NEXT_VERSION}" "${RELEASE_TAG}" "${BUMP_TYPE}"
+fi
+
+if ! $DRY_RUN; then
+  WORKTREE_VERSION=$(node -p "require('./package.json').version")
+  info "Validating release tag ${RELEASE_TAG} against package.json version ${WORKTREE_VERSION}"
+  node scripts/validate-release-version.mjs --tag "${RELEASE_TAG}" --version "${WORKTREE_VERSION}" 2>&1 \
+    || { error "Release tag ${RELEASE_TAG} does not match package.json version ${WORKTREE_VERSION}."; exit 1; }
+  success "Release tag ${RELEASE_TAG} matches package.json version ${WORKTREE_VERSION}"
+else
+  info "[dry-run] Would validate that ${RELEASE_TAG} matches package.json version"
 fi
 
 # ── Step 6: Verify production builds ──────────────────────────────────────

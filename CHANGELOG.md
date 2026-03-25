@@ -1,3 +1,26 @@
+## [0.1.117](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.116...v0.1.117) (2026-03-25)
+
+### Detected changes
+- .husky: .husky/pre-push
+- apps: 2 changed file(s)
+  - apps/dashboard/public/runtime-version.json
+  - apps/dashboard/public/sw.js
+- root: package.json
+- scripts: 6 changed file(s)
+  - scripts/release-version.mjs
+  - scripts/release.sh
+  - scripts/validate-release-ref.sh
+  - scripts/validate-release-ref.test.sh
+  - scripts/validate-release-version.mjs
+  - scripts/validate-release-version.test.mjs
+
+
+## [0.1.117](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.116...v0.1.117) (2026-03-25)
+
+
+
+
+
 ## [0.1.116](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.115...v0.1.116) (2026-03-25)
 
 ### Detected changes
