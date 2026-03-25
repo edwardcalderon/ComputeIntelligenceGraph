@@ -138,7 +138,7 @@ export async function install(
   const planner = new InstallPlanner();
   const profileStore = new ConnectionProfileStore();
 
-  console.log('\nCIG installation');
+  console.log(`\nCIG installation (v${CLI_VERSION})`);
 
   let prereqResults = await runAllChecks();
   let failedChecks = prereqResults.filter((result) => !result.passed);

@@ -6,8 +6,8 @@ print_usage() {
 Usage: ./install.sh [cig setup flags]
 
 Launches the CIG prerequisite checks and onboarding wizard.
-The script prefers a local built CLI, then an installed `cig` binary,
-and finally the published npm package.
+The script prefers the published npm package, then a local built CLI
+fallback, and finally an installed `cig` binary as a fallback.
 
 Web installer:
   curl -fsSL https://cig.lat/install.sh | bash
@@ -22,7 +22,10 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   exit 0
 fi
 
-SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_ROOT=""
+if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+  SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
 OS_NAME="$(uname -s)"
 
 case "$OS_NAME" in
@@ -46,23 +49,30 @@ if [[ "$NODE_MAJOR" -lt 22 ]]; then
 fi
 
 LOCAL_CLI=""
-for candidate_root in "$PWD" "$SCRIPT_ROOT"; do
-  if [[ -f "${candidate_root}/packages/cli/dist/index.js" ]]; then
-    LOCAL_CLI="${candidate_root}/packages/cli/dist/index.js"
-    break
-  fi
-done
-
-if [[ -n "$LOCAL_CLI" ]]; then
-  CLI_CMD=(node "$LOCAL_CLI")
-elif command -v cig >/dev/null 2>&1; then
-  CLI_CMD=(cig)
-else
+if command -v npx >/dev/null 2>&1; then
   CLI_CMD=(npx --yes @cig-technology/cli@latest)
-fi
+else
+  candidate_roots=("$PWD")
+  if [[ -n "$SCRIPT_ROOT" ]]; then
+    candidate_roots+=("$SCRIPT_ROOT")
+  fi
 
-echo "Running CIG prerequisite checks..."
-"${CLI_CMD[@]}" doctor
+  for candidate_root in "${candidate_roots[@]}"; do
+    if [[ -f "${candidate_root}/packages/cli/dist/index.js" ]]; then
+      LOCAL_CLI="${candidate_root}/packages/cli/dist/index.js"
+      break
+    fi
+  done
+
+  if [[ -n "$LOCAL_CLI" ]]; then
+    CLI_CMD=(node "$LOCAL_CLI")
+  elif command -v cig >/dev/null 2>&1; then
+    CLI_CMD=(cig)
+  else
+    echo "Could not find the published npm package, a local build, or an installed cig binary."
+    exit 1
+  fi
+fi
 
 echo "Launching CIG setup wizard..."
 "${CLI_CMD[@]}" setup "$@"

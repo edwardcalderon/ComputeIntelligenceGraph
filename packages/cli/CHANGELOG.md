@@ -1,3 +1,24 @@
+## [0.1.6](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.5...cli-v0.1.6) (2026-03-25)
+
+
+
+
+
+## [0.1.6](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.5...cli-v0.1.6) (2026-03-25)
+
+
+### Features
+
+- display the actual CLI package version in the setup/install banner
+- derive the CLI version from the package manifest instead of a stale hardcoded constant
+- harden the public bash installer so `curl | bash` does not trip over `BASH_SOURCE` when no script file is present
+
+### Release
+
+- ensure the installation banner reflects the published `@cig-technology/cli` version
+- keep the public installer safe in both file-based and piped execution modes
+
+
 ## [0.1.5](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.4...cli-v0.1.5) (2026-03-25)
 
 
