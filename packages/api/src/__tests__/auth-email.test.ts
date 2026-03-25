@@ -7,7 +7,7 @@ vi.hoisted(() => {
   process.env['SMTP_HOST'] = 'mail.example.com';
   process.env['SMTP_PORT'] = '587';
   process.env['SMTP_SECURE'] = 'true';
-  process.env['SMTP_FROM_EMAIL'] = 'notifications@example.com';
+  process.env['SMTP_FROM_EMAIL'] = 'notifications@cig.technology';
   process.env['SMTP_AUTH_ENABLED'] = 'true';
   process.env['SMTP_PASSWORD'] = 'smtp-password';
   process.env['SMTP_OTP_SUBJECT'] = 'Your one-time code';
@@ -70,7 +70,7 @@ describe('auth email routes', () => {
       port: 587,
       secure: false,
       auth: {
-        user: 'notifications@example.com',
+        user: 'notifications@cig.technology',
         pass: 'smtp-password',
       },
       requireTLS: true,

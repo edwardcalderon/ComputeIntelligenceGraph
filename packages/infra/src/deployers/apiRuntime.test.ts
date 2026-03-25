@@ -53,9 +53,9 @@ describe('api runtime helpers', () => {
         smtpHost: 'mail.example.com',
         smtpPort: 587,
         smtpSecure: true,
-        smtpFromEmail: 'notifications@example.com',
+        smtpFromEmail: 'notifications@cig.technology',
         smtpAuthEnabled: true,
-        smtpUser: 'notifications@example.com',
+        smtpUser: 'notifications@cig.technology',
         smtpOtpSubject: 'Your one-time code',
         smtpPasswordSecretArn: 'arn:aws:secretsmanager:::smtp-password',
         corsOrigins: ['https://app.cig.lat'],
@@ -72,9 +72,9 @@ describe('api runtime helpers', () => {
         smtpHost: 'mail.example.com',
         smtpPort: 587,
         smtpSecure: true,
-        smtpFromEmail: 'notifications@example.com',
+        smtpFromEmail: 'notifications@cig.technology',
         smtpAuthEnabled: true,
-        smtpUser: 'notifications@example.com',
+        smtpUser: 'notifications@cig.technology',
         smtpOtpSubject: 'Your one-time code',
         smtpPasswordSecretArn: 'arn:aws:secretsmanager:::smtp-password',
       }
@@ -88,9 +88,9 @@ describe('api runtime helpers', () => {
     expect(runtime.smtpHost).toBe('mail.example.com');
     expect(runtime.smtpPort).toBe(587);
     expect(runtime.smtpSecure).toBe(true);
-    expect(runtime.smtpFromEmail).toBe('notifications@example.com');
+    expect(runtime.smtpFromEmail).toBe('notifications@cig.technology');
     expect(runtime.smtpAuthEnabled).toBe(true);
-    expect(runtime.smtpUser).toBe('notifications@example.com');
+    expect(runtime.smtpUser).toBe('notifications@cig.technology');
     expect(runtime.smtpOtpSubject).toBe('Your one-time code');
     expect(runtime.smtpPasswordSecretArn).toBe('arn:aws:secretsmanager:::smtp-password');
     expect(runtime.corsOrigins).toEqual(['https://app.cig.lat']);
