@@ -1,14 +1,3 @@
-## [0.1.8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.123...cli-v0.1.8) (2026-03-25)
-
-
-### Bug Fixes
-
-* **cli:** stage workspace lockfile in release ([4375110](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/4375110807d42af474dc1f9210423eb5dfb6e9ab))
-
-
-
-
-
 ## [0.1.8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.7...cli-v0.1.8) (2026-03-25)
 
 ### Features
