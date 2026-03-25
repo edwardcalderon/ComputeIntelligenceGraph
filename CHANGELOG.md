@@ -1,3 +1,17 @@
+## [0.1.112](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.111...v0.1.112) (2026-03-25)
+
+### Detected changes
+- .github: .github/workflows/deploy-api.yml
+- docs: docs/deployment/api-aws.md
+- packages: packages/infra/README.md
+
+
+## [0.1.112](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.111...v0.1.112) (2026-03-25)
+
+
+
+
+
 ## [0.1.111](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.110...v0.1.111) (2026-03-25)
 
 ### Detected changes

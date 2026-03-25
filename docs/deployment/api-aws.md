@@ -117,6 +117,8 @@ Resources created:
 
 `SMTP_USER` mirrors `SMTP_FROM_EMAIL` in production. The repository uses a placeholder example address, not the production mailbox, and the application still falls back to `SMTP_FROM_EMAIL` if `SMTP_USER` is omitted.
 
+During production deploys, the actual sender/login is read from AWS Secrets Manager secret `/cig/prod/api/smtp-from-email` and injected into the ECS task as both `SMTP_FROM_EMAIL` and `SMTP_USER`.
+
 ### Secrets injected through AWS Secrets Manager
 
 - `DATABASE_URL` (populated from the direct Supabase URL or `SUPABASE_DIRECT_URL_POOLER` when present)

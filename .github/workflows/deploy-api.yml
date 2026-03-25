@@ -420,15 +420,13 @@ jobs:
     environment:
       name: production
       url: https://${{ env.API_DOMAIN }}
-    env:
-      TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
-      API_SMTP_HOST: ${{ vars.SMTP_HOST || 'mail.xn--tlo-fla.com' }}
-      API_SMTP_PORT: ${{ vars.SMTP_PORT || '587' }}
-      API_SMTP_SECURE: ${{ vars.SMTP_SECURE || 'true' }}
-      API_SMTP_FROM_EMAIL: ${{ vars.SMTP_FROM_EMAIL || 'smtp-login@example.com' }}
-      API_SMTP_USER: ${{ vars.SMTP_FROM_EMAIL || 'smtp-login@example.com' }}
-      API_SMTP_AUTH_ENABLED: ${{ vars.SMTP_AUTH_ENABLED || 'true' }}
-      API_SMTP_OTP_SUBJECT: ${{ vars.SMTP_OTP_SUBJECT || 'Your CIG one-time code' }}
+  env:
+    TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
+    API_SMTP_HOST: ${{ vars.SMTP_HOST || 'mail.xn--tlo-fla.com' }}
+    API_SMTP_PORT: ${{ vars.SMTP_PORT || '587' }}
+    API_SMTP_SECURE: ${{ vars.SMTP_SECURE || 'true' }}
+    API_SMTP_AUTH_ENABLED: ${{ vars.SMTP_AUTH_ENABLED || 'true' }}
+    API_SMTP_OTP_SUBJECT: ${{ vars.SMTP_OTP_SUBJECT || 'Your CIG one-time code' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -488,6 +486,12 @@ jobs:
           terraform -chdir=packages/iac/environments/api-prod init
           terraform -chdir=packages/iac/environments/api-prod output -json > "$RUNNER_TEMP/api-core.json"
 
+          SMTP_FROM_EMAIL_VALUE=$(aws secretsmanager get-secret-value \
+            --secret-id "/cig/prod/api/smtp-from-email" \
+            --region "$AWS_REGION" \
+            --query SecretString \
+            --output text)
+
           {
             echo "API_VPC_ID=$(jq -r '.vpc_id.value' "$RUNNER_TEMP/api-core.json")"
             echo "API_ALB_SECURITY_GROUP_ID=$(jq -r '.alb_security_group_id.value' "$RUNNER_TEMP/api-core.json")"
@@ -496,6 +500,8 @@ jobs:
             echo "API_PRIVATE_SUBNET_IDS=$(jq -r '.private_subnet_ids.value | join(",")' "$RUNNER_TEMP/api-core.json")"
             echo "API_NEO4J_BOLT_URI=$(jq -r '.neo4j_bolt_uri.value' "$RUNNER_TEMP/api-core.json")"
             echo "API_NEO4J_PASSWORD_SECRET_ARN=$(jq -r '.neo4j_password_secret_arn.value' "$RUNNER_TEMP/api-core.json")"
+            printf 'API_SMTP_FROM_EMAIL=%s\n' "$SMTP_FROM_EMAIL_VALUE"
+            printf 'API_SMTP_USER=%s\n' "$SMTP_FROM_EMAIL_VALUE"
           } > "$API_CORE_ENV_FILE"
 
       - name: Resolve Authentik runtime values
@@ -538,13 +544,7 @@ jobs:
           SUPABASE_URL_VALUE: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY_VALUE: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           JWT_SECRET_VALUE: ${{ secrets.JWT_SECRET }}
-          SMTP_PASSWORD_VALUE: ${{ secrets.SMTP_PASSWORD }}
         run: |
-          if [ -z "$SMTP_PASSWORD_VALUE" ]; then
-            echo 'SMTP_PASSWORD secret is required.' >&2
-            exit 1
-          fi
-
           DATABASE_URL_VALUE="${SUPABASE_DIRECT_URL_POOLER_VALUE:-$DATABASE_URL_VALUE}"
 
           if [ -z "$DATABASE_URL_VALUE" ]; then
@@ -613,7 +613,14 @@ jobs:
           ensure_secret "/cig/prod/api/authentik-token-endpoint" "$AUTHENTIK_TOKEN_ENDPOINT" API_AUTHENTIK_TOKEN_ENDPOINT_SECRET_ARN
           ensure_secret "/cig/prod/api/oidc-client-id" "$OIDC_CLIENT_ID" API_OIDC_CLIENT_ID_SECRET_ARN
           ensure_secret "/cig/prod/api/oidc-client-secret" "$OIDC_CLIENT_SECRET" API_OIDC_CLIENT_SECRET_SECRET_ARN
-          ensure_secret "/cig/prod/api/smtp-password" "$SMTP_PASSWORD_VALUE" API_SMTP_PASSWORD_SECRET_ARN
+
+          SMTP_PASSWORD_SECRET_ARN=$(aws secretsmanager describe-secret \
+            --secret-id "/cig/prod/api/smtp-password" \
+            --region "$AWS_REGION" \
+            --query ARN \
+            --output text)
+
+          echo "API_SMTP_PASSWORD_SECRET_ARN=$SMTP_PASSWORD_SECRET_ARN" >> "$API_SECRET_ARNS_FILE"
 
       - name: Deploy API runtime
         working-directory: packages/infra

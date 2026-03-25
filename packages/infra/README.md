@@ -76,6 +76,8 @@ Any new API runtime variable or secret should be added here first, then mirrored
 
 `API_SMTP_USER` mirrors `API_SMTP_FROM_EMAIL` in production. The repository uses a placeholder example address, not the production mailbox, and the application still falls back to `API_SMTP_FROM_EMAIL` if `API_SMTP_USER` is omitted.
 
+In production deploys, the runtime sender/login is resolved from AWS Secrets Manager as the `smtp-from-email` secret. The repo keeps the real mailbox address out of plain text, and the deployed task definition still receives the resolved value as `SMTP_FROM_EMAIL` / `SMTP_USER`.
+
 Bootstrap-only mode uses:
 
 - `INFRA_API_BOOTSTRAP_ONLY=true`
