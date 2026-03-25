@@ -87,9 +87,10 @@ stale_repo="${tmpdir}/stale"
 floor_repo="${tmpdir}/floor"
 good_repo="${tmpdir}/good"
 cli_good_repo="${tmpdir}/cli-good"
+cli_followup_repo="${tmpdir}/cli-followup"
 cli_floor_repo="${tmpdir}/cli-floor"
 mkdir -p "$bad_repo" "$stale_repo" "$floor_repo" "$good_repo"
-mkdir -p "$cli_good_repo" "$cli_floor_repo"
+mkdir -p "$cli_good_repo" "$cli_followup_repo" "$cli_floor_repo"
 
 make_repo "0.1.113" "$bad_repo"
 git -C "$bad_repo" tag "v0.1.114"
@@ -105,7 +106,7 @@ cat >"$stale_repo/package.json" <<'EOF'
 EOF
 git -C "$stale_repo" add package.json
 git -C "$stale_repo" commit -q -m "test: bump version for current release"
-assert_fails_in_repo "$stale_repo" bash "$validator" HEAD~1
+assert_passes_in_repo "$stale_repo" bash "$validator" HEAD~1
 
 make_repo "0.1.114" "$floor_repo"
 git -C "$floor_repo" tag "v0.1.114"
@@ -127,6 +128,15 @@ assert_passes_in_repo "$good_repo" bash "$validator" HEAD
 make_cli_repo "0.1.123" "$cli_good_repo"
 git -C "$cli_good_repo" tag "cli-v0.1.123"
 assert_passes_in_repo "$cli_good_repo" bash "$validator" HEAD
+
+make_cli_repo "0.1.123" "$cli_followup_repo"
+git -C "$cli_followup_repo" tag "cli-v0.1.123"
+cat >"$cli_followup_repo/packages/cli/README.md" <<'EOF'
+# CLI follow-up
+EOF
+git -C "$cli_followup_repo" add packages/cli/README.md
+git -C "$cli_followup_repo" commit -q -m "test: add follow-up commit after cli release"
+assert_passes_in_repo "$cli_followup_repo" bash "$validator" HEAD cli-v0.1.123
 
 make_cli_repo "0.1.123" "$cli_floor_repo"
 git -C "$cli_floor_repo" tag "cli-v0.1.123"

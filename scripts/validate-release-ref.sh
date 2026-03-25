@@ -69,19 +69,6 @@ validate_commit() {
     return 0
   fi
 
-  if [[ "$commit" != "$head_commit" ]]; then
-    for tag in "${release_tags[@]}"; do
-      [[ -z "$tag" ]] && continue
-
-      case "$tag" in
-        v[0-9]*.[0-9]*.[0-9]*+build.[0-9]*|v[0-9]*.[0-9]*.[0-9]*|cli-v[0-9]*.[0-9]*.[0-9]*+build.[0-9]*|cli-v[0-9]*.[0-9]*.[0-9]*)
-          echo "${tag} points to ${commit}, but release tags must be pushed from HEAD (${head_commit})." >&2
-          return 1
-          ;;
-      esac
-    done
-  fi
-
   for tag in "${release_tags[@]}"; do
     [[ -z "$tag" ]] && continue
 
