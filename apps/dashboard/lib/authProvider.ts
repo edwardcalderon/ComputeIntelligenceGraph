@@ -128,7 +128,10 @@ export const authProvider: AuthProvider = {
     if (sessionSource === "supabase" || getAuthBackend() !== "authentik") {
       const supabase = getSupabaseClient();
       try {
-        await supabase?.auth.signOut();
+        // Supabase email sessions should log out locally; the hosted
+        // end-session redirect is not needed here and can fail without an API
+        // key when Supabase tries to round-trip through its OIDC logout page.
+        await supabase?.auth.signOut({ scope: "local" });
       } catch {
         // Ignore Supabase sign-out failures and still clear the app session.
       }

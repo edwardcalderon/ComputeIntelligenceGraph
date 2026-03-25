@@ -264,7 +264,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const supabase = getSupabaseClient();
       void (async () => {
         try {
-          await supabase?.auth.signOut();
+          // Supabase email sessions do not need the hosted end-session flow.
+          // Keep logout local so we do not redirect into Supabase's OIDC
+          // logout endpoint, which expects an API key on the request.
+          await supabase?.auth.signOut({ scope: "local" });
         } catch { /* ignore */ }
         try {
           sessionStorage.removeItem("cig_auth_source");

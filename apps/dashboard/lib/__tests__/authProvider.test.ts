@@ -40,6 +40,7 @@ describe("dashboard authProvider.logout", () => {
     const result = await authProvider.logout();
 
     expect(supabaseSignOut).toHaveBeenCalledTimes(1);
+    expect(supabaseSignOut).toHaveBeenCalledWith({ scope: "local" });
     expect(result).toEqual({
       success: true,
       redirectTo: "http://localhost:3000",

@@ -1,3 +1,21 @@
+## [0.1.102](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.101...v0.1.102) (2026-03-25)
+
+### Detected changes
+- apps: 6 changed file(s)
+  - apps/dashboard/lib/__tests__/authProvider.test.ts
+  - apps/dashboard/lib/authProvider.ts
+  - apps/dashboard/public/runtime-version.json
+  - apps/dashboard/public/sw.js
+  - apps/landing/components/AuthProvider.tsx
+  - apps/landing/public/runtime-version.json
+
+
+## [0.1.102](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.101...v0.1.102) (2026-03-25)
+
+
+
+
+
 ## [0.1.101](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.100...v0.1.101) (2026-03-25)
 
 ### Detected changes
