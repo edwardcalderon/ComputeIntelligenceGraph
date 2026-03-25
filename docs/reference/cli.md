@@ -72,13 +72,29 @@ For first-time onboarding, use the interactive setup wizard:
 cig setup
 ```
 
-Or run the repo-level bash installer:
+Or run the public bash installer:
 
 ```bash
 curl -fsSL https://cig.lat/install.sh | bash
 ```
 
-The installation guide is published at https://cig.lat/install.
+The public installer resolves the published npm package first so the web
+install path uses the same release artifact and provenance metadata as
+`npm install -g @cig-technology/cli`.
+
+If Docker Engine or Docker Compose is missing, the installer can offer to
+install the Docker prerequisites automatically on supported Linux and macOS
+package managers before continuing.
+If Docker is already installed but the daemon is stopped, the installer can
+offer to start or initialize it automatically before retrying the checks.
+If Docker is installed but this shell cannot access the daemon or does not
+have sudo-capable privileges, the installer tells you to rerun it from an
+administrator shell or a sudo-capable account.
+
+Installation guide:
+
+- https://cig.lat/install
+- Dashboard: https://app.cig.lat
 
 ## Package Maintenance
 

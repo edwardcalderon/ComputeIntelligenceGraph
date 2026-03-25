@@ -67,6 +67,9 @@ install the Docker prerequisites automatically on supported Linux and macOS
 package managers before continuing.
 If Docker is already installed but the daemon is stopped, the installer can
 offer to start or initialize it automatically before retrying the checks.
+If Docker is installed but this shell cannot access the daemon or does not
+have sudo-capable privileges, the installer explains that you must rerun it
+from an administrator shell or a sudo-capable account.
 
 If you prefer a direct npm install:
 

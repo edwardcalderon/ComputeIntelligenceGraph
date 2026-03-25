@@ -53,6 +53,13 @@ describe('dependency-installer', () => {
         installGroup: 'docker',
         remediationKind: 'start',
       },
+      {
+        passed: false,
+        message: 'Docker daemon access denied',
+        remediation: 'Run as admin',
+        installGroup: 'docker',
+        remediationKind: 'admin',
+      },
       { passed: false, message: 'Disk low', remediation: 'Free disk space', remediationKind: 'manual' },
       { passed: true, message: 'Memory OK' },
     ];
@@ -60,7 +67,8 @@ describe('dependency-installer', () => {
     expect(splitPrereqFailures(results)).toEqual({
       installable: [results[0]],
       startable: [results[1]],
-      manual: [results[2]],
+      admin: [results[2]],
+      manual: [results[3]],
     });
   });
 
@@ -75,6 +83,7 @@ describe('dependency-installer', () => {
         },
       ],
       startable: [],
+      admin: [],
       manual: [],
     });
 
@@ -93,6 +102,7 @@ describe('dependency-installer', () => {
           remediationKind: 'start',
         },
       ],
+      admin: [],
       manual: [],
     });
 
@@ -106,9 +116,10 @@ describe('dependency-installer', () => {
       dnf: false,
       pacman: false,
       brew: false,
+      sudo: true,
     });
 
-    expect(buildDependencyInstallPlan('linux')).toEqual({
+    expect(buildDependencyInstallPlan('linux')).toMatchObject({
       platform: 'linux',
       packageManager: 'apt',
       commands: [
@@ -126,6 +137,7 @@ describe('dependency-installer', () => {
       dnf: false,
       pacman: false,
       brew: true,
+      sudo: true,
     });
 
     expect(buildDependencyInstallPlan('darwin')).toEqual({
@@ -144,9 +156,10 @@ describe('dependency-installer', () => {
       brew: false,
       systemctl: true,
       service: false,
+      sudo: true,
     });
 
-    expect(buildDockerDaemonStartPlan('linux')).toEqual({
+    expect(buildDockerDaemonStartPlan('linux')).toMatchObject({
       platform: 'linux',
       commands: ['sudo systemctl start docker'],
       summary: 'Starting the Docker daemon with systemctl.',
@@ -159,6 +172,7 @@ describe('dependency-installer', () => {
       dnf: false,
       pacman: false,
       brew: false,
+      sudo: true,
     });
 
     const result = await installMissingDependencies('linux');
@@ -183,6 +197,7 @@ describe('dependency-installer', () => {
       brew: false,
       systemctl: true,
       service: false,
+      sudo: true,
     });
 
     const result = await startDockerDaemon('linux');
@@ -191,5 +206,28 @@ describe('dependency-installer', () => {
     expect(result.attempted).toBe(true);
     expect(result.commands).toEqual(['sudo systemctl start docker']);
     expect(execSyncMock).toHaveBeenCalledWith('sudo systemctl start docker', expect.any(Object));
+  });
+
+  it('marks Linux remediation as admin-required when sudo is unavailable', async () => {
+    setCommandAvailability({
+      'apt-get': true,
+      dnf: false,
+      pacman: false,
+      brew: false,
+      systemctl: true,
+      service: false,
+      sudo: false,
+    });
+
+    const installPlan = buildDependencyInstallPlan('linux');
+    const startPlan = buildDockerDaemonStartPlan('linux');
+
+    expect(installPlan.commands).toEqual([]);
+    expect(installPlan.requiresAdmin).toBe(true);
+    expect(installPlan.summary).toContain('administrator privileges');
+
+    expect(startPlan.commands).toEqual([]);
+    expect(startPlan.requiresAdmin).toBe(true);
+    expect(startPlan.summary).toContain('administrator privileges');
   });
 });

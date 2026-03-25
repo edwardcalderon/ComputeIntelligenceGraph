@@ -62,8 +62,8 @@ describe('Property 12: Prerequisite check correctness', () => {
           return Buffer.from('Docker version 27.0.0');
         }
 
-        if (command === 'docker ps') {
-          throw new Error('permission denied while trying to connect to the Docker daemon');
+        if (command === 'docker info') {
+          throw new Error('Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?');
         }
 
         return Buffer.from('');
@@ -75,6 +75,30 @@ describe('Property 12: Prerequisite check correctness', () => {
         expect(result.passed).toBe(false);
         expect(result.remediationKind).toBe('start');
         expect(result.message).toContain('Docker is installed, but the daemon is not running');
+      } finally {
+        resetExecSyncProvider();
+      }
+    });
+
+    it('returns admin remediation when Docker is installed but the user cannot access the daemon', async () => {
+      setExecSyncProvider((command: string) => {
+        if (command === 'docker --version') {
+          return Buffer.from('Docker version 27.0.0');
+        }
+
+        if (command === 'docker info') {
+          throw new Error('Got permission denied while trying to connect to the Docker daemon socket');
+        }
+
+        return Buffer.from('');
+      });
+
+      try {
+        const result = await checkDockerEngine();
+
+        expect(result.passed).toBe(false);
+        expect(result.remediationKind).toBe('admin');
+        expect(result.message).toContain('cannot access the daemon');
       } finally {
         resetExecSyncProvider();
       }

@@ -5,6 +5,7 @@ import type { PrereqCheckResult } from '../prereqs.js';
 export interface PrereqFailureGroups {
   installable: PrereqCheckResult[];
   startable: PrereqCheckResult[];
+  admin: PrereqCheckResult[];
   manual: PrereqCheckResult[];
 }
 
@@ -13,12 +14,14 @@ export interface DependencyInstallPlan {
   packageManager?: 'apt' | 'dnf' | 'pacman' | 'brew';
   commands: string[];
   summary: string;
+  requiresAdmin?: boolean;
 }
 
 export interface DockerDaemonStartPlan {
   platform: 'linux' | 'macos' | 'unsupported';
   commands: string[];
   summary: string;
+  requiresAdmin?: boolean;
 }
 
 export interface DependencyInstallResult {
@@ -27,6 +30,7 @@ export interface DependencyInstallResult {
   commands: string[];
   summary: string;
   error?: string;
+  requiresAdmin?: boolean;
 }
 
 function normalizePlatform(platform: NodeJS.Platform): 'linux' | 'macos' | 'unsupported' {
@@ -48,6 +52,26 @@ function hasCommand(command: string): boolean {
   } catch {
     return false;
   }
+}
+
+function isRootUser(): boolean {
+  return typeof process.getuid === 'function' && process.getuid() === 0;
+}
+
+function canUseSudo(): boolean {
+  return isRootUser() || hasCommand('sudo');
+}
+
+function elevateLinuxCommands(commands: string[]): string[] {
+  if (isRootUser()) {
+    return commands;
+  }
+
+  if (!hasCommand('sudo')) {
+    return [];
+  }
+
+  return commands.map((command) => `sudo ${command}`);
 }
 
 function detectLinuxPackageManager(): 'apt' | 'dnf' | 'pacman' | null {
@@ -73,12 +97,25 @@ export function splitPrereqFailures(results: PrereqCheckResult[]): PrereqFailure
   const startable = results.filter(
     (result) => !result.passed && result.installGroup === 'docker' && result.remediationKind === 'start'
   );
-  const manual = results.filter((result) => !result.passed && result.remediationKind !== 'install' && result.remediationKind !== 'start');
+  const admin = results.filter(
+    (result) => !result.passed && result.installGroup === 'docker' && result.remediationKind === 'admin'
+  );
+  const manual = results.filter(
+    (result) =>
+      !result.passed &&
+      result.remediationKind !== 'install' &&
+      result.remediationKind !== 'start' &&
+      result.remediationKind !== 'admin'
+  );
 
-  return { installable, startable, manual };
+  return { installable, startable, admin, manual };
 }
 
 export function buildDependencyInstallPrompt(groups: PrereqFailureGroups): string {
+  if (groups.admin.length > 0) {
+    return 'Docker is installed, but this terminal does not have administrator access. Re-run this installer from a sudo-capable shell to install the remaining Docker prerequisites automatically?';
+  }
+
   if (groups.installable.length === 0) {
     return 'Missing prerequisites can only be fixed manually. Continue with the remediation steps above?';
   }
@@ -98,6 +135,10 @@ export function buildDependencyInstallPrompt(groups: PrereqFailureGroups): strin
 }
 
 export function buildDockerDaemonStartPrompt(groups: PrereqFailureGroups): string {
+  if (groups.admin.length > 0) {
+    return 'Docker is installed, but this terminal does not have administrator access. Re-run this installer from a sudo-capable shell to start the Docker daemon automatically?';
+  }
+
   if (groups.startable.length === 0) {
     return 'Docker is installed but not running. Try to initialize or start the daemon automatically now?';
   }
@@ -147,34 +188,64 @@ export function buildDependencyInstallPlan(platform = os.platform()): Dependency
     return {
       platform: 'linux',
       commands: [],
-      summary:
-        'No supported Linux package manager was detected. Install Docker Engine and Docker Compose manually.',
+      requiresAdmin: !canUseSudo(),
+      summary: !canUseSudo()
+        ? 'No supported Linux package manager was detected, and this terminal cannot elevate privileges. Re-run this installer from a sudo-capable shell or install Docker Engine and Docker Compose manually.'
+        : 'No supported Linux package manager was detected. Install Docker Engine and Docker Compose manually.',
     };
   }
 
   if (packageManager === 'apt') {
+    const commands = elevateLinuxCommands([
+      'apt-get update',
+      'apt-get install -y docker.io docker-compose-plugin',
+      'systemctl enable --now docker',
+    ]);
+
     return {
       platform: 'linux',
       packageManager,
-      commands: ['sudo apt-get update', 'sudo apt-get install -y docker.io docker-compose-plugin', 'sudo systemctl enable --now docker'],
-      summary: 'Installing Docker Engine and Docker Compose with apt-get.',
+      commands,
+      requiresAdmin: commands.length === 0,
+      summary:
+        commands.length === 0
+          ? 'Docker prerequisites require administrator privileges. Re-run this installer from a sudo-capable shell to install Docker Engine and Docker Compose automatically.'
+          : 'Installing Docker Engine and Docker Compose with apt-get.',
     };
   }
 
   if (packageManager === 'dnf') {
+    const commands = elevateLinuxCommands([
+      'dnf install -y docker docker-compose-plugin',
+      'systemctl enable --now docker',
+    ]);
+
     return {
       platform: 'linux',
       packageManager,
-      commands: ['sudo dnf install -y docker docker-compose-plugin', 'sudo systemctl enable --now docker'],
-      summary: 'Installing Docker Engine and Docker Compose with dnf.',
+      commands,
+      requiresAdmin: commands.length === 0,
+      summary:
+        commands.length === 0
+          ? 'Docker prerequisites require administrator privileges. Re-run this installer from a sudo-capable shell to install Docker Engine and Docker Compose automatically.'
+          : 'Installing Docker Engine and Docker Compose with dnf.',
     };
   }
+
+  const commands = elevateLinuxCommands([
+    'pacman -Sy --noconfirm docker docker-compose',
+    'systemctl enable --now docker',
+  ]);
 
   return {
     platform: 'linux',
     packageManager: 'pacman',
-    commands: ['sudo pacman -Sy --noconfirm docker docker-compose', 'sudo systemctl enable --now docker'],
-    summary: 'Installing Docker Engine and Docker Compose with pacman.',
+    commands,
+    requiresAdmin: commands.length === 0,
+    summary:
+      commands.length === 0
+        ? 'Docker prerequisites require administrator privileges. Re-run this installer from a sudo-capable shell to install Docker Engine and Docker Compose automatically.'
+        : 'Installing Docker Engine and Docker Compose with pacman.',
   };
 }
 
@@ -198,18 +269,30 @@ export function buildDockerDaemonStartPlan(platform = os.platform()): DockerDaem
   }
 
   if (hasCommand('systemctl')) {
+    const commands = elevateLinuxCommands(['systemctl start docker']);
+
     return {
       platform: 'linux',
-      commands: ['sudo systemctl start docker'],
-      summary: 'Starting the Docker daemon with systemctl.',
+      commands,
+      requiresAdmin: commands.length === 0,
+      summary:
+        commands.length === 0
+          ? 'Starting the Docker daemon requires administrator privileges. Re-run this installer from a sudo-capable shell or start Docker manually.'
+          : 'Starting the Docker daemon with systemctl.',
     };
   }
 
   if (hasCommand('service')) {
+    const commands = elevateLinuxCommands(['service docker start']);
+
     return {
       platform: 'linux',
-      commands: ['sudo service docker start'],
-      summary: 'Starting the Docker daemon with the service manager.',
+      commands,
+      requiresAdmin: commands.length === 0,
+      summary:
+        commands.length === 0
+          ? 'Starting the Docker daemon requires administrator privileges. Re-run this installer from a sudo-capable shell or start Docker manually.'
+          : 'Starting the Docker daemon with the service manager.',
     };
   }
 
@@ -228,6 +311,7 @@ export async function installMissingDependencies(platform = os.platform()): Prom
       attempted: false,
       succeeded: false,
       commands: [],
+      requiresAdmin: plan.requiresAdmin,
       summary: plan.summary,
     };
   }
@@ -245,13 +329,17 @@ export async function installMissingDependencies(platform = os.platform()): Prom
       succeeded: true,
       commands: plan.commands,
       summary: plan.summary,
+      requiresAdmin: plan.requiresAdmin,
     };
   } catch (error) {
     return {
       attempted: true,
       succeeded: false,
       commands: plan.commands,
-      summary: 'Automatic installation of Docker prerequisites failed. Please review the remediation steps above.',
+      requiresAdmin: plan.requiresAdmin,
+      summary: plan.requiresAdmin
+        ? 'Automatic installation of Docker prerequisites requires administrator privileges. Re-run this installer from a sudo-capable shell or install Docker manually.'
+        : 'Automatic installation of Docker prerequisites failed. Please review the remediation steps above.',
       error: error instanceof Error ? error.message : String(error),
     };
   }
@@ -265,6 +353,7 @@ export async function startDockerDaemon(platform = os.platform()): Promise<Depen
       attempted: false,
       succeeded: false,
       commands: [],
+      requiresAdmin: plan.requiresAdmin,
       summary: plan.summary,
     };
   }
@@ -282,13 +371,17 @@ export async function startDockerDaemon(platform = os.platform()): Promise<Depen
       succeeded: true,
       commands: plan.commands,
       summary: plan.summary,
+      requiresAdmin: plan.requiresAdmin,
     };
   } catch (error) {
     return {
       attempted: true,
       succeeded: false,
       commands: plan.commands,
-      summary: 'Automatic Docker daemon startup failed. Please review the remediation steps above.',
+      requiresAdmin: plan.requiresAdmin,
+      summary: plan.requiresAdmin
+        ? 'Automatic Docker daemon startup requires administrator privileges. Re-run this installer from a sudo-capable shell or start Docker manually.'
+        : 'Automatic Docker daemon startup failed. Please review the remediation steps above.',
       error: error instanceof Error ? error.message : String(error),
     };
   }

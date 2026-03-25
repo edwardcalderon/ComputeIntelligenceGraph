@@ -23,12 +23,45 @@ export interface PrereqCheckResult {
   message: string;
   remediation?: string;
   installGroup?: 'docker';
-  remediationKind?: 'install' | 'start' | 'manual';
+  remediationKind?: 'install' | 'start' | 'admin' | 'manual';
 }
 
 // Allow injection for testing
 let getFreeMem = () => os.freemem();
 let runCommand = execSync;
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return String(error);
+}
+
+function classifyDockerEngineFailure(errorMessage: string): 'admin' | 'start' | 'unknown' {
+  const normalized = errorMessage.toLowerCase();
+
+  if (
+    normalized.includes('permission denied') ||
+    normalized.includes('got permission denied') ||
+    normalized.includes('permission to connect to the docker daemon') ||
+    normalized.includes('permission to access the docker daemon')
+  ) {
+    return 'admin';
+  }
+
+  if (
+    normalized.includes('cannot connect to the docker daemon') ||
+    normalized.includes('is the docker daemon running') ||
+    normalized.includes('the docker daemon is not running') ||
+    normalized.includes('no such file or directory') ||
+    normalized.includes('context deadline exceeded')
+  ) {
+    return 'start';
+  }
+
+  return 'unknown';
+}
 
 export function setFreeMemProvider(provider: () => number): void {
   getFreeMem = provider;
@@ -48,7 +81,7 @@ export function resetExecSyncProvider(): void {
 
 /**
  * Check if Docker Engine is installed and the daemon is running.
- * Runs `docker ps` to verify both installation and daemon status.
+ * Runs `docker info` to verify both installation and daemon access.
  */
 export async function checkDockerEngine(): Promise<PrereqCheckResult> {
   try {
@@ -65,7 +98,7 @@ export async function checkDockerEngine(): Promise<PrereqCheckResult> {
   }
 
   try {
-    runCommand('docker ps', { stdio: 'pipe' });
+    runCommand('docker info', { stdio: 'pipe' });
     return {
       passed: true,
       message: 'Docker Engine is installed and running',
@@ -73,7 +106,20 @@ export async function checkDockerEngine(): Promise<PrereqCheckResult> {
       remediationKind: 'manual',
     };
   } catch (err) {
-    const stderr = err instanceof Error ? err.message : String(err);
+    const stderr = getErrorMessage(err);
+    const kind = classifyDockerEngineFailure(stderr);
+
+    if (kind === 'admin') {
+      return {
+        passed: false,
+        message: `Docker is installed, but this user cannot access the daemon${stderr ? ` (${stderr})` : ''}`,
+        remediation:
+          'Run the installer from an administrator shell, add this user to the docker group, or retry with sudo-enabled access.',
+        installGroup: 'docker',
+        remediationKind: 'admin',
+      };
+    }
+
     return {
       passed: false,
       message: `Docker is installed, but the daemon is not running${stderr ? ` (${stderr})` : ''}`,

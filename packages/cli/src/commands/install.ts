@@ -60,6 +60,11 @@ function printPrereqFailures(results: PrereqCheckResult[]): void {
   });
 }
 
+function printAdminAccessGuidance(context: string): void {
+  console.error(context);
+  console.error('Re-run this installer from an administrator shell or a sudo-capable user, then try again.');
+}
+
 async function displayProfileDetails(profile: 'core' | 'full'): Promise<void> {
   const servicesByProfile: Record<'core' | 'full', string[]> = {
     core: ['API', 'Dashboard', 'Neo4j', 'Discovery', 'Cartography', 'cig-node'],
@@ -141,6 +146,11 @@ export async function install(
     let groups = splitPrereqFailures(failedChecks);
     printPrereqFailures(failedChecks);
 
+    if (groups.admin.length > 0) {
+      printAdminAccessGuidance('Docker is installed, but this user cannot access the daemon.');
+      process.exit(1);
+    }
+
     if (groups.startable.length > 0) {
       const shouldStartDocker = await promptYesNo(buildDockerDaemonStartPrompt(groups));
       if (!shouldStartDocker) {
@@ -150,6 +160,9 @@ export async function install(
       const startResult = await startDockerDaemon();
       if (!startResult.succeeded) {
         console.error(startResult.summary);
+        if (startResult.requiresAdmin) {
+          printAdminAccessGuidance('Docker daemon startup requires administrator privileges in this environment.');
+        }
         if (startResult.error) {
           console.error(startResult.error);
         }
@@ -178,6 +191,9 @@ export async function install(
       const installResult = await installMissingDependencies();
       if (!installResult.succeeded) {
         console.error(installResult.summary);
+        if (installResult.requiresAdmin) {
+          printAdminAccessGuidance('Installing Docker prerequisites requires administrator privileges in this environment.');
+        }
         if (installResult.error) {
           console.error(installResult.error);
         }

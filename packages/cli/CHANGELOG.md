@@ -1,3 +1,24 @@
+## [0.1.5](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.4...cli-v0.1.5) (2026-03-25)
+
+
+
+
+
+## [0.1.5](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.4...cli-v0.1.5) (2026-03-25)
+
+
+### Features
+
+- distinguish Docker daemon startup failures from admin-access failures during prerequisite checks
+- detect Docker with `docker info` so the installer can tell when the daemon is stopped versus when this user lacks access
+- refuse Linux auto-remediation when the shell cannot use sudo, and explain that an administrator shell is required
+
+### Release
+
+- keep Docker auto-start and auto-install flows safe when the terminal does not have sudo-capable access
+- surface a clearer admin-shell requirement instead of trying commands that cannot succeed
+
+
 ## [0.1.4](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.3...cli-v0.1.4) (2026-03-25)
 
 
