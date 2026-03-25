@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@supabase/supabase-js"; // newsletter only
 import { GraphParticleTypography } from "../components/GraphParticleTypography";
 import { SpaceBackground } from "../components/SpaceBackground";
@@ -292,6 +293,12 @@ const HeroSection: React.FC = () => {
       >
         {t("hero.getStarted")} <ArrowRight size={18} />
       </button>
+      <Link
+        href="/install"
+        className="inline-flex items-center gap-2 rounded-full border border-cyan-300/70 dark:border-cyan-700/60 bg-cyan-50/90 dark:bg-cyan-950/35 px-8 py-3.5 text-base font-semibold text-cyan-900 dark:text-cyan-100 shadow transition-all duration-300 hover:scale-105 hover:border-cyan-400 dark:hover:border-cyan-500 hover:bg-cyan-100/90 dark:hover:bg-cyan-950/55 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+      >
+        <BookOpen size={18} /> {t("resources.installGuide")}
+      </Link>
       <a
         href="https://github.com/edwardcalderon/ComputeIntelligenceGraph"
         target="_blank"
@@ -523,8 +530,8 @@ interface ResourceLink {
 
 const resourceLinks: ResourceLink[] = [
   { href: "https://github.com/edwardcalderon/ComputeIntelligenceGraph", labelKey: "resources.github", icon: <Github size={22} /> },
-  { href: "#", labelKey: "resources.docs", icon: <BookOpen size={22} /> },
-  { href: "#", labelKey: "resources.demo", icon: <LayoutDashboard size={22} /> },
+  { href: "/install", labelKey: "resources.installGuide", icon: <BookOpen size={22} /> },
+  { href: "/install.sh", labelKey: "resources.installScript", icon: <Terminal size={22} /> },
 ];
 
 const ResourcesBlock: React.FC = () => {

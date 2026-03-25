@@ -429,6 +429,8 @@ export type TranslationKey =
   | "resources.failedToLoad"
   | "resources.found"
   | "resources.github"
+  | "resources.installGuide"
+  | "resources.installScript"
   | "resources.next"
   | "resources.noMatch"
   | "resources.pageOf"

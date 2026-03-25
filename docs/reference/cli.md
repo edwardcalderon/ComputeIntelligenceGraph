@@ -75,8 +75,10 @@ cig setup
 Or run the repo-level bash installer:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/edwardcalderon/ComputeIntelligenceGraph/main/install.sh | bash
+curl -fsSL https://cig.lat/install.sh | bash
 ```
+
+The installation guide is published at https://cig.lat/install.
 
 ## Package Maintenance
 

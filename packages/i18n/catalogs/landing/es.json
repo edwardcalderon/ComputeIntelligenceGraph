@@ -44,6 +44,8 @@
   "resources.github": "Repositorio en GitHub",
   "resources.docs": "Documentación",
   "resources.demo": "Demo en vivo",
+  "resources.installGuide": "Guía de instalación",
+  "resources.installScript": "Script instalador",
 
   "cta.title": "¿Listo para mapear tu infraestructura?",
   "cta.desc": "Obtén acceso anticipado o ve directo al despliegue auto-alojado. Código abierto, gratis para siempre.",

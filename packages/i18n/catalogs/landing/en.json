@@ -44,6 +44,8 @@
   "resources.github": "GitHub Repo",
   "resources.docs": "Documentation",
   "resources.demo": "Live Demo",
+  "resources.installGuide": "Installation Guide",
+  "resources.installScript": "Installer Script",
 
   "cta.title": "Ready to map your infrastructure?",
   "cta.desc": "Get early access or jump straight into the self-hosted deployment. Open-source, free forever.",

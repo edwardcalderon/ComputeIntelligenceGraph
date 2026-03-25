@@ -40,6 +40,7 @@ auth/bootstrap/dashboard work. Those pieces were largely delivered under
 - [x] CLI package-local versioning, README guard, and prerelease scripts are wired into `packages/cli`
 - [ ] Confirm npm registry publication and post-publish smoke install from the public registry
 - [x] CLI onboarding release now includes a first-run `cig setup` wizard and repo-level `install.sh` bootstrap script
+- [x] Public installer script and installation guide are published on `cig.lat` at `/install.sh` and `/install`
 - [x] Initial graph snapshot seeding is wired into install/login flows with queued upload for unauthenticated runs
 
 ## Completed Baseline

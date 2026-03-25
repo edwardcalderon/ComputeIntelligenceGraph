@@ -44,6 +44,8 @@
   "resources.github": "GitHub 仓库",
   "resources.docs": "文档",
   "resources.demo": "在线演示",
+  "resources.installGuide": "安装指南",
+  "resources.installScript": "安装脚本",
 
   "cta.title": "准备好映射您的基础设施了吗？",
   "cta.desc": "获取早期访问权限或直接进入自托管部署。开源，永久免费。",
