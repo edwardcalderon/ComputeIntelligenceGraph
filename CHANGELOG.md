@@ -1,3 +1,18 @@
+## [0.1.115](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.114...v0.1.115) (2026-03-25)
+
+### Detected changes
+- apps: 3 changed file(s)
+  - apps/dashboard/public/runtime-version.json
+  - apps/dashboard/public/sw.js
+  - apps/landing/public/runtime-version.json
+
+
+## [0.1.115](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.114...v0.1.115) (2026-03-25)
+
+
+
+
+
 ## [0.1.114](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.113...v0.1.114) (2026-03-25)
 
 ### Detected changes
