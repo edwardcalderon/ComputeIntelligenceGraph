@@ -241,7 +241,21 @@ async function sendOtpViaSmtp(email: string, otpCode: string): Promise<void> {
     to: email,
     subject,
     html,
-    text: `Your one-time code is ${otpCode}. It expires in 10 minutes.`,
+    text: `CIG - Computer Intelligence Graph
+
+Your One-Time Passcode
+
+Enter this code to verify your identity and sign in:
+
+${otpCode}
+
+This code expires in 10 minutes.
+
+If you didn't request this code, you can safely ignore this email.
+Never share this code with anyone. CIG staff will never ask for it.
+
+© 2026 CIG - Computer Intelligence Graph
+`,
   });
 }
 
