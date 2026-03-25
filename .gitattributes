@@ -9,3 +9,9 @@
 *.ico binary
 *.woff binary
 *.woff2 binary
+
+# Auto-generated build artifacts - excluded from diff statistics
+# See CONTRIBUTING.md for details
+**/runtime-version.json linguist-generated=true
+**/sw.js linguist-generated=true
+apps/*/.next/trace linguist-generated=true
