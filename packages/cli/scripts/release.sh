@@ -71,7 +71,7 @@ fi
 
 echo ""
 echo "🏷️  Creating tag: $TAG"
-git add package.json package-lock.json versioning.config.json CHANGELOG.md README.md scripts/release.sh scripts/sync-readme.mjs scripts/guard-readme.mjs
+git add ../../pnpm-lock.yaml package.json package-lock.json versioning.config.json CHANGELOG.md README.md scripts/release.sh scripts/sync-readme.mjs scripts/guard-readme.mjs
 git commit -m "chore(cli): release v${NEW_VERSION}" --no-verify
 git tag -a "$TAG" -m "@cig-technology/cli v${NEW_VERSION}"
 
