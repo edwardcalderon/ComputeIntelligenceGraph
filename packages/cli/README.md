@@ -36,12 +36,11 @@ binaries and provenance data.
 - Package: https://www.npmjs.com/package/@cig-technology/cli
 - GitHub releases: https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases
 
-## 📋 Latest Changes (v0.1.7)
+## 📋 Latest Changes (v0.1.123)
 
 ### Bug Fixes
 
-* **cli:** keep setup wizard interactive ([78e9f74](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/78e9f746a3d9911ac1b31e3a0c6ac16daa5b548e))
-* **cli:** resolve public installer versioning ([de7be3c](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/de7be3cf6d6b72967bef772c708ca50eb5c87e2b))
+* **auth:** prevent race condition in landing auth state sync ([77272f6](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/77272f6d86ed7bf1fbd7b7ba53b324f5c84cc79a))
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 

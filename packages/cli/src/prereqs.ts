@@ -14,9 +14,6 @@
 import { execSync } from 'child_process';
 import * as os from 'os';
 import * as net from 'net';
-import { promisify } from 'util';
-
-const exec = promisify(require('child_process').exec);
 
 export interface PrereqCheckResult {
   passed: boolean;

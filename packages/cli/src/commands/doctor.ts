@@ -59,5 +59,7 @@ export async function doctor(): Promise<void> {
   }
   console.log('╚════════════════════════════════════════════════════════════╝\n');
 
-  process.exit(allPassed ? 0 : 1);
+  if (!allPassed) {
+    throw new Error('System is not ready.');
+  }
 }

@@ -45,8 +45,7 @@ export async function bootstrapReset(): Promise<void> {
     credentialManager.saveBootstrapToken(bootstrapTokenData);
     console.log(`✓ New bootstrap token saved to ${resolveCliPaths().secretsFile}`);
   } catch (err) {
-    console.error('✗ Failed to save bootstrap token:', err instanceof Error ? err.message : String(err));
-    process.exit(1);
+    throw new Error(`Failed to save bootstrap token: ${err instanceof Error ? err.message : String(err)}`);
   }
 
   // Display new token prominently

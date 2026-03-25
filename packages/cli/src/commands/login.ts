@@ -17,6 +17,7 @@ import { ConnectionProfileStore } from '../stores/connection-profile-store.js';
 import { ConnectionProfile } from '../types/runtime.js';
 import { syncPendingInitialGraphArtifacts } from '../services/initial-graph.js';
 import { resolveCliPaths } from '../storage/paths.js';
+import { intro, outro, spinner } from '@clack/prompts';
 
 interface DeviceAuthorizeResponse {
   device_code: string;
@@ -38,6 +39,8 @@ export async function login(apiUrl: string): Promise<void> {
   const apiClient = new ApiClient({ baseUrl: apiUrl });
   const profileStore = new ConnectionProfileStore();
 
+  intro('CIG Device Login');
+
   // Step 1: POST to /auth/device/authorize
   console.log('Initiating device authorization...');
   let authorizeResponse: DeviceAuthorizeResponse;
@@ -45,8 +48,7 @@ export async function login(apiUrl: string): Promise<void> {
   try {
     authorizeResponse = await apiClient.post<DeviceAuthorizeResponse>('/api/v1/auth/device/authorize');
   } catch (err) {
-    console.error('Failed to initiate device authorization:', err instanceof Error ? err.message : String(err));
-    process.exit(1);
+    throw new Error(`Failed to initiate device authorization: ${err instanceof Error ? err.message : String(err)}`);
   }
 
   // Step 2: Display user_code and verification_uri prominently
@@ -68,6 +70,8 @@ export async function login(apiUrl: string): Promise<void> {
   const expiresAt = Date.now() + authorizeResponse.expires_in * 1000;
   let pollIntervalMs = 5000; // Start at 5 seconds
   const maxPollIntervalMs = 30000; // Max 30 seconds
+  const waitSpinner = spinner();
+  waitSpinner.start('Waiting for device approval...');
 
   while (Date.now() < expiresAt) {
     await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
@@ -79,8 +83,7 @@ export async function login(apiUrl: string): Promise<void> {
         device_code: deviceCode,
       });
     } catch (err) {
-      console.error('Poll error:', err instanceof Error ? err.message : String(err));
-      process.exit(1);
+      throw new Error(`Poll error: ${err instanceof Error ? err.message : String(err)}`);
     }
 
     // Handle slow_down: increase poll interval with exponential backoff
@@ -92,8 +95,7 @@ export async function login(apiUrl: string): Promise<void> {
     // Handle approved: store tokens and exit successfully
     if (pollResponse.status === 'approved') {
       if (!pollResponse.access_token || !pollResponse.refresh_token) {
-        console.error('Approval response missing tokens');
-        process.exit(1);
+        throw new Error('Approval response missing tokens');
       }
 
       const tokens: AuthTokens = {
@@ -131,30 +133,30 @@ export async function login(apiUrl: string): Promise<void> {
         if (graphSync.uploaded > 0) {
           console.log(`✓ Uploaded ${graphSync.uploaded} pending initial graph snapshot(s).`);
         }
-        console.log('✓ Login successful! Tokens stored securely.');
-        process.exit(0);
+        waitSpinner.stop('Device authorization approved.');
+        outro('Login successful! Tokens stored securely.');
+        return;
       } catch (err) {
-        console.error('Failed to store tokens:', err instanceof Error ? err.message : String(err));
-        process.exit(1);
+        throw new Error(`Failed to store tokens: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
 
     // Handle denied: display error and exit
     if (pollResponse.status === 'denied') {
-      console.error('✗ Device authorization denied.');
-      process.exit(1);
+      waitSpinner.stop('Device authorization denied.');
+      throw new Error('Device authorization denied.');
     }
 
     // Handle expired: display error and exit
     if (pollResponse.status === 'expired') {
-      console.error('✗ Device code expired. Please run `cig login` again.');
-      process.exit(1);
+      waitSpinner.stop('Device authorization expired.');
+      throw new Error('Device code expired. Please run `cig login` again.');
     }
 
     // Status is pending, continue polling
   }
 
   // Timeout: device code expired
-  console.error('✗ Device code expired. Please run `cig login` again.');
-  process.exit(1);
+  waitSpinner.stop('Device code expired.');
+  throw new Error('Device code expired. Please run `cig login` again.');
 }

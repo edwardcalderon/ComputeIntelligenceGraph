@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import { execSync } from 'node:child_process';
-import * as readline from 'node:readline';
+import { confirm, isCancel, select, spinner, cancel } from '@clack/prompts';
 import { runAllChecks } from '../prereqs.js';
 import { generateCompose, InstallManifest } from '../compose-generator.js';
 import { CredentialManager } from '../credentials.js';
@@ -25,38 +25,45 @@ function abortInstall(message: string): never {
   throw new Error(message);
 }
 
+function formatChoiceLabel(value: string): string {
+  return value
+    .split('-')
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ');
+}
+
+function promptCancelled(message: string): never {
+  cancel(message);
+  throw new Error(message);
+}
+
 async function promptChoice(question: string, options: string[]): Promise<string> {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
+  const result = await select({
+    message: question,
+    options: options.map((option) => ({
+      value: option,
+      label: formatChoiceLabel(option),
+    })),
   });
 
-  try {
-    while (true) {
-      console.log(`\n${question}`);
-      options.forEach((option, index) => {
-        console.log(`  ${index + 1}. ${option}`);
-      });
-
-      const answer = await new Promise<string>((resolve) => {
-        rl.question(`Enter your choice (1-${options.length}): `, resolve);
-      });
-
-      const selectedIndex = parseInt(answer, 10) - 1;
-      if (selectedIndex >= 0 && selectedIndex < options.length) {
-        return options[selectedIndex]!;
-      }
-
-      console.error(`Invalid selection. Choose a number from 1 to ${options.length}.`);
-    }
-  } finally {
-    rl.close();
+  if (isCancel(result)) {
+    promptCancelled('Installation was cancelled.');
   }
+
+  return String(result);
 }
 
 async function promptYesNo(question: string): Promise<boolean> {
-  const answer = await promptChoice(question, ['Yes', 'No']);
-  return answer === 'Yes';
+  const result = await confirm({
+    message: question,
+    initialValue: true,
+  });
+
+  if (isCancel(result)) {
+    promptCancelled('Installation was cancelled.');
+  }
+
+  return Boolean(result);
 }
 
 function printPrereqFailures(results: PrereqCheckResult[]): void {
@@ -148,7 +155,10 @@ export async function install(
 
   console.log(`\nCIG installation (v${CLI_VERSION})`);
 
+  const checkSpinner = spinner();
+  checkSpinner.start('Running CIG prerequisite checks...');
   let prereqResults = await runAllChecks();
+  checkSpinner.stop('CIG prerequisite checks completed.');
   let failedChecks = prereqResults.filter((result) => !result.passed);
   if (failedChecks.length > 0) {
     let groups = splitPrereqFailures(failedChecks);
@@ -165,7 +175,10 @@ export async function install(
         abortInstall('Docker daemon startup was skipped by the operator.');
       }
 
+      const startSpinner = spinner();
+      startSpinner.start('Starting Docker daemon...');
       const startResult = await startDockerDaemon();
+      startSpinner.stop(startResult.succeeded ? 'Docker daemon start attempted.' : 'Docker daemon start failed.');
       if (!startResult.succeeded) {
         console.error(startResult.summary);
         if (startResult.requiresAdmin) {
@@ -178,7 +191,9 @@ export async function install(
       }
 
       console.log(startResult.summary);
+      checkSpinner.start('Re-running prerequisite checks...');
       prereqResults = await runAllChecks();
+      checkSpinner.stop('Prerequisite checks completed.');
       failedChecks = prereqResults.filter((result) => !result.passed);
       groups = splitPrereqFailures(failedChecks);
       if (failedChecks.length > 0) {
@@ -196,7 +211,10 @@ export async function install(
         abortInstall('Automatic Docker prerequisite installation was skipped by the operator.');
       }
 
+      const installSpinner = spinner();
+      installSpinner.start('Installing Docker prerequisites...');
       const installResult = await installMissingDependencies();
+      installSpinner.stop(installResult.succeeded ? 'Docker prerequisite installation attempted.' : 'Docker prerequisite installation failed.');
       if (!installResult.succeeded) {
         console.error(installResult.summary);
         if (installResult.requiresAdmin) {
@@ -210,7 +228,9 @@ export async function install(
 
       console.log(installResult.summary);
 
+      checkSpinner.start('Re-running prerequisite checks...');
       const retryResults = await runAllChecks();
+      checkSpinner.stop('Prerequisite checks completed.');
       const remainingFailures = retryResults.filter((result) => !result.passed);
       groups = splitPrereqFailures(remainingFailures);
       if (remainingFailures.length > 0) {
@@ -235,7 +255,7 @@ export async function install(
   }
 
   if (!mode) {
-    mode = (await promptChoice('Select installation mode:', ['managed', 'self-hosted'])) as
+    mode = (await promptChoice('Select installation mode:', ['self-hosted', 'managed'])) as
       | 'managed'
       | 'self-hosted';
   }

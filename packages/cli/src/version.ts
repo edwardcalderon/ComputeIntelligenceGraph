@@ -1,3 +1,6 @@
-import { version as packageVersion } from '../package.json';
+import { createRequire } from 'node:module';
 
-export const CLI_VERSION = packageVersion;
+const require = createRequire(import.meta.url);
+const packageJson = require('../package.json') as { version: string };
+
+export const CLI_VERSION = packageJson.version;

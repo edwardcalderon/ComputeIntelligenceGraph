@@ -1,5 +1,6 @@
-import { exec } from 'child_process';
-import * as fs from 'fs';
+import { cancel, intro, isCancel, outro, select, spinner, text } from '@clack/prompts';
+import { exec } from 'node:child_process';
+import * as fs from 'node:fs';
 import { CredentialManager } from './credentials.js';
 
 export interface WizardConfig {
@@ -44,93 +45,104 @@ export async function rollback(): Promise<void> {
   console.log('TODO: implement rollback');
 }
 
-export async function runWizard(): Promise<void> {
-  // Dynamic import for ESM inquirer
-  const inquirer = await import('inquirer');
-  const prompt = inquirer.default.createPromptModule();
+function promptCancelled(message: string): never {
+  cancel(message);
+  throw new Error(message);
+}
 
-  // Step 1: Detect OS
+export async function runWizard(): Promise<void> {
+  intro('CIG setup wizard');
+
   const os = detectOS();
   console.log(`Detected OS: ${os}`);
 
-  // Step 2: Check Docker
   const dockerInstalled = await checkDockerInstalled();
   if (!dockerInstalled) {
-    console.error('Docker is not installed or not running. Please install Docker and try again.');
-    process.exit(1);
+    promptCancelled('Docker is not installed or not running. Please install Docker and try again.');
   }
 
-  let config: WizardConfig = { target: 'local', dashboardPort: 3000 };
+  const targetResult = await select({
+    message: 'Select deployment target:',
+    options: [
+      { value: 'local', label: 'Local' },
+      { value: 'aws', label: 'AWS' },
+      { value: 'gcp', label: 'GCP' },
+      { value: 'hybrid', label: 'Hybrid (AWS + GCP)' },
+    ],
+  });
 
+  if (isCancel(targetResult)) {
+    promptCancelled('Setup was cancelled.');
+  }
+
+  let config: WizardConfig = {
+    target: targetResult as WizardConfig['target'],
+    dashboardPort: 3000,
+  };
+
+  const credManager = new CredentialManager();
+
+  if (config.target === 'aws' || config.target === 'hybrid') {
+    const awsResult = await text({
+      message: 'Enter AWS IAM Role ARN:',
+      placeholder: 'arn:aws:iam::123456789012:role/CIGRole',
+    });
+
+    if (isCancel(awsResult)) {
+      promptCancelled('Setup was cancelled.');
+    }
+
+    const awsRoleArn = String(awsResult).trim();
+    if (!validateAwsRoleArn(awsRoleArn)) {
+      promptCancelled('Invalid ARN format. Expected: arn:aws:iam::<account>:role/<name>');
+    }
+
+    config.awsRoleArn = awsRoleArn;
+    credManager.save('aws', awsRoleArn);
+  }
+
+  if (config.target === 'gcp' || config.target === 'hybrid') {
+    const gcpResult = await text({
+      message: 'Enter path to GCP service account JSON file:',
+      placeholder: '/path/to/service-account.json',
+    });
+
+    if (isCancel(gcpResult)) {
+      promptCancelled('Setup was cancelled.');
+    }
+
+    const gcpServiceAccount = String(gcpResult).trim();
+    if (!validateGcpServiceAccount(gcpServiceAccount)) {
+      promptCancelled('File not found or not a .json file.');
+    }
+
+    config.gcpServiceAccount = gcpServiceAccount;
+    credManager.save('gcp', gcpServiceAccount);
+  }
+
+  const portResult = await text({
+    message: 'Dashboard port:',
+    placeholder: '3000',
+    defaultValue: '3000',
+  });
+
+  if (isCancel(portResult)) {
+    promptCancelled('Setup was cancelled.');
+  }
+
+  config.dashboardPort = Number.parseInt(String(portResult), 10) || 3000;
+
+  const progress = spinner();
+  progress.start('Provisioning CIG infrastructure...');
   try {
-    // Step 3: Deployment target
-    const { target } = await prompt([
-      {
-        type: 'list',
-        name: 'target',
-        message: 'Select deployment target:',
-        choices: [
-          { name: 'Local', value: 'local' },
-          { name: 'AWS', value: 'aws' },
-          { name: 'GCP', value: 'gcp' },
-          { name: 'Hybrid (AWS + GCP)', value: 'hybrid' },
-        ],
-      },
-    ]) as { target: WizardConfig['target'] };
-    config.target = target;
-
-    const credManager = new CredentialManager();
-
-    // Step 4: AWS credentials
-    if (target === 'aws' || target === 'hybrid') {
-      const { awsRoleArn } = await prompt([
-        {
-          type: 'input',
-          name: 'awsRoleArn',
-          message: 'Enter AWS IAM Role ARN:',
-          validate: (val: string) =>
-            validateAwsRoleArn(val) || 'Invalid ARN format. Expected: arn:aws:iam::<account>:role/<name>',
-        },
-      ]) as { awsRoleArn: string };
-      config.awsRoleArn = awsRoleArn;
-      credManager.save('aws', awsRoleArn);
-    }
-
-    // Step 5: GCP credentials
-    if (target === 'gcp' || target === 'hybrid') {
-      const { gcpServiceAccount } = await prompt([
-        {
-          type: 'input',
-          name: 'gcpServiceAccount',
-          message: 'Enter path to GCP service account JSON file:',
-          validate: (val: string) =>
-            validateGcpServiceAccount(val) || 'File not found or not a .json file.',
-        },
-      ]) as { gcpServiceAccount: string };
-      config.gcpServiceAccount = gcpServiceAccount;
-      credManager.save('gcp', gcpServiceAccount);
-    }
-
-    // Step 6: Dashboard port
-    const { dashboardPort } = await prompt([
-      {
-        type: 'number',
-        name: 'dashboardPort',
-        message: 'Dashboard port:',
-        default: 3000,
-      },
-    ]) as { dashboardPort: number };
-    config.dashboardPort = dashboardPort ?? 3000;
-
-    // Step 7: Provision
-    console.log('Provisioning CIG infrastructure...');
     await provision(config);
-
-    // Step 8: Success
-    console.log(`CIG installed successfully! Dashboard: http://localhost:${config.dashboardPort}`);
-  } catch (err) {
-    console.error('Error:', err instanceof Error ? err.message : String(err));
+    progress.stop('Provisioning step completed.');
+    outro(`CIG installed successfully! Dashboard: http://localhost:${config.dashboardPort}`);
+  } catch (error) {
+    progress.stop('Provisioning failed.');
+    console.error('Error:', error instanceof Error ? error.message : String(error));
     console.log('Rolling back...');
     await rollback();
+    promptCancelled('The setup wizard did not complete.');
   }
 }

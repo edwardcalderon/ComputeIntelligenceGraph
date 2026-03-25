@@ -48,8 +48,7 @@ export async function bootstrapFlow(): Promise<InstallManifest> {
     credentialManager.saveBootstrapToken(bootstrapTokenData);
     console.log(`✓ Bootstrap token saved to ${resolveCliPaths().secretsFile}`);
   } catch (err) {
-    console.error('✗ Failed to save bootstrap token:', err instanceof Error ? err.message : String(err));
-    process.exit(1);
+    throw new Error(`Failed to save bootstrap token: ${err instanceof Error ? err.message : String(err)}`);
   }
 
   // Step 3: Display Dashboard URL and token prominently

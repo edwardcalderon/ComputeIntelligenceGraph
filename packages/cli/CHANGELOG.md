@@ -1,3 +1,43 @@
+## [0.1.123](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.7...cli-v0.1.123) (2026-03-25)
+
+
+### Bug Fixes
+
+* **auth:** prevent race condition in landing auth state sync ([77272f6](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/77272f6d86ed7bf1fbd7b7ba53b324f5c84cc79a))
+
+
+
+
+
+## [0.1.123](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.122...cli-v0.1.123) (2026-03-25)
+
+
+### Features
+
+- migrate the CLI runtime to Oclif command classes with a central dispatcher
+- switch the onboarding wizard to Clack for a more polished terminal experience
+- run the CLI package as native ESM so the new prompt stack works cleanly on Node 22
+
+### Release
+
+- keep the package-local CLI release line independent from the monorepo root semver line
+- preserve the existing command surface while removing the legacy Commander/Inquirer stack
+
+## [0.1.122](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.7...cli-v0.1.122) (2026-03-25)
+
+
+### Features
+
+- migrate the CLI command layer to Oclif command classes and a central dispatcher
+- replace the onboarding wizard prompts with Clack for a more polished terminal experience
+- keep install, login, enrollment, and scan flows working under the new ESM package runtime
+- preserve the existing command surface while removing the legacy Commander/Inquirer stack
+
+### Release
+
+- switch the `@cig-technology/cli` package to native ESM so Oclif and Clack can run without CommonJS shims
+- keep the package-local CLI version aligned with the current published `0.1.122` line
+
 ## [0.1.7](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.6...cli-v0.1.7) (2026-03-25)
 
 
