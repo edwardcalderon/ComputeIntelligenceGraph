@@ -17,6 +17,21 @@ Install guide:
 EOF
 }
 
+resolve_published_cli_version() {
+  if ! command -v npm >/dev/null 2>&1; then
+    return 1
+  fi
+
+  local resolved_version
+  resolved_version="$(npm view @cig-technology/cli version 2>/dev/null | head -n 1 | tr -d '[:space:]')"
+
+  if [[ -z "$resolved_version" ]]; then
+    return 1
+  fi
+
+  printf '%s' "$resolved_version"
+}
+
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   print_usage
   exit 0
@@ -50,7 +65,13 @@ fi
 
 LOCAL_CLI=""
 if command -v npx >/dev/null 2>&1; then
-  CLI_CMD=(npx --yes @cig-technology/cli@latest)
+  if CLI_VERSION="$(resolve_published_cli_version)"; then
+    echo "Resolved published CIG CLI version: v${CLI_VERSION}"
+    CLI_CMD=(npx --yes "@cig-technology/cli@${CLI_VERSION}")
+  else
+    echo "Could not resolve the published CIG CLI version. Falling back to @latest."
+    CLI_CMD=(npx --yes @cig-technology/cli@latest)
+  fi
 else
   candidate_roots=("$PWD")
   if [[ -n "$SCRIPT_ROOT" ]]; then

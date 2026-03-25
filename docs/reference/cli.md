@@ -78,8 +78,9 @@ Or run the public bash installer:
 curl -fsSL https://cig.lat/install.sh | bash
 ```
 
-The public installer resolves the published npm package first so the web
-install path uses the same release artifact and provenance metadata as
+The public installer resolves the published npm package version first, prints
+that resolved version, and then launches the wizard so the web install path
+uses the same release artifact and provenance metadata as
 `npm install -g @cig-technology/cli`.
 
 If Docker Engine or Docker Compose is missing, the installer can offer to

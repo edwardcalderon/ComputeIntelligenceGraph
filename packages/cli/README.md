@@ -25,8 +25,9 @@ This package is a real foundation release with the new onboarding flow, but not 
 
 The published npm package is the canonical release artifact. The public
 installer at `https://cig.lat/install.sh` resolves `@cig-technology/cli`
-from npm first so the `curl | bash` path and `npm install -g` path use the
-same binaries and provenance data.
+from npm first, prints the resolved package version, and then launches the
+wizard so the `curl | bash` path and `npm install -g` path use the same
+binaries and provenance data.
 
 ### Quick links
 

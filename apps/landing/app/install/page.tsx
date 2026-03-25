@@ -45,15 +45,6 @@ const checklistKeys = [
   "install.prereqs.ports",
 ];
 
-export const metadata = {
-  title: "Install CIG",
-  description:
-    "Install CIG from the public cig.lat installer, then use the guided setup wizard to bootstrap the first graph.",
-  alternates: {
-    canonical: "/install",
-  },
-};
-
 function InstallContent() {
   const t = useTranslation();
   
@@ -125,6 +116,11 @@ function InstallContent() {
               <p className="mt-4 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
                 {t("install.webInstall.localScript")}
                 <span className="font-mono text-zinc-900 dark:text-zinc-100"> ./install.sh</span>.
+              </p>
+              <p className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                The public installer resolves the current published npm version
+                before launching the wizard, so the version banner matches the
+                binary you actually install.
               </p>
             </div>
           </div>

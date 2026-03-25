@@ -84,6 +84,8 @@ export function resetExecSyncProvider(): void {
  * Runs `docker info` to verify both installation and daemon access.
  */
 export async function checkDockerEngine(): Promise<PrereqCheckResult> {
+  const accessScope = os.platform() === 'linux' ? 'this Linux shell' : 'this shell';
+
   try {
     runCommand('docker --version', { stdio: 'pipe' });
   } catch (err) {
@@ -112,7 +114,7 @@ export async function checkDockerEngine(): Promise<PrereqCheckResult> {
     if (kind === 'admin') {
       return {
         passed: false,
-        message: `Docker is installed, but this user cannot access the daemon${stderr ? ` (${stderr})` : ''}`,
+        message: `Docker is installed, but ${accessScope} cannot access the daemon${stderr ? ` (${stderr})` : ''}`,
         remediation:
           'Run the installer from an administrator shell, add this user to the docker group, or retry with sudo-enabled access.',
         installGroup: 'docker',
