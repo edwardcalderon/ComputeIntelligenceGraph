@@ -12,11 +12,13 @@ errors=0
 validate_commit() {
   local objectish="$1"
   local commit
+  local head_commit
   local package_version
   local tag
   local release_tags=()
 
   commit="$(git rev-parse --verify "${objectish}^{commit}")"
+  head_commit="$(git rev-parse --verify HEAD)"
 
   if [[ -n "${seen_commits[$commit]-}" ]]; then
     return 0
@@ -26,6 +28,19 @@ validate_commit() {
   mapfile -t release_tags < <(git tag --points-at "$commit" || true)
   if [[ "${#release_tags[@]}" -eq 0 ]]; then
     return 0
+  fi
+
+  if [[ "$commit" != "$head_commit" ]]; then
+    for tag in "${release_tags[@]}"; do
+      [[ -z "$tag" ]] && continue
+
+      case "$tag" in
+        v[0-9]*.[0-9]*.[0-9]*+build.[0-9]*|v[0-9]*.[0-9]*.[0-9]*)
+          echo "${tag} points to ${commit}, but release tags must be pushed from HEAD (${head_commit})." >&2
+          return 1
+          ;;
+      esac
+    done
   fi
 
   package_version="$(

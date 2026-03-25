@@ -1,3 +1,18 @@
+## [0.1.122](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.121...v0.1.122) (2026-03-25)
+
+### Detected changes
+- scripts: 3 changed file(s)
+  - scripts/release.sh
+  - scripts/validate-release-ref.sh
+  - scripts/validate-release-ref.test.sh
+
+
+## [0.1.122](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.121...v0.1.122) (2026-03-25)
+
+
+
+
+
 ## [0.1.121](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.120...v0.1.121) (2026-03-25)
 
 ### Features

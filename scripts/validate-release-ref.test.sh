@@ -63,12 +63,25 @@ EOF
 }
 
 bad_repo="${tmpdir}/bad"
+stale_repo="${tmpdir}/stale"
 good_repo="${tmpdir}/good"
-mkdir -p "$bad_repo" "$good_repo"
+mkdir -p "$bad_repo" "$stale_repo" "$good_repo"
 
 make_repo "0.1.113" "$bad_repo"
 git -C "$bad_repo" tag "v0.1.114"
 assert_fails_in_repo "$bad_repo" bash "$validator" HEAD
+
+make_repo "0.1.113" "$stale_repo"
+git -C "$stale_repo" tag "v0.1.113"
+cat >"$stale_repo/package.json" <<'EOF'
+{
+  "name": "cig-release-test",
+  "version": "0.1.114"
+}
+EOF
+git -C "$stale_repo" add package.json
+git -C "$stale_repo" commit -q -m "test: bump version for current release"
+assert_fails_in_repo "$stale_repo" bash "$validator" HEAD~1
 
 make_repo "0.1.114" "$good_repo"
 git -C "$good_repo" tag "v0.1.114"

@@ -573,8 +573,10 @@ fi
 
 if $SKIP_PUSH; then
   warn "Push skipped (--no-push). Run manually:"
-  echo "  git push && git push --tags"
+  echo "  git push origin \"${BRANCH}\""
+  echo "  git push origin \"${RELEASE_TAG}\""
 elif ! $DRY_RUN; then
+  info "Pushing only ${BRANCH} and ${RELEASE_TAG}; do not push --tags from release runs."
   git push origin "$BRANCH"
   git push origin "${RELEASE_TAG}"
   success "Pushed ${BRANCH} + tag ${RELEASE_TAG}"
