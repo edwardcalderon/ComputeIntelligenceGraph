@@ -15,12 +15,19 @@ continuous discovery engine. In the current foundation release, it can:
 
 This package is a real foundation release, but not the final platform shape.
 
-## 📋 Latest Changes (v0.1.1)
+## 📋 Latest Changes (v0.1.118)
 
-### Changed
-- add package-local `@edcalderon/versioning` integration for validation, version sync, README sync, and prerelease workflows
-- add package-local README guard and changelog-driven README update scripts
-- expand CLI documentation and release guidance for operators and maintainers
+### Features
+
+* **cli:** add setup wizard and graph seeding ([451f850](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/451f8505ccf2456082560b4283e84a92a96d50ff))
+
+
+
+
+
+# Changelog
+
+All notable changes to `@cig-technology/cli` are documented in this file.
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 
