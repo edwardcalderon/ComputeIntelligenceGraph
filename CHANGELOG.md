@@ -1,3 +1,15 @@
+## [0.1.116](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.115...v0.1.116) (2026-03-25)
+
+### Detected changes
+- apps: apps/dashboard/components/Footer.tsx
+
+
+## [0.1.116](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.115...v0.1.116) (2026-03-25)
+
+
+
+
+
 ## [0.1.115](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.114...v0.1.115) (2026-03-25)
 
 ### Detected changes
