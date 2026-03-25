@@ -1,9 +1,41 @@
+## [0.1.3](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.2...cli-v0.1.3) (2026-03-25)
+
+
+
+
+
+## [0.1.3](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.2...cli-v0.1.3) (2026-03-25)
+
+
+### Features
+
+- add a public `curl -fsSL https://cig.lat/install.sh | bash` install path to the CLI README
+- make the public installer resolve `@cig-technology/cli` from the npm registry first
+- add registry, dashboard, and install-guide links to the package README
+
+### Release
+
+- keep the web installer aligned with the published npm package so remote installs use the same binaries and provenance
+- keep the package-local `cli-v*` release line independent from the monorepo root semver line
+- keep `bash ./install.sh` as the local checkout fallback for contributors
+
+
+
 ## [0.1.2](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.1...cli-v0.1.2) (2026-03-25)
 
 
 ### Features
 
-* **cli:** add setup wizard and graph seeding ([451f850](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/451f8505ccf2456082560b4283e84a92a96d50ff))
+- add `cig setup` as the first-class onboarding wizard for self-hosted and managed installs
+- add a root `install.sh` wrapper that validates prerequisites and launches the wizard
+- seed the initial graph during install and persist it until login can upload it
+- preserve the existing `login`, `enroll`, `connect`, `status`, `open`, `upgrade`, and `uninstall` commands
+
+### Release
+
+- package-local release line starts at `0.1.2` and is tagged as `cli-v0.1.2`
+- changelog links now compare against `cli-v*` tags instead of the monorepo root `v*` tags
+- this package release is independent from the monorepo root semver line
 
 
 
