@@ -1,3 +1,14 @@
+## [0.1.9](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.8...cli-v0.1.9) (2026-03-25)
+
+
+### Bug Fixes
+
+* **cli:** keep setup wizard open until dismiss ([991fc9e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/991fc9ebcebed2c7514597dc955450682acd2423))
+
+
+
+
+
 ## [0.1.8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.7...cli-v0.1.8) (2026-03-25)
 
 ### Features

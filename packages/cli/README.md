@@ -36,25 +36,11 @@ binaries and provenance data.
 - Package: https://www.npmjs.com/package/@cig-technology/cli
 - GitHub releases: https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases
 
-## 📋 Latest Changes (v0.1.8)
+## 📋 Latest Changes (v0.1.9)
 
-### Features
+### Bug Fixes
 
-- migrate the CLI runtime to Oclif command classes with a central dispatcher
-- switch the onboarding wizard to Clack for a more polished terminal experience
-- run the CLI package as native ESM so the new prompt stack works cleanly on Node 22
-- display the actual CLI package version in the setup/install banner
-- derive the version banner from `packages/cli/package.json` instead of a stale constant
-- harden the public `curl | bash` installer so it resolves the published npm binary first
-- detect Docker daemon availability and guide users through install/start remediation
-- keep the setup wizard interactive when prerequisite checks fail
-
-### Release
-
-- keep the package-local CLI release line independent from the monorepo root semver line
-- preserve the existing command surface while removing the legacy Commander/Inquirer stack
-- keep the public installer, README, and changelog synchronized with the published npm package
-- reset the package-local CLI release sequence to `0.1.8` so the version line matches the package-local history
+* **cli:** keep setup wizard open until dismiss ([991fc9e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/991fc9ebcebed2c7514597dc955450682acd2423))
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 
