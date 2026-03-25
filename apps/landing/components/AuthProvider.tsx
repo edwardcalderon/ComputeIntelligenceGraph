@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { getSupabaseClient, revokeSessionViaApi } from "@cig/auth";
 
 /* ─── Shared auth interface ──────────────────────────────────────────── */
@@ -145,19 +145,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isHydrated: false,
     isSigningOut: false,
   });
+  // Monotonic refresh token so an older async session read cannot overwrite
+  // a newer OTP/login/logout transition.
+  const refreshGenerationRef = useRef(0);
+
+  const invalidatePendingRefreshes = useCallback(() => {
+    refreshGenerationRef.current += 1;
+  }, []);
+
+  const reconcileAuthState = useCallback(async () => {
+    const generation = ++refreshGenerationRef.current;
+    const localUser = readAuthentikSession();
+
+    if (localUser) {
+      setAuthState({
+        user: localUser,
+        isHydrated: true,
+        isSigningOut: false,
+      });
+    }
+
+    const supabaseUser = await readSupabaseSession();
+    if (generation !== refreshGenerationRef.current) {
+      return;
+    }
+
+    setAuthState({
+      user: supabaseUser ?? localUser,
+      isHydrated: true,
+      isSigningOut: false,
+    });
+  }, []);
 
   useEffect(() => {
-    let cancelled = false;
-
     // 1) Handle Authentik logout return
     const params = new URLSearchParams(window.location.search);
     if (params.get("logged_out") === "1") {
+      invalidatePendingRefreshes();
       clearAuthentikSession();
       window.history.replaceState({}, "", window.location.pathname);
-      if (!cancelled) {
-        setAuthState({ user: null, isHydrated: true, isSigningOut: false });
-      }
-      return () => { cancelled = true; };
+      setAuthState({ user: null, isHydrated: true, isSigningOut: false });
+      return;
     }
 
     // 2) Process Authentik hash tokens if present
@@ -186,30 +214,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // 3) Resolve current user preferring Supabase (email) if present, else Authentik
-    (async () => {
-      const [sb, ak] = await Promise.all([
-        readSupabaseSession(),
-        Promise.resolve(readAuthentikSession()),
-      ]);
-      if (!cancelled) {
-        setAuthState({ user: sb ?? ak, isHydrated: true, isSigningOut: false });
-      }
-    })();
+    // 3) Resolve the current user. Authentik/OTP sessions are available
+    // synchronously in sessionStorage, while Supabase may need an async read.
+    void reconcileAuthState();
 
     // 4) Subscribe to Supabase changes even in Authentik mode (hybrid)
     const supabase = getSupabaseClient();
     let unsub: (() => void) | undefined;
 
-    const refreshUser = async () => {
-      const [sb, ak] = await Promise.all([readSupabaseSession(), Promise.resolve(readAuthentikSession())]);
-      if (!cancelled) {
-        setAuthState({ user: sb ?? ak, isHydrated: true, isSigningOut: false });
-      }
-    };
-
     const onSessionChanged = () => {
-      void refreshUser();
+      void reconcileAuthState();
     };
 
     window.addEventListener("cig-session-changed", onSessionChanged);
@@ -235,21 +249,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isSigningOut: false,
           });
         } else {
-          // If Supabase signed out, fall back to any existing Authentik session
-          setAuthState({
-            user: readAuthentikSession(),
-            isHydrated: true,
-            isSigningOut: false,
-          });
+          void reconcileAuthState();
         }
       });
       unsub = () => subscription.unsubscribe();
     }
 
-    return () => { cancelled = true; unsub?.(); window.removeEventListener("cig-session-changed", onSessionChanged); };
-  }, []);
+    return () => { unsub?.(); window.removeEventListener("cig-session-changed", onSessionChanged); };
+  }, [invalidatePendingRefreshes, reconcileAuthState]);
 
   const signOut = useCallback(() => {
+    invalidatePendingRefreshes();
     const sessionSource = (() => {
       try {
         return (sessionStorage.getItem("cig_auth_source") as "authentik" | "supabase" | null) ?? authState.user?.authSource ?? null;
@@ -291,7 +301,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       window.location.replace(window.location.origin);
     }
-  }, [authState.user?.authSource]);
+  }, [authState.user?.authSource, invalidatePendingRefreshes]);
 
   return (
     <AuthContext.Provider

@@ -1,3 +1,17 @@
+## [0.1.106](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.105...v0.1.106) (2026-03-25)
+
+### Detected changes
+- apps: 2 changed file(s)
+  - apps/landing/components/AuthProvider.tsx
+  - apps/landing/public/runtime-version.json
+
+
+## [0.1.106](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.105...v0.1.106) (2026-03-25)
+
+
+
+
+
 ## [0.1.105](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.104...v0.1.105) (2026-03-25)
 
 ### Detected changes
