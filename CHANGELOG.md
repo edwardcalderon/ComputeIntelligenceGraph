@@ -1,3 +1,17 @@
+## [0.1.103](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.102...v0.1.103) (2026-03-25)
+
+### Detected changes
+- packages: 2 changed file(s)
+  - packages/infra/infra.config.test.ts
+  - packages/infra/infra.config.ts
+
+
+## [0.1.103](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.102...v0.1.103) (2026-03-25)
+
+
+
+
+
 ## [0.1.102](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.101...v0.1.102) (2026-03-25)
 
 ### Detected changes

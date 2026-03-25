@@ -68,6 +68,17 @@ function optionalEnv(name: string): string | undefined {
   return value;
 }
 
+function firstEnv(...names: string[]): string | undefined {
+  for (const name of names) {
+    const value = optionalEnv(name);
+    if (value !== undefined) {
+      return value;
+    }
+  }
+
+  return undefined;
+}
+
 function csvEnv(name: string, required = false): string[] {
   const value = process.env[name];
   if (!value || value.trim() === '') {
@@ -114,10 +125,42 @@ function inferHostedZoneDomain(domain: string): string {
   return segments.slice(-2).join('.');
 }
 
-function loadApiStackConfig(): ApiStackConfig {
+export function loadApiStackConfig(): ApiStackConfig {
   const stage = $app.stage;
   const domain = requiredEnv('API_DOMAIN');
   const bootstrapOnly = booleanEnv('INFRA_API_BOOTSTRAP_ONLY', false);
+  const smtpHost = firstEnv('API_SMTP_HOST', 'SMTP_HOST');
+  const smtpPortRaw = firstEnv('API_SMTP_PORT', 'SMTP_PORT');
+  const smtpSecureRaw = firstEnv('API_SMTP_SECURE', 'SMTP_SECURE');
+  const smtpFromEmail = firstEnv('API_SMTP_FROM_EMAIL', 'SMTP_FROM_EMAIL');
+  const smtpAuthEnabledRaw = firstEnv('API_SMTP_AUTH_ENABLED', 'SMTP_AUTH_ENABLED');
+  const smtpUser = firstEnv('API_SMTP_USER', 'SMTP_USER');
+  const smtpOtpSubject = firstEnv('API_SMTP_OTP_SUBJECT', 'SMTP_OTP_SUBJECT');
+  const smtpPasswordSecretArn = firstEnv(
+    'API_SMTP_PASSWORD_SECRET_ARN',
+    'SMTP_PASSWORD_SECRET_ARN'
+  );
+  const smtpPort = smtpPortRaw ? Number(smtpPortRaw) : 587;
+  if (smtpPortRaw && !Number.isFinite(smtpPort)) {
+    throw new Error('API_SMTP_PORT / SMTP_PORT must be a number');
+  }
+  const smtpSecure = smtpSecureRaw ? smtpSecureRaw === 'true' : smtpPort === 465;
+  const smtpAuthEnabled = smtpAuthEnabledRaw ? smtpAuthEnabledRaw === 'true' : true;
+
+  if (!bootstrapOnly) {
+    const missing = [
+      smtpHost ? undefined : 'API_SMTP_HOST / SMTP_HOST',
+      smtpPortRaw ? undefined : 'API_SMTP_PORT / SMTP_PORT',
+      smtpFromEmail ? undefined : 'API_SMTP_FROM_EMAIL / SMTP_FROM_EMAIL',
+      smtpAuthEnabled && !smtpPasswordSecretArn
+        ? 'API_SMTP_PASSWORD_SECRET_ARN / SMTP_PASSWORD_SECRET_ARN'
+        : undefined,
+    ].filter((value): value is string => Boolean(value));
+
+    if (missing.length > 0) {
+      throw new Error(`Missing SMTP runtime config: ${missing.join(', ')}`);
+    }
+  }
 
   return {
     appName: process.env.INFRA_APP_NAME ?? 'cig-api',
@@ -164,6 +207,14 @@ function loadApiStackConfig(): ApiStackConfig {
     supabaseServiceRoleKeySecretArn: optionalEnv(
       'API_SUPABASE_SERVICE_ROLE_KEY_SECRET_ARN'
     ),
+    smtpHost: smtpHost ?? '',
+    smtpPort,
+    smtpSecure,
+    smtpFromEmail: smtpFromEmail ?? '',
+    smtpAuthEnabled,
+    smtpUser,
+    smtpOtpSubject,
+    smtpPasswordSecretArn,
     projectTag: process.env.INFRA_PROJECT_TAG ?? 'cig-api',
     pipelineRepo: optionalEnv('INFRA_PIPELINE_REPO'),
     pipelinePrefix: process.env.INFRA_PIPELINE_PREFIX ?? 'cig-api',
@@ -175,7 +226,7 @@ function loadApiStackConfig(): ApiStackConfig {
   };
 }
 
-function secretArns(config: ApiStackConfig): string[] {
+export function secretArns(config: ApiStackConfig): string[] {
   return [
     config.databaseUrlSecretArn,
     config.jwtSecretArn,
@@ -187,6 +238,7 @@ function secretArns(config: ApiStackConfig): string[] {
     config.oidcClientSecretSecretArn,
     config.supabaseUrlSecretArn,
     config.supabaseServiceRoleKeySecretArn,
+    config.smtpPasswordSecretArn,
   ].filter((value): value is string => Boolean(value));
 }
 
