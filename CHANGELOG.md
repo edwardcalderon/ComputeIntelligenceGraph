@@ -1,3 +1,17 @@
+## [0.1.120](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.118...v0.1.120) (2026-03-25)
+
+
+### Bug Fixes
+
+* **auth:** prevent race condition in landing auth state sync ([77272f6](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/77272f6d86ed7bf1fbd7b7ba53b324f5c84cc79a))
+* **cli:** keep setup wizard interactive ([78e9f74](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/78e9f746a3d9911ac1b31e3a0c6ac16daa5b548e))
+* **cli:** repair v0.1.6 release notes ([daa280e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/daa280eb99e7f88df9d3af1fabb3d5b0590f66e9))
+* **cli:** resolve public installer versioning ([de7be3c](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/de7be3cf6d6b72967bef772c708ca50eb5c87e2b))
+
+
+
+
+
 ## [0.1.119](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.118...v0.1.119) (2026-03-25)
 
 
