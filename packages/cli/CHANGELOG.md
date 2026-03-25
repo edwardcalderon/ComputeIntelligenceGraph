@@ -1,12 +1,6 @@
 ## [0.1.3](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.2...cli-v0.1.3) (2026-03-25)
 
 
-
-
-
-## [0.1.3](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.2...cli-v0.1.3) (2026-03-25)
-
-
 ### Features
 
 - add a public `curl -fsSL https://cig.lat/install.sh | bash` install path to the CLI README
