@@ -1,3 +1,23 @@
+## [0.1.118](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.117...v0.1.118) (2026-03-25)
+
+
+### Bug Fixes
+
+* **cli:** repair v0.1.3 release notes ([d3eaf01](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/d3eaf01f7edf75766965c1e4b6b29c7af09cb5e7))
+* **cli:** repair v0.1.4 release notes ([8ddf54a](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/8ddf54a30a25005e1dc49eb0d14340438338243b))
+* **cli:** reset package release line to 0.1.2 ([b4fdfb1](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/b4fdfb16f71ad6a99011b255a3ce2c665aff876e))
+
+
+### Features
+
+* **cli:** add setup wizard and graph seeding ([451f850](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/451f8505ccf2456082560b4283e84a92a96d50ff))
+* **landing:** add LandingLayout component with navbar/footer for install page ([b421f6e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/b421f6e3777bd5152e5b1bda2e83b12ab1d7c885))
+* **landing:** publish public installer and guide ([192ab4b](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/192ab4b3ebffc5d5b98a6821c417189a9bd1f60c))
+
+
+
+
+
 ## [0.1.117](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.116...v0.1.117) (2026-03-25)
 
 ### Detected changes
