@@ -55,8 +55,8 @@
   "install.backHome": "Volver al inicio",
 
   "install.webInstall.title": "Instalación web",
-  "install.webInstall.subtitle": "Canaliza el script hospedado directamente a bash.",
-  "install.webInstall.localScript": "El mismo script también está disponible desde un checkout clonado como",
+  "install.webInstall.subtitle": "Pega el comando hospedado directamente en bash.",
+  "install.webInstall.localScript": "El mismo script también está disponible en un checkout clonado como",
 
   "install.prereqs.title": "Requisitos previos",
   "install.prereqs.node": "Node.js 22 o superior",

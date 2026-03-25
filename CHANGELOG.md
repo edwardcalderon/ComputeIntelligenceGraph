@@ -1,3 +1,16 @@
+## [0.1.121](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.120...v0.1.121) (2026-03-25)
+
+### Features
+
+* **landing:** add a copy-to-clipboard action to the public install card
+* **landing:** split the install page into a server shell and interactive install content
+* **i18n:** refine install-card copy for the public curl installer
+
+### Release
+
+* bump the root, landing, and CLI package versions to `0.1.121`
+* keep the public install guide aligned with the published npm binary
+
 ## [0.1.120](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.118...v0.1.120) (2026-03-25)
 
 
