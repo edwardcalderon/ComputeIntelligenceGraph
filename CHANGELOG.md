@@ -1,3 +1,22 @@
+## [0.1.105](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.104...v0.1.105) (2026-03-25)
+
+### Detected changes
+- apps: 4 changed file(s)
+  - apps/dashboard/lib/__tests__/authProvider.test.ts
+  - apps/dashboard/lib/authProvider.ts
+  - apps/landing/components/AuthProvider.tsx
+  - apps/landing/components/AuthentikProvider.tsx
+- packages: 2 changed file(s)
+  - packages/auth/src/index.ts
+  - packages/auth/src/session.ts
+
+
+## [0.1.105](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.104...v0.1.105) (2026-03-25)
+
+
+
+
+
 ## [0.1.104](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.103...v0.1.104) (2026-03-25)
 
 ### Detected changes

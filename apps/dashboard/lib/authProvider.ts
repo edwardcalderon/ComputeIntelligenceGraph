@@ -1,9 +1,5 @@
 import type { AuthProvider } from "@refinedev/core";
-import {
-  discoverEndpoints,
-  orchestrateLogout,
-} from "@edcalderon/auth/authentik";
-import { getSupabaseClient } from "@cig/auth";
+import { getSupabaseClient, revokeSessionViaApi } from "@cig/auth";
 import { resolveDashboardAuthSource } from "./sessionAuth";
 import {
   resolveLandingLoggedOutUrl,
@@ -53,16 +49,6 @@ function decodeJwt(token: string): Record<string, unknown> | null {
   }
 }
 
-function getAuthentikIssuer(): string {
-  const base = process.env.NEXT_PUBLIC_AUTHENTIK_URL ?? "https://auth.cig.technology";
-  return new URL("/application/o/cig-dashboard/", base).toString();
-}
-
-function getAuthentikClientId(): string {
-  return process.env.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID ??
-    "G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v";
-}
-
 function getAuthBackend(): "authentik" | "supabase" {
   return (process.env.NEXT_PUBLIC_AUTH_PROVIDER as "authentik" | "supabase") || "authentik";
 }
@@ -78,49 +64,6 @@ function formatAuthProviderLabel(provider: string): string {
   }
 }
 
-async function resolveDashboardLogoutUrl(
-  accessToken: string | undefined,
-  idToken: string | undefined,
-): Promise<string> {
-  const issuer = decodeJwt(idToken ?? accessToken ?? "")?.iss;
-  const fallbackIssuer = typeof issuer === "string" && issuer.trim()
-    ? issuer
-    : getAuthentikIssuer();
-  const issuerUrl = fallbackIssuer.endsWith("/")
-    ? fallbackIssuer
-    : `${fallbackIssuer}/`;
-  const postLogoutRedirectUri = resolveLandingLoggedOutUrl();
-  const baseConfig = {
-    issuer: fallbackIssuer,
-    postLogoutRedirectUri,
-    endSessionEndpoint: new URL("end-session/", issuerUrl).toString(),
-    revocationEndpoint: new URL("revoke/", issuerUrl).toString(),
-    clientId: getAuthentikClientId(),
-  };
-
-  try {
-    const endpoints = await discoverEndpoints(fallbackIssuer).catch(() => null);
-    const logoutConfig = endpoints
-      ? {
-          ...baseConfig,
-          endSessionEndpoint: endpoints.endSession ?? baseConfig.endSessionEndpoint,
-          revocationEndpoint: endpoints.revocation ?? baseConfig.revocationEndpoint,
-        }
-      : baseConfig;
-    const result = await orchestrateLogout(logoutConfig, {
-      accessToken,
-      idToken,
-    });
-    return result.endSessionUrl;
-  } catch {
-    const result = await orchestrateLogout(baseConfig, {
-      accessToken,
-      idToken,
-    });
-    return result.endSessionUrl;
-  }
-}
-
 export const authProvider: AuthProvider = {
   /** Login happens on the landing page — not used inside the dashboard. */
   login: async () => ({ success: true }),
@@ -128,6 +71,7 @@ export const authProvider: AuthProvider = {
   logout: async () => {
     const session = getSession();
     const sessionSource = session?.authSource ?? null;
+    const token = session?.token;
     clearSession();
 
     if (sessionSource === "supabase" || getAuthBackend() !== "authentik") {
@@ -143,20 +87,16 @@ export const authProvider: AuthProvider = {
 
       return {
         success: true,
-        redirectTo: resolveLandingUrl(),
+        redirectTo: resolveLandingLoggedOutUrl(),
       };
     }
 
-    const endSessionUrl = await resolveDashboardLogoutUrl(
-      session?.token,
-      session?.idToken,
-    ).catch(() => resolveLandingLoggedOutUrl());
+    void revokeSessionViaApi(token);
 
-    if (typeof window !== "undefined") {
-      window.location.replace(endSessionUrl);
-    }
-
-    return { success: true };
+    return {
+      success: true,
+      redirectTo: resolveLandingLoggedOutUrl(),
+    };
   },
 
   check: async () => {

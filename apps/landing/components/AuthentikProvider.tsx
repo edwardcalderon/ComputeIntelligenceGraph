@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { revokeAuthentikToken } from "@cig/auth";
+import { revokeSessionViaApi } from "@cig/auth";
 
 interface AuthentikUser {
   email: string;
@@ -106,9 +106,7 @@ export function AuthentikProvider({ children }: { children: React.ReactNode }) {
     try {
       const token = sessionStorage.getItem("cig_access_token");
       if (token) {
-        const issuerUrl = process.env.NEXT_PUBLIC_AUTHENTIK_URL ?? "https://auth.cig.technology";
-        const clientId  = process.env.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID ?? "G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v";
-        revokeAuthentikToken({ issuerUrl, clientId, redirectUri: "" }, token).catch(() => {});
+        revokeSessionViaApi(token).catch(() => {});
       }
     } catch { /* ignore */ }
 

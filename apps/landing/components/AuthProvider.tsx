@@ -1,11 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import {
-  discoverEndpoints,
-  orchestrateLogout,
-} from "@edcalderon/auth/authentik";
-import { getSupabaseClient } from "@cig/auth";
+import { getSupabaseClient, revokeSessionViaApi } from "@cig/auth";
 
 /* ─── Shared auth interface ──────────────────────────────────────────── */
 
@@ -44,8 +40,6 @@ export function useCIGAuth() {
 /** Env flag: set NEXT_PUBLIC_AUTH_PROVIDER=supabase to fall back to Supabase auth */
 const AUTH_PROVIDER: "authentik" | "supabase" =
   (process.env.NEXT_PUBLIC_AUTH_PROVIDER as "authentik" | "supabase") || "authentik";
-
-const LANDING_LOGOUT_COMPLETE_QUERY = "logged_out=1";
 
 /* ─── JWT helpers ────────────────────────────────────────────────────── */
 
@@ -107,6 +101,10 @@ function clearAuthentikSession() {
     sessionStorage.removeItem("cig_social_provider");
     document.cookie = "cig_has_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
   } catch { /* ignore */ }
+}
+
+function getLandingLoggedOutUrl(): string {
+  return `${window.location.origin}?logged_out=1`;
 }
 
 /* ─── Supabase session helpers ──────────────────────────────────────── */
@@ -259,6 +257,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return authState.user?.authSource ?? null;
       }
     })();
+    const loggedOutUrl = getLandingLoggedOutUrl();
+    const accessToken = sessionStorage.getItem("cig_access_token") ?? undefined;
 
     if (sessionSource === "supabase") {
       const supabase = getSupabaseClient();
@@ -273,16 +273,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           sessionStorage.removeItem("cig_auth_source");
         } catch { /* ignore */ }
         setAuthState({ user: null, isHydrated: true, isSigningOut: false });
+        window.location.replace(loggedOutUrl);
       })();
       return;
     }
-
-    const logoutReturnUrl = new URL(
-      `/?${LANDING_LOGOUT_COMPLETE_QUERY}`,
-      window.location.origin,
-    ).toString();
-    const accessToken = sessionStorage.getItem("cig_access_token") ?? undefined;
-    const idToken = sessionStorage.getItem("cig_id_token") ?? undefined;
 
     clearAuthentikSession();
     setAuthState({
@@ -291,47 +285,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isSigningOut: true,
     });
 
-    void (async () => {
-      const issuer = decodeJwtPayload(idToken ?? accessToken ?? "")?.iss;
-      const fallbackIssuer = typeof issuer === "string" && issuer.trim()
-        ? issuer
-        : getAuthentikIssuer();
-      const issuerUrl = fallbackIssuer.endsWith("/")
-        ? fallbackIssuer
-        : `${fallbackIssuer}/`;
-      const clientId = process.env.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID ??
-        "G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v";
-      const baseConfig = {
-        issuer: fallbackIssuer,
-        postLogoutRedirectUri: logoutReturnUrl,
-        endSessionEndpoint: new URL("end-session/", issuerUrl).toString(),
-        revocationEndpoint: new URL("revoke/", issuerUrl).toString(),
-        clientId,
-      };
-
-      try {
-        const endpoints = await discoverEndpoints(fallbackIssuer).catch(() => null);
-        const logoutConfig = endpoints
-          ? {
-              ...baseConfig,
-              endSessionEndpoint: endpoints.endSession ?? baseConfig.endSessionEndpoint,
-              revocationEndpoint: endpoints.revocation ?? baseConfig.revocationEndpoint,
-            }
-          : baseConfig;
-
-        const result = await orchestrateLogout(logoutConfig, {
-          accessToken,
-          idToken,
-        });
-        window.location.replace(result.endSessionUrl);
-      } catch {
-        const result = await orchestrateLogout(baseConfig, {
-          accessToken,
-          idToken,
-        });
-        window.location.replace(result.endSessionUrl);
-      }
-    })();
+    void revokeSessionViaApi(accessToken);
+    try {
+      window.location.replace(loggedOutUrl);
+    } catch {
+      window.location.replace(window.location.origin);
+    }
   }, [authState.user?.authSource]);
 
   return (
@@ -347,9 +306,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-function getAuthentikIssuer(): string {
-  const base = process.env.NEXT_PUBLIC_AUTHENTIK_URL ?? "https://auth.cig.technology";
-  return new URL("/application/o/cig-dashboard/", base).toString();
 }

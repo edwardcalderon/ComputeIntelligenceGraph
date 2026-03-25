@@ -1,11 +1,13 @@
 import { authProvider } from "../authProvider";
-import { getSupabaseClient } from "@cig/auth";
+import { getSupabaseClient, revokeSessionViaApi } from "@cig/auth";
 
 jest.mock("@cig/auth", () => ({
   getSupabaseClient: jest.fn(),
+  revokeSessionViaApi: jest.fn().mockResolvedValue(undefined),
 }));
 
 const mockGetSupabaseClient = getSupabaseClient as jest.MockedFunction<typeof getSupabaseClient>;
+const mockRevokeSessionViaApi = revokeSessionViaApi as jest.MockedFunction<typeof revokeSessionViaApi>;
 
 function makeJwt(issuer: string): string {
   const payload = Buffer.from(JSON.stringify({ iss: issuer }), "utf8").toString("base64url");
@@ -48,7 +50,7 @@ describe("dashboard authProvider.logout", () => {
     expect(supabaseSignOut).toHaveBeenCalledWith({ scope: "local" });
     expect(result).toEqual({
       success: true,
-      redirectTo: "http://localhost:3000",
+      redirectTo: "http://localhost:3000?logged_out=1",
     });
     expect(sessionStorage.getItem("cig_access_token")).toBeNull();
     expect(sessionStorage.getItem("cig_auth_source")).toBeNull();
@@ -71,7 +73,22 @@ describe("dashboard authProvider.logout", () => {
     expect(supabaseSignOut).toHaveBeenCalledWith({ scope: "local" });
     expect(result).toEqual({
       success: true,
-      redirectTo: "http://localhost:3000",
+      redirectTo: "http://localhost:3000?logged_out=1",
+    });
+  });
+
+  it("revokes Authentik sessions via the API logout route and returns to landing", async () => {
+    sessionStorage.setItem("cig_access_token", "authentik-access-token");
+    sessionStorage.setItem("cig_auth_source", "authentik");
+    sessionStorage.setItem("cig_expires_at", String(Date.now() + 60_000));
+
+    const result = await authProvider.logout();
+
+    expect(mockRevokeSessionViaApi).toHaveBeenCalledTimes(1);
+    expect(mockRevokeSessionViaApi).toHaveBeenCalledWith("authentik-access-token");
+    expect(result).toEqual({
+      success: true,
+      redirectTo: "http://localhost:3000?logged_out=1",
     });
   });
 });
