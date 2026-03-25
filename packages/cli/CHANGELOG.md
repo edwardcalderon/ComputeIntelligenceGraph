@@ -1,3 +1,25 @@
+## [0.1.120](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.117...v0.1.120) (2026-03-25)
+
+
+### Features
+
+* **cli:** add setup wizard and graph seeding ([451f850](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/451f8505ccf2456082560b4283e84a92a96d50ff))
+
+
+
+
+
+## [0.1.119](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.117...v0.1.119) (2026-03-25)
+
+
+### Features
+
+* **cli:** add setup wizard and graph seeding ([451f850](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/451f8505ccf2456082560b4283e84a92a96d50ff))
+
+
+
+
+
 ## [0.1.118](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.117...v0.1.118) (2026-03-25)
 
 

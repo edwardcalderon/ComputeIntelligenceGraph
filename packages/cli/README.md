@@ -15,19 +15,11 @@ continuous discovery engine. In the current foundation release, it can:
 
 This package is a real foundation release, but not the final platform shape.
 
-## 📋 Latest Changes (v0.1.118)
+## 📋 Latest Changes (v0.1.120)
 
 ### Features
 
 * **cli:** add setup wizard and graph seeding ([451f850](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/451f8505ccf2456082560b4283e84a92a96d50ff))
-
-
-
-
-
-# Changelog
-
-All notable changes to `@cig-technology/cli` are documented in this file.
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 
