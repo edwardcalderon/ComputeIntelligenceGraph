@@ -13,6 +13,22 @@ function promptCancelled(message: string): never {
   throw new Error(message);
 }
 
+async function pauseBeforeExit(message = 'Press Enter to return to your shell.'): Promise<void> {
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    return;
+  }
+
+  const result = await text({
+    message,
+    placeholder: 'Press Enter to continue',
+    defaultValue: '',
+  });
+
+  if (isCancel(result)) {
+    return;
+  }
+}
+
 function formatChoiceLabel(value: string): string {
   return value
     .split('-')
@@ -55,30 +71,35 @@ export async function setup(options: SetupCommandOptions = {}): Promise<void> {
   let profile = options.profile;
   let apiUrl = options.apiUrl;
 
-  intro(`CIG Setup Wizard v${CLI_VERSION}`);
-  console.log('A guided installation flow for local and managed CIG setups.');
-
-  if (!mode) {
-    mode = (await promptChoice('Select installation mode:', ['self-hosted', 'managed'])) as
-      | 'managed'
-      | 'self-hosted';
-  }
-
-  if (!profile) {
-    profile = (await promptChoice('Select installation profile:', ['core', 'full'])) as
-      | 'core'
-      | 'full';
-  }
-
-  if (mode === 'managed' && !apiUrl) {
-    apiUrl = await promptInput('Enter the control plane API URL', 'https://api.cig.technology');
-  }
-
   try {
+    intro(`CIG Setup Wizard v${CLI_VERSION}`);
+    console.log('A guided installation flow for local and managed CIG setups.');
+
+    if (!mode) {
+      mode = (await promptChoice('Select installation mode:', ['self-hosted', 'managed'])) as
+        | 'managed'
+        | 'self-hosted';
+    }
+
+    if (!profile) {
+      profile = (await promptChoice('Select installation profile:', ['core', 'full'])) as
+        | 'core'
+        | 'full';
+    }
+
+    if (mode === 'managed' && !apiUrl) {
+      apiUrl = await promptInput('Enter the control plane API URL', 'https://api.cig.technology');
+    }
+
     await install(apiUrl, mode, profile);
     outro('Setup completed successfully.');
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    promptCancelled(`Setup did not complete: ${message}`);
+    if (message !== 'Setup was cancelled.' && message !== 'Installation was cancelled.') {
+      console.error(`Setup did not complete: ${message}`);
+    }
+    throw error instanceof Error ? error : new Error(message);
+  } finally {
+    await pauseBeforeExit();
   }
 }
