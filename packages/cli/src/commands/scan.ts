@@ -21,14 +21,14 @@ import { resolveAwsRegion } from '../env.js';
 // Types
 // ---------------------------------------------------------------------------
 
-interface ScanAsset {
+export interface ScanAsset {
   asset_type: string;
   provider: string;
   identifier: string;
   metadata_json: Record<string, unknown>;
 }
 
-interface ScanResult {
+export interface ScanResult {
   scan_type: string;
   provider?: string;
   status: 'completed' | 'failed';
@@ -68,7 +68,7 @@ function fileExists(filePath: string): boolean {
 // Local scanner (inline to avoid cross-package import)
 // ---------------------------------------------------------------------------
 
-function scanLocal(): ScanResult {
+export function scanLocal(): ScanResult {
   const assets: ScanAsset[] = [];
 
   // OS info
@@ -89,24 +89,28 @@ function scanLocal(): ScanResult {
   });
 
   // Network interfaces
-  const interfaces = os.networkInterfaces();
-  for (const [name, addrs] of Object.entries(interfaces)) {
-    if (!addrs) continue;
-    for (const addr of addrs) {
-      if (addr.internal) continue;
-      assets.push({
-        asset_type: 'network_interface',
-        provider: 'local',
-        identifier: `${os.hostname()}-${name}-${addr.address}`,
-        metadata_json: {
-          interface: name,
-          address: addr.address,
-          family: addr.family,
-          netmask: addr.netmask,
-          mac: addr.mac,
-        },
-      });
+  try {
+    const interfaces = os.networkInterfaces();
+    for (const [name, addrs] of Object.entries(interfaces)) {
+      if (!addrs) continue;
+      for (const addr of addrs) {
+        if (addr.internal) continue;
+        assets.push({
+          asset_type: 'network_interface',
+          provider: 'local',
+          identifier: `${os.hostname()}-${name}-${addr.address}`,
+          metadata_json: {
+            interface: name,
+            address: addr.address,
+            family: addr.family,
+            netmask: addr.netmask,
+            mac: addr.mac,
+          },
+        });
+      }
     }
+  } catch {
+    // Some test/runtime environments do not expose network interfaces.
   }
 
   // Docker containers
@@ -177,7 +181,7 @@ function scanLocal(): ScanResult {
 // Cloud scanner stubs
 // ---------------------------------------------------------------------------
 
-function scanCloud(provider?: string): ScanResult {
+export function scanCloud(provider?: string): ScanResult {
   const assets: ScanAsset[] = [];
   const targetProvider = provider ?? 'aws';
 

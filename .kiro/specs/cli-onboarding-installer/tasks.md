@@ -39,6 +39,8 @@ auth/bootstrap/dashboard work. Those pieces were largely delivered under
 - [x] `@cig-technology/cli@0.1.0` packaging was validated with build, test, and `npm pack --dry-run`
 - [x] CLI package-local versioning, README guard, and prerelease scripts are wired into `packages/cli`
 - [ ] Confirm npm registry publication and post-publish smoke install from the public registry
+- [x] CLI onboarding release now includes a first-run `cig setup` wizard and repo-level `install.sh` bootstrap script
+- [x] Initial graph snapshot seeding is wired into install/login flows with queued upload for unauthenticated runs
 
 ## Completed Baseline
 
@@ -78,6 +80,7 @@ These are intentionally archived rather than re-tracked here:
   - [x] 1.8 Publish the CLI as a standalone npm package under `@cig-technology`
   - [x] 1.9 Document current CLI behavior, storage paths, and setup flows
   - [x] 1.10 Add package-local `@edcalderon/versioning` support for validate/sync/README guard and prerelease workflows
+  - [x] 1.11 Add `cig setup` onboarding wizard and root bash installer wrapper
 
 - [~] 2. CLI command surface modernization
   - [x] 2.1 Add real `cig enroll` command
@@ -112,6 +115,7 @@ These are intentionally archived rather than re-tracked here:
   - [ ] 5.5 Hash self-hosted bootstrap tokens at rest in the API/database layer
   - [ ] 5.6 Wire local node-to-local API sync for self-hosted mode
   - [ ] 5.7 Split stack manifest from node config manifest on the API side
+  - [x] 5.8 Seed and queue the initial graph snapshot during onboarding installs
 
 - [ ] 6. Permission tiers and connectors
   - [ ] 6.1 Add persistent permission grants/requests models and API storage
@@ -127,6 +131,7 @@ These are intentionally archived rather than re-tracked here:
   - [x] 7.4 Add standalone CLI npm packaging, README, release script, and GitHub Actions publish workflow
   - [ ] 7.5 Add node runtime bundle packaging and release path
   - [ ] 7.6 Add Linux distribution validation matrix and runtime smoke tests
+  - [x] 7.7 Add first-run bash installer / wizard release path for the CLI
 
 ## Immediate Next Steps
 
@@ -135,6 +140,7 @@ These are intentionally archived rather than re-tracked here:
 - [ ] C. Implement Linux host installer that materializes the staged bundle into `/etc/cig-node`, `/var/lib/cig-node`, and `cig-node.service`
 - [ ] D. Unify managed API auth onto `@cig/auth/server` instead of the legacy JWT-only path
 - [ ] E. Verify the first npm release end-to-end from the public registry and add smoke-install notes
+- [ ] F. Expand `apps/wizard-ui` beyond the placeholder if/when the browser wizard becomes part of onboarding
 
 ## Verification Gates
 

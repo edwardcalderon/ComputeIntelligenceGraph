@@ -10,6 +10,7 @@ import { StateManager } from '../managers/state-manager.js';
 import { InstallPlanner } from '../services/install-planner.js';
 import { NodeBundleInstaller } from '../services/node-bundle-installer.js';
 import { ConnectionProfileStore } from '../stores/connection-profile-store.js';
+import { seedInitialGraph } from '../services/initial-graph.js';
 import { CLI_VERSION } from '../version.js';
 
 async function promptChoice(question: string, options: string[]): Promise<string> {
@@ -210,7 +211,21 @@ export async function install(
   });
   profileStore.setDefault(mode === 'self-hosted' ? 'self-hosted-local' : 'managed-cloud');
 
+  const graphBootstrap = await seedInitialGraph({
+    installDir,
+    apiUrl,
+    mode,
+    profile,
+    credentialManager,
+  });
+
   console.log(`✓ Installation assets written to ${installDir}`);
+  if (graphBootstrap.uploaded) {
+    console.log(`✓ Initial graph seeded and uploaded (${graphBootstrap.assetCount} assets).`);
+  } else {
+    console.log(`✓ Initial graph snapshot saved to ${graphBootstrap.artifactPath}.`);
+    console.log('  It will upload automatically after authentication is available.');
+  }
   if (mode === 'self-hosted') {
     console.log('Open http://127.0.0.1:3000 to complete bootstrap.');
   }

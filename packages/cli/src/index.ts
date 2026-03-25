@@ -5,6 +5,7 @@ import { login } from './commands/login.js';
 import { logout } from './commands/logout.js';
 import { doctor } from './commands/doctor.js';
 import { install } from './commands/install.js';
+import { setup } from './commands/setup.js';
 import { bootstrapReset } from './commands/bootstrap-reset.js';
 import { connectApi, connectAws, connectGcp } from './commands/connect.js';
 import { enroll } from './commands/enroll.js';
@@ -50,6 +51,23 @@ program
   .action(() => {
     doctor().catch((err) => {
       console.error('Error during doctor check:', err);
+      process.exit(1);
+    });
+  });
+
+program
+  .command('setup')
+  .description('Run the guided onboarding wizard and install CIG')
+  .option('--mode <mode>', 'Installation mode: managed or self-hosted')
+  .option('--profile <profile>', 'Installation profile: core or full')
+  .option('--api-url <url>', 'API URL')
+  .action((opts) => {
+    setup({
+      apiUrl: opts.apiUrl,
+      mode: opts.mode,
+      profile: opts.profile,
+    }).catch((err) => {
+      console.error('Error during setup:', err);
       process.exit(1);
     });
   });

@@ -7,7 +7,7 @@
  * Validates: Requirements 3.5, 3.9
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fc from 'fast-check';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -208,16 +208,22 @@ describe('Property 6: Token refresh predicate correctness', () => {
      * Edge case: when expiresAt is exactly at the 5-minute boundary,
      * needsRefresh() should return false (>= comparison).
      */
-    const fiveMinutesMs = 5 * 60 * 1000;
-    const tokens: AuthTokens = {
-      accessToken: 'test-access',
-      refreshToken: 'test-refresh',
-      expiresAt: Date.now() + fiveMinutesMs,
-      refreshExpiresAt: Date.now() + 86400000,
-    };
+    const now = 1_700_000_000_000;
+    vi.spyOn(Date, 'now').mockReturnValue(now);
+    try {
+      const fiveMinutesMs = 5 * 60 * 1000;
+      const tokens: AuthTokens = {
+        accessToken: 'test-access',
+        refreshToken: 'test-refresh',
+        expiresAt: now + fiveMinutesMs,
+        refreshExpiresAt: now + 86400000,
+      };
 
-    const result = manager.needsRefresh(tokens);
-    expect(result).toBe(false);
+      const result = manager.needsRefresh(tokens);
+      expect(result).toBe(false);
+    } finally {
+      vi.restoreAllMocks();
+    }
   });
 
   it('needsRefresh() boundary: just before 5 minute threshold', () => {
@@ -227,16 +233,22 @@ describe('Property 6: Token refresh predicate correctness', () => {
      * Edge case: when expiresAt is just before the 5-minute boundary,
      * needsRefresh() should return true.
      */
-    const fiveMinutesMs = 5 * 60 * 1000;
-    const tokens: AuthTokens = {
-      accessToken: 'test-access',
-      refreshToken: 'test-refresh',
-      expiresAt: Date.now() + fiveMinutesMs - 1,
-      refreshExpiresAt: Date.now() + 86400000,
-    };
+    const now = 1_700_000_000_000;
+    vi.spyOn(Date, 'now').mockReturnValue(now);
+    try {
+      const fiveMinutesMs = 5 * 60 * 1000;
+      const tokens: AuthTokens = {
+        accessToken: 'test-access',
+        refreshToken: 'test-refresh',
+        expiresAt: now + fiveMinutesMs - 1,
+        refreshExpiresAt: now + 86400000,
+      };
 
-    const result = manager.needsRefresh(tokens);
-    expect(result).toBe(true);
+      const result = manager.needsRefresh(tokens);
+      expect(result).toBe(true);
+    } finally {
+      vi.restoreAllMocks();
+    }
   });
 
   it('needsRefresh() with expired tokens', () => {

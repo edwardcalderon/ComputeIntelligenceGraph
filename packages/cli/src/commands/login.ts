@@ -15,6 +15,8 @@ import { CredentialManager, AuthTokens } from '../credentials.js';
 import { ApiClient } from '../services/api-client.js';
 import { ConnectionProfileStore } from '../stores/connection-profile-store.js';
 import { ConnectionProfile } from '../types/runtime.js';
+import { syncPendingInitialGraphArtifacts } from '../services/initial-graph.js';
+import { resolveCliPaths } from '../storage/paths.js';
 
 interface DeviceAuthorizeResponse {
   device_code: string;
@@ -121,6 +123,14 @@ export async function login(apiUrl: string): Promise<void> {
         };
         profileStore.save(profile);
         profileStore.setDefault(profile.id);
+        const graphSync = await syncPendingInitialGraphArtifacts({
+          apiUrl,
+          installDir: resolveCliPaths().installDir,
+          credentialManager,
+        });
+        if (graphSync.uploaded > 0) {
+          console.log(`✓ Uploaded ${graphSync.uploaded} pending initial graph snapshot(s).`);
+        }
         console.log('✓ Login successful! Tokens stored securely.');
         process.exit(0);
       } catch (err) {

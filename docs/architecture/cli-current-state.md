@@ -11,7 +11,8 @@ first public CLI foundation release was prepared.
 - Tag-driven publish workflow: `cli-v*.*.*`
 - Local release helper script under `packages/cli/scripts/release.sh`
 - Package-local `@edcalderon/versioning` config, README guard, and prerelease helpers
-- Command surface for auth, install, enroll, connect, status, open, upgrade, and uninstall
+- Command surface for auth, setup, install, enroll, connect, status, open, upgrade, and uninstall
+- Root `install.sh` onboarding wrapper for Linux/macOS
 
 ### Runtime-oriented groundwork
 
@@ -33,6 +34,8 @@ first public CLI foundation release was prepared.
 - self-hosted compose generation
 - self-hosted local stack startup attempt via Docker Compose
 - managed login and enrollment request flow
+- interactive `cig setup` onboarding flow
+- automatic initial graph capture during install, with upload once auth is available
 
 ### Partially working
 
@@ -49,6 +52,7 @@ first public CLI foundation release was prepared.
 - node certificate rotation and revocation
 - end-to-end permissions approval workflow
 - remote SSH bootstrap
+- browser wizard implementation in `apps/wizard-ui`
 
 ## Deployment Reality By Mode
 

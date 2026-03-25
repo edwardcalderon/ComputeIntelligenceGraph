@@ -27,6 +27,7 @@ Supported today:
 - local node key generation
 - managed connection-profile storage
 - staging of runtime bundle assets into the local install directory
+- initial graph snapshot capture during install, with upload when auth is available
 
 Not supported today:
 
@@ -43,6 +44,7 @@ Supported today:
 - local `docker compose up -d`
 - health polling against the local stack
 - local install-state persistence
+- initial graph snapshot capture during install, with queued upload once local auth exists
 
 Not supported today:
 
@@ -62,6 +64,18 @@ Or run with `npx`:
 
 ```bash
 npx @cig-technology/cli login --api-url https://app.cig.lat
+```
+
+For first-time onboarding, use the interactive setup wizard:
+
+```bash
+cig setup
+```
+
+Or run the repo-level bash installer:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/edwardcalderon/ComputeIntelligenceGraph/main/install.sh | bash
 ```
 
 ## Package Maintenance
@@ -163,6 +177,7 @@ Managed mode today:
 - stages `node-runtime/identity.json`
 - stages `node-runtime/cig-node.service`
 - writes install state locally
+- seeds the initial graph snapshot and uploads it immediately when auth is present
 
 Self-hosted mode today:
 
@@ -171,6 +186,21 @@ Self-hosted mode today:
 - starts the compose stack locally
 - waits for health endpoints
 - stores local install state
+- seeds the initial graph snapshot locally and queues upload until auth is available
+
+### `cig setup`
+
+```bash
+cig setup
+```
+
+Current behavior:
+
+- runs the guided onboarding wizard
+- prompts for managed vs self-hosted mode
+- prompts for the install profile
+- falls through to the same install engine as `cig install`
+- is the recommended first-run entrypoint for operators
 
 ### `cig enroll`
 
