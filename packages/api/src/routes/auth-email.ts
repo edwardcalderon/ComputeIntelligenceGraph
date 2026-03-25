@@ -231,13 +231,17 @@ async function storeOtpChallenge(email: string, otpCode: string): Promise<void> 
 
 async function sendOtpViaSmtp(email: string, otpCode: string): Promise<void> {
   const transport = getSmtpTransport();
+  const fromName = process.env.SMTP_FROM_NAME?.trim() || 'CIG';
   const fromEmail = process.env.SMTP_FROM_EMAIL?.trim();
   const subject = process.env.SMTP_OTP_SUBJECT?.trim() || 'Your CIG one-time code';
   const htmlTemplate = await getOtpTemplateHtml();
   const html = htmlTemplate.replace(/\{\{\s*otp_code\s*\}\}/g, otpCode);
 
   await transport.sendMail({
-    from: fromEmail,
+    from: {
+      name: fromName,
+      address: fromEmail!,
+    },
     to: email,
     subject,
     html,

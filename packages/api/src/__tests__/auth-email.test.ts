@@ -7,6 +7,7 @@ vi.hoisted(() => {
   process.env['SMTP_HOST'] = 'mail.example.com';
   process.env['SMTP_PORT'] = '587';
   process.env['SMTP_SECURE'] = 'true';
+  process.env['SMTP_FROM_NAME'] = 'CIG';
   process.env['SMTP_FROM_EMAIL'] = 'smtp-login@example.com';
   process.env['SMTP_USER'] = 'smtp-login@example.com';
   process.env['SMTP_AUTH_ENABLED'] = 'true';
@@ -79,6 +80,14 @@ describe('auth email routes', () => {
         rejectUnauthorized: true,
       },
     });
+    expect(mailerMocks.sendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: {
+          name: 'CIG',
+          address: 'smtp-login@example.com',
+        },
+      })
+    );
     expect(mailerMocks.sendMail).toHaveBeenCalledTimes(1);
   });
 });
