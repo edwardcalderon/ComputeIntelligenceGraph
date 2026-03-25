@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -8,41 +10,39 @@ import {
   Sparkles,
   Terminal,
 } from "lucide-react";
+import { LandingLayout } from "../../components/LandingLayout";
+import { useTranslation } from "@cig-technology/i18n/react";
 
 const steps = [
   {
-    title: "Download the installer",
-    description:
-      "Use the public cig.lat endpoint to fetch the same install script that lives in the repository.",
+    titleKey: "install.steps.download.title",
+    descKey: "install.steps.download.desc",
     icon: Download,
   },
   {
-    title: "Run the setup wizard",
-    description:
-      "The wizard validates prerequisites, asks for the install mode, and launches the correct bootstrap path.",
+    titleKey: "install.steps.wizard.title",
+    descKey: "install.steps.wizard.desc",
     icon: Terminal,
   },
   {
-    title: "Choose the install mode",
-    description:
-      "Pick self-hosted for Docker Compose or managed for the cloud-connected node runtime bundle.",
+    titleKey: "install.steps.mode.title",
+    descKey: "install.steps.mode.desc",
     icon: Layers3,
   },
   {
-    title: "Seed the first graph",
-    description:
-      "The installer captures the first graph snapshot and uploads it as soon as auth is available.",
+    titleKey: "install.steps.seed.title",
+    descKey: "install.steps.seed.desc",
     icon: Sparkles,
   },
 ];
 
-const checklist = [
-  "Node.js 22 or newer",
-  "Docker Engine",
-  "Docker Compose v2",
-  "At least 4 GB free memory",
-  "At least 10 GB free disk",
-  "Open ports for the local stack",
+const checklistKeys = [
+  "install.prereqs.node",
+  "install.prereqs.docker",
+  "install.prereqs.compose",
+  "install.prereqs.memory",
+  "install.prereqs.disk",
+  "install.prereqs.ports",
 ];
 
 export const metadata = {
@@ -54,7 +54,9 @@ export const metadata = {
   },
 };
 
-export default function InstallPage() {
+function InstallContent() {
+  const t = useTranslation();
+  
   return (
     <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-zinc-50 via-white to-zinc-100 text-zinc-900 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 dark:text-zinc-50">
       <div className="pointer-events-none absolute -top-40 -left-40 h-[520px] w-[520px] rounded-full bg-cyan-500/10 blur-3xl dark:bg-cyan-400/10" />
@@ -76,15 +78,13 @@ export default function InstallPage() {
           <div className="space-y-6">
             <div className="space-y-4">
               <p className="text-sm font-semibold uppercase tracking-[0.35em] text-cyan-500/90 dark:text-cyan-300/90">
-                Install CIG
+                {t("install.title")}
               </p>
               <h1 className="max-w-3xl text-4xl font-black tracking-tight md:text-6xl">
-                Install CIG with one command, then let the wizard handle the rest.
+                {t("install.headline")}
               </h1>
               <p className="max-w-2xl text-base leading-7 text-zinc-600 dark:text-zinc-400 md:text-lg">
-                The public installer at cig.lat is the fastest path into the platform.
-                It validates your machine, launches the guided setup flow, and boots the
-                first graph snapshot so you can connect to the dashboard right away.
+                {t("install.description")}
               </p>
             </div>
 
@@ -94,14 +94,14 @@ export default function InstallPage() {
                 className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-violet-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-950/20 transition-all hover:-translate-y-0.5 hover:shadow-xl"
               >
                 <Download size={16} />
-                Download install.sh
+                {t("install.downloadBtn")}
               </a>
               <Link
                 href="/"
                 className="inline-flex items-center gap-2 rounded-full border border-zinc-300 bg-white/85 px-6 py-3 text-sm font-semibold text-zinc-800 shadow transition-all hover:-translate-y-0.5 hover:border-zinc-400 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900/85 dark:text-zinc-200 dark:hover:border-zinc-500 dark:hover:bg-zinc-800/85"
               >
                 <ArrowLeft size={16} />
-                Back to home
+                {t("install.backHome")}
               </Link>
             </div>
 
@@ -109,10 +109,10 @@ export default function InstallPage() {
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">
-                    Web install
+                    {t("install.webInstall.title")}
                   </p>
                   <p className="text-sm text-zinc-600 dark:text-zinc-300">
-                    Pipe the hosted script straight into bash.
+                    {t("install.webInstall.subtitle")}
                   </p>
                 </div>
                 <span className="rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-cyan-900 dark:border-cyan-800 dark:bg-cyan-950/50 dark:text-cyan-100">
@@ -123,7 +123,7 @@ export default function InstallPage() {
                 <code>{`curl -fsSL https://cig.lat/install.sh | bash`}</code>
               </pre>
               <p className="mt-4 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                The same script is also available from a cloned checkout as
+                {t("install.webInstall.localScript")}
                 <span className="font-mono text-zinc-900 dark:text-zinc-100"> ./install.sh</span>.
               </p>
             </div>
@@ -132,16 +132,16 @@ export default function InstallPage() {
           <aside className="space-y-4">
             <div className="rounded-3xl border border-zinc-200/80 bg-white/85 p-5 shadow-xl shadow-zinc-950/10 dark:border-zinc-800/80 dark:bg-zinc-950/70">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">
-                Prerequisites
+                {t("install.prereqs.title")}
               </p>
               <div className="mt-4 space-y-3">
-                {checklist.map((item) => (
+                {checklistKeys.map((key) => (
                   <div
-                    key={item}
+                    key={key}
                     className="flex items-center gap-3 rounded-2xl border border-zinc-200/70 bg-zinc-50/80 px-4 py-3 text-sm text-zinc-700 dark:border-zinc-800/80 dark:bg-zinc-900/70 dark:text-zinc-300"
                   >
                     <BadgeCheck size={16} className="text-emerald-500" />
-                    <span>{item}</span>
+                    <span>{t(key)}</span>
                   </div>
                 ))}
               </div>
@@ -149,24 +149,20 @@ export default function InstallPage() {
 
             <div className="rounded-3xl border border-zinc-200/80 bg-white/85 p-5 shadow-xl shadow-zinc-950/10 dark:border-zinc-800/80 dark:bg-zinc-950/70">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">
-                Install modes
+                {t("install.modes.title")}
               </p>
               <div className="mt-4 space-y-3 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
                 <div className="rounded-2xl border border-zinc-200/70 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/70">
                   <p className="mb-1 font-semibold text-zinc-900 dark:text-zinc-100">
-                    Self-hosted
+                    {t("install.modes.selfHosted.title")}
                   </p>
-                  <p>
-                    Best for local development or a small private deployment using Docker Compose.
-                  </p>
+                  <p>{t("install.modes.selfHosted.desc")}</p>
                 </div>
                 <div className="rounded-2xl border border-zinc-200/70 bg-zinc-50/80 p-4 dark:border-zinc-800/80 dark:bg-zinc-900/70">
                   <p className="mb-1 font-semibold text-zinc-900 dark:text-zinc-100">
-                    Managed / cloud
+                    {t("install.modes.managed.title")}
                   </p>
-                  <p>
-                    Best for a Linux host that will enroll against the API and stage the node runtime bundle.
-                  </p>
+                  <p>{t("install.modes.managed.desc")}</p>
                 </div>
               </div>
             </div>
@@ -178,7 +174,7 @@ export default function InstallPage() {
             const Icon = step.icon;
             return (
               <article
-                key={step.title}
+                key={step.titleKey}
                 className="rounded-3xl border border-zinc-200/80 bg-white/85 p-5 shadow-lg shadow-zinc-950/10 dark:border-zinc-800/80 dark:bg-zinc-950/70"
                 style={{ animationDelay: `${index * 120}ms` }}
               >
@@ -186,10 +182,10 @@ export default function InstallPage() {
                   <Icon size={20} className="text-cyan-500 dark:text-cyan-300" />
                 </div>
                 <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                  {step.title}
+                  {t(step.titleKey)}
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                  {step.description}
+                  {t(step.descKey)}
                 </p>
               </article>
             );
@@ -199,23 +195,28 @@ export default function InstallPage() {
         <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
           <div className="rounded-3xl border border-zinc-200/80 bg-white/85 p-6 shadow-xl shadow-zinc-950/10 dark:border-zinc-800/80 dark:bg-zinc-950/70">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">
-              After install
+              {t("install.after.title")}
             </p>
             <div className="mt-4 space-y-4 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-              <p>The installer launches the guided onboarding wizard and hands off to the CLI.</p>
+              <p>{t("install.after.desc1")}</p>
               <p>
-                Use <span className="font-mono text-zinc-900 dark:text-zinc-100">cig setup</span> to rerun onboarding later.
+                {t("install.after.setupCmd.prefix")}{" "}
+                <span className="font-mono text-zinc-900 dark:text-zinc-100">cig setup</span>{" "}
+                {t("install.after.setupCmd.suffix")}
               </p>
               <p>
-                Use <span className="font-mono text-zinc-900 dark:text-zinc-100">cig status</span> and{" "}
-                <span className="font-mono text-zinc-900 dark:text-zinc-100">cig open</span> to check the install and open the dashboard URL.
+                {t("install.after.statusCmd.prefix")}{" "}
+                <span className="font-mono text-zinc-900 dark:text-zinc-100">cig status</span>{" "}
+                {t("install.after.statusCmd.and")}{" "}
+                <span className="font-mono text-zinc-900 dark:text-zinc-100">cig open</span>{" "}
+                {t("install.after.statusCmd.suffix")}
               </p>
             </div>
           </div>
 
           <div className="rounded-3xl border border-zinc-200/80 bg-white/85 p-6 shadow-xl shadow-zinc-950/10 dark:border-zinc-800/80 dark:bg-zinc-950/70">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">
-              Quick links
+              {t("install.quickLinks.title")}
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <a
@@ -224,7 +225,7 @@ export default function InstallPage() {
               >
                 <span className="inline-flex items-center gap-2">
                   <Terminal size={16} className="text-cyan-500" />
-                  Installer script
+                  {t("install.quickLinks.installer")}
                 </span>
                 <ArrowRight size={16} className="text-zinc-500" />
               </a>
@@ -234,18 +235,26 @@ export default function InstallPage() {
               >
                 <span className="inline-flex items-center gap-2">
                   <Download size={16} className="text-violet-500" />
-                  Landing page
+                  {t("install.quickLinks.landing")}
                 </span>
                 <ArrowRight size={16} className="text-zinc-500" />
               </a>
             </div>
 
             <p className="mt-4 text-sm leading-6 text-zinc-500 dark:text-zinc-500">
-              The installer and the guide are both published from the CIG landing app, so the public URL always matches the deployed site.
+              {t("install.quickLinks.desc")}
             </p>
           </div>
         </section>
       </div>
     </main>
+  );
+}
+
+export default function InstallPage() {
+  return (
+    <LandingLayout>
+      <InstallContent />
+    </LandingLayout>
   );
 }
