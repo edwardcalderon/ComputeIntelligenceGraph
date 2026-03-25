@@ -157,6 +157,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const generation = ++refreshGenerationRef.current;
     const localUser = readAuthentikSession();
 
+    // Immediately set hydrated state if we have a local user
+    // This prevents the "Restoring session" screen from showing too long
     if (localUser) {
       setAuthState({
         user: localUser,
@@ -165,16 +167,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
     }
 
+    // Check Supabase session in background (for hybrid auth or email sessions)
+    // Only update if Supabase returns a valid user that's different from local
     const supabaseUser = await readSupabaseSession();
+    
+    // Bail if a newer reconciliation started (login/logout happened during async)
     if (generation !== refreshGenerationRef.current) {
       return;
     }
 
-    setAuthState({
-      user: supabaseUser ?? localUser,
-      isHydrated: true,
-      isSigningOut: false,
-    });
+    // Only update state if:
+    // 1. We have a Supabase user (different from local), OR
+    // 2. We had no local user but Supabase also has none (set hydrated with null)
+    // 3. We had no local user but Supabase has one
+    if (supabaseUser) {
+      // Supabase user takes precedence
+      setAuthState({
+        user: supabaseUser,
+        isHydrated: true,
+        isSigningOut: false,
+      });
+    } else if (!localUser) {
+      // No user anywhere - mark as hydrated (logged out state)
+      setAuthState({
+        user: null,
+        isHydrated: true,
+        isSigningOut: false,
+      });
+    }
+    // If we have localUser but no supabaseUser, keep the localUser state set above
   }, []);
 
   useEffect(() => {

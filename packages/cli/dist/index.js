@@ -7,6 +7,7 @@ const login_js_1 = require("./commands/login.js");
 const logout_js_1 = require("./commands/logout.js");
 const doctor_js_1 = require("./commands/doctor.js");
 const install_js_1 = require("./commands/install.js");
+const setup_js_1 = require("./commands/setup.js");
 const bootstrap_reset_js_1 = require("./commands/bootstrap-reset.js");
 const connect_js_1 = require("./commands/connect.js");
 const enroll_js_1 = require("./commands/enroll.js");
@@ -46,6 +47,22 @@ program
     .action(() => {
     (0, doctor_js_1.doctor)().catch((err) => {
         console.error('Error during doctor check:', err);
+        process.exit(1);
+    });
+});
+program
+    .command('setup')
+    .description('Run the guided onboarding wizard and install CIG')
+    .option('--mode <mode>', 'Installation mode: managed or self-hosted')
+    .option('--profile <profile>', 'Installation profile: core or full')
+    .option('--api-url <url>', 'API URL')
+    .action((opts) => {
+    (0, setup_js_1.setup)({
+        apiUrl: opts.apiUrl,
+        mode: opts.mode,
+        profile: opts.profile,
+    }).catch((err) => {
+        console.error('Error during setup:', err);
         process.exit(1);
     });
 });

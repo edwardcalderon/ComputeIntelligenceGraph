@@ -1,1 +1,4 @@
-{}
+{
+  "/auth/login/[provider]/route": "app/auth/login/[provider]/route.js",
+  "/auth/login-callback/route": "app/auth/login-callback/route.js"
+}
