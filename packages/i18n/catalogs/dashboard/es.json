@@ -241,6 +241,8 @@
   "chat.title": "Asistente IA",
   "chat.expand": "Expandir",
   "chat.collapse": "Contraer",
+  "chat.expandSessions": "Expandir sesiones",
+  "chat.collapseSessions": "Contraer sesiones",
   "chat.expandMobile": "Expandir chat",
   "chat.collapseMobile": "Contraer chat",
   "chat.emptyState": "Pregunta cualquier cosa sobre tu infraestructura.",

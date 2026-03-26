@@ -170,11 +170,104 @@ describe("ChatWidget", () => {
     });
 
     await waitFor(() => {
+      const dialog = screen.getByRole("dialog");
+      expect(within(dialog).getByText("chat.deleteSession")).toBeInTheDocument();
+      expect(within(dialog).getByText("Prod alerts")).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "common.confirm" }));
+    });
+
+    await waitFor(() => {
       expect(mockedGetChatSessionMessages).toHaveBeenLastCalledWith("chat-2");
     });
 
     expect(mockedDeleteChatSession).toHaveBeenCalledWith("chat-1");
     expect(sessionStorage.getItem("cig-chat-active-session")).toBe("chat-2");
+  });
+
+  it("collapses the session rail into icon-only mode with hover tooltips", async () => {
+    const firstSession = {
+      id: "chat-1",
+      title: "Prod alerts",
+      lastMessagePreview: "Two critical issues in us-east-1.",
+      lastMessageAt: "2026-03-26T09:00:00.000Z",
+      createdAt: "2026-03-26T09:00:00.000Z",
+      updatedAt: "2026-03-26T09:00:00.000Z",
+    };
+    const secondSession = {
+      id: "chat-2",
+      title: "Revenue pulse",
+      lastMessagePreview: "Sales are up 12% week over week.",
+      lastMessageAt: "2026-03-26T10:00:00.000Z",
+      createdAt: "2026-03-26T10:00:00.000Z",
+      updatedAt: "2026-03-26T10:00:00.000Z",
+    };
+
+    mockedGetHealth.mockResolvedValue({
+      status: "ok",
+      version: "0.2.41",
+      timestamp: "2026-03-26T09:00:00.000Z",
+      chat: {
+        provider: "openai",
+        model: "gpt-4o-mini",
+        configured: true,
+        reachable: true,
+        providerReachable: true,
+        checkedAt: "2026-03-26T09:00:00.000Z",
+        latencyMs: 42,
+      },
+    });
+    mockedGetChatSessions.mockResolvedValue({
+      items: [firstSession, secondSession],
+      total: 2,
+    });
+    mockedGetChatSessionMessages.mockResolvedValue({
+      session: firstSession,
+      items: [
+        {
+          id: "msg-1",
+          role: "assistant",
+          content: "Saved answer",
+          timestamp: "2026-03-26T09:00:00.000Z",
+        },
+      ],
+      total: 1,
+    });
+
+    render(<ChatWidget />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "chat.openChat" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Prod alerts").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Revenue pulse").length).toBeGreaterThan(0);
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "chat.collapseSessions" }));
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Prod alerts • Two critical issues in us-east-1." }),
+      ).toHaveTextContent("P");
+      expect(
+        screen.getByRole("button", { name: "Revenue pulse • Sales are up 12% week over week." }),
+      ).toHaveTextContent("R");
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "chat.expandSessions" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Prod alerts").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("Revenue pulse").length).toBeGreaterThan(0);
+    });
   });
 
   it("renames a saved session and keeps the updated title in the rail", async () => {

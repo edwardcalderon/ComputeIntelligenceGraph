@@ -1,3 +1,28 @@
+## [0.2.43](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.42...v0.2.43) (2026-03-26)
+
+### Detected changes
+- apps: 3 changed file(s)
+  - apps/dashboard/components/ChatSessionPanel.tsx
+  - apps/dashboard/components/ChatWidget.tsx
+  - apps/dashboard/components/__tests__/ChatWidget.test.tsx
+- packages: 9 changed file(s)
+  - packages/i18n/catalogs/dashboard/en.json
+  - packages/i18n/catalogs/dashboard/es.json
+  - packages/i18n/catalogs/dashboard/zh.json
+  - packages/i18n/src/locales/dashboard.ts
+  - packages/i18n/src/locales/keys.ts
+  - packages/ui/src/components/ConfirmDialog.tsx
+  - packages/ui/src/components/ModalCard.tsx
+  - packages/ui/src/components/UpdateDialog.tsx
+  - packages/ui/src/components/index.ts
+
+
+## [0.2.43](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.42...v0.2.43) (2026-03-26)
+
+
+
+
+
 ## [0.2.42](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.41...v0.2.42) (2026-03-26)
 
 ### Detected changes

@@ -241,6 +241,8 @@
   "chat.title": "AI 助手",
   "chat.expand": "展开",
   "chat.collapse": "收起",
+  "chat.expandSessions": "展开会话",
+  "chat.collapseSessions": "收起会话",
   "chat.expandMobile": "展开聊天",
   "chat.collapseMobile": "收起聊天",
   "chat.emptyState": "随时询问关于您的基础设施的任何问题。",

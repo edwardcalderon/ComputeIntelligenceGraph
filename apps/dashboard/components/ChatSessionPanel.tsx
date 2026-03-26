@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Check, MessageSquarePlus, Pencil, Trash2, X } from "lucide-react";
+import {
+  Check,
+  MessageSquarePlus,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Pencil,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useTranslation } from "@cig-technology/i18n/react";
 import type { ChatSessionSummary } from "../lib/api";
 
@@ -46,6 +54,7 @@ function SessionItem({
   timestamp,
   active,
   draft = false,
+  compact = false,
   deleteLabel,
   draftLabel,
   renameLabel,
@@ -62,6 +71,7 @@ function SessionItem({
   timestamp: string | null;
   active: boolean;
   draft?: boolean;
+  compact?: boolean;
   deleteLabel: string;
   draftLabel: string;
   renameLabel: string;
@@ -74,6 +84,9 @@ function SessionItem({
   onCancelEdit?: () => void;
 }) {
   const [value, setValue] = useState(title);
+  const tooltipLabel = [title, preview ?? (draft ? draftLabel : "")]
+    .filter(Boolean)
+    .join(" • ");
 
   function submitRename() {
     const nextTitle = value.trim();
@@ -84,10 +97,63 @@ function SessionItem({
     onRename(nextTitle);
   }
 
+  if (compact) {
+    return (
+      <div className="group relative">
+        <button
+          type="button"
+          onClick={onClick}
+          disabled={pending}
+          title={tooltipLabel}
+          aria-label={tooltipLabel}
+          className={[
+            "relative flex h-11 w-11 items-center justify-center rounded-2xl border transition-all duration-200",
+            active
+              ? "border-violet-300/70 bg-violet-500/12 text-violet-700 shadow-[0_8px_22px_rgba(109,40,217,0.12)] dark:border-violet-400/30 dark:bg-violet-400/10 dark:text-violet-200"
+              : "border-slate-200/90 bg-white/80 text-slate-500 hover:border-violet-200 hover:text-violet-600 dark:border-zinc-700/80 dark:bg-zinc-900/80 dark:text-zinc-400 dark:hover:border-violet-400/30 dark:hover:text-violet-200",
+            pending ? "cursor-not-allowed opacity-60" : "",
+          ].join(" ")}
+        >
+          <span
+            className={[
+              "absolute left-1.5 top-1.5 h-2 w-2 rounded-full",
+              active ? "bg-violet-500 shadow-[0_0_0_3px_rgba(109,40,217,0.12)]" : "bg-slate-300 dark:bg-zinc-600",
+            ].join(" ")}
+          />
+          <span
+            className={[
+              "flex h-8 w-8 items-center justify-center rounded-xl border text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors",
+              draft
+                ? "border-violet-200/70 bg-violet-500/10 text-violet-700 dark:border-violet-400/25 dark:bg-violet-400/10 dark:text-violet-200"
+                : "border-slate-200/70 bg-white/80 text-slate-600 dark:border-zinc-700/70 dark:bg-zinc-900/90 dark:text-zinc-200",
+            ].join(" ")}
+          >
+            {draft ? <MessageSquarePlus className="h-3.5 w-3.5" /> : title.slice(0, 1).toUpperCase()}
+          </span>
+        </button>
+
+        <div className="pointer-events-none absolute left-full top-1/2 z-20 ml-2 hidden w-56 -translate-y-1/2 rounded-2xl border border-slate-200/80 bg-white/95 p-3 text-left shadow-[0_18px_40px_rgba(15,23,42,0.14)] backdrop-blur-xl group-hover:block group-focus-visible:block dark:border-zinc-700/70 dark:bg-zinc-950/95 dark:shadow-black/50">
+          <p className="truncate text-sm font-semibold text-slate-800 dark:text-zinc-100" title={title}>
+            {title}
+          </p>
+          <p
+            className="mt-1 max-h-10 overflow-hidden text-xs leading-relaxed text-slate-500 dark:text-zinc-400"
+            title={preview || draftLabel}
+          >
+            {preview || draftLabel}
+          </p>
+          <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-400 dark:text-zinc-500">
+            {draft ? draftLabel : timestamp ?? ""}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={[
-        "group flex items-start gap-2 rounded-xl border px-2.5 py-2 transition-all duration-200",
+        "group flex items-start gap-2 overflow-hidden rounded-xl border px-2.5 py-2 transition-all duration-200",
         active
           ? "border-violet-300/70 bg-violet-500/8 shadow-[0_10px_24px_rgba(109,40,217,0.08)] dark:border-violet-400/30 dark:bg-violet-400/10"
           : "border-transparent bg-transparent hover:border-slate-200 hover:bg-white/85 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/85",
@@ -141,8 +207,9 @@ function SessionItem({
           onClick={onClick}
           className="mt-1 block min-w-0 text-left"
           disabled={editing}
+          title={preview || "Start a fresh thread."}
         >
-          <span className="block truncate text-[11px] leading-5 text-slate-500 dark:text-zinc-400">
+          <span className="block max-w-full truncate text-[11px] leading-5 text-slate-500 dark:text-zinc-400">
             {preview || "Start a fresh thread."}
           </span>
         </button>
@@ -250,20 +317,22 @@ export function ChatSessionPanel({
   isLoading,
   pendingSessionId,
   onSelectSession,
-  onDeleteSession,
+  onRequestDeleteSession,
   onRenameSession,
   onStartDraft,
-  desktopOpen = true,
+  onToggleCompact,
+  desktopCompact = false,
 }: {
   sessions: ChatSessionSummary[];
   activeSessionId: string | null;
   isLoading: boolean;
   pendingSessionId?: string | null;
   onSelectSession: (sessionId: string | null) => void;
-  onDeleteSession: (sessionId: string) => void;
+  onRequestDeleteSession: (session: ChatSessionSummary) => void;
   onRenameSession: (sessionId: string, title: string) => void | Promise<void>;
   onStartDraft: () => void;
-  desktopOpen?: boolean;
+  onToggleCompact: () => void;
+  desktopCompact?: boolean;
 }) {
   const t = useTranslation();
   const deleteLabel = t("chat.deleteSession");
@@ -340,32 +409,69 @@ export function ChatSessionPanel({
         </div>
       </div>
 
-      <aside className={[
-        "w-48 shrink-0 border-r border-slate-100 bg-slate-50/55 dark:border-zinc-700/40 dark:bg-zinc-950/20 sm:flex-col",
-        desktopOpen ? "hidden sm:flex" : "hidden",
-      ].join(" ")}>
-        <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-3 dark:border-zinc-700/40">
-          <div className="flex min-w-0 items-center gap-2">
-            <p className="truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-zinc-500">
-              {t("chat.sessionsTitle")}
-            </p>
-            {displaySessions.length > 0 ? (
+      <aside
+        className={[
+          "hidden shrink-0 border-r border-slate-100 bg-slate-50/55 dark:border-zinc-700/40 dark:bg-zinc-950/20 sm:flex sm:flex-col",
+          "transition-[width] duration-300 ease-out",
+          desktopCompact ? "w-16" : "w-48",
+        ].join(" ")}
+      >
+        <div
+          className={[
+            "flex items-center border-b border-slate-100 dark:border-zinc-700/40",
+            desktopCompact
+              ? "justify-between gap-2 px-2 py-2"
+              : "justify-between gap-2 px-3 py-3",
+          ].join(" ")}
+        >
+          {desktopCompact ? (
+            <>
               <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-slate-500 shadow-sm dark:bg-zinc-800 dark:text-zinc-400">
                 {displaySessions.length}
               </span>
-            ) : null}
-          </div>
-          <button
-            type="button"
-            onClick={onStartDraft}
-            aria-label={t("chat.newSession")}
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-violet-300/60 bg-violet-500/10 text-violet-700 transition-colors hover:bg-violet-500/16 dark:border-violet-400/30 dark:bg-violet-400/12 dark:text-violet-300 dark:hover:bg-violet-400/16"
-          >
-            <MessageSquarePlus className="h-4 w-4" />
-          </button>
+              <button
+                type="button"
+                onClick={onToggleCompact}
+                aria-label={t("chat.expandSessions")}
+                title={t("chat.expandSessions")}
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-violet-300/60 bg-white text-violet-600 transition-all hover:-translate-y-0.5 hover:bg-violet-50 dark:border-violet-400/30 dark:bg-zinc-900 dark:text-violet-300 dark:hover:bg-zinc-800"
+              >
+                <span className="sr-only">{t("chat.expandSessions")}</span>
+                <PanelLeftOpen className="h-4 w-4" />
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="flex min-w-0 items-center gap-2">
+                <p className="truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-zinc-500">
+                  {t("chat.sessionsTitle")}
+                </p>
+                {displaySessions.length > 0 ? (
+                  <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-slate-500 shadow-sm dark:bg-zinc-800 dark:text-zinc-400">
+                    {displaySessions.length}
+                  </span>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                onClick={onToggleCompact}
+                aria-label={t("chat.collapseSessions")}
+                title={t("chat.collapseSessions")}
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-violet-300/60 bg-violet-500/10 text-violet-700 transition-all hover:-translate-y-0.5 hover:bg-violet-500/16 dark:border-violet-400/30 dark:bg-violet-400/12 dark:text-violet-300 dark:hover:bg-violet-400/16"
+              >
+                <span className="sr-only">{t("chat.collapseSessions")}</span>
+                <PanelLeftClose className="h-4 w-4" />
+              </button>
+            </>
+          )}
         </div>
 
-        <div className="flex-1 space-y-1 overflow-y-auto px-2 py-2">
+        <div
+          className={[
+            "flex-1 overflow-y-auto px-2 py-2",
+            desktopCompact ? "space-y-2" : "space-y-1",
+          ].join(" ")}
+        >
           {isLoading ? (
             <div className="rounded-xl px-2 py-3 text-xs text-slate-400 dark:text-zinc-500">
               {t("chat.loadingSessions")}
@@ -387,6 +493,7 @@ export function ChatSessionPanel({
                     : activeSessionId === session.id
                 }
                 draft={session.id === DRAFT_SESSION_ID}
+                compact={desktopCompact}
                 deleteLabel={deleteLabel}
                 draftLabel={draftLabel}
                 renameLabel={renameLabel}
@@ -412,11 +519,29 @@ export function ChatSessionPanel({
                 onDelete={
                   session.id === DRAFT_SESSION_ID
                     ? undefined
-                    : () => onDeleteSession(session.id)
+                    : () => onRequestDeleteSession(session)
                 }
               />
             ))
           )}
+
+          <div className="flex justify-center pt-2">
+            <button
+              type="button"
+              onClick={onStartDraft}
+              aria-label={t("chat.newSession")}
+              title={t("chat.newSession")}
+              className={[
+                "inline-flex items-center justify-center rounded-2xl border border-violet-300/60 bg-violet-500/10 text-violet-700 transition-all hover:-translate-y-0.5 hover:bg-violet-500/16 dark:border-violet-400/30 dark:bg-violet-400/12 dark:text-violet-300 dark:hover:bg-violet-400/16",
+                desktopCompact
+                  ? "h-11 w-11"
+                  : "h-10 w-full gap-2 px-3 text-sm font-medium",
+              ].join(" ")}
+            >
+              <MessageSquarePlus className="h-4 w-4" />
+              {!desktopCompact ? <span>{t("chat.newSession")}</span> : null}
+            </button>
+          </div>
         </div>
       </aside>
     </>

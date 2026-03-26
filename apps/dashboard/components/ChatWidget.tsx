@@ -12,11 +12,12 @@ import {
   Mic,
   Minimize2,
   MessageSquarePlus,
-  PanelLeft,
   Paperclip,
   Send,
+  Trash2,
   X,
 } from "lucide-react";
+import { ConfirmDialog } from "@cig/ui";
 import { useTranslation } from "@cig-technology/i18n/react";
 import {
   deleteChatSession,
@@ -96,6 +97,7 @@ export function ChatWidget() {
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [pendingSessionId, setPendingSessionId] = useState<string | null>(null);
+  const [deleteConfirmationSession, setDeleteConfirmationSession] = useState<ChatSessionSummary | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasHydratedSessions, setHasHydratedSessions] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -345,11 +347,11 @@ export function ChatWidget() {
     await loadSessionMessages(sessionId);
   }
 
-  async function handleDeleteSession(sessionId: string) {
-    if (!window.confirm(t("chat.deleteSessionConfirm"))) {
-      return;
-    }
+  function requestDeleteSession(session: ChatSessionSummary) {
+    setDeleteConfirmationSession(session);
+  }
 
+  async function performDeleteSession(sessionId: string) {
     setIsLoadingSessions(true);
     setPendingSessionId(sessionId);
     setError(null);
@@ -371,6 +373,16 @@ export function ChatWidget() {
       setPendingSessionId(null);
       setIsLoadingSessions(false);
     }
+  }
+
+  async function confirmDeleteSession() {
+    if (!deleteConfirmationSession) {
+      return;
+    }
+
+    const session = deleteConfirmationSession;
+    setDeleteConfirmationSession(null);
+    await performDeleteSession(session.id);
   }
 
   async function handleRenameSession(sessionId: string, title: string) {
@@ -707,22 +719,6 @@ export function ChatWidget() {
               </div>
 
               <div className="flex items-center gap-2 self-center">
-                {/* Sessions toggle — compact desktop only */}
-                {sessionHistoryAvailable && !isExpanded && (
-                  <button
-                    onClick={() => setIsSessionsOpen((v) => !v)}
-                    aria-label={isSessionsOpen ? "Hide sessions" : "Show sessions"}
-                    title={isSessionsOpen ? "Hide sessions" : "Show sessions"}
-                    className={[
-                      "hidden items-center justify-center rounded-full p-1.5 transition-colors hover:bg-slate-100 dark:hover:bg-zinc-700/50 sm:flex",
-                      isSessionsOpen
-                        ? "text-violet-500 dark:text-violet-400"
-                        : "text-slate-400 dark:text-zinc-400",
-                    ].join(" ")}
-                  >
-                    <PanelLeft className="h-4 w-4" />
-                  </button>
-                )}
                 {/* Expand / collapse — desktop only */}
                 <button
                   onClick={() => setIsExpanded((v) => !v)}
@@ -772,10 +768,11 @@ export function ChatWidget() {
                     isLoading={isLoadingSessions}
                     pendingSessionId={pendingSessionId}
                     onSelectSession={handleSelectSession}
-                    onDeleteSession={handleDeleteSession}
+                    onRequestDeleteSession={requestDeleteSession}
                     onRenameSession={handleRenameSession}
                     onStartDraft={handleStartDraft}
-                    desktopOpen={isExpanded || isSessionsOpen}
+                    onToggleCompact={() => setIsSessionsOpen((value) => !value)}
+                    desktopCompact={!isSessionsOpen}
                   />
                 ) : null}
 
@@ -943,6 +940,32 @@ export function ChatWidget() {
                 </div>
               </div>
             )}
+
+            <ConfirmDialog
+              open={deleteConfirmationSession !== null}
+              title={t("chat.deleteSession")}
+              description="This will permanently remove the session and its message history."
+              confirmLabel={t("common.confirm")}
+              cancelLabel={t("common.cancel")}
+              dismissLabel={t("chat.deleteSession")}
+              tone="danger"
+              confirmTone="danger"
+              icon={<Trash2 className="h-5 w-5" aria-hidden="true" />}
+              onDismiss={() => setDeleteConfirmationSession(null)}
+              onConfirm={() => {
+                void confirmDeleteSession();
+              }}
+            >
+              {deleteConfirmationSession ? (
+                <div className="rounded-2xl border border-rose-200/70 bg-rose-50/80 p-4 text-sm text-rose-900 shadow-inner dark:border-rose-400/20 dark:bg-rose-500/10 dark:text-rose-100">
+                  <p className="font-semibold">{deleteConfirmationSession.title}</p>
+                  <p className="mt-1 text-xs leading-6 text-rose-700 dark:text-rose-200/80">
+                    {deleteConfirmationSession.lastMessagePreview ||
+                      t("chat.sessionDraftDescription")}
+                  </p>
+                </div>
+              ) : null}
+            </ConfirmDialog>
           </div>
         </div>
       )}

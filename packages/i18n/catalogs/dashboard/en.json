@@ -241,6 +241,8 @@
   "chat.title": "AI Assistant",
   "chat.expand": "Expand",
   "chat.collapse": "Collapse",
+  "chat.expandSessions": "Expand sessions",
+  "chat.collapseSessions": "Collapse sessions",
   "chat.expandMobile": "Expand chat",
   "chat.collapseMobile": "Collapse chat",
   "chat.emptyState": "Ask anything about your infrastructure.",

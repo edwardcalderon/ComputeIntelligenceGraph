@@ -3,6 +3,8 @@ export * from "./GlowButton";
 export * from "./HoloCard";
 export * from "./FooterBar";
 export * from "./LegalDrawer";
+export * from "./ModalCard";
+export * from "./ConfirmDialog";
 export * from "./UpdateDialog";
 export * from "./ScanLine";
 export * from "./SignedOut";
