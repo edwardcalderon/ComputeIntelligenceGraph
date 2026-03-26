@@ -13,6 +13,7 @@ import { oidcRoutes } from './routes/oidc';
 import { auditRoutes } from './routes/audit';
 import { sessionRoutes } from './routes/sessions';
 import { scanRoutes } from './routes/scans';
+import { chatRoutes } from './routes/chat';
 
 import { authEmailRoutes } from './routes/auth-email';
 
@@ -63,6 +64,9 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── Custom Auth Email Endpoints ─────────────────────────────────────────────
   await app.register(authEmailRoutes);
+
+  // ─── Dashboard Chat Assistant ────────────────────────────────────────────────
+  await app.register(chatRoutes);
 
   // ─── Resources ──────────────────────────────────────────────────────────────
 

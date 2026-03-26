@@ -5,8 +5,7 @@ import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "@cig-technology/i18n/react";
 import { StatCard } from "../../components/StatCard";
 import { getResourcesPaged, getDiscoveryStatus, PagedResources, DiscoveryStatus } from "../../lib/api";
-
-const WS_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080").replace(/^http/, "ws") + "/ws";
+import { buildAuthenticatedWebSocketUrl } from "../../lib/browserApi";
 const RESOURCE_TYPES = ["compute", "storage", "network", "database"] as const;
 const PROVIDERS = ["aws", "gcp", "kubernetes", "docker"] as const;
 const TYPE_COLORS: Record<string, string> = { compute: "#06b6d4", storage: "#3b82f6", network: "#a855f7", database: "#10b981" };
@@ -20,6 +19,7 @@ function fmt(date: string | null): string {
 export default function OverviewPage() {
   const t = useTranslation();
   const queryClient = useQueryClient();
+  const wsUrl = buildAuthenticatedWebSocketUrl();
   const { data: totalData, isLoading: totalLoading } = useQuery<PagedResources>({ queryKey: ["resources", "total"], queryFn: () => getResourcesPaged("limit=1") });
   const typeQueries = useQueries({
     queries: RESOURCE_TYPES.map((type) => ({
@@ -37,17 +37,22 @@ export default function OverviewPage() {
   const { data: discoveryData, isLoading: discoveryLoading } = useQuery<DiscoveryStatus>({ queryKey: ["discovery", "status"], queryFn: getDiscoveryStatus, refetchInterval: 30_000 });
 
   useEffect(() => {
+    if (!wsUrl) {
+      return;
+    }
+
+    const socketUrl = wsUrl;
     let ws: WebSocket | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
     function connect() {
-      ws = new WebSocket(WS_URL);
+      ws = new WebSocket(socketUrl);
       ws.onmessage = (event) => { try { const msg = JSON.parse(event.data as string) as { type: string }; if (msg.type === "resource_updated" || msg.type === "discovery_complete") { queryClient.invalidateQueries({ queryKey: ["resources"] }); queryClient.invalidateQueries({ queryKey: ["discovery"] }); } } catch {} };
       ws.onclose = () => { reconnectTimer = setTimeout(connect, 5_000); };
       ws.onerror = () => { ws?.close(); };
     }
     connect();
     return () => { if (reconnectTimer) clearTimeout(reconnectTimer); ws?.close(); };
-  }, [queryClient]);
+  }, [queryClient, wsUrl]);
 
   const { data: regionSampleData } = useQuery<PagedResources>({ queryKey: ["resources", "region-sample"], queryFn: () => getResourcesPaged("limit=200") });
   const regionCounts = regionSampleData?.items.reduce<Record<string, number>>((acc, r) => { const region = r.region ?? "unknown"; acc[region] = (acc[region] ?? 0) + 1; return acc; }, {});

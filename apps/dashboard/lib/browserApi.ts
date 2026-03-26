@@ -1,4 +1,4 @@
-import { getBrowserAccessToken, getDashboardClient } from "./cigClient";
+import { DASHBOARD_API_URL, getBrowserAccessToken, getDashboardClient } from "./cigClient";
 
 export { getBrowserAccessToken };
 
@@ -19,4 +19,21 @@ export function buildBrowserApiHeaders(headers?: HeadersInit): Headers {
 
 export async function browserApiFetch(path: string, init: RequestInit = {}): Promise<Response> {
   return getDashboardClient().requestRaw(path, init);
+}
+
+export function buildAuthenticatedWebSocketUrl(path = "/ws"): string | null {
+  const token = getBrowserAccessToken();
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const url = new URL(DASHBOARD_API_URL);
+    url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+    url.pathname = path.startsWith("/") ? path : `/${path}`;
+    url.searchParams.set("token", token);
+    return url.toString();
+  } catch {
+    return null;
+  }
 }

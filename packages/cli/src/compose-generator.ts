@@ -156,7 +156,15 @@ function generateServiceConfig(
     chatbot: {
       image: imageFor('chatbot', 'cig-chatbot:latest'),
       environment: {
-        LOG_LEVEL: 'info',
+        NODE_ENV: 'production',
+        NEO4J_URI: 'bolt://neo4j:7687',
+        NEO4J_USER: '${NEO4J_USER:-neo4j}',
+        NEO4J_PASSWORD: '${NEO4J_PASSWORD:-cigpassword}',
+        CHROMA_HOST: '${CHROMA_HOST:-api.trychroma.com}',
+        CHROMA_API_KEY: '${CHROMA_API_KEY:-}',
+        CHROMA_TENANT: '${CHROMA_TENANT:-}',
+        CHROMA_DATABASE: '${CHROMA_DATABASE:-cig}',
+        OPENAI_API_KEY: '${OPENAI_API_KEY:-}',
       },
     },
   };

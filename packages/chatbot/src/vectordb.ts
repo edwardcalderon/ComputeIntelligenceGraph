@@ -1,4 +1,4 @@
-import { ChromaClient, Collection, type Metadata } from 'chromadb';
+import { ChromaClient, CloudClient, Collection, type Metadata } from 'chromadb';
 
 export interface VectorDocument {
   id: string;
@@ -12,14 +12,75 @@ const COLLECTION_NAME = 'infrastructure_resources';
 let clientInstance: ChromaClient | null = null;
 let collectionInstance: Collection | null = null;
 
+export interface ChromaConnectionConfig {
+  mode: 'cloud' | 'local';
+  path?: string;
+  apiKey?: string;
+  tenant?: string;
+  database?: string;
+  cloudHost?: string;
+}
+
+function normalizeCloudHost(host: string): string {
+  const trimmed = host.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+
+  return `https://${trimmed}`;
+}
+
+export function resolveChromaConnectionConfig(): ChromaConnectionConfig {
+  const cloudApiKey = process.env.CHROMA_API_KEY?.trim();
+  const cloudTenant = process.env.CHROMA_TENANT?.trim();
+  const cloudDatabase = process.env.CHROMA_DATABASE?.trim();
+  const cloudHost = process.env.CHROMA_HOST?.trim();
+
+  if (cloudApiKey) {
+    if (!cloudTenant || !cloudDatabase) {
+      throw new Error(
+        'CHROMA_TENANT and CHROMA_DATABASE are required when CHROMA_API_KEY is set.',
+      );
+    }
+
+    return {
+      mode: 'cloud',
+      apiKey: cloudApiKey,
+      tenant: cloudTenant,
+      database: cloudDatabase,
+      cloudHost: normalizeCloudHost(cloudHost || 'api.trychroma.com'),
+    };
+  }
+
+  const url = process.env.CHROMA_URL ?? 'http://localhost:8000';
+  return {
+    mode: 'local',
+    path: url,
+  };
+}
+
+function createClient(): ChromaClient {
+  const config = resolveChromaConnectionConfig();
+
+  if (config.mode === 'cloud') {
+    return new CloudClient({
+      apiKey: config.apiKey,
+      tenant: config.tenant,
+      database: config.database,
+      cloudHost: config.cloudHost,
+    });
+  }
+
+  return new ChromaClient({ path: config.path });
+}
+
 export class VectorStore {
   private client: ChromaClient;
   private collection: Collection | null = null;
 
   constructor() {
     if (!clientInstance) {
-      const url = process.env.CHROMA_URL ?? 'http://localhost:8000';
-      clientInstance = new ChromaClient({ path: url });
+      clientInstance = createClient();
     }
     this.client = clientInstance;
   }

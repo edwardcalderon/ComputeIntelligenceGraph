@@ -19,7 +19,7 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { getRelationships, getResourcesPaged, Resource } from "../../../lib/api";
-import { DASHBOARD_API_URL } from "../../../lib/cigClient";
+import { buildAuthenticatedWebSocketUrl } from "../../../lib/browserApi";
 import { PROVIDER_COLORS, PROVIDER_LABELS, getProviderColor } from "../../../lib/providers";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -38,8 +38,6 @@ interface ResourceNodeData {
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const WS_URL = DASHBOARD_API_URL.replace(/^http/, "ws") + "/ws";
 
 const TYPE_COLORS: Record<string, { bg: string; border: string; text: string }> = {
   compute:  { bg: "#dbeafe", border: "#3b82f6", text: "#1d4ed8" },
@@ -172,6 +170,7 @@ function DetailPanel({ resource, onClose }: { resource: Resource; onClose: () =>
 function GraphContent() {
   const t = useTranslation();
   const queryClient = useQueryClient();
+  const wsUrl = buildAuthenticatedWebSocketUrl();
 
   // Filters
   const [filterType, setFilterType] = useState("");
@@ -269,11 +268,16 @@ function GraphContent() {
 
   // WebSocket real-time updates
   useEffect(() => {
+    if (!wsUrl) {
+      return;
+    }
+
+    const socketUrl = wsUrl;
     let ws: WebSocket | null = null;
     let timer: ReturnType<typeof setTimeout> | null = null;
 
     function connect() {
-      ws = new WebSocket(WS_URL);
+      ws = new WebSocket(socketUrl);
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data as string) as { type: string };
@@ -291,7 +295,7 @@ function GraphContent() {
       if (timer) clearTimeout(timer);
       ws?.close();
     };
-  }, [queryClient]);
+  }, [queryClient, wsUrl]);
 
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node<ResourceNodeData>) => {
     setSelectedId((prev) => (prev === node.id ? null : node.id));

@@ -15,7 +15,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import crypto from 'crypto';
 import fastifyRateLimit from 'fastify-rate-limit';
-import { revokeAuthentikToken } from '@cig/auth';
 import { query } from '../db/client';
 import { authenticate, generateJwt, Permission } from '../auth';
 import { writeAuditEvent } from '../audit';
@@ -56,6 +55,31 @@ function getClientIp(request: FastifyRequest): string {
     return forwarded.split(',')[0]?.trim() ?? request.ip;
   }
   return request.ip;
+}
+
+/**
+ * Best-effort token revocation against Authentik.
+ *
+ * Keep this local to the API route so server startup does not depend on the
+ * browser-oriented `@cig/auth` entrypoint, which is transpiler-dependent.
+ */
+async function revokeAuthentikToken(
+  config: { issuerUrl: string; clientId: string; redirectUri?: string },
+  token: string
+): Promise<void> {
+  const body = new URLSearchParams({
+    client_id: config.clientId,
+    token,
+  });
+
+  await fetch(`${config.issuerUrl}/application/o/revoke/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body.toString(),
+    keepalive: true,
+  }).catch(() => {
+    // Ignore revocation errors — session will expire naturally.
+  });
 }
 
 // ---------------------------------------------------------------------------

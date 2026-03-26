@@ -3,6 +3,15 @@ export interface VectorDocument {
     content: string;
     metadata: Record<string, unknown>;
 }
+export interface ChromaConnectionConfig {
+    mode: 'cloud' | 'local';
+    path?: string;
+    apiKey?: string;
+    tenant?: string;
+    database?: string;
+    cloudHost?: string;
+}
+export declare function resolveChromaConnectionConfig(): ChromaConnectionConfig;
 export declare class VectorStore {
     private client;
     private collection;

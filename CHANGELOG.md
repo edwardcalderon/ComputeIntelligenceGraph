@@ -1,3 +1,41 @@
+## [0.2.8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.7...v0.2.8) (2026-03-26)
+
+### Detected changes
+- apps: 8 changed file(s)
+  - apps/dashboard/app/(dashboard)/graph/page.tsx
+  - apps/dashboard/app/(dashboard)/page.tsx
+  - apps/dashboard/e2e/realtime-updates.spec.ts
+  - apps/dashboard/lib/browserApi.ts
+  - apps/dashboard/public/runtime-version.json
+  - apps/dashboard/public/sw.js
+  - apps/landing/public/runtime-version.json
+  - apps/landing/public/sw.js
+- root: docker-compose.yml
+- packages: 15 changed file(s)
+  - packages/api/src/__tests__/chat.test.ts
+  - packages/api/src/chat.ts
+  - packages/api/src/routes.ts
+  - packages/api/src/routes/chat.ts
+  - packages/api/src/routes/device-auth.ts
+  - packages/auth/src/index.ts
+  - packages/chatbot/src/vectordb.d.ts
+  - packages/chatbot/src/vectordb.js
+  - packages/chatbot/src/vectordb.test.ts
+  - packages/chatbot/src/vectordb.ts
+  - packages/cli/src/__tests__/compose-generator.property.test.ts
+  - packages/cli/src/commands/install.ts
+  - packages/cli/src/compose-generator.ts
+  - packages/sdk/src/client.test.ts
+  - packages/sdk/src/client.ts
+- scripts: scripts/release.sh
+
+
+## [0.2.8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.7...v0.2.8) (2026-03-26)
+
+
+
+
+
 ## [0.2.6](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.5...v0.2.6) (2026-03-26)
 
 

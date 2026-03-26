@@ -1,6 +1,43 @@
 import { test, expect } from '@playwright/test';
+import crypto from 'crypto';
+
+const JWT_SECRET = process.env.JWT_SECRET ?? 'local-dev-jwt-secret';
+
+function base64Url(input: string | Buffer): string {
+  return Buffer.from(input).toString('base64url');
+}
+
+function makeTestJwt(): string {
+  const header = base64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const payload = base64Url(
+    JSON.stringify({
+      sub: 'dashboard-e2e-user',
+      permissions: ['READ_RESOURCES'],
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 60 * 60,
+    })
+  );
+  const unsigned = `${header}.${payload}`;
+  const signature = crypto.createHmac('sha256', JWT_SECRET).update(unsigned).digest('base64url');
+  return `${unsigned}.${signature}`;
+}
 
 test.describe('Real-time Updates', () => {
+  test.beforeEach(async ({ page }) => {
+    const token = makeTestJwt();
+    await page.addInitScript(
+      ({ accessToken, expiresAt }) => {
+        sessionStorage.setItem('cig_access_token', accessToken);
+        sessionStorage.setItem('cig_expires_at', expiresAt);
+        sessionStorage.setItem('cig_auth_source', 'supabase');
+      },
+      {
+        accessToken: token,
+        expiresAt: String(Date.now() + 60 * 60 * 1000),
+      }
+    );
+  });
+
   test('should establish WebSocket connection on overview page', async ({ page }) => {
     // Listen for WebSocket connections
     const wsPromise = page.waitForEvent('websocket');

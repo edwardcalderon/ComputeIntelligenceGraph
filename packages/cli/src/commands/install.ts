@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import { execSync } from 'node:child_process';
-import { confirm, isCancel, select, spinner, cancel } from '@clack/prompts';
+import { cancel, confirm, isCancel, password, select, spinner, text } from '@clack/prompts';
 import { runAllChecks } from '../prereqs.js';
 import { generateCompose, InstallManifest } from '../compose-generator.js';
 import { CredentialManager } from '../credentials.js';
@@ -39,6 +39,10 @@ function promptCancelled(message: string): never {
   throw new Error(message);
 }
 
+function resolveEnvValue(name: string, fallback = ''): string {
+  return process.env[name]?.trim() ?? fallback;
+}
+
 async function promptChoice(question: string, options: string[]): Promise<string> {
   const result = await select({
     message: question,
@@ -66,6 +70,46 @@ async function promptYesNo(question: string): Promise<boolean> {
   }
 
   return Boolean(result);
+}
+
+async function promptTextValue(question: string, defaultValue = ''): Promise<string> {
+  const result = await text({
+    message: question,
+    placeholder: defaultValue || undefined,
+    defaultValue,
+  });
+
+  if (isCancel(result)) {
+    promptCancelled('Installation was cancelled.');
+  }
+
+  const value = String(result).trim();
+  if (!value) {
+    return defaultValue;
+  }
+
+  return value;
+}
+
+async function promptSecretValue(question: string, defaultValue = ''): Promise<string> {
+  if (defaultValue) {
+    return defaultValue;
+  }
+
+  const result = await password({
+    message: question,
+  });
+
+  if (isCancel(result)) {
+    promptCancelled('Installation was cancelled.');
+  }
+
+  const value = String(result).trim();
+  if (!value) {
+    return defaultValue;
+  }
+
+  return value;
 }
 
 function printPrereqFailures(results: PrereqCheckResult[]): void {
@@ -108,6 +152,45 @@ async function displayProfileDetails(profile: 'discovery' | 'full'): Promise<voi
 
   console.log(`\n${profile.toUpperCase()} profile services:`);
   servicesByProfile[profile].forEach((service) => console.log(`  - ${service}`));
+  if (profile === 'full') {
+    console.log('  - Chatbot uses Chroma Cloud + OpenAI credentials from the install wizard.');
+  }
+}
+
+async function collectChatbotEnvOverrides(): Promise<Record<string, string>> {
+  const defaults = {
+    CHROMA_HOST: resolveEnvValue('CHROMA_HOST', 'api.trychroma.com'),
+    CHROMA_API_KEY: resolveEnvValue('CHROMA_API_KEY'),
+    CHROMA_TENANT: resolveEnvValue('CHROMA_TENANT'),
+    CHROMA_DATABASE: resolveEnvValue('CHROMA_DATABASE', 'cig'),
+    OPENAI_API_KEY: resolveEnvValue('OPENAI_API_KEY'),
+  };
+
+  const allPresent = Object.values(defaults).every((value) => value.trim() !== '');
+  if (allPresent) {
+    return defaults;
+  }
+
+  console.log('\nFull profile requires Chatbot runtime credentials.');
+  const chromaHost = await promptTextValue('Chroma host', defaults.CHROMA_HOST);
+  const chromaTenant = await promptTextValue('Chroma tenant', defaults.CHROMA_TENANT);
+  const chromaDatabase = await promptTextValue('Chroma database', defaults.CHROMA_DATABASE);
+  const chromaApiKey = await promptSecretValue('Chroma API key', defaults.CHROMA_API_KEY);
+  const openAiApiKey = await promptSecretValue('OpenAI API key', defaults.OPENAI_API_KEY);
+
+  if (!chromaHost || !chromaTenant || !chromaDatabase || !chromaApiKey || !openAiApiKey) {
+    throw new Error(
+      'Chatbot configuration is incomplete. Provide CHROMA_HOST, CHROMA_TENANT, CHROMA_DATABASE, CHROMA_API_KEY, and OPENAI_API_KEY.'
+    );
+  }
+
+  return {
+    CHROMA_HOST: chromaHost,
+    CHROMA_API_KEY: chromaApiKey,
+    CHROMA_TENANT: chromaTenant,
+    CHROMA_DATABASE: chromaDatabase,
+    OPENAI_API_KEY: openAiApiKey,
+  };
 }
 
 async function pollHealthChecks(manifest: InstallManifest, timeoutMs = 300_000): Promise<boolean> {
@@ -320,6 +403,13 @@ export async function install(
   }
 
   manifest.profile = installProfile;
+  if (installProfile === 'full') {
+    const chatbotEnvOverrides = await collectChatbotEnvOverrides();
+    manifest.env_overrides = {
+      ...(manifest.env_overrides ?? {}),
+      ...chatbotEnvOverrides,
+    };
+  }
   if (publishedImageManifest) {
     manifest.service_images = publishedImageManifest;
   }

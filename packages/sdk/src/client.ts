@@ -66,7 +66,7 @@ export class CigClient {
   private readonly fetchImpl: typeof fetch;
 
   constructor(private readonly options: CigClientOptions) {
-    this.fetchImpl = options.fetch ?? fetch;
+    this.fetchImpl = (options.fetch ?? fetch).bind(globalThis);
   }
 
   private async resolveHeaders(headers?: HeadersInit, body?: BodyInit | null): Promise<Headers> {

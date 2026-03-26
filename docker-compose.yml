@@ -237,6 +237,10 @@ services:
       NEO4J_USER: ${NEO4J_USER:-neo4j}
       NEO4J_PASSWORD: ${NEO4J_PASSWORD:-cigpassword}
       CHROMA_URL: http://chroma:8000
+      CHROMA_HOST: ${CHROMA_HOST:-api.trychroma.com}
+      CHROMA_API_KEY: ${CHROMA_API_KEY:-}
+      CHROMA_TENANT: ${CHROMA_TENANT:-}
+      CHROMA_DATABASE: ${CHROMA_DATABASE:-cig}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     depends_on:
       neo4j:

@@ -237,13 +237,20 @@ describe('Pinned service image refs', () => {
     const manifest: InstallManifest = {
       profile: 'full',
       services: ['api', 'dashboard', 'neo4j', 'discovery', 'cartography', 'chatbot'],
-        service_images: {
-          api: 'docker.io/cigtechnology/cig-api@sha256:1111111111111111111111111111111111111111111111111111111111111111',
-          dashboard: 'docker.io/cigtechnology/cig-dashboard@sha256:2222222222222222222222222222222222222222222222222222222222222222',
-          neo4j: 'docker.io/library/neo4j@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-          discovery: 'docker.io/cigtechnology/cig-discovery@sha256:3333333333333333333333333333333333333333333333333333333333333333',
-          cartography: 'docker.io/cigtechnology/cig-cartography@sha256:4444444444444444444444444444444444444444444444444444444444444444',
-          chatbot: 'docker.io/cigtechnology/cig-chatbot@sha256:5555555555555555555555555555555555555555555555555555555555555555',
+      service_images: {
+        api: 'docker.io/cigtechnology/cig-api@sha256:1111111111111111111111111111111111111111111111111111111111111111',
+        dashboard: 'docker.io/cigtechnology/cig-dashboard@sha256:2222222222222222222222222222222222222222222222222222222222222222',
+        neo4j: 'docker.io/library/neo4j@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        discovery: 'docker.io/cigtechnology/cig-discovery@sha256:3333333333333333333333333333333333333333333333333333333333333333',
+        cartography: 'docker.io/cigtechnology/cig-cartography@sha256:4444444444444444444444444444444444444444444444444444444444444444',
+        chatbot: 'docker.io/cigtechnology/cig-chatbot@sha256:5555555555555555555555555555555555555555555555555555555555555555',
+      },
+      env_overrides: {
+        CHROMA_HOST: 'api.trychroma.com',
+        CHROMA_API_KEY: 'chroma-api-key',
+        CHROMA_TENANT: 'tenant-123',
+        CHROMA_DATABASE: 'cig',
+        OPENAI_API_KEY: 'openai-api-key',
       },
     };
 
@@ -253,12 +260,29 @@ describe('Pinned service image refs', () => {
 
       const composePath = path.join(outputDir, 'docker-compose.yml');
       const composeData = JSON.parse(fs.readFileSync(composePath, 'utf-8')) as {
-        services: Record<string, { image: string }>;
+        services: Record<string, { image: string; environment?: Record<string, string> }>;
       };
       const serviceImages = manifest.service_images as Record<string, string>;
+      const envContent = fs.readFileSync(path.join(outputDir, '.env'), 'utf-8');
 
       expect(composeData.services.chatbot.image).toBe(serviceImages.chatbot);
       expect(composeData.services.neo4j.image).toBe(serviceImages.neo4j);
+      expect(composeData.services.chatbot.environment).toMatchObject({
+        NODE_ENV: 'production',
+        NEO4J_URI: 'bolt://neo4j:7687',
+        NEO4J_USER: '${NEO4J_USER:-neo4j}',
+        NEO4J_PASSWORD: '${NEO4J_PASSWORD:-cigpassword}',
+        CHROMA_HOST: '${CHROMA_HOST:-api.trychroma.com}',
+        CHROMA_API_KEY: '${CHROMA_API_KEY:-}',
+        CHROMA_TENANT: '${CHROMA_TENANT:-}',
+        CHROMA_DATABASE: '${CHROMA_DATABASE:-cig}',
+        OPENAI_API_KEY: '${OPENAI_API_KEY:-}',
+      });
+      expect(envContent).toContain('CHROMA_HOST=api.trychroma.com');
+      expect(envContent).toContain('CHROMA_API_KEY=chroma-api-key');
+      expect(envContent).toContain('CHROMA_TENANT=tenant-123');
+      expect(envContent).toContain('CHROMA_DATABASE=cig');
+      expect(envContent).toContain('OPENAI_API_KEY=openai-api-key');
     } finally {
       fs.rmSync(outputDir, { recursive: true, force: true });
     }

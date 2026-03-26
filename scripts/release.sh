@@ -51,6 +51,8 @@ RELEASE_EXCLUDE_PATTERNS=(
   "**/dist/**"
   "**/.turbo/**"
   "**/coverage/**"
+  "**/playwright-report/**"
+  "**/test-results/**"
   "**/*.tsbuildinfo"
 )
 
@@ -58,7 +60,7 @@ is_release_excluded_path() {
   local path="$1"
 
   case "$path" in
-    .vscode/*|*/node_modules/*|*/.next/*|*/dist/*|*/.turbo/*|*/coverage/*|*.tsbuildinfo)
+    .vscode/*|*/node_modules/*|*/.next/*|*/dist/*|*/.turbo/*|*/coverage/*|*/playwright-report/*|*/test-results/*|*.tsbuildinfo)
       return 0
       ;;
     *)
