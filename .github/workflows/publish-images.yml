@@ -517,7 +517,7 @@ jobs:
           NODE
 
       - name: Upload GitHub release asset
-        if: ${{ github.event_name == 'push' && github.event.inputs.dry_run != 'true' }}
+        if: ${{ github.event.inputs.dry_run != 'true' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare.outputs.release_tag }}
