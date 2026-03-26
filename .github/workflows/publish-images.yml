@@ -399,12 +399,13 @@ jobs:
           const registry = process.env.REGISTRY;
           const buildServices = new Set(JSON.parse(process.env.BUILD_SERVICES_JSON || '[]'));
           const registryNamespace = registry.replace(/^docker\.io\//, '');
-          const serviceImageNames = {
-            api: 'cig-api',
-            dashboard: 'cig-dashboard',
-            discovery: 'cig-discovery',
-            cartography: 'cig-cartography',
-            chatbot: 'cig-chatbot',
+          const imageSources = {
+            api: { repositoryPath: `${registryNamespace}/cig-api`, reference: 'latest' },
+            dashboard: { repositoryPath: `${registryNamespace}/cig-dashboard`, reference: 'latest' },
+            discovery: { repositoryPath: `${registryNamespace}/cig-discovery`, reference: 'latest' },
+            cartography: { repositoryPath: `${registryNamespace}/cig-cartography`, reference: 'latest' },
+            chatbot: { repositoryPath: `${registryNamespace}/cig-chatbot`, reference: 'latest' },
+            neo4j: { repositoryPath: 'library/neo4j', reference: '5' },
           };
           const dockerHubTokenCache = new Map();
 
@@ -447,15 +448,15 @@ jobs:
             return token;
           }
 
-          async function resolveLatestDigest(service) {
-            const imageName = serviceImageNames[service];
-            if (!imageName) {
+          async function resolveDockerHubDigest(service) {
+            const source = imageSources[service];
+            if (!source) {
               throw new Error(`Unknown service: ${service}`);
             }
 
-            const repositoryPath = `${registryNamespace}/${imageName}`;
+            const { repositoryPath, reference } = source;
             const token = await fetchDockerHubToken(repositoryPath);
-            const manifestUrl = `https://registry-1.docker.io/v2/${repositoryPath}/manifests/latest`;
+            const manifestUrl = `https://registry-1.docker.io/v2/${repositoryPath}/manifests/${reference}`;
             const response = await fetch(manifestUrl, {
               method: 'GET',
               headers: {
@@ -470,14 +471,15 @@ jobs:
 
             const digest = response.headers.get('docker-content-digest');
             if (typeof digest !== 'string' || digest.trim() === '') {
-              throw new Error(`Docker Hub did not return a digest for ${repositoryPath}:latest.`);
+              throw new Error(`Docker Hub did not return a digest for ${repositoryPath}:${reference}.`);
             }
 
-            return `docker.io/${registryNamespace}/${imageName}@${digest}`;
+            return `docker.io/${repositoryPath}@${digest}`;
           }
 
           const manifest = {
             version,
+            source_tag: releaseTag,
             release_tag: releaseTag,
             source_sha: sourceSha,
             registry,
@@ -504,10 +506,10 @@ jobs:
             manifest.images[fragment.service] = fragment.image;
           }
 
-          const requiredServices = ['api', 'dashboard', 'discovery', 'cartography', 'chatbot'];
+          const requiredServices = ['api', 'dashboard', 'discovery', 'cartography', 'chatbot', 'neo4j'];
           for (const service of requiredServices) {
             if (typeof manifest.images[service] !== 'string' || manifest.images[service].trim() === '') {
-              manifest.images[service] = await resolveLatestDigest(service);
+              manifest.images[service] = await resolveDockerHubDigest(service);
             }
           }
 
