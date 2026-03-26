@@ -290,8 +290,8 @@ jobs:
             cartography)
               {
                 echo 'image_name=cig-cartography'
-                echo 'dockerfile=services/cartography/Dockerfile'
-                echo 'context=.'
+                echo 'dockerfile=Dockerfile'
+                echo 'context=services/cartography'
                 echo 'build_args<<EOF'
                 echo
                 echo 'EOF'
