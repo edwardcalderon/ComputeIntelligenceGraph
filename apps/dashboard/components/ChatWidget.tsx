@@ -33,6 +33,11 @@ import { ChatSessionPanel } from "./ChatSessionPanel";
 const ACTIVE_SESSION_STORAGE_KEY = "cig-chat-active-session";
 const MAX_CHARS = 2000;
 
+function isMissingChatSessionsRouteError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /\b404\b/.test(message) && /chat\/sessions|not found/i.test(message);
+}
+
 function readStoredActiveSessionId(): string | null {
   if (typeof window === "undefined") {
     return null;
@@ -62,6 +67,7 @@ export function ChatWidget() {
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState<"chat" | "templates">("chat");
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
+  const [sessionHistoryAvailable, setSessionHistoryAvailable] = useState(true);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -129,17 +135,30 @@ export function ChatWidget() {
   }, [isOpen]);
 
   async function refreshSessions(preferredSessionId?: string | null): Promise<string | null> {
-    const next = await getChatSessions();
-    setSessions(next.items);
+    try {
+      const next = await getChatSessions();
+      setSessionHistoryAvailable(true);
+      setSessions(next.items);
 
-    const resolvedSessionId =
-      preferredSessionId && next.items.some((session) => session.id === preferredSessionId)
-        ? preferredSessionId
-        : next.items[0]?.id ?? null;
+      const resolvedSessionId =
+        preferredSessionId && next.items.some((session) => session.id === preferredSessionId)
+          ? preferredSessionId
+          : next.items[0]?.id ?? null;
 
-    setActiveSessionId(resolvedSessionId);
-    writeStoredActiveSessionId(resolvedSessionId);
-    return resolvedSessionId;
+      setActiveSessionId(resolvedSessionId);
+      writeStoredActiveSessionId(resolvedSessionId);
+      return resolvedSessionId;
+    } catch (err) {
+      if (isMissingChatSessionsRouteError(err)) {
+        setSessionHistoryAvailable(false);
+        setSessions([]);
+        setActiveSessionId(null);
+        writeStoredActiveSessionId(null);
+        return null;
+      }
+
+      throw err;
+    }
   }
 
   async function loadSessionMessages(sessionId: string | null) {
@@ -189,6 +208,7 @@ export function ChatWidget() {
           return;
         }
 
+        setSessionHistoryAvailable(true);
         setSessions(nextSessions.items);
         const storedSessionId = readStoredActiveSessionId();
         const nextActiveSessionId =
@@ -206,7 +226,15 @@ export function ChatWidget() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : t("chat.errorFallback"));
+          if (isMissingChatSessionsRouteError(err)) {
+            setSessionHistoryAvailable(false);
+            setSessions([]);
+            setActiveSessionId(null);
+            writeStoredActiveSessionId(null);
+            setMessages([]);
+          } else {
+            setError(err instanceof Error ? err.message : t("chat.errorFallback"));
+          }
         }
       } finally {
         if (!cancelled) {
@@ -675,14 +703,16 @@ export function ChatWidget() {
                   isExpanded ? "flex-1" : "",
                 ].join(" ")}
               >
-                <ChatSessionPanel
-                  sessions={sessions}
-                  activeSessionId={activeSessionId}
-                  isLoading={isLoadingSessions}
-                  onSelectSession={handleSelectSession}
-                  onDeleteSession={handleDeleteSession}
-                  onStartDraft={handleStartDraft}
-                />
+                {sessionHistoryAvailable ? (
+                  <ChatSessionPanel
+                    sessions={sessions}
+                    activeSessionId={activeSessionId}
+                    isLoading={isLoadingSessions}
+                    onSelectSession={handleSelectSession}
+                    onDeleteSession={handleDeleteSession}
+                    onStartDraft={handleStartDraft}
+                  />
+                ) : null}
 
                 <div className="flex min-h-0 flex-1 flex-col">
                   <div

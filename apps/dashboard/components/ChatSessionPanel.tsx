@@ -39,7 +39,7 @@ function formatSessionTime(value: string | null): string {
   return date.toLocaleDateString();
 }
 
-function SessionCard({
+function SessionItem({
   title,
   preview,
   timestamp,
@@ -49,7 +49,6 @@ function SessionCard({
   draftLabel,
   onClick,
   onDelete,
-  compact = false,
 }: {
   title: string;
   preview: string | null;
@@ -60,57 +59,96 @@ function SessionCard({
   draftLabel: string;
   onClick: () => void;
   onDelete?: () => void;
-  compact?: boolean;
+}) {
+  return (
+    <div
+      className={[
+        "group flex items-start gap-2 rounded-xl border px-2.5 py-2 transition-all duration-200",
+        active
+          ? "border-violet-300/70 bg-violet-500/8 shadow-[0_10px_24px_rgba(109,40,217,0.08)] dark:border-violet-400/30 dark:bg-violet-400/10"
+          : "border-transparent bg-transparent hover:border-slate-200 hover:bg-white/85 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/85",
+      ].join(" ")}
+    >
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex min-w-0 flex-1 items-start gap-2 text-left"
+      >
+        <span
+          className={[
+            "mt-1.5 h-2 w-2 shrink-0 rounded-full",
+            active
+              ? "bg-violet-500 shadow-[0_0_0_3px_rgba(109,40,217,0.12)] dark:bg-violet-300"
+              : "bg-slate-300 dark:bg-zinc-600",
+          ].join(" ")}
+        />
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center justify-between gap-2">
+            <span className="truncate text-sm font-medium text-slate-800 dark:text-zinc-100">
+              {title}
+            </span>
+            <span className="shrink-0 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-zinc-500">
+              {draft ? draftLabel : timestamp ?? ""}
+            </span>
+          </span>
+          <span className="mt-1 block truncate text-[11px] leading-5 text-slate-500 dark:text-zinc-400">
+            {preview || "Start a fresh thread."}
+          </span>
+        </span>
+      </button>
+
+      {onDelete ? (
+        <button
+          type="button"
+          onClick={onDelete}
+          aria-label={deleteLabel}
+          className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:text-zinc-500 dark:hover:bg-red-500/10 dark:hover:text-red-300"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function SessionPill({
+  title,
+  timestamp,
+  active,
+  draft = false,
+  draftLabel,
+  onClick,
+}: {
+  title: string;
+  timestamp: string | null;
+  active: boolean;
+  draft?: boolean;
+  draftLabel: string;
+  onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={[
-        "group relative overflow-hidden rounded-2xl border text-left transition-all duration-200",
-        compact ? "min-w-[11.5rem] max-w-[11.5rem] px-3 py-3" : "w-full px-3.5 py-3.5",
+        "inline-flex min-w-0 items-center gap-2 rounded-full border px-3 py-2 text-left transition-colors",
         active
-          ? "border-violet-300/70 bg-violet-500/10 shadow-[0_16px_30px_rgba(109,40,217,0.12)] dark:border-violet-400/35 dark:bg-violet-400/10"
-          : "border-slate-200/80 bg-white/82 hover:border-slate-300 hover:bg-slate-50 dark:border-zinc-700/70 dark:bg-zinc-900/82 dark:hover:border-zinc-600 dark:hover:bg-zinc-800/82",
+          ? "border-violet-300/70 bg-violet-500/10 text-violet-700 dark:border-violet-400/30 dark:bg-violet-400/12 dark:text-violet-300"
+          : "border-slate-200/80 bg-white/80 text-slate-600 dark:border-zinc-700/80 dark:bg-zinc-900/80 dark:text-zinc-300",
       ].join(" ")}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(109,40,217,0.12),transparent_45%)] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
-      <div className="relative">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-slate-900 dark:text-zinc-100">
-              {title}
-            </p>
-            <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-400 dark:text-zinc-500">
-              {draft ? draftLabel : timestamp ?? ""}
-            </p>
-          </div>
-          {onDelete ? (
-            <span
-              role="button"
-              tabIndex={0}
-              onClick={(event) => {
-                event.stopPropagation();
-                onDelete();
-              }}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  onDelete();
-                }
-              }}
-              className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:text-zinc-500 dark:hover:bg-red-500/10 dark:hover:text-red-300"
-              aria-label={deleteLabel}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </span>
-          ) : null}
-        </div>
-        <p className="mt-2 line-clamp-2 min-h-[2.5rem] text-xs leading-relaxed text-slate-500 dark:text-zinc-400">
-          {preview || "Start a fresh thread for a different task or question."}
-        </p>
-      </div>
+      <span
+        className={[
+          "h-2 w-2 shrink-0 rounded-full",
+          active ? "bg-violet-500 dark:bg-violet-300" : "bg-slate-300 dark:bg-zinc-600",
+        ].join(" ")}
+      />
+      <span className="min-w-0">
+        <span className="block truncate text-xs font-medium">{title}</span>
+        <span className="block truncate text-[9px] uppercase tracking-[0.14em] text-slate-400 dark:text-zinc-500">
+          {draft ? draftLabel : timestamp ?? ""}
+        </span>
+      </span>
     </button>
   );
 }
@@ -150,27 +188,29 @@ export function ChatSessionPanel({
 
   return (
     <>
-      <div className="border-b border-slate-100 px-4 py-3 dark:border-zinc-700/40 sm:hidden">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div>
+      <div className="border-b border-slate-100 px-3 py-2.5 dark:border-zinc-700/40 sm:hidden">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-zinc-500">
               {t("chat.sessionsTitle")}
             </p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">
-              {t("chat.sessionsSubtitle")}
-            </p>
+            {displaySessions.length > 0 ? (
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-zinc-800 dark:text-zinc-400">
+                {displaySessions.length}
+              </span>
+            ) : null}
           </div>
           <button
             type="button"
             onClick={onStartDraft}
-            className="inline-flex items-center gap-2 rounded-full border border-violet-300/60 bg-violet-500/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-700 dark:border-violet-400/30 dark:bg-violet-400/12 dark:text-violet-300"
+            aria-label={t("chat.newSession")}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-violet-300/60 bg-violet-500/10 text-violet-700 dark:border-violet-400/30 dark:bg-violet-400/12 dark:text-violet-300"
           >
-            <MessageSquarePlus className="h-3.5 w-3.5" />
-            {t("chat.newSession")}
+            <MessageSquarePlus className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {isLoading ? (
             <div className="text-xs text-slate-400 dark:text-zinc-500">
               {t("chat.loadingSessions")}
@@ -181,19 +221,19 @@ export function ChatSessionPanel({
             </div>
           ) : (
             displaySessions.map((session) => (
-              <SessionCard
+              <SessionPill
                 key={session.id}
-                compact
                 title={session.title}
-                preview={session.lastMessagePreview}
                 timestamp={formatSessionTime(session.lastMessageAt ?? session.updatedAt)}
-                active={session.id === DRAFT_SESSION_ID ? activeSessionId === null : activeSessionId === session.id}
+                active={
+                  session.id === DRAFT_SESSION_ID
+                    ? activeSessionId === null
+                    : activeSessionId === session.id
+                }
                 draft={session.id === DRAFT_SESSION_ID}
-                deleteLabel={deleteLabel}
                 draftLabel={draftLabel}
-                onClick={() => onSelectSession(session.id === DRAFT_SESSION_ID ? null : session.id)}
-                onDelete={
-                  session.id === DRAFT_SESSION_ID ? undefined : () => onDeleteSession(session.id)
+                onClick={() =>
+                  onSelectSession(session.id === DRAFT_SESSION_ID ? null : session.id)
                 }
               />
             ))
@@ -201,47 +241,59 @@ export function ChatSessionPanel({
         </div>
       </div>
 
-      <aside className="hidden w-56 shrink-0 border-r border-slate-100 bg-slate-50/70 dark:border-zinc-700/40 dark:bg-zinc-950/30 sm:flex sm:flex-col">
-        <div className="border-b border-slate-100 px-4 py-4 dark:border-zinc-700/40">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-zinc-500">
-            {t("chat.sessionsTitle")}
-          </p>
-          <p className="mt-1 text-xs text-slate-500 dark:text-zinc-400">
-            {t("chat.sessionsSubtitle")}
-          </p>
+      <aside className="hidden w-48 shrink-0 border-r border-slate-100 bg-slate-50/55 dark:border-zinc-700/40 dark:bg-zinc-950/20 sm:flex sm:flex-col">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-3 dark:border-zinc-700/40">
+          <div className="flex min-w-0 items-center gap-2">
+            <p className="truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-zinc-500">
+              {t("chat.sessionsTitle")}
+            </p>
+            {displaySessions.length > 0 ? (
+              <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-slate-500 shadow-sm dark:bg-zinc-800 dark:text-zinc-400">
+                {displaySessions.length}
+              </span>
+            ) : null}
+          </div>
           <button
             type="button"
             onClick={onStartDraft}
-            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-violet-300/60 bg-violet-500/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-700 transition-colors hover:bg-violet-500/16 dark:border-violet-400/30 dark:bg-violet-400/12 dark:text-violet-300 dark:hover:bg-violet-400/16"
+            aria-label={t("chat.newSession")}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-violet-300/60 bg-violet-500/10 text-violet-700 transition-colors hover:bg-violet-500/16 dark:border-violet-400/30 dark:bg-violet-400/12 dark:text-violet-300 dark:hover:bg-violet-400/16"
           >
             <MessageSquarePlus className="h-4 w-4" />
-            {t("chat.newSession")}
           </button>
         </div>
 
-        <div className="flex-1 space-y-3 overflow-y-auto px-3 py-3">
+        <div className="flex-1 space-y-1 overflow-y-auto px-2 py-2">
           {isLoading ? (
-            <div className="rounded-2xl border border-slate-200/80 bg-white/70 px-3 py-4 text-xs text-slate-400 dark:border-zinc-700/70 dark:bg-zinc-900/70 dark:text-zinc-500">
+            <div className="rounded-xl px-2 py-3 text-xs text-slate-400 dark:text-zinc-500">
               {t("chat.loadingSessions")}
             </div>
           ) : displaySessions.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 px-3 py-4 text-xs leading-relaxed text-slate-400 dark:border-zinc-700 dark:text-zinc-500">
+            <div className="rounded-xl px-2 py-3 text-xs leading-relaxed text-slate-400 dark:text-zinc-500">
               {t("chat.noSavedSessions")}
             </div>
           ) : (
             displaySessions.map((session) => (
-              <SessionCard
+              <SessionItem
                 key={session.id}
                 title={session.title}
                 preview={session.lastMessagePreview}
                 timestamp={formatSessionTime(session.lastMessageAt ?? session.updatedAt)}
-                active={session.id === DRAFT_SESSION_ID ? activeSessionId === null : activeSessionId === session.id}
+                active={
+                  session.id === DRAFT_SESSION_ID
+                    ? activeSessionId === null
+                    : activeSessionId === session.id
+                }
                 draft={session.id === DRAFT_SESSION_ID}
                 deleteLabel={deleteLabel}
                 draftLabel={draftLabel}
-                onClick={() => onSelectSession(session.id === DRAFT_SESSION_ID ? null : session.id)}
+                onClick={() =>
+                  onSelectSession(session.id === DRAFT_SESSION_ID ? null : session.id)
+                }
                 onDelete={
-                  session.id === DRAFT_SESSION_ID ? undefined : () => onDeleteSession(session.id)
+                  session.id === DRAFT_SESSION_ID
+                    ? undefined
+                    : () => onDeleteSession(session.id)
                 }
               />
             ))

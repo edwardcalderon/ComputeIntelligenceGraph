@@ -1,3 +1,18 @@
+## [0.2.35](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.34...v0.2.35) (2026-03-26)
+
+### Detected changes
+- apps: 3 changed file(s)
+  - apps/dashboard/components/ChatSessionPanel.tsx
+  - apps/dashboard/components/ChatWidget.tsx
+  - apps/dashboard/components/__tests__/ChatWidget.test.tsx
+
+
+## [0.2.35](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.34...v0.2.35) (2026-03-26)
+
+
+
+
+
 ## [0.2.34](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.33...v0.2.34) (2026-03-26)
 
 

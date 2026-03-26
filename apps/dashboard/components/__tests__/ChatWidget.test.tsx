@@ -157,14 +157,9 @@ describe("ChatWidget", () => {
       expect(screen.getAllByRole("button", { name: "chat.deleteSession" }).length).toBeGreaterThan(0);
     });
 
-    const prodAlertsCards = screen
-      .getAllByText("Prod alerts")
-      .map((node) => node.closest("button"))
-      .filter((node): node is HTMLButtonElement => node instanceof HTMLButtonElement);
-
-    const prodAlertsDeleteButton = within(prodAlertsCards[0]!).getByRole("button", {
+    const prodAlertsDeleteButton = screen.getAllByRole("button", {
       name: "chat.deleteSession",
-    });
+    })[0]!;
 
     await act(async () => {
       fireEvent.click(prodAlertsDeleteButton);
@@ -272,5 +267,38 @@ describe("ChatWidget", () => {
     });
 
     expect(screen.queryByRole("button", { name: "chat.useTemplate" })).not.toBeInTheDocument();
+  });
+
+  it("falls back to draft-only chat when session history is unavailable", async () => {
+    mockedGetHealth.mockResolvedValue({
+      status: "ok",
+      version: "0.2.33",
+      timestamp: "2026-03-26T09:00:00.000Z",
+      chat: {
+        provider: "openai",
+        model: "gpt-4o-mini",
+        configured: true,
+        reachable: true,
+        providerReachable: true,
+        checkedAt: "2026-03-26T09:00:00.000Z",
+        latencyMs: 42,
+      },
+    });
+    mockedGetChatSessions.mockRejectedValue(
+      new Error("API error 404: Route GET:/api/v1/chat/sessions not found")
+    );
+
+    render(<ChatWidget />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "chat.openChat" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("chat.emptyState")).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText("chat.sessionsTitle")).not.toBeInTheDocument();
+    expect(screen.queryByText("API error 404: Route GET:/api/v1/chat/sessions not found")).not.toBeInTheDocument();
   });
 });
