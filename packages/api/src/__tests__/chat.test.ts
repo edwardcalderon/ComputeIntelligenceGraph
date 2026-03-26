@@ -1,8 +1,8 @@
-import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { GraphQueryEngine, Provider, ResourceState, ResourceType, type Resource_Model } from '@cig/graph';
 import { createServer } from '../index';
-import { clearChatSessions } from '../chat';
+import { clearPersistedChatSessionsForTests } from '../chat-store';
 import { generateJwt, Permission } from '../auth';
 
 function makeAuthHeader(): string {
@@ -43,6 +43,7 @@ describe('POST /api/v1/chat', () => {
 
     app = await createServer();
     await app.ready();
+    await clearPersistedChatSessionsForTests();
   });
 
   afterAll(async () => {
@@ -50,12 +51,12 @@ describe('POST /api/v1/chat', () => {
     await app.close();
   });
 
-  beforeEach(() => {
-    clearChatSessions();
+  beforeEach(async () => {
     searchResourcesSpy.mockReset();
+    await clearPersistedChatSessionsForTests();
   });
 
-  it('summarizes matching resources for authenticated users', async () => {
+  it('creates and persists a session when a user sends the first message', async () => {
     searchResourcesSpy.mockResolvedValueOnce([makeResource()]);
 
     const response = await app.inject({
@@ -66,17 +67,99 @@ describe('POST /api/v1/chat', () => {
       },
       payload: {
         message: 'show me the production api',
-        sessionId: 'chat-session-1',
       },
     });
 
     expect(response.statusCode).toBe(200);
-    const body = response.json<{ answer: string; needsClarification: boolean }>();
+    const body = response.json<{ sessionId?: string; answer: string; needsClarification: boolean }>();
+    expect(body.sessionId).toBeTypeOf('string');
     expect(body.answer).toContain('prod-api');
     expect(body.needsClarification).toBe(false);
+
+    const sessionsResponse = await app.inject({
+      method: 'GET',
+      url: '/api/v1/chat/sessions',
+      headers: {
+        authorization: makeAuthHeader(),
+      },
+    });
+
+    expect(sessionsResponse.statusCode).toBe(200);
+    const sessions = sessionsResponse.json<{
+      items: Array<{ id: string; title: string; lastMessagePreview: string | null }>;
+      total: number;
+    }>();
+    expect(sessions.total).toBe(1);
+    expect(sessions.items[0]?.id).toBe(body.sessionId);
+    expect(sessions.items[0]?.title).toContain('show me the production api');
+    expect(sessions.items[0]?.lastMessagePreview).toContain('I found');
+
+    const messagesResponse = await app.inject({
+      method: 'GET',
+      url: `/api/v1/chat/sessions/${body.sessionId}/messages`,
+      headers: {
+        authorization: makeAuthHeader(),
+      },
+    });
+
+    expect(messagesResponse.statusCode).toBe(200);
+    const messages = messagesResponse.json<{
+      items: Array<{ role: 'user' | 'assistant'; content: string }>;
+      total: number;
+    }>();
+    expect(messages.total).toBe(2);
+    expect(messages.items.map((item) => item.role)).toEqual(['user', 'assistant']);
   });
 
-  it('asks for clarification when nothing matches', async () => {
+  it('reuses an existing session id and appends later exchanges', async () => {
+    searchResourcesSpy.mockResolvedValue([makeResource()]);
+
+    const first = await app.inject({
+      method: 'POST',
+      url: '/api/v1/chat',
+      headers: {
+        authorization: makeAuthHeader(),
+      },
+      payload: {
+        message: 'show me the production api',
+      },
+    });
+
+    const sessionId = first.json<{ sessionId: string }>().sessionId;
+
+    const second = await app.inject({
+      method: 'POST',
+      url: '/api/v1/chat',
+      headers: {
+        authorization: makeAuthHeader(),
+      },
+      payload: {
+        message: 'expand prod-api',
+        sessionId,
+      },
+    });
+
+    expect(second.statusCode).toBe(200);
+    expect(second.json<{ sessionId?: string }>().sessionId).toBe(sessionId);
+
+    const messagesResponse = await app.inject({
+      method: 'GET',
+      url: `/api/v1/chat/sessions/${sessionId}/messages`,
+      headers: {
+        authorization: makeAuthHeader(),
+      },
+    });
+
+    const messages = messagesResponse.json<{
+      items: Array<{ role: 'user' | 'assistant'; content: string }>;
+      total: number;
+    }>();
+
+    expect(messages.total).toBe(4);
+    expect(messages.items[2]?.content).toBe('expand prod-api');
+  });
+
+  it('asks for clarification and allows a stored session to be deleted', async () => {
     searchResourcesSpy.mockResolvedValueOnce([]);
 
     const response = await app.inject({
@@ -87,13 +170,36 @@ describe('POST /api/v1/chat', () => {
       },
       payload: {
         message: 'tell me about the thing',
-        sessionId: 'chat-session-2',
       },
     });
 
     expect(response.statusCode).toBe(200);
-    const body = response.json<{ needsClarification: boolean; clarifyingQuestion?: string }>();
+    const body = response.json<{
+      sessionId?: string;
+      needsClarification: boolean;
+      clarifyingQuestion?: string;
+    }>();
     expect(body.needsClarification).toBe(true);
     expect(body.clarifyingQuestion).toContain('provider');
+
+    const deleteResponse = await app.inject({
+      method: 'DELETE',
+      url: `/api/v1/chat/sessions/${body.sessionId}`,
+      headers: {
+        authorization: makeAuthHeader(),
+      },
+    });
+
+    expect(deleteResponse.statusCode).toBe(200);
+
+    const sessionsResponse = await app.inject({
+      method: 'GET',
+      url: '/api/v1/chat/sessions',
+      headers: {
+        authorization: makeAuthHeader(),
+      },
+    });
+
+    expect(sessionsResponse.json<{ total: number }>().total).toBe(0);
   });
 });

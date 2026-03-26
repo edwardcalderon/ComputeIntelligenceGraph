@@ -11,6 +11,7 @@ export interface ChatResponse {
   cypher?: string;
   needsClarification: boolean;
   clarifyingQuestion?: string;
+  sessionId?: string;
 }
 
 interface OpenAiChatCompletionResponse {
@@ -21,11 +22,8 @@ interface OpenAiChatCompletionResponse {
   }>;
 }
 
-const SESSION_HISTORY_LIMIT = 12;
 const DEFAULT_CLARIFICATION =
   'Can you mention a provider, resource type, or resource name?';
-
-const sessionHistory = new Map<string, ChatTurn[]>();
 
 function serializeResource(resource: Resource_Model): string {
   const region = resource.region ? `, ${resource.region}` : '';
@@ -56,20 +54,6 @@ function stripJsonFence(content: string): string {
       .trim();
   }
   return trimmed;
-}
-
-function appendSessionTurn(sessionId: string, turn: ChatTurn): void {
-  const current = sessionHistory.get(sessionId) ?? [];
-  const next = [...current, turn].slice(-SESSION_HISTORY_LIMIT);
-  sessionHistory.set(sessionId, next);
-}
-
-export function clearChatSessions(): void {
-  sessionHistory.clear();
-}
-
-export function getChatHistory(sessionId: string): ChatTurn[] {
-  return sessionHistory.get(sessionId) ?? [];
 }
 
 function buildFallbackResponse(question: string, resources: Resource_Model[]): ChatResponse {
@@ -195,26 +179,9 @@ async function tryOpenAiResponse(
 export async function answerChatQuestion(
   question: string,
   resources: Resource_Model[],
-  sessionId?: string
+  history: ChatTurn[] = []
 ): Promise<ChatResponse> {
-  const history = sessionId ? getChatHistory(sessionId) : [];
   const fallback = buildFallbackResponse(question, resources);
   const aiResponse = await tryOpenAiResponse(question, resources, history);
-  const response = aiResponse ?? fallback;
-
-  if (sessionId) {
-    const timestamp = new Date().toISOString();
-    appendSessionTurn(sessionId, {
-      role: 'user',
-      content: question,
-      timestamp,
-    });
-    appendSessionTurn(sessionId, {
-      role: 'assistant',
-      content: response.answer,
-      timestamp,
-    });
-  }
-
-  return response;
+  return aiResponse ?? fallback;
 }

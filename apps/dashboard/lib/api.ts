@@ -7,6 +7,9 @@ export type {
   BootstrapStatus,
   ChatMessage,
   ChatResponse,
+  ChatSessionDetailResponse,
+  ChatSessionListResponse,
+  ChatSessionSummary,
   CostBreakdown,
   CostBreakdownEntry,
   CostEntry,
@@ -76,7 +79,15 @@ export const getSecurityFindings = (resourceId?: string) =>
 
 export const getSecurityScore = () => getClient().getSecurityScore();
 
-export const sendChatMessage = (message: string, sessionId: string) =>
+export const getChatSessions = () => getClient().getChatSessions();
+
+export const getChatSessionMessages = (sessionId: string) =>
+  getClient().getChatSessionMessages(sessionId);
+
+export const deleteChatSession = (sessionId: string) =>
+  getClient().deleteChatSession(sessionId);
+
+export const sendChatMessage = (message: string, sessionId?: string) =>
   getClient().sendChatMessage(message, sessionId);
 
 export const getTargets = () => getClient().getTargets();

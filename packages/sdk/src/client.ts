@@ -3,6 +3,8 @@ import type {
   BootstrapCompleteResponse,
   BootstrapStatus,
   ChatResponse,
+  ChatSessionDetailResponse,
+  ChatSessionListResponse,
   CostBreakdown,
   CostSummary,
   CostsResponse,
@@ -189,7 +191,26 @@ export class CigClient {
     return this.request<SecurityScore>("/api/v1/security/score");
   }
 
-  sendChatMessage(message: string, sessionId: string): Promise<ChatResponse> {
+  getChatSessions(): Promise<ChatSessionListResponse> {
+    return this.request<ChatSessionListResponse>("/api/v1/chat/sessions");
+  }
+
+  getChatSessionMessages(sessionId: string): Promise<ChatSessionDetailResponse> {
+    return this.request<ChatSessionDetailResponse>(
+      `/api/v1/chat/sessions/${encodeURIComponent(sessionId)}/messages`
+    );
+  }
+
+  deleteChatSession(sessionId: string): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(
+      `/api/v1/chat/sessions/${encodeURIComponent(sessionId)}`,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
+  sendChatMessage(message: string, sessionId?: string): Promise<ChatResponse> {
     return this.request<ChatResponse>("/api/v1/chat", {
       method: "POST",
       body: JSON.stringify({ message, sessionId }),

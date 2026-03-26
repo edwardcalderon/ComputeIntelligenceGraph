@@ -146,9 +146,30 @@ export interface SecurityScanResult {
 }
 
 export interface ChatMessage {
+  id?: string;
   role: "user" | "assistant";
   content: string;
   timestamp: string;
+}
+
+export interface ChatSessionSummary {
+  id: string;
+  title: string;
+  lastMessagePreview: string | null;
+  lastMessageAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatSessionListResponse {
+  items: ChatSessionSummary[];
+  total: number;
+}
+
+export interface ChatSessionDetailResponse {
+  session: ChatSessionSummary;
+  items: ChatMessage[];
+  total: number;
 }
 
 export interface ChatResponse {
@@ -156,6 +177,7 @@ export interface ChatResponse {
   cypher?: string;
   needsClarification: boolean;
   clarifyingQuestion?: string;
+  sessionId?: string;
 }
 
 export interface ManagedTarget {

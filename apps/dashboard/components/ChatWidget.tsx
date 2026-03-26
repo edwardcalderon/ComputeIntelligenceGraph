@@ -11,42 +11,47 @@ import {
   Maximize2,
   Mic,
   Minimize2,
+  MessageSquarePlus,
   Paperclip,
   Send,
   X,
 } from "lucide-react";
 import { useTranslation } from "@cig-technology/i18n/react";
-import { getHealth, sendChatMessage, type ChatMessage, type HealthResponse } from "../lib/api";
+import {
+  deleteChatSession,
+  getChatSessionMessages,
+  getChatSessions,
+  getHealth,
+  sendChatMessage,
+  type ChatMessage,
+  type ChatSessionSummary,
+  type HealthResponse,
+} from "../lib/api";
 import { ChatTemplatesTab } from "./ChatExamplesTab";
+import { ChatSessionPanel } from "./ChatSessionPanel";
 
-const STORAGE_KEY = "cig-chat-history";
+const ACTIVE_SESSION_STORAGE_KEY = "cig-chat-active-session";
 const MAX_CHARS = 2000;
 
-function getSessionId(): string {
-  if (typeof window === "undefined") return "";
-  let id = sessionStorage.getItem("cig-chat-session");
-  if (!id) {
-    id = Math.random().toString(36).slice(2) + Date.now().toString(36);
-    sessionStorage.setItem("cig-chat-session", id);
+function readStoredActiveSessionId(): string | null {
+  if (typeof window === "undefined") {
+    return null;
   }
-  return id;
+
+  return sessionStorage.getItem(ACTIVE_SESSION_STORAGE_KEY);
 }
 
-function loadHistory(): ChatMessage[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as ChatMessage[]) : [];
-  } catch {
-    return [];
+function writeStoredActiveSessionId(sessionId: string | null) {
+  if (typeof window === "undefined") {
+    return;
   }
-}
 
-function saveHistory(messages: ChatMessage[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-  } catch {
-    // ignore
+  if (!sessionId) {
+    sessionStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY);
+    return;
   }
+
+  sessionStorage.setItem(ACTIVE_SESSION_STORAGE_KEY, sessionId);
 }
 
 export function ChatWidget() {
@@ -56,9 +61,14 @@ export function ChatWidget() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState<"chat" | "templates">("chat");
+  const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasHydratedSessions, setHasHydratedSessions] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [healthReady, setHealthReady] = useState(false);
@@ -68,16 +78,13 @@ export function ChatWidget() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const statusPillRef = useRef<HTMLButtonElement>(null);
   const statusTooltipCloseTimerRef = useRef<number | null>(null);
+  const sessionMessagesRequestRef = useRef(0);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
-  }, []);
-
-  useEffect(() => {
-    setMessages(loadHistory());
   }, []);
 
   useEffect(() => {
@@ -114,12 +121,107 @@ export function ChatWidget() {
   }, []);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    bottomRef.current?.scrollIntoView?.({ behavior: "smooth" });
   }, [messages, isLoading]);
 
   useEffect(() => {
     if (isOpen) setTimeout(() => textareaRef.current?.focus(), 50);
   }, [isOpen]);
+
+  async function refreshSessions(preferredSessionId?: string | null): Promise<string | null> {
+    const next = await getChatSessions();
+    setSessions(next.items);
+
+    const resolvedSessionId =
+      preferredSessionId && next.items.some((session) => session.id === preferredSessionId)
+        ? preferredSessionId
+        : next.items[0]?.id ?? null;
+
+    setActiveSessionId(resolvedSessionId);
+    writeStoredActiveSessionId(resolvedSessionId);
+    return resolvedSessionId;
+  }
+
+  async function loadSessionMessages(sessionId: string | null) {
+    const requestId = sessionMessagesRequestRef.current + 1;
+    sessionMessagesRequestRef.current = requestId;
+
+    if (!sessionId) {
+      setIsLoadingMessages(false);
+      setMessages([]);
+      return;
+    }
+
+    setIsLoadingMessages(true);
+    try {
+      const next = await getChatSessionMessages(sessionId);
+      if (sessionMessagesRequestRef.current !== requestId) {
+        return;
+      }
+      setMessages(next.items);
+    } catch (err) {
+      if (sessionMessagesRequestRef.current !== requestId) {
+        return;
+      }
+      setError(err instanceof Error ? err.message : t("chat.errorFallback"));
+      setMessages([]);
+    } finally {
+      if (sessionMessagesRequestRef.current === requestId) {
+        setIsLoadingMessages(false);
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (!isOpen || hasHydratedSessions) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const bootstrapSessions = async () => {
+      setIsLoadingSessions(true);
+      setError(null);
+
+      try {
+        const nextSessions = await getChatSessions();
+        if (cancelled) {
+          return;
+        }
+
+        setSessions(nextSessions.items);
+        const storedSessionId = readStoredActiveSessionId();
+        const nextActiveSessionId =
+          storedSessionId && nextSessions.items.some((session) => session.id === storedSessionId)
+            ? storedSessionId
+            : nextSessions.items[0]?.id ?? null;
+
+        setActiveSessionId(nextActiveSessionId);
+        writeStoredActiveSessionId(nextActiveSessionId);
+
+        if (nextActiveSessionId) {
+          await loadSessionMessages(nextActiveSessionId);
+        } else {
+          setMessages([]);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : t("chat.errorFallback"));
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingSessions(false);
+          setHasHydratedSessions(true);
+        }
+      }
+    };
+
+    void bootstrapSessions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hasHydratedSessions, isOpen, t]);
 
   function handleClose() {
     setIsOpen(false);
@@ -170,6 +272,51 @@ export function ChatWidget() {
     });
   }
 
+  function handleStartDraft() {
+    setActiveTab("chat");
+    setError(null);
+    setInput("");
+    setActiveSessionId(null);
+    setMessages([]);
+    writeStoredActiveSessionId(null);
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  }
+
+  async function handleSelectSession(sessionId: string | null) {
+    setActiveTab("chat");
+    setError(null);
+    setInput("");
+    setActiveSessionId(sessionId);
+    writeStoredActiveSessionId(sessionId);
+    await loadSessionMessages(sessionId);
+  }
+
+  async function handleDeleteSession(sessionId: string) {
+    if (!window.confirm(t("chat.deleteSessionConfirm"))) {
+      return;
+    }
+
+    setIsLoadingSessions(true);
+    setError(null);
+
+    try {
+      await deleteChatSession(sessionId);
+      const nextActiveSessionId =
+        activeSessionId === sessionId ? undefined : activeSessionId;
+      const resolvedSessionId = await refreshSessions(nextActiveSessionId);
+
+      if (resolvedSessionId) {
+        await loadSessionMessages(resolvedSessionId);
+      } else {
+        setMessages([]);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("chat.errorFallback"));
+    } finally {
+      setIsLoadingSessions(false);
+    }
+  }
+
   async function handleSend() {
     const text = input.trim();
     if (!text || isLoading) return;
@@ -181,13 +328,12 @@ export function ChatWidget() {
     };
     const next = [...messages, userMsg];
     setMessages(next);
-    saveHistory(next);
     setInput("");
     setError(null);
     setIsLoading(true);
 
     try {
-      const res = await sendChatMessage(text, getSessionId());
+      const res = await sendChatMessage(text, activeSessionId ?? undefined);
       const content =
         res.needsClarification && res.clarifyingQuestion
           ? res.clarifyingQuestion
@@ -199,7 +345,17 @@ export function ChatWidget() {
       };
       const updated = [...next, assistantMsg];
       setMessages(updated);
-      saveHistory(updated);
+      const resolvedSessionId = res.sessionId ?? activeSessionId ?? null;
+      if (resolvedSessionId) {
+        setActiveSessionId(resolvedSessionId);
+        writeStoredActiveSessionId(resolvedSessionId);
+        try {
+          await refreshSessions(resolvedSessionId);
+        } catch {
+          // The exchange already succeeded; keep the live thread visible even if
+          // the sidebar refresh fails.
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("chat.errorFallback"));
     } finally {
@@ -260,7 +416,9 @@ export function ChatWidget() {
     <>
       {/* Mobile backdrop — only when sheet is not full-screen */}
       {isOpen && !(isExpanded && isMobile) && (
-        <div
+        <button
+          type="button"
+          aria-label={t("chat.closeChat")}
           className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm sm:hidden"
           onClick={handleClose}
         />
@@ -268,7 +426,9 @@ export function ChatWidget() {
 
       {/* Desktop expanded backdrop */}
       {isOpen && isExpanded && (
-        <div
+        <button
+          type="button"
+          aria-label={t("chat.minimize")}
           className="fixed inset-0 z-40 hidden bg-black/50 backdrop-blur-sm sm:block"
           onClick={() => setIsExpanded(false)}
         />
@@ -508,149 +668,186 @@ export function ChatWidget() {
               </div>
             )}
 
-            {/* ── Messages ────────────────────────────────────────── */}
-            <div
-              className={[
-                "relative z-10 space-y-3 overflow-y-auto px-4 py-4 sm:px-6",
-                isExpanded ? "flex-1" : "max-h-[38vh] sm:max-h-64",
-                activeTab === "templates" ? "hidden" : "",
-              ].join(" ")}
-            >
-              {messages.length === 0 && (
-                <p className="mt-4 text-center text-sm text-slate-400 dark:text-zinc-500">
-                  {t("chat.emptyState")}
-                </p>
-              )}
-              {messages.map((msg, i) => (
-                <div
-                  key={i}
-                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                >
+            {activeTab !== "templates" && (
+              <div
+                className={[
+                  "relative z-10 flex min-h-0 flex-col sm:flex-row",
+                  isExpanded ? "flex-1" : "",
+                ].join(" ")}
+              >
+                <ChatSessionPanel
+                  sessions={sessions}
+                  activeSessionId={activeSessionId}
+                  isLoading={isLoadingSessions}
+                  onSelectSession={handleSelectSession}
+                  onDeleteSession={handleDeleteSession}
+                  onStartDraft={handleStartDraft}
+                />
+
+                <div className="flex min-h-0 flex-1 flex-col">
                   <div
                     className={[
-                      "max-w-[80%] rounded-2xl px-3.5 py-2 text-sm",
-                      msg.role === "user"
-                        ? [
-                            "rounded-br-sm border",
-                            // Light
-                            "border-indigo-200/60 bg-gradient-to-br from-indigo-50 to-purple-50 text-slate-800",
-                            // Dark
-                            "dark:border-indigo-500/20 dark:from-indigo-500/20 dark:to-purple-600/20 dark:text-white/90",
-                          ].join(" ")
-                        : [
-                            "rounded-bl-sm border",
-                            // Light
-                            "border-slate-200/70 bg-slate-50 text-slate-700",
-                            // Dark
-                            "dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-white/70",
-                          ].join(" "),
+                      "relative z-10 space-y-3 overflow-y-auto px-4 py-4 sm:px-6",
+                      isExpanded ? "min-h-0 flex-1" : "max-h-[38vh] sm:max-h-80",
                     ].join(" ")}
                   >
-                    {msg.content}
-                  </div>
-                </div>
-              ))}
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="rounded-2xl rounded-bl-sm border border-slate-200/70 bg-slate-50 px-3.5 py-2.5 dark:border-white/[0.06] dark:bg-white/[0.04]">
-                    <span className="flex items-center gap-1">
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-indigo-400/70 [animation-delay:-0.3s] dark:bg-indigo-400/60" />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-indigo-400/70 [animation-delay:-0.15s] dark:bg-indigo-400/60" />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-indigo-400/70 dark:bg-indigo-400/60" />
-                    </span>
-                  </div>
-                </div>
-              )}
-              {error && (
-                <p className="text-center text-xs text-red-500 dark:text-red-400/80">
-                  {error}
-                </p>
-              )}
-              <div ref={bottomRef} />
-            </div>
+                    {isLoadingMessages && messages.length === 0 ? (
+                      <div className="mt-4 flex justify-center">
+                        <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-500">
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-violet-400" />
+                          {t("chat.loadingSessions")}
+                        </div>
+                      </div>
+                    ) : messages.length === 0 ? (
+                      <div className="mx-auto mt-4 max-w-sm rounded-3xl border border-dashed border-slate-200 bg-slate-50/70 px-5 py-5 text-center dark:border-zinc-700 dark:bg-zinc-900/50">
+                        <p className="text-sm font-semibold text-slate-700 dark:text-zinc-200">
+                          {activeSessionId ? t("chat.emptySession") : t("chat.emptyState")}
+                        </p>
+                        <p className="mt-2 text-xs leading-relaxed text-slate-400 dark:text-zinc-500">
+                          {activeSessionId
+                            ? t("chat.emptySessionHint")
+                            : t("chat.emptyStateHint")}
+                        </p>
+                        {!activeSessionId ? (
+                          <button
+                            type="button"
+                            onClick={handleStartDraft}
+                            className="mt-4 inline-flex items-center gap-2 rounded-full border border-violet-300/60 bg-violet-500/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-700 dark:border-violet-400/30 dark:bg-violet-400/12 dark:text-violet-300"
+                          >
+                            <MessageSquarePlus className="h-3.5 w-3.5" />
+                            {t("chat.newSession")}
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
 
-            {/* ── Textarea ────────────────────────────────────────── */}
-            <div className={`relative z-10 border-t border-slate-100 dark:border-zinc-700/40${activeTab === "templates" ? " hidden" : ""}`}>
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value.slice(0, MAX_CHARS))}
-                onKeyDown={handleKeyDown}
-                rows={isExpanded ? 5 : 3}
-                disabled={isLoading}
-                placeholder={t("chat.placeholder")}
-                className="w-full resize-none bg-transparent px-4 py-4 text-sm leading-relaxed text-slate-800 placeholder-slate-400 outline-none disabled:opacity-50 dark:text-zinc-100 dark:placeholder-zinc-500 sm:px-6"
-                style={{ scrollbarWidth: "none" }}
-              />
-            </div>
-
-            {/* ── Toolbar ─────────────────────────────────────────── */}
-            <div className={`relative z-10 px-3 pb-3 sm:px-4 sm:pb-4${activeTab === "templates" ? " hidden" : ""}`}>
-              <div className="flex items-center justify-between">
-                {/* Left: attachments + voice */}
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-0.5 rounded-xl border border-slate-200/70 bg-slate-50 p-1 dark:border-zinc-700/50 dark:bg-zinc-800/40">
-                    {[
-                      { icon: Paperclip, label: t("chat.uploadFiles") },
-                      { icon: Link, label: t("chat.webLink") },
-                      { icon: Code, label: t("chat.codeRepo") },
-                    ].map(({ icon: Icon, label }) => (
-                      <button
-                        key={label}
-                        title={label}
-                        className="rounded-lg p-2 text-slate-400 transition-all duration-200 hover:bg-slate-100 hover:text-slate-600 dark:text-zinc-500 dark:hover:bg-zinc-800/80 dark:hover:text-zinc-200 sm:p-2.5"
+                    {messages.map((msg, index) => (
+                      <div
+                        key={msg.id ?? `${msg.role}-${msg.timestamp}-${index}`}
+                        className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                       >
-                        <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      </button>
+                        <div
+                          className={[
+                            "max-w-[80%] rounded-2xl px-3.5 py-2 text-sm",
+                            msg.role === "user"
+                              ? [
+                                  "rounded-br-sm border",
+                                  "border-indigo-200/60 bg-gradient-to-br from-indigo-50 to-purple-50 text-slate-800",
+                                  "dark:border-indigo-500/20 dark:from-indigo-500/20 dark:to-purple-600/20 dark:text-white/90",
+                                ].join(" ")
+                              : [
+                                  "rounded-bl-sm border",
+                                  "border-slate-200/70 bg-slate-50 text-slate-700",
+                                  "dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-white/70",
+                                ].join(" "),
+                          ].join(" ")}
+                        >
+                          {msg.content}
+                        </div>
+                      </div>
                     ))}
+                    {isLoading && (
+                      <div className="flex justify-start">
+                        <div className="rounded-2xl rounded-bl-sm border border-slate-200/70 bg-slate-50 px-3.5 py-2.5 dark:border-white/[0.06] dark:bg-white/[0.04]">
+                          <span className="flex items-center gap-1">
+                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-indigo-400/70 [animation-delay:-0.3s] dark:bg-indigo-400/60" />
+                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-indigo-400/70 [animation-delay:-0.15s] dark:bg-indigo-400/60" />
+                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-indigo-400/70 dark:bg-indigo-400/60" />
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    {error && (
+                      <p className="text-center text-xs text-red-500 dark:text-red-400/80">
+                        {error}
+                      </p>
+                    )}
+                    <div ref={bottomRef} />
                   </div>
-                  <button
-                    title={t("chat.voiceInput")}
-                    className="rounded-lg border border-slate-200/70 p-2 text-slate-400 transition-all duration-200 hover:border-red-200 hover:bg-red-50 hover:text-red-500 dark:border-zinc-700/30 dark:text-zinc-500 dark:hover:border-red-500/30 dark:hover:bg-zinc-800/80 dark:hover:text-red-400 sm:p-2.5"
-                  >
-                    <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  </button>
-                </div>
 
-                {/* Right: counter + send */}
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-medium text-slate-400 dark:text-zinc-500">
-                    {input.length}
-                    <span className="text-slate-300 dark:text-zinc-600">
-                      /{MAX_CHARS}
-                    </span>
-                  </span>
-                  <button
-                    onClick={handleSend}
-                    disabled={isLoading || !input.trim()}
-                    aria-label={t("chat.sendMessage")}
-                    className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-red-600 to-red-500 p-2.5 text-white shadow-lg transition-all duration-300 hover:from-red-500 hover:to-red-400 hover:scale-110 hover:shadow-red-500/30 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 sm:p-3"
-                  >
-                    <Send className="h-4 w-4 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:rotate-12 sm:h-5 sm:w-5" />
-                    <div className="absolute inset-0 scale-0 rounded-xl bg-white/20 transition-transform duration-200 group-active:scale-100" />
-                  </button>
+                  <div className="relative z-10 border-t border-slate-100 dark:border-zinc-700/40">
+                    <textarea
+                      ref={textareaRef}
+                      value={input}
+                      onChange={(e) => setInput(e.target.value.slice(0, MAX_CHARS))}
+                      onKeyDown={handleKeyDown}
+                      rows={isExpanded ? 5 : 3}
+                      disabled={isLoading || isLoadingMessages}
+                      placeholder={t("chat.placeholder")}
+                      className="w-full resize-none bg-transparent px-4 py-4 text-sm leading-relaxed text-slate-800 placeholder-slate-400 outline-none disabled:opacity-50 dark:text-zinc-100 dark:placeholder-zinc-500 sm:px-6"
+                      style={{ scrollbarWidth: "none" }}
+                    />
+                  </div>
+
+                  <div className="relative z-10 px-3 pb-3 sm:px-4 sm:pb-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-0.5 rounded-xl border border-slate-200/70 bg-slate-50 p-1 dark:border-zinc-700/50 dark:bg-zinc-800/40">
+                          {[
+                            { icon: Paperclip, label: t("chat.uploadFiles") },
+                            { icon: Link, label: t("chat.webLink") },
+                            { icon: Code, label: t("chat.codeRepo") },
+                          ].map(({ icon: Icon, label }) => (
+                            <button
+                              key={label}
+                              title={label}
+                              className="rounded-lg p-2 text-slate-400 transition-all duration-200 hover:bg-slate-100 hover:text-slate-600 dark:text-zinc-500 dark:hover:bg-zinc-800/80 dark:hover:text-zinc-200 sm:p-2.5"
+                            >
+                              <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          title={t("chat.voiceInput")}
+                          className="rounded-lg border border-slate-200/70 p-2 text-slate-400 transition-all duration-200 hover:border-red-200 hover:bg-red-50 hover:text-red-500 dark:border-zinc-700/30 dark:text-zinc-500 dark:hover:border-red-500/30 dark:hover:bg-zinc-800/80 dark:hover:text-red-400 sm:p-2.5"
+                        >
+                          <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-medium text-slate-400 dark:text-zinc-500">
+                          {input.length}
+                          <span className="text-slate-300 dark:text-zinc-600">
+                            /{MAX_CHARS}
+                          </span>
+                        </span>
+                        <button
+                          onClick={handleSend}
+                          disabled={isLoading || isLoadingMessages || !input.trim()}
+                          aria-label={t("chat.sendMessage")}
+                          className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-red-600 to-red-500 p-2.5 text-white shadow-lg transition-all duration-300 hover:from-red-500 hover:to-red-400 hover:scale-110 hover:shadow-red-500/30 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 sm:p-3"
+                        >
+                          <Send className="h-4 w-4 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:rotate-12 sm:h-5 sm:w-5" />
+                          <div className="absolute inset-0 scale-0 rounded-xl bg-white/20 transition-transform duration-200 group-active:scale-100" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-2 text-xs text-slate-400 dark:border-zinc-800/50 dark:text-zinc-500 sm:mt-3 sm:pt-3">
+                      <div className="hidden items-center gap-2 sm:flex">
+                        <Info className="h-3 w-3" />
+                        <span>
+                          Press{" "}
+                          <kbd className="rounded border border-slate-300 bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-500 shadow-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                            Shift + Enter
+                          </kbd>{" "}
+                          {t("chat.shiftEnterHint")}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        <span>
+                          {activeSessionId
+                            ? t("chat.sessionSaved")
+                            : t("chat.sessionDraftLabel")}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              {/* Footer */}
-              <div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-2 text-xs text-slate-400 dark:border-zinc-800/50 dark:text-zinc-500 sm:mt-3 sm:pt-3">
-                {/* Keyboard hint — desktop only */}
-                <div className="hidden items-center gap-2 sm:flex">
-                  <Info className="h-3 w-3" />
-                  <span>
-                    Press{" "}
-                    <kbd className="rounded border border-slate-300 bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-500 shadow-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-                      Shift + Enter
-                    </kbd>{" "}
-                    {t("chat.shiftEnterHint")}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                  <span>{t("chat.allSystemsOperational")}</span>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       )}

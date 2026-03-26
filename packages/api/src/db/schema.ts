@@ -81,6 +81,26 @@ export interface DeviceSession {
   metadata: Record<string, unknown> | null;
 }
 
+// chat_sessions
+export interface ChatSession {
+  id: string;
+  user_id: string;
+  title: string;
+  last_message_preview: string | null;
+  last_message_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+// chat_messages
+export interface ChatMessage {
+  id: string;
+  session_id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  created_at: Date;
+}
+
 // oidc_states
 export interface OidcState {
   state: string;

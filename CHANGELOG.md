@@ -1,3 +1,33 @@
+## [0.2.33](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.32...v0.2.33) (2026-03-26)
+
+### Detected changes
+- apps: 4 changed file(s)
+  - apps/dashboard/components/ChatSessionPanel.tsx
+  - apps/dashboard/components/ChatWidget.tsx
+  - apps/dashboard/components/__tests__/ChatWidget.test.tsx
+  - apps/dashboard/lib/api.ts
+- packages: 13 changed file(s)
+  - packages/api/src/__tests__/chat.test.ts
+  - packages/api/src/chat-store.ts
+  - packages/api/src/chat.ts
+  - packages/api/src/db/migrations/003_chat_sessions.sql
+  - packages/api/src/db/schema.ts
+  - packages/api/src/routes/chat.ts
+  - packages/i18n/catalogs/dashboard/en.json
+  - packages/i18n/catalogs/dashboard/es.json
+  - packages/i18n/catalogs/dashboard/zh.json
+  - packages/i18n/src/locales/dashboard.ts
+  - packages/i18n/src/locales/keys.ts
+  - packages/sdk/src/client.ts
+  - packages/sdk/src/types.ts
+
+
+## [0.2.33](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.32...v0.2.33) (2026-03-26)
+
+
+
+
+
 ## [0.2.32](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.31...v0.2.32) (2026-03-26)
 
 ### Detected changes
