@@ -1,3 +1,18 @@
+## [0.1.125](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.124...v0.1.125) (2026-03-26)
+
+### Detected changes
+- apps: 3 changed file(s)
+  - apps/dashboard/components/ChatWidget.tsx
+  - apps/dashboard/public/runtime-version.json
+  - apps/dashboard/public/sw.js
+
+
+## [0.1.125](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.124...v0.1.125) (2026-03-26)
+
+
+
+
+
 ## [0.1.124](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.122...v0.1.124) (2026-03-26)
 
 
