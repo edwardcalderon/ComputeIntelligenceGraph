@@ -12,6 +12,7 @@ import {
   Mic,
   Minimize2,
   MessageSquarePlus,
+  PanelLeft,
   Paperclip,
   Send,
   X,
@@ -64,6 +65,7 @@ export function ChatWidget() {
 
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isSessionsOpen, setIsSessionsOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState<"chat" | "templates">("chat");
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
@@ -591,7 +593,8 @@ export function ChatWidget() {
                   aria-label={`Chat backend status: ${chatModel}, ${chatStatus}`}
                   data-testid="chat-status-pill"
                   className={[
-                    "inline-flex max-w-full items-center gap-2 rounded-full border px-1.5 py-1 sm:px-3 sm:py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] transition-all duration-200 backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-emerald-300/70 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-emerald-400/40 dark:focus:ring-offset-zinc-900",
+                    "inline-flex max-w-full items-center gap-2 rounded-full border px-1.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] transition-all duration-200 backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-emerald-300/70 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-emerald-400/40 dark:focus:ring-offset-zinc-900",
+                    isExpanded ? "sm:px-3 sm:py-1.5" : "",
                     chatIndicatorHealthy
                       ? "border-emerald-300/30 bg-white/36 text-slate-700 shadow-[0_6px_20px_rgba(16,185,129,0.06)] dark:border-emerald-400/15 dark:bg-zinc-950/18 dark:text-zinc-100"
                       : "border-slate-200/70 bg-white/28 text-slate-600 shadow-[0_6px_20px_rgba(15,23,42,0.04)] dark:border-zinc-700/55 dark:bg-zinc-950/20 dark:text-zinc-300",
@@ -625,12 +628,12 @@ export function ChatWidget() {
                         ].join(" ")}
                       />
                     </span>
-                    <span className="hidden max-w-[6.5rem] truncate normal-case tracking-normal sm:inline sm:max-w-[7.5rem] sm:tracking-[0.1em]">
+                    <span className={`hidden max-w-[6.5rem] truncate normal-case tracking-normal sm:max-w-[7.5rem] sm:tracking-[0.1em] ${isExpanded ? "sm:inline" : ""}`}>
                       {chatModel}
                     </span>
                     <span
                       className={[
-                        "hidden rounded-full border px-1.5 py-0.5 text-[9px] font-semibold tracking-[0.15em] backdrop-blur-md sm:inline",
+                        `hidden rounded-full border px-1.5 py-0.5 text-[9px] font-semibold tracking-[0.15em] backdrop-blur-md ${isExpanded ? "sm:inline" : ""}`,
                         chatIndicatorHealthy
                           ? "border-emerald-200/55 bg-emerald-500/8 text-emerald-700 dark:border-emerald-400/15 dark:bg-emerald-400/10 dark:text-emerald-300"
                           : "border-slate-300/70 bg-white/30 text-slate-500 dark:border-zinc-600/70 dark:bg-zinc-950/28 dark:text-zinc-400",
@@ -661,6 +664,22 @@ export function ChatWidget() {
               </div>
 
               <div className="flex items-center gap-2 self-center">
+                {/* Sessions toggle — compact desktop only */}
+                {sessionHistoryAvailable && !isExpanded && (
+                  <button
+                    onClick={() => setIsSessionsOpen((v) => !v)}
+                    aria-label={isSessionsOpen ? "Hide sessions" : "Show sessions"}
+                    title={isSessionsOpen ? "Hide sessions" : "Show sessions"}
+                    className={[
+                      "hidden items-center justify-center rounded-full p-1.5 transition-colors hover:bg-slate-100 dark:hover:bg-zinc-700/50 sm:flex",
+                      isSessionsOpen
+                        ? "text-violet-500 dark:text-violet-400"
+                        : "text-slate-400 dark:text-zinc-400",
+                    ].join(" ")}
+                  >
+                    <PanelLeft className="h-4 w-4" />
+                  </button>
+                )}
                 {/* Expand / collapse — desktop only */}
                 <button
                   onClick={() => setIsExpanded((v) => !v)}
@@ -711,6 +730,7 @@ export function ChatWidget() {
                     onSelectSession={handleSelectSession}
                     onDeleteSession={handleDeleteSession}
                     onStartDraft={handleStartDraft}
+                    desktopOpen={isExpanded || isSessionsOpen}
                   />
                 ) : null}
 

@@ -160,6 +160,7 @@ export function ChatSessionPanel({
   onSelectSession,
   onDeleteSession,
   onStartDraft,
+  desktopOpen = true,
 }: {
   sessions: ChatSessionSummary[];
   activeSessionId: string | null;
@@ -167,6 +168,7 @@ export function ChatSessionPanel({
   onSelectSession: (sessionId: string | null) => void;
   onDeleteSession: (sessionId: string) => void;
   onStartDraft: () => void;
+  desktopOpen?: boolean;
 }) {
   const t = useTranslation();
   const deleteLabel = t("chat.deleteSession");
@@ -241,7 +243,10 @@ export function ChatSessionPanel({
         </div>
       </div>
 
-      <aside className="hidden w-48 shrink-0 border-r border-slate-100 bg-slate-50/55 dark:border-zinc-700/40 dark:bg-zinc-950/20 sm:flex sm:flex-col">
+      <aside className={[
+        "w-48 shrink-0 border-r border-slate-100 bg-slate-50/55 dark:border-zinc-700/40 dark:bg-zinc-950/20 sm:flex-col",
+        desktopOpen ? "hidden sm:flex" : "hidden",
+      ].join(" ")}>
         <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-3 dark:border-zinc-700/40">
           <div className="flex min-w-0 items-center gap-2">
             <p className="truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-zinc-500">
