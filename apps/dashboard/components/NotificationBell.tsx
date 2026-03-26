@@ -163,9 +163,14 @@ export function NotificationBell() {
         )}
       </button>
 
-      {/* Dropdown panel */}
+      {/* Mobile backdrop */}
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-[22rem] sm:w-96 rounded-xl border border-cig bg-cig-card shadow-xl z-50 flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-40 sm:hidden" aria-hidden="true" />
+      )}
+
+      {/* Dropdown panel — full-width sheet on mobile, anchored popover on sm+ */}
+      {open && (
+        <div className="fixed left-2 right-2 top-14 z-50 rounded-xl border border-cig bg-cig-card shadow-xl flex flex-col overflow-hidden sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-1 sm:w-96 sm:inset-x-auto">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-cig">
             <div className="flex items-center gap-2">
@@ -254,7 +259,7 @@ export function NotificationBell() {
           </div>
 
           {/* List */}
-          <div className="max-h-72 overflow-y-auto divide-y divide-cig">
+          <div className="max-h-[55vh] sm:max-h-72 overflow-y-auto divide-y divide-cig">
             {filtered.length === 0 ? (
               <div className="py-8 text-center text-xs text-cig-muted">
                 {search || filter !== "all"

@@ -1,3 +1,18 @@
+## [0.2.13](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.12...v0.2.13) (2026-03-26)
+
+### Detected changes
+- apps: 3 changed file(s)
+  - apps/dashboard/components/NotificationBell.tsx
+  - apps/dashboard/public/runtime-version.json
+  - apps/landing/public/runtime-version.json
+
+
+## [0.2.13](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.12...v0.2.13) (2026-03-26)
+
+
+
+
+
 ## [0.2.12](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.11...v0.2.12) (2026-03-26)
 
 
