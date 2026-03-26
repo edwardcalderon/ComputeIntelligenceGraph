@@ -1,3 +1,25 @@
+## [0.2.16](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.14...v0.2.16) (2026-03-26)
+
+
+### Bug Fixes
+
+* **dashboard:** improve canvas responsiveness and sidebar mobile display ([2bfd21a](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/2bfd21ae3bf040e9f2bad1951c65bde87f8b6102))
+
+
+
+
+
+## [0.2.16](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.14...v0.2.16) (2026-03-26)
+
+
+### Bug Fixes
+
+* **dashboard:** improve canvas responsiveness and sidebar mobile display ([2bfd21a](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/2bfd21ae3bf040e9f2bad1951c65bde87f8b6102))
+
+
+
+
+
 ## [0.2.15](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.14...v0.2.15) (2026-03-26)
 
 ### Detected changes
