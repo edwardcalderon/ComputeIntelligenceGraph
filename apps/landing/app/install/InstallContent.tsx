@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useState } from "react";
-import { useResolvedDocsUrl, useResolvedLandingUrl } from "@cig/ui";
+import {
+  useResolvedDocsUrl,
+  useResolvedLandingUrl,
+} from "@cig/ui/siteUrl.client";
 import {
   ArrowLeft,
   ArrowRight,

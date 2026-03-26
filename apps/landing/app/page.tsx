@@ -11,7 +11,7 @@ import { PreferencesMenu } from "../components/PreferencesMenu";
 import { useCIGAuth } from "../components/AuthProvider";
 import { useTranslation } from "@cig-technology/i18n/react";
 import { FooterBar } from "@cig/ui/components";
-import { useResolvedDocsUrl } from "@cig/ui";
+import { useResolvedDocsUrl } from "@cig/ui/siteUrl.client";
 import {
   Cloud,
   GitGraph,

@@ -11,7 +11,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { useTheme } from "../app/providers";
 import { FooterBar } from "@cig/ui/components";
-import { useResolvedDocsUrl } from "@cig/ui";
+import { useResolvedDocsUrl } from "@cig/ui/siteUrl.client";
 
 const DASHBOARD_URL =
   process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3002";

@@ -54,7 +54,7 @@ describe("siteUrl", () => {
 
     expect(
       resolveDocsUrl({ hostname: "localhost", protocol: "http:" }),
-    ).toBe("http://localhost:3000/documentation");
+    ).toBe("http://localhost:3004/documentation");
   });
 
   it("falls back to the configured docs url on production hosts", () => {

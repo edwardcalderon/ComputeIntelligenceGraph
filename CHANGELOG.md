@@ -1,3 +1,25 @@
+## [0.2.41](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.40...v0.2.41) (2026-03-26)
+
+### Detected changes
+- apps: 6 changed file(s)
+  - apps/dashboard/lib/__tests__/siteUrl.test.ts
+  - apps/dashboard/lib/siteUrl.ts
+  - apps/landing/app/install/InstallContent.tsx
+  - apps/landing/app/page.tsx
+  - apps/landing/components/AuthenticatedLanding.tsx
+  - apps/landing/components/LandingLayout.tsx
+- packages: 3 changed file(s)
+  - packages/ui/package.json
+  - packages/ui/src/siteUrl.client.ts
+  - packages/ui/src/siteUrl.ts
+
+
+## [0.2.41](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.40...v0.2.41) (2026-03-26)
+
+
+
+
+
 ## [0.2.40](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.39...v0.2.40) (2026-03-26)
 
 ### Detected changes

@@ -1,8 +1,6 @@
-import { useSyncExternalStore } from "react";
-
 const DEFAULT_LANDING_URL = "http://localhost:3000";
 const DEFAULT_DASHBOARD_URL = "http://localhost:3001";
-const DEFAULT_DOCS_URL = "http://localhost:3000/documentation";
+const DEFAULT_DOCS_URL = "http://localhost:3004/documentation";
 
 export type UrlContext = {
   hostname?: string | null;
@@ -57,7 +55,7 @@ export function resolveDocsUrl(context: UrlContext = {}): string {
   const protocol = context.protocol;
 
   if (hostname && isLocalHostname(hostname)) {
-    return `${formatLocalOriginUrl(hostname, protocol ?? "http:", 3000)}/documentation`;
+    return `${formatLocalOriginUrl(hostname, protocol ?? "http:", 3004)}/documentation`;
   }
 
   const configuredDocsUrl = env.NEXT_PUBLIC_DOCS_URL;
@@ -83,53 +81,4 @@ export function resolveDashboardUrl(context: UrlContext = {}): string {
   }
 
   return env.NEXT_PUBLIC_DASHBOARD_URL ?? DEFAULT_DASHBOARD_URL;
-}
-
-function subscribe(onStoreChange: () => void): () => void {
-  if (typeof window === "undefined") {
-    return () => {};
-  }
-
-  window.addEventListener("popstate", onStoreChange);
-  window.addEventListener("hashchange", onStoreChange);
-
-  return () => {
-    window.removeEventListener("popstate", onStoreChange);
-    window.removeEventListener("hashchange", onStoreChange);
-  };
-}
-
-function getClientContext(): UrlContext {
-  if (typeof window === "undefined") {
-    return {};
-  }
-
-  return {
-    hostname: window.location.hostname,
-    protocol: window.location.protocol,
-  };
-}
-
-function getServerContext(): UrlContext {
-  return {};
-}
-
-export function useUrlContext(): UrlContext {
-  return useSyncExternalStore(subscribe, getClientContext, getServerContext);
-}
-
-export function useResolvedLandingUrl(): string {
-  return resolveLandingUrl(useUrlContext());
-}
-
-export function useResolvedLandingLoggedOutUrl(): string {
-  return resolveLandingLoggedOutUrl(useUrlContext());
-}
-
-export function useResolvedDocsUrl(): string {
-  return resolveDocsUrl(useUrlContext());
-}
-
-export function useResolvedDashboardUrl(): string {
-  return resolveDashboardUrl(useUrlContext());
 }

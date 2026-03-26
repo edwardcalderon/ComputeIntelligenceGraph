@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { FooterBar } from "@cig/ui/components";
-import { useResolvedDocsUrl } from "@cig/ui";
+import { useResolvedDocsUrl } from "@cig/ui/siteUrl.client";
 import { AuthButton } from "./AuthButton";
 import { PreferencesMenu } from "./PreferencesMenu";
 import { useTranslation } from "@cig-technology/i18n/react";
