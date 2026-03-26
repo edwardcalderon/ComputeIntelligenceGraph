@@ -16,6 +16,7 @@ import path from 'node:path';
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { query, withTransaction } from '../db/client';
+import { Permission } from '../auth';
 
 let supabaseClient: SupabaseClient | null = null;
 let smtpTransport: Transporter | null = null;
@@ -47,6 +48,7 @@ interface EmailSessionClaims {
   email: string;
   name: string;
   provider: 'email';
+  permissions: Permission[];
 }
 
 function getSupabaseClient(): SupabaseClient {
@@ -187,16 +189,17 @@ function getSmtpTransport(): Transporter {
   return smtpTransport;
 }
 
-function buildEmailSessionClaims(email: string): EmailSessionClaims {
+export function buildEmailSessionClaims(email: string): EmailSessionClaims {
   return {
     sub: email,
     email,
     name: email.split('@')[0] ?? email,
     provider: 'email',
+    permissions: [Permission.READ_RESOURCES],
   };
 }
 
-function issueEmailSessionToken(email: string): string {
+export function issueEmailSessionToken(email: string): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     throw new Error('JWT_SECRET environment variable is not set');

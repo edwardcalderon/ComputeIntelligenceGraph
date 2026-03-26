@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "@cig-technology/i18n/react";
@@ -10,6 +10,11 @@ import {
   completeBootstrap,
   BootstrapStatus,
 } from "../../../lib/api";
+import {
+  clearBootstrapPromptSeen,
+  markBootstrapPromptSeen,
+} from "../../../lib/bootstrapPreferences";
+import { notifyUser } from "../../../components/NotificationBell";
 
 type Step = "check" | "token" | "admin" | "complete";
 
@@ -65,6 +70,11 @@ export default function BootstrapPage() {
         password,
       }),
     onSuccess: () => {
+      clearBootstrapPromptSeen();
+      notifyUser(
+        "Bootstrap complete. Your admin account is ready.",
+        "success"
+      );
       setError(null);
       setStep("complete");
     },
@@ -101,6 +111,12 @@ export default function BootstrapPage() {
     }
     completeMutation.mutate();
   }
+
+  useEffect(() => {
+    if (needsBootstrap) {
+      markBootstrapPromptSeen();
+    }
+  }, [needsBootstrap]);
 
   const inputClasses = "w-full rounded-xl border border-cig bg-cig-base px-4 py-2.5 text-sm text-cig-primary placeholder-cig-muted focus:outline-none focus:ring-1 focus:ring-cyan-500/40 focus:border-cyan-500/30 transition-colors";
 

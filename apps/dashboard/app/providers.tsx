@@ -9,6 +9,7 @@ import { LOCALE_META } from "@cig-technology/i18n";
 import { initI18n } from "./i18n";
 import { dataProvider } from "../lib/dataProvider";
 import { authProvider } from "../lib/authProvider";
+import { NotificationProvider } from "../components/NotificationBell";
 
 // Initialize i18n catalogs once at module level
 initI18n();
@@ -53,6 +54,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           resources={resources}
           options={{ disableTelemetry: true, projectId: "cig-dashboard" }}
         >
+          <NotificationProvider />
           {children}
         </Refine>
       </QueryClientProvider>

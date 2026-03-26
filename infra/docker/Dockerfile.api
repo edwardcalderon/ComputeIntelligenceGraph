@@ -18,6 +18,8 @@ COPY packages/auth/package.json ./packages/auth/
 COPY packages/config/package.json ./packages/config/
 COPY packages/graph/package.json ./packages/graph/
 COPY packages/discovery/package.json ./packages/discovery/
+COPY packages/agents/package.json ./packages/agents/
+COPY packages/chatbot/package.json ./packages/chatbot/
 
 # Install only the API workspace tree needed for the runtime image.
 # The cache mount keeps pnpm's store warm across workflow runs.

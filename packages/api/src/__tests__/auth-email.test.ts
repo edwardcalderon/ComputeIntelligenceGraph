@@ -1,5 +1,7 @@
 import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
+import jwt from 'jsonwebtoken';
+import { issueEmailSessionToken } from '../routes/auth-email.js';
 
 vi.hoisted(() => {
   process.env['DATABASE_URL'] = 'sqlite://:memory:';
@@ -89,5 +91,18 @@ describe('auth email routes', () => {
       })
     );
     expect(mailerMocks.sendMail).toHaveBeenCalledTimes(1);
+  });
+
+  it('issues email sessions with read permissions for dashboard chat access', () => {
+    const token = issueEmailSessionToken('person@example.com');
+    const payload = jwt.verify(token, process.env['JWT_SECRET']!) as {
+      permissions?: string[];
+      provider?: string;
+      email?: string;
+    };
+
+    expect(payload.permissions).toContain('READ_RESOURCES');
+    expect(payload.provider).toBe('email');
+    expect(payload.email).toBe('person@example.com');
   });
 });

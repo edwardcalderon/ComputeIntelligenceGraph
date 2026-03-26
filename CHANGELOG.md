@@ -1,3 +1,28 @@
+## [0.2.11](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.10...v0.2.11) (2026-03-26)
+
+### Detected changes
+- apps: 9 changed file(s)
+  - apps/dashboard/app/(dashboard)/bootstrap/page.tsx
+  - apps/dashboard/app/providers.tsx
+  - apps/dashboard/components/BootstrapRedirect.tsx
+  - apps/dashboard/components/NotificationBell.tsx
+  - apps/dashboard/components/__tests__/BootstrapRedirect.test.tsx
+  - apps/dashboard/lib/__tests__/authProvider.test.ts
+  - apps/dashboard/lib/bootstrapPreferences.ts
+  - apps/dashboard/public/runtime-version.json
+  - apps/landing/public/runtime-version.json
+- infra: infra/docker/Dockerfile.api
+- packages: 2 changed file(s)
+  - packages/api/src/__tests__/auth-email.test.ts
+  - packages/api/src/routes/auth-email.ts
+
+
+## [0.2.11](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.10...v0.2.11) (2026-03-26)
+
+
+
+
+
 ## [0.2.10](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.8...v0.2.10) (2026-03-26)
 
 

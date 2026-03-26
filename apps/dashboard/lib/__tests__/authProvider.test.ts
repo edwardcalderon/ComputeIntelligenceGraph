@@ -44,7 +44,7 @@ describe("dashboard authProvider.logout", () => {
     sessionStorage.setItem("cig_auth_source", "supabase");
     sessionStorage.setItem("cig_expires_at", String(Date.now() + 60_000));
 
-    const result = await authProvider.logout();
+    const result = await authProvider.logout({} as never);
 
     expect(supabaseSignOut).toHaveBeenCalledTimes(1);
     expect(supabaseSignOut).toHaveBeenCalledWith({ scope: "local" });
@@ -67,7 +67,7 @@ describe("dashboard authProvider.logout", () => {
     sessionStorage.setItem("cig_access_token", makeJwt("https://project.supabase.co/auth/v1"));
     sessionStorage.setItem("cig_expires_at", String(Date.now() + 60_000));
 
-    const result = await authProvider.logout();
+    const result = await authProvider.logout({} as never);
 
     expect(supabaseSignOut).toHaveBeenCalledTimes(1);
     expect(supabaseSignOut).toHaveBeenCalledWith({ scope: "local" });
@@ -82,7 +82,7 @@ describe("dashboard authProvider.logout", () => {
     sessionStorage.setItem("cig_auth_source", "authentik");
     sessionStorage.setItem("cig_expires_at", String(Date.now() + 60_000));
 
-    const result = await authProvider.logout();
+    const result = await authProvider.logout({} as never);
 
     expect(mockRevokeSessionViaApi).toHaveBeenCalledTimes(1);
     expect(mockRevokeSessionViaApi).toHaveBeenCalledWith("authentik-access-token");

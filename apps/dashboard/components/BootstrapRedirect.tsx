@@ -1,9 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useTranslation } from "@cig-technology/i18n/react";
 import { getBootstrapStatus } from "../lib/api";
+import {
+  clearBootstrapPromptSeen,
+  hasSeenBootstrapPrompt,
+  markBootstrapPromptSeen,
+} from "../lib/bootstrapPreferences";
+import { notifyUser } from "./NotificationBell";
 
 export function BootstrapRedirect({
   children,
@@ -14,19 +20,41 @@ export function BootstrapRedirect({
   const router = useRouter();
   const pathname = usePathname();
   const [checked, setChecked] = useState(false);
+  const didCheckRef = useRef(false);
 
   useEffect(() => {
+    if (didCheckRef.current) {
+      return;
+    }
+    didCheckRef.current = true;
+
     let cancelled = false;
 
     const checkBootstrap = async () => {
       try {
         const status = await getBootstrapStatus();
-        if (
-          !cancelled &&
-          status.mode === "self-hosted" &&
-          status.requires_bootstrap &&
-          pathname !== "/bootstrap"
-        ) {
+        if (cancelled) {
+          return;
+        }
+
+        if (status.mode !== "self-hosted" || !status.requires_bootstrap) {
+          clearBootstrapPromptSeen();
+          return;
+        }
+
+        const hasSeenPrompt = hasSeenBootstrapPrompt();
+        if (hasSeenPrompt) {
+          return;
+        }
+
+        const shouldRedirect = pathname !== "/bootstrap";
+        markBootstrapPromptSeen();
+        notifyUser(
+          "Self-hosted setup is required. Open the bootstrap flow to finish initial setup.",
+          "progress"
+        );
+
+        if (shouldRedirect) {
           router.replace("/bootstrap");
         }
       } catch (err) {

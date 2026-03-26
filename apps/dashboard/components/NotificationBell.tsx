@@ -17,6 +17,13 @@ export interface Notification {
 
 type FilterType = "all" | "success" | "error" | "progress";
 
+type NotificationEventDetail = {
+  message: string;
+  type: "success" | "error" | "progress";
+  source?: "notifyUser" | "refine";
+};
+
+// Simple in-memory notification store — populated by useNotification interceptor
 let _notifications: Notification[] = [];
 let _listeners: (() => void)[] = [];
 
@@ -314,11 +321,17 @@ export function NotificationProvider() {
 
   useEffect(() => {
     const origNotify = notify;
-    function handler(
-      e: CustomEvent<{ message: string; type: "success" | "error" | "progress" }>
-    ) {
-      pushNotification(e.detail);
-      origNotify?.(e.detail);
+
+    // We use a custom event so any component can push notifications
+    function handler(event: Event) {
+      const detail = (event as CustomEvent<NotificationEventDetail>).detail;
+
+      if (detail.source === "notifyUser") {
+        return;
+      }
+
+      pushNotification(detail);
+      origNotify?.({ message: detail.message, type: detail.type });
     }
     window.addEventListener("cig:notify" as never, handler as EventListener);
     return () => window.removeEventListener("cig:notify" as never, handler as EventListener);
@@ -332,5 +345,9 @@ export function notifyUser(
   type: "success" | "error" | "progress" = "progress"
 ) {
   pushNotification({ message, type });
-  window.dispatchEvent(new CustomEvent("cig:notify", { detail: { message, type } }));
+  window.dispatchEvent(
+    new CustomEvent("cig:notify", {
+      detail: { message, type, source: "notifyUser" },
+    })
+  );
 }
