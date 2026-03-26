@@ -16,6 +16,7 @@ export type {
   DeviceAuthRequest,
   DeviceAuthResponse,
   DeviceSession,
+  HealthResponse,
   DiscoveryStatus,
   EnrollmentTokenResponse,
   GraphStats,
@@ -44,6 +45,8 @@ export const searchResources = (query: string, params?: string) =>
   getClient().searchResources(query, params);
 
 export const getDiscoveryStatus = () => getClient().getDiscoveryStatus();
+
+export const getHealth = () => getClient().getHealth();
 
 export const triggerDiscovery = () => getClient().triggerDiscovery();
 

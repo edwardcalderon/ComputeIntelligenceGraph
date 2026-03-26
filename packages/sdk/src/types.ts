@@ -25,6 +25,22 @@ export interface DiscoveryStatus {
   nextRun: string | null;
 }
 
+export interface ChatHealthStatus {
+  provider: "openai" | "fallback";
+  model: string;
+  configured: boolean;
+  reachable: boolean;
+  checkedAt: string;
+  latencyMs: number | null;
+}
+
+export interface HealthResponse {
+  status: "ok";
+  version: string;
+  timestamp: string;
+  chat: ChatHealthStatus;
+}
+
 export interface GraphStats {
   nodeCount: number;
   edgeCount: number;

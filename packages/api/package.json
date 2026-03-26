@@ -1,6 +1,6 @@
 {
   "name": "@cig/api",
-  "version": "0.2.17",
+  "version": "0.2.18",
   "description": "CIG REST/GraphQL API server",
   "files": [
     "dist"
@@ -9,12 +9,12 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc --build && node scripts/copy-migrations.mjs",
-    "dev": "pnpm build && concurrently --names \"tsc,api\" --prefix-colors \"cyan.bold,green.bold\" \"tsc --watch\" \"node --watch --env-file=../../.env dist/index.js\"",
+    "dev": "pnpm build && concurrently --names \"tsc,api\" --prefix-colors \"cyan.bold,green.bold\" \"tsc --build --watch --preserveWatchOutput\" \"node scripts/dev-runner.mjs\"",
     "start": "node dist/index.js",
     "migrate:up": "pnpm build && node dist/migrate.js",
     "lint": "tsc --noEmit",
     "test": "vitest run",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist tsconfig.tsbuildinfo"
   },
   "dependencies": {
     "@aws-sdk/client-cost-explorer": "^3.1009.0",

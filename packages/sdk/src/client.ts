@@ -16,6 +16,7 @@ import type {
   SecurityFindingsResponse,
   SecurityScore,
   SessionListResponse,
+  HealthResponse,
   TargetsResponse,
 } from "./types";
 
@@ -129,6 +130,10 @@ export class CigClient {
 
   getDiscoveryStatus(): Promise<DiscoveryStatus> {
     return this.request<DiscoveryStatus>("/api/v1/discovery/status");
+  }
+
+  getHealth(): Promise<HealthResponse> {
+    return this.request<HealthResponse>("/api/v1/health");
   }
 
   triggerDiscovery(): Promise<{ message: string }> {

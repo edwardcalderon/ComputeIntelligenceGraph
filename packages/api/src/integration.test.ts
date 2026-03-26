@@ -144,14 +144,28 @@ function makeAuthHeader(permissions: Permission[]): string {
 
 describe('API Integration Tests', () => {
   let app: FastifyInstance;
+  const originalOpenAiKey = process.env['OPENAI_API_KEY'];
+  const originalOpenAiModel = process.env['OPENAI_CHAT_MODEL'];
 
   beforeAll(async () => {
+    process.env['OPENAI_API_KEY'] = '';
+    process.env['OPENAI_CHAT_MODEL'] = 'gpt-4o-mini';
     app = await createServer();
     await app.ready();
   });
 
   afterAll(async () => {
     await app.close();
+    if (originalOpenAiKey === undefined) {
+      delete process.env['OPENAI_API_KEY'];
+    } else {
+      process.env['OPENAI_API_KEY'] = originalOpenAiKey;
+    }
+    if (originalOpenAiModel === undefined) {
+      delete process.env['OPENAI_CHAT_MODEL'];
+    } else {
+      process.env['OPENAI_CHAT_MODEL'] = originalOpenAiModel;
+    }
   });
 
   // ── Health ──────────────────────────────────────────────────────────────────
@@ -168,6 +182,13 @@ describe('API Integration Tests', () => {
       expect(body.status).toBe('ok');
       expect(typeof body.version).toBe('string');
       expect(typeof body.timestamp).toBe('string');
+      expect(body.chat).toMatchObject({
+        provider: 'fallback',
+        model: 'gpt-4o-mini',
+        configured: false,
+        reachable: false,
+      });
+      expect(typeof body.chat.checkedAt).toBe('string');
     });
   });
 

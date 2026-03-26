@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useTranslation } from "@cig-technology/i18n/react";
 import { getBootstrapStatus } from "../lib/api";
 import {
   clearBootstrapPromptSeen,
@@ -11,15 +10,15 @@ import {
 } from "../lib/bootstrapPreferences";
 import { notifyUser } from "./NotificationBell";
 
+const BOOTSTRAP_STATUS_TIMEOUT_MS = 3_000;
+
 export function BootstrapRedirect({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const t = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
-  const [checked, setChecked] = useState(false);
   const didCheckRef = useRef(false);
 
   useEffect(() => {
@@ -32,7 +31,12 @@ export function BootstrapRedirect({
 
     const checkBootstrap = async () => {
       try {
-        const status = await getBootstrapStatus();
+        const status = await Promise.race([
+          getBootstrapStatus(),
+          new Promise<never>((_resolve, reject) => {
+            window.setTimeout(() => reject(new Error("Bootstrap status check timed out")), BOOTSTRAP_STATUS_TIMEOUT_MS);
+          }),
+        ]);
         if (cancelled) {
           return;
         }
@@ -58,10 +62,8 @@ export function BootstrapRedirect({
           router.replace("/bootstrap");
         }
       } catch (err) {
-        console.error("Failed to check bootstrap status:", err);
-      } finally {
         if (!cancelled) {
-          setChecked(true);
+          console.warn("Failed to check bootstrap status:", err);
         }
       }
     };
@@ -71,14 +73,6 @@ export function BootstrapRedirect({
       cancelled = true;
     };
   }, [router, pathname]);
-
-  if (!checked) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <p className="text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
-      </div>
-    );
-  }
 
   return <>{children}</>;
 }

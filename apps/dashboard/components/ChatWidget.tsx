@@ -15,7 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { useTranslation } from "@cig-technology/i18n/react";
-import { sendChatMessage, ChatMessage } from "../lib/api";
+import { getHealth, sendChatMessage, type ChatMessage, type HealthResponse } from "../lib/api";
 
 const STORAGE_KEY = "cig-chat-history";
 const MAX_CHARS = 2000;
@@ -57,6 +57,8 @@ export function ChatWidget() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [health, setHealth] = useState<HealthResponse | null>(null);
+  const [healthReady, setHealthReady] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -69,6 +71,39 @@ export function ChatWidget() {
 
   useEffect(() => {
     setMessages(loadHistory());
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    let intervalId: number | undefined;
+
+    const refreshHealth = async () => {
+      try {
+        const next = await getHealth();
+        if (cancelled) {
+          return;
+        }
+        setHealth(next);
+        setHealthReady(true);
+      } catch {
+        if (!cancelled) {
+          setHealth(null);
+          setHealthReady(true);
+        }
+      }
+    };
+
+    void refreshHealth();
+    intervalId = window.setInterval(() => {
+      void refreshHealth();
+    }, 20_000);
+
+    return () => {
+      cancelled = true;
+      if (intervalId !== undefined) {
+        window.clearInterval(intervalId);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -127,6 +162,20 @@ export function ChatWidget() {
       handleSend();
     }
   }
+
+  const chatModel = health?.chat?.model?.trim() || "gpt-4o-mini";
+  const chatProvider = health?.chat?.provider ?? (healthReady ? "fallback" : "openai");
+  const chatIsConnected = health?.chat?.reachable ?? false;
+  const chatLastChecked = health?.chat?.checkedAt
+    ? new Date(health.chat.checkedAt).toLocaleString()
+    : null;
+  const chatStatus = !healthReady
+    ? "CHECKING"
+    : chatIsConnected
+    ? "CONNECTED"
+    : health?.chat?.configured
+    ? "OFFLINE"
+    : "FALLBACK";
 
   return (
     <>
@@ -259,20 +308,105 @@ export function ChatWidget() {
             </button>
 
             {/* ── Header ──────────────────────────────────────────── */}
-            <div className="relative z-10 flex items-center justify-between border-b border-slate-100 px-4 pb-3 pt-3 dark:border-zinc-700/40 sm:px-6 sm:pt-4">
-              <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
-                <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">
-                  {t("chat.title")}
+            <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-slate-100 px-4 pb-3 pt-3 dark:border-zinc-700/40 sm:px-6 sm:pt-4">
+              <span className="sr-only">{t("chat.title")}</span>
+              <div className="group relative min-w-0 max-w-full sm:max-w-[68%]">
+                <span
+                  tabIndex={0}
+                  aria-describedby="chat-status-tooltip"
+                  aria-label={`Chat backend status: ${chatModel}, ${chatStatus}`}
+                  data-testid="chat-status-pill"
+                  className={[
+                    "inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] transition-all duration-200 backdrop-blur-xl",
+                    chatIsConnected
+                      ? "border-emerald-300/30 bg-white/36 text-slate-700 shadow-[0_6px_20px_rgba(16,185,129,0.06)] dark:border-emerald-400/15 dark:bg-zinc-950/18 dark:text-zinc-100"
+                      : "border-slate-200/70 bg-white/28 text-slate-600 shadow-[0_6px_20px_rgba(15,23,42,0.04)] dark:border-zinc-700/55 dark:bg-zinc-950/20 dark:text-zinc-300",
+                  ].join(" ")}
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span className="relative flex h-2.5 w-2.5 items-center justify-center">
+                      <span
+                        className={[
+                          "absolute h-2.5 w-2.5 rounded-full",
+                          chatIsConnected
+                            ? "animate-ping bg-emerald-400/22"
+                            : "bg-slate-400/20",
+                        ].join(" ")}
+                      />
+                      <span
+                        className={[
+                          "relative h-2 w-2 rounded-full",
+                          chatIsConnected
+                            ? "bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.1)]"
+                            : "bg-slate-400 dark:bg-zinc-500",
+                        ].join(" ")}
+                      />
+                    </span>
+                    <span className="max-w-[6.5rem] truncate normal-case tracking-normal sm:max-w-[7.5rem] sm:tracking-[0.1em]">
+                      {chatModel}
+                    </span>
+                    <span
+                      className={[
+                        "rounded-full border px-1.5 py-0.5 text-[9px] font-semibold tracking-[0.15em] backdrop-blur-md",
+                        chatIsConnected
+                          ? "border-emerald-200/55 bg-emerald-500/8 text-emerald-700 dark:border-emerald-400/15 dark:bg-emerald-400/10 dark:text-emerald-300"
+                          : "border-slate-300/70 bg-white/30 text-slate-500 dark:border-zinc-600/70 dark:bg-zinc-950/28 dark:text-zinc-400",
+                      ].join(" ")}
+                    >
+                      {chatStatus}
+                    </span>
+                  </span>
                 </span>
+
+                <div
+                  id="chat-status-tooltip"
+                  data-testid="chat-status-tooltip"
+                  role="tooltip"
+                  className="pointer-events-none absolute left-0 top-full z-40 mt-2 w-[min(15rem,calc(100vw-3rem))] translate-y-1 opacity-0 transition-all duration-200 ease-out group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100 sm:w-60"
+                >
+                  <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/92 shadow-[0_18px_42px_rgba(15,23,42,0.14)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/90 dark:shadow-[0_18px_42px_rgba(0,0,0,0.34)]">
+                    <div className="bg-gradient-to-r from-emerald-500/10 via-transparent to-cyan-500/10 px-3 py-3">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={[
+                            "h-2 w-2 rounded-full",
+                            chatIsConnected ? "bg-emerald-400" : "bg-slate-400",
+                          ].join(" ")}
+                        />
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-semibold text-slate-900 dark:text-white">{chatModel}</p>
+                          <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-zinc-500">
+                            {chatProvider === "openai" ? "OpenAI" : "Fallback"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        <span
+                          className={[
+                            "inline-flex items-center rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]",
+                            chatIsConnected
+                              ? "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/12 dark:text-emerald-300"
+                              : "bg-slate-500/10 text-slate-600 dark:bg-zinc-800/70 dark:text-zinc-300",
+                          ].join(" ")}
+                        >
+                          {chatStatus}
+                        </span>
+                        <span className="inline-flex items-center rounded-full bg-slate-900/5 px-2 py-1 text-[10px] font-medium text-slate-600 dark:bg-white/5 dark:text-zinc-300">
+                          {chatLastChecked ?? "pending"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="px-3 pb-3 text-[10px] leading-relaxed text-slate-500 dark:text-zinc-500">
+                      {healthReady
+                        ? chatIsConnected
+                          ? "Chat backend is reachable and ready."
+                          : "Chat backend is not reachable right now."
+                        : "Checking chat backend health..."}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="rounded-2xl bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-zinc-800/60 dark:text-zinc-300">
-                  GPT-4
-                </span>
-                <span className="rounded-2xl border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-500 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400">
-                  Pro
-                </span>
+              <div className="ml-auto flex items-center gap-2 self-center">
                 {/* Expand / collapse — desktop only */}
                 <button
                   onClick={() => setIsExpanded((v) => !v)}

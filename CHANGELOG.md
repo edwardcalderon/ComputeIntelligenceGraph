@@ -1,3 +1,28 @@
+## [0.2.18](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.17...v0.2.18) (2026-03-26)
+
+### Detected changes
+- apps: 5 changed file(s)
+  - apps/dashboard/components/BootstrapRedirect.tsx
+  - apps/dashboard/components/ChatWidget.tsx
+  - apps/dashboard/components/__tests__/ChatWidget.test.tsx
+  - apps/dashboard/lib/api.ts
+  - apps/dashboard/middleware.ts
+- packages: 7 changed file(s)
+  - packages/api/package.json
+  - packages/api/scripts/dev-runner.mjs
+  - packages/api/src/index.ts
+  - packages/api/src/integration.test.ts
+  - packages/sdk/src/client.test.ts
+  - packages/sdk/src/client.ts
+  - packages/sdk/src/types.ts
+
+
+## [0.2.18](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.17...v0.2.18) (2026-03-26)
+
+
+
+
+
 ## [0.2.17](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.16...v0.2.17) (2026-03-26)
 
 

@@ -10,6 +10,20 @@ import { closeDatabase } from './db/client';
 
 const VERSION = '0.1.0';
 const RATE_LIMIT_EXEMPT_ROUTES = new Set(['GET /api/v1/health', 'GET /metrics']);
+const OPENAI_MODEL_DEFAULT = 'gpt-4o-mini';
+const OPENAI_HEALTH_CACHE_MS = 30_000;
+const OPENAI_HEALTH_TIMEOUT_MS = 2_500;
+
+type ChatHealthStatus = {
+  provider: 'openai' | 'fallback';
+  model: string;
+  configured: boolean;
+  reachable: boolean;
+  checkedAt: string;
+  latencyMs: number | null;
+};
+
+let openAiHealthCache: { checkedAt: number; status: ChatHealthStatus } | null = null;
 
 function resolveCorsOrigins(): true | string[] {
   const configuredOrigins = process.env.CORS_ORIGINS?.trim();
@@ -35,6 +49,69 @@ function resolveCorsOrigins(): true | string[] {
     'https://www.cig.lat',
     'https://edwardcalderon.github.io',
   ];
+}
+
+async function resolveChatHealth(): Promise<ChatHealthStatus> {
+  const model = process.env.OPENAI_CHAT_MODEL?.trim() || OPENAI_MODEL_DEFAULT;
+  const apiKey = process.env.OPENAI_API_KEY?.trim() || '';
+  const now = Date.now();
+
+  if (openAiHealthCache && now - openAiHealthCache.checkedAt < OPENAI_HEALTH_CACHE_MS) {
+    return openAiHealthCache.status;
+  }
+
+  const checkedAt = new Date().toISOString();
+
+  if (!apiKey) {
+    const status: ChatHealthStatus = {
+      provider: 'fallback',
+      model,
+      configured: false,
+      reachable: false,
+      checkedAt,
+      latencyMs: null,
+    };
+    openAiHealthCache = { checkedAt: now, status };
+    return status;
+  }
+
+  const controller = new AbortController();
+  const startedAt = Date.now();
+  const timeout = setTimeout(() => controller.abort(), OPENAI_HEALTH_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(`https://api.openai.com/v1/models/${encodeURIComponent(model)}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+      signal: controller.signal,
+    });
+
+    const status: ChatHealthStatus = {
+      provider: 'openai',
+      model,
+      configured: true,
+      reachable: response.ok,
+      checkedAt,
+      latencyMs: Date.now() - startedAt,
+    };
+    openAiHealthCache = { checkedAt: now, status };
+    return status;
+  } catch (_error) {
+    const status: ChatHealthStatus = {
+      provider: 'openai',
+      model,
+      configured: true,
+      reachable: false,
+      checkedAt,
+      latencyMs: Date.now() - startedAt,
+    };
+    openAiHealthCache = { checkedAt: now, status };
+    return status;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export async function createServer(): Promise<FastifyInstance> {
@@ -87,10 +164,12 @@ export async function createServer(): Promise<FastifyInstance> {
 
   // Health check
   app.get('/api/v1/health', async (_request: FastifyRequest, reply: FastifyReply) => {
+    const chat = await resolveChatHealth();
     return reply.send({
       status: 'ok',
       version: VERSION,
       timestamp: new Date().toISOString(),
+      chat,
     });
   });
 

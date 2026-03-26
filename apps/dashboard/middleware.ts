@@ -8,6 +8,8 @@ const PUBLIC_PATHS = [
   "/auth/login-callback",
   "/auth/login",
   "/api/auth/sync",
+  "/runtime-version.json",
+  "/sw.js",
   "/_next",
   "/favicon",
 ];
