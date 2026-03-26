@@ -208,6 +208,30 @@ describe('Pinned service image refs', () => {
     }
   });
 
+  it('defaults to the cigtechnology registry when no manifest images are provided', async () => {
+    const manifest: InstallManifest = {
+      profile: 'discovery',
+      services: ['api', 'dashboard', 'neo4j', 'discovery', 'cartography'],
+    };
+
+    const outputDir = fs.mkdtempSync(path.join(tmpDir, 'test-'));
+    try {
+      await generateCompose(manifest, outputDir);
+
+      const composePath = path.join(outputDir, 'docker-compose.yml');
+      const composeData = JSON.parse(fs.readFileSync(composePath, 'utf-8')) as {
+        services: Record<string, { image: string }>;
+      };
+
+      expect(composeData.services.api.image).toBe('docker.io/cigtechnology/cig-api:latest');
+      expect(composeData.services.dashboard.image).toBe('docker.io/cigtechnology/cig-dashboard:latest');
+      expect(composeData.services.discovery.image).toBe('docker.io/cigtechnology/cig-discovery:latest');
+      expect(composeData.services.cartography.image).toBe('docker.io/cigtechnology/cig-cartography:latest');
+    } finally {
+      fs.rmSync(outputDir, { recursive: true, force: true });
+    }
+  });
+
   it('includes chatbot in the full bundle when requested', async () => {
     const manifest: InstallManifest = {
       profile: 'full',

@@ -93,7 +93,7 @@ services:
       context: .
       dockerfile: infra/docker/Dockerfile.api
       target: production
-    image: cig/api:latest
+    image: docker.io/cigtechnology/cig-api:latest
     container_name: cig-api
     restart: unless-stopped
     networks:
@@ -139,7 +139,7 @@ services:
     build:
       context: .
       dockerfile: services/cartography/Dockerfile
-    image: cig/cartography:latest
+    image: docker.io/cigtechnology/cig-cartography:latest
     container_name: cig-cartography
     restart: unless-stopped
     networks:
@@ -188,7 +188,7 @@ services:
       context: .
       dockerfile: infra/docker/Dockerfile.discovery
       target: production
-    image: cig/discovery:latest
+    image: docker.io/cigtechnology/cig-discovery:latest
     container_name: cig-discovery
     restart: unless-stopped
     networks:
@@ -226,7 +226,7 @@ services:
       context: .
       dockerfile: infra/docker/Dockerfile.chatbot
       target: production
-    image: cig/chatbot:latest
+    image: docker.io/cigtechnology/cig-chatbot:latest
     container_name: cig-chatbot
     restart: unless-stopped
     networks:
@@ -265,7 +265,7 @@ services:
       context: .
       dockerfile: infra/docker/Dockerfile.dashboard
       target: production
-    image: cig/dashboard:latest
+    image: docker.io/cigtechnology/cig-dashboard:latest
     container_name: cig-dashboard
     restart: unless-stopped
     networks:

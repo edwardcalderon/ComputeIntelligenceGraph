@@ -10,6 +10,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { InstallProfile } from './types/runtime.js';
 
+const DEFAULT_IMAGE_REGISTRY = 'docker.io/cigtechnology';
+
 export interface InstallManifest {
   profile: InstallProfile;
   services: string[];
@@ -81,11 +83,12 @@ function generateServiceConfig(
   profile: InstallProfile,
   serviceImages?: Record<string, string>
 ): ServiceConfig {
-  const imageFor = (name: string, fallback: string): string => serviceImages?.[name] ?? fallback;
+  const imageFor = (name: string, fallbackSuffix: string): string =>
+    serviceImages?.[name] ?? `${DEFAULT_IMAGE_REGISTRY}/${fallbackSuffix}`;
 
   const discoveryBundle: Record<string, ServiceConfig> = {
     api: {
-      image: imageFor('api', 'cig/api:latest'),
+      image: imageFor('api', 'cig-api:latest'),
       ports: ['8000:8000'],
       environment: {
         PORT: '8000',
@@ -99,7 +102,7 @@ function generateServiceConfig(
       },
     },
     dashboard: {
-      image: imageFor('dashboard', 'cig/dashboard:latest'),
+      image: imageFor('dashboard', 'cig-dashboard:latest'),
       ports: ['3000:3000'],
       environment: {
         PORT: '3000',
@@ -126,7 +129,7 @@ function generateServiceConfig(
       },
     },
     discovery: {
-      image: imageFor('discovery', 'cig/discovery:latest'),
+      image: imageFor('discovery', 'cig-discovery:latest'),
       ports: ['8080:8080'],
       environment: {
         PORT: '8080',
@@ -139,7 +142,7 @@ function generateServiceConfig(
       },
     },
     cartography: {
-      image: imageFor('cartography', 'cig/cartography:latest'),
+      image: imageFor('cartography', 'cig-cartography:latest'),
       environment: {
         LOG_LEVEL: 'info',
       },
@@ -152,7 +155,7 @@ function generateServiceConfig(
   const fullBundle: Record<string, ServiceConfig> = {
     ...discoveryBundle,
     chatbot: {
-      image: imageFor('chatbot', 'cig/chatbot:latest'),
+      image: imageFor('chatbot', 'cig-chatbot:latest'),
       environment: {
         LOG_LEVEL: 'info',
       },
@@ -168,7 +171,7 @@ function generateServiceConfig(
   const profileConfigs = configs[profile] ?? discoveryBundle;
   return (
     profileConfigs[serviceName] || {
-      image: `cig/${serviceName}:latest`,
+      image: `${DEFAULT_IMAGE_REGISTRY}/cig-${serviceName}:latest`,
       environment: {},
     }
   );

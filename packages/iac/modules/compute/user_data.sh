@@ -61,7 +61,7 @@ services:
       retries: 3
 
   dashboard:
-    image: ghcr.io/cig/dashboard:latest
+    image: docker.io/cigtechnology/cig-dashboard:latest
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -76,7 +76,7 @@ services:
       retries: 3
 
   discovery:
-    image: ghcr.io/cig/discovery:latest
+    image: docker.io/cigtechnology/cig-discovery:latest
     restart: unless-stopped
     environment:
       NEO4J_URI: bolt://neo4j:7687
