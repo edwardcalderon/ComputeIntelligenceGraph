@@ -1,3 +1,25 @@
+## [0.2.17](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.16...v0.2.17) (2026-03-26)
+
+
+### Features
+
+* add report link to footer and version display in docs ([a2680fd](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/a2680fd515a153803bf53710f867db7dfebb4a53))
+
+
+
+
+
+## [0.2.17](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.16...v0.2.17) (2026-03-26)
+
+
+### Features
+
+* add report link to footer and version display in docs ([a2680fd](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/a2680fd515a153803bf53710f867db7dfebb4a53))
+
+
+
+
+
 ## [0.2.16](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.14...v0.2.16) (2026-03-26)
 
 
