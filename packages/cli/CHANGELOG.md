@@ -1,3 +1,9 @@
+## [0.1.17](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.16...cli-v0.1.17) (2026-03-26)
+
+
+
+
+
 ## [0.1.16](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.15...cli-v0.1.16) (2026-03-26)
 
 
