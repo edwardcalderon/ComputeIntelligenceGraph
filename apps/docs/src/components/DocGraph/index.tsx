@@ -481,15 +481,15 @@ export default function DocGraph(): React.ReactElement {
       {/* ── Outer page wrapper: allows scrolling past the canvas ── */}
       <div style={{
         display:'flex', justifyContent:'center',
-        padding:'0 2.5vw', boxSizing:'border-box',
+        padding:'2rem 2.5vw 3rem', boxSizing:'border-box',
         touchAction:'auto',
       }}>
-        {/* ── Canvas wrapper: 95vw, scroll-isolated ── */}
+        {/* ── Canvas wrapper: 90vw, scroll-isolated ── */}
         <div
           ref={wrapRef}
           style={{
             position:'relative',
-            width:'95vw', height:'85vh', minHeight:480,
+            width:'90vw', height:'80vh', minHeight:480,
             overflow:'hidden',
             touchAction:'none',
             overscrollBehavior:'contain',
