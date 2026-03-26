@@ -1,3 +1,25 @@
+## [0.2.21](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.19...v0.2.21) (2026-03-26)
+
+
+### Bug Fixes
+
+* **docs:** resolve process is not defined error in footer ([d1a6d44](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/d1a6d4444687a59da26d396183ad73856f69e504))
+
+
+
+
+
+## [0.2.21](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.19...v0.2.21) (2026-03-26)
+
+
+### Bug Fixes
+
+* **docs:** resolve process is not defined error in footer ([d1a6d44](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/d1a6d4444687a59da26d396183ad73856f69e504))
+
+
+
+
+
 ## [0.2.20](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.19...v0.2.20) (2026-03-26)
 
 ### Detected changes
