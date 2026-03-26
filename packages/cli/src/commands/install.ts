@@ -294,7 +294,14 @@ export async function install(
     const resolvedImageManifest = await resolvePublishedImageManifest(CLI_VERSION);
     ensureRequiredBundleImages(resolvedImageManifest.images, installProfile);
     publishedImageManifest = resolvedImageManifest.images;
-    console.log(`✓ Resolved published image manifest v${resolvedImageManifest.version}.`);
+    if (resolvedImageManifest.resolutionSource === 'docker-hub-latest') {
+      console.log(
+        `✓ Resolved pinned container images from Docker Hub latest tags for v${resolvedImageManifest.version}.`
+      );
+      console.log('  The GitHub release asset was missing or invalid, so the Docker Hub bundle became the source of truth.');
+    } else {
+      console.log(`✓ Resolved published image manifest v${resolvedImageManifest.version}.`);
+    }
   }
 
   const plan = planner.createPlan({ mode, profile: installProfile, apiUrl });

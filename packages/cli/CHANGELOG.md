@@ -1,3 +1,16 @@
+## [0.1.14](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.13...cli-v0.1.14) (2026-03-26)
+
+### Bug Fixes
+
+- fall back to pinned Docker Hub bundle digests when the published CLI image manifest is missing or malformed
+- treat Docker Hub as the source of truth for self-hosted install image resolution when the GitHub release asset cannot be used
+- add regression coverage for the GitHub release manifest fallback path
+
+### Release
+
+- keep the public installer resilient when `cli-v0.1.13/images.json` is not yet published
+- update the CLI installer docs to describe the Docker Hub source-of-truth fallback
+
 ## [0.1.13](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.127...cli-v0.1.13) (2026-03-26)
 
 

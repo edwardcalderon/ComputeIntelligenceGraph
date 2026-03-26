@@ -26,9 +26,12 @@ This package is a real foundation release with the new onboarding flow, but not 
 The published npm package is the canonical release artifact. The public
 installer at `https://cig.lat/install.sh` resolves `@cig-technology/cli`
 from npm first, prints the resolved package version, fetches the matching
-`images.json` bundle manifest for that CLI release, and then launches the
-wizard so the `curl | bash` path and `npm install -g` path use the same
-binaries and pinned container provenance data.
+`images.json` bundle manifest for that CLI release when it exists, or falls
+back to the latest pinned Docker Hub image digests for the same release line
+when the asset has not been published yet or cannot be validated. In that case,
+Docker Hub becomes the source of truth for the install. It then launches the wizard so the
+`curl | bash` path and `npm install -g` path use the same binaries and pinned
+container provenance data.
 
 ### Quick links
 
@@ -37,12 +40,18 @@ binaries and pinned container provenance data.
 - Package: https://www.npmjs.com/package/@cig-technology/cli
 - GitHub releases: https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases
 
-## 📋 Latest Changes (v0.1.10)
+## 📋 Latest Changes (v0.1.14)
 
 ### Bug Fixes
 
-* **cli:** keep interactive installer attached to tty ([303916e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/303916edbd53e9901a43e347dde954e8a78edb1b))
-* **cli:** keep setup cancel flow open ([fc4dfe5](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/fc4dfe5c6b17e29bb91b205b4c74acd530773b2d))
+- fall back to pinned Docker Hub bundle digests when the published CLI image manifest is missing or malformed
+- treat Docker Hub as the source of truth for self-hosted install image resolution when the GitHub release asset cannot be used
+- add regression coverage for the GitHub release manifest fallback path
+
+### Release
+
+- keep the public installer resilient when `cli-v0.1.13/images.json` is not yet published
+- update the CLI installer docs to describe the Docker Hub source-of-truth fallback
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 
@@ -56,8 +65,10 @@ curl -fsSL https://cig.lat/install.sh | bash
 
 That public installer resolves `@cig-technology/cli` from the npm registry
 first, then loads the matching Docker Hub bundle manifest for that CLI
-version, so the web install path and the direct npm path use the same
-published binaries and pinned container image digests.
+version when it exists. If the release asset has not been published yet, the
+installer resolves the latest published Docker Hub digests for the bundle so
+the web install path and the direct npm path still use pinned container image
+digests.
 
 If Docker Engine or Docker Compose is missing, the installer can offer to
 install the Docker prerequisites automatically on supported Linux and macOS
@@ -127,9 +138,11 @@ you intend to use managed mode only.
 - The web installer is a thin bash wrapper; it does not embed a separate
   runtime. It resolves the published npm package so the installed bits are
   reproducible.
-- The web installer also fetches the matching Docker Hub bundle manifest from
-  the GitHub release asset named for that CLI version, so compose files use
-  pinned image digests instead of `latest`.
+- The web installer fetches the matching Docker Hub bundle manifest from the
+  GitHub release asset named for that CLI version when available. If the
+  asset is missing or invalid, it falls back to the latest pinned Docker Hub
+  digests for the same bundle so compose files still use pinned image digests
+  instead of `latest`, and Docker Hub becomes the source of truth.
 - The self-hosted bundle is discovery-first. `core` is kept only as a legacy
   alias for callers that still pass the older profile name.
 - When Docker prerequisites are missing, the installer can offer to install

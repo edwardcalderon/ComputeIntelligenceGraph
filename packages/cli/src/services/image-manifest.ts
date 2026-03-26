@@ -3,10 +3,22 @@ export interface PublishedImageManifest {
   source_tag?: string;
   source_sha?: string;
   registry?: string;
+  resolutionSource?: 'release-asset' | 'docker-hub-latest';
   images: Record<string, string>;
 }
 
 const DEFAULT_RELEASE_BASE_URL = 'https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases/download';
+const DEFAULT_DOCKERHUB_NAMESPACE = 'cigtechnology';
+const DEFAULT_DOCKERHUB_REGISTRY = `docker.io/${DEFAULT_DOCKERHUB_NAMESPACE}`;
+const DEFAULT_DOCKERHUB_ACCEPT =
+  'application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.index.v1+json';
+const SERVICE_IMAGE_NAMES: Record<string, string> = {
+  api: 'cig-api',
+  dashboard: 'cig-dashboard',
+  discovery: 'cig-discovery',
+  cartography: 'cig-cartography',
+  chatbot: 'cig-chatbot',
+};
 
 export function resolveImageManifestUrl(version: string): string {
   const override = process.env['CIG_IMAGE_MANIFEST_URL']?.trim();
@@ -15,6 +27,99 @@ export function resolveImageManifestUrl(version: string): string {
   }
 
   return `${DEFAULT_RELEASE_BASE_URL}/cli-v${version}/images.json`;
+}
+
+function isReleaseAssetFallbackAllowed(): boolean {
+  return !process.env['CIG_IMAGE_MANIFEST_URL']?.trim();
+}
+
+async function resolveReleaseAssetManifest(
+  version: string,
+  fetchImpl: typeof fetch
+): Promise<PublishedImageManifest> {
+  const url = resolveImageManifestUrl(version);
+  const response = await fetchImpl(url);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch published image manifest from ${url}: ${response.status} ${response.statusText}`);
+  }
+
+  const manifest = (await response.json()) as unknown;
+  return assertManifestShape(manifest, version);
+}
+
+function buildDockerHubRepository(imageName: string): string {
+  return `${DEFAULT_DOCKERHUB_NAMESPACE}/${imageName}`;
+}
+
+async function resolveDockerHubToken(repositoryPath: string, fetchImpl: typeof fetch): Promise<string> {
+  const tokenUrl = new URL('https://auth.docker.io/token');
+  tokenUrl.searchParams.set('service', 'registry.docker.io');
+  tokenUrl.searchParams.set('scope', `repository:${repositoryPath}:pull`);
+
+  const response = await fetchImpl(tokenUrl);
+  if (!response.ok) {
+    throw new Error(`Failed to request Docker Hub token for ${repositoryPath}: ${response.status} ${response.statusText}`);
+  }
+
+  const payload = (await response.json()) as { token?: unknown; access_token?: unknown };
+  const token = typeof payload.token === 'string' && payload.token.trim() !== ''
+    ? payload.token
+    : typeof payload.access_token === 'string' && payload.access_token.trim() !== ''
+      ? payload.access_token
+      : '';
+
+  if (token === '') {
+    throw new Error(`Docker Hub did not return an access token for ${repositoryPath}.`);
+  }
+
+  return token;
+}
+
+async function resolveDockerHubLatestDigest(
+  repositoryPath: string,
+  fetchImpl: typeof fetch
+): Promise<string> {
+  const token = await resolveDockerHubToken(repositoryPath, fetchImpl);
+  const manifestUrl = `https://registry-1.docker.io/v2/${repositoryPath}/manifests/latest`;
+  const response = await fetchImpl(manifestUrl, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: DEFAULT_DOCKERHUB_ACCEPT,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to resolve latest digest for ${repositoryPath}: ${response.status} ${response.statusText}`);
+  }
+
+  const digest = response.headers.get('docker-content-digest');
+  if (typeof digest !== 'string' || digest.trim() === '') {
+    throw new Error(`Docker Hub did not return a digest for ${repositoryPath}:latest.`);
+  }
+
+  return `docker.io/${repositoryPath}@${digest}`;
+}
+
+async function resolveDockerHubFallbackManifest(
+  version: string,
+  fetchImpl: typeof fetch
+): Promise<PublishedImageManifest> {
+  const images: Record<string, string> = {};
+
+  for (const [service, imageName] of Object.entries(SERVICE_IMAGE_NAMES)) {
+    const repositoryPath = buildDockerHubRepository(imageName);
+    images[service] = await resolveDockerHubLatestDigest(repositoryPath, fetchImpl);
+  }
+
+  return {
+    version,
+    source_tag: `cli-v${version}`,
+    registry: DEFAULT_DOCKERHUB_REGISTRY,
+    resolutionSource: 'docker-hub-latest',
+    images,
+  };
 }
 
 function assertManifestShape(manifest: unknown, version: string): PublishedImageManifest {
@@ -43,6 +148,7 @@ function assertManifestShape(manifest: unknown, version: string): PublishedImage
     source_tag: data.source_tag,
     source_sha: data.source_sha,
     registry: data.registry,
+    resolutionSource: 'release-asset',
     images: images as Record<string, string>,
   };
 }
@@ -51,13 +157,26 @@ export async function resolvePublishedImageManifest(
   version: string,
   fetchImpl: typeof fetch = globalThis.fetch
 ): Promise<PublishedImageManifest> {
-  const url = resolveImageManifestUrl(version);
-  const response = await fetchImpl(url);
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch published image manifest from ${url}: ${response.status} ${response.statusText}`);
+  if (!isReleaseAssetFallbackAllowed()) {
+    return resolveReleaseAssetManifest(version, fetchImpl);
   }
 
-  const manifest = (await response.json()) as unknown;
-  return assertManifestShape(manifest, version);
+  try {
+    return await resolveReleaseAssetManifest(version, fetchImpl);
+  } catch (releaseAssetError) {
+    try {
+      return await resolveDockerHubFallbackManifest(version, fetchImpl);
+    } catch (fallbackError) {
+      const releaseMessage =
+        releaseAssetError instanceof Error ? releaseAssetError.message : String(releaseAssetError);
+      const fallbackMessage =
+        fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+
+      throw new Error(
+        `Failed to resolve published image manifest for cli-v${version}. ` +
+          `Release asset lookup failed: ${releaseMessage}. ` +
+          `Docker Hub fallback also failed: ${fallbackMessage}`
+      );
+    }
+  }
 }

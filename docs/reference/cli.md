@@ -80,9 +80,12 @@ curl -fsSL https://cig.lat/install.sh | bash
 
 The public installer resolves the published npm package version first, prints
 that resolved version, fetches the matching `images.json` bundle manifest from
-the GitHub release for that CLI version, and then launches the wizard so the
-web install path uses the same release artifact and pinned container digests
-as `npm install -g @cig-technology/cli`.
+the GitHub release for that CLI version when it exists, or falls back to the
+latest pinned Docker Hub digests for that bundle when the release asset has
+not been published yet or cannot be validated. In that case, Docker Hub
+becomes the source of truth. It then launches the wizard so the web install path
+uses the same release artifact and pinned container digests as
+`npm install -g @cig-technology/cli`.
 
 If Docker Engine or Docker Compose is missing, the installer can offer to
 install the Docker prerequisites automatically on supported Linux and macOS
