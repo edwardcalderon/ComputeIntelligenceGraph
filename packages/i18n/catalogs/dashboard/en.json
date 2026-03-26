@@ -259,6 +259,7 @@
   "chat.examplesSubtitle": "Sample cards the assistant can return for each query type.",
   "chat.exampleTrigger": "Try asking:",
 
+  "nav.docs": "Documentation",
   "nav.notifications": "Notifications",
 
   "notifications.title": "Notifications",

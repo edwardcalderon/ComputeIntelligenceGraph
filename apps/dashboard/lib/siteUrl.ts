@@ -1,5 +1,6 @@
-const DEFAULT_LANDING_URL = "http://localhost:3000";
+const DEFAULT_LANDING_URL   = "http://localhost:3000";
 const DEFAULT_DASHBOARD_URL = "http://localhost:3001";
+const DEFAULT_DOCS_URL      = "http://localhost:3004";
 
 type UrlContext = {
   hostname?: string | null;
@@ -54,4 +55,19 @@ export function resolveDashboardUrl(context: UrlContext = {}): string {
   }
 
   return process.env.NEXT_PUBLIC_DASHBOARD_URL ?? DEFAULT_DASHBOARD_URL;
+}
+
+export function resolveDocsUrl(context: UrlContext = {}): string {
+  const hostname =
+    context.hostname ??
+    (typeof window !== "undefined" ? window.location.hostname : undefined);
+  const protocol =
+    context.protocol ??
+    (typeof window !== "undefined" ? window.location.protocol : undefined);
+
+  if (hostname && isLocalHostname(hostname)) {
+    return formatLocalOriginUrl(hostname, protocol ?? "http:", 3004);
+  }
+
+  return process.env.NEXT_PUBLIC_DOCS_URL ?? DEFAULT_DOCS_URL;
 }

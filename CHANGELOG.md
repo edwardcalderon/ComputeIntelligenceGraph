@@ -1,3 +1,22 @@
+## [0.2.22](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.21...v0.2.22) (2026-03-26)
+
+### Detected changes
+- apps: 3 changed file(s)
+  - apps/dashboard/components/Sidebar.tsx
+  - apps/dashboard/lib/siteUrl.ts
+  - apps/dashboard/next.config.js
+- packages: 3 changed file(s)
+  - packages/i18n/catalogs/dashboard/en.json
+  - packages/i18n/catalogs/dashboard/es.json
+  - packages/i18n/catalogs/dashboard/zh.json
+
+
+## [0.2.22](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.21...v0.2.22) (2026-03-26)
+
+
+
+
+
 ## [0.2.21](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.19...v0.2.21) (2026-03-26)
 
 

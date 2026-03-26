@@ -259,6 +259,7 @@
   "chat.examplesSubtitle": "助手可根据不同查询类型返回的示例卡片。",
   "chat.exampleTrigger": "试着问：",
 
+  "nav.docs": "文档",
   "nav.notifications": "通知",
 
   "notifications.title": "通知",
