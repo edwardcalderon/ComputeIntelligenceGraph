@@ -1,3 +1,19 @@
+## [0.2.38](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.37...v0.2.38) (2026-03-26)
+
+### Detected changes
+- apps: 4 changed file(s)
+  - apps/docs/src/components/DevPanel.tsx
+  - apps/docs/src/theme/DocSidebar/index.tsx
+  - apps/docs/src/theme/DocSidebar/styles.css
+  - apps/docs/src/theme/Footer/index.tsx
+
+
+## [0.2.38](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.37...v0.2.38) (2026-03-26)
+
+
+
+
+
 ## [0.2.37](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.36...v0.2.37) (2026-03-26)
 
 ### Detected changes

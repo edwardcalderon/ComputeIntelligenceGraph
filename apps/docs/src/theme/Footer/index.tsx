@@ -1,18 +1,30 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import './styles.css';
+
+function useLandingUrl(): string {
+  const [url, setUrl] = useState('https://cig.lat');
+  useEffect(() => {
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      setUrl(`http://${host}:3001`);
+    }
+  }, []);
+  return url;
+}
 
 export default function Footer(): JSX.Element {
   const currentYear = new Date().getFullYear();
   const {siteConfig} = useDocusaurusContext();
   const version = typeof siteConfig.customFields?.appVersion === 'string' ? siteConfig.customFields.appVersion : '';
+  const landingUrl = useLandingUrl();
 
   const footerLinks = [
     { label: 'GitHub', href: 'https://github.com/edwardcalderon/ComputeIntelligenceGraph' },
     { label: 'Issues', href: 'https://github.com/edwardcalderon/ComputeIntelligenceGraph/issues' },
     { label: 'Report', href: 'https://github.com/edwardcalderon/ComputeIntelligenceGraph/issues/new' },
-    { label: 'Landing', href: 'https://cig.lat' },
+    { label: 'Landing', href: landingUrl },
   ];
 
   return (

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { devI18n, devMermaid, devSearch, mockAnalytics, isDevelopment } from '../utils/devTools';
+import { devMermaid, devSearch, mockAnalytics, isDevelopment } from '../utils/devTools';
 import styles from './DevPanel.module.css';
 
 /**
@@ -9,8 +9,7 @@ import styles from './DevPanel.module.css';
  */
 export const DevPanel: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'i18n' | 'mermaid' | 'search' | 'analytics'>('i18n');
-  const [selectedLanguage, setSelectedLanguage] = useState(devI18n.getLanguagePreference() || 'en');
+  const [activeTab, setActiveTab] = useState<'mermaid' | 'search' | 'analytics'>('mermaid');
   const [mermaidCode, setMermaidCode] = useState('graph TD\n  A[Start] --> B[End]');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Array<{ id: string; title: string; score: number }>>([]);
@@ -18,12 +17,6 @@ export const DevPanel: React.FC = () => {
   if (!isDevelopment()) {
     return null;
   }
-
-  const handleLanguageChange = (lang: string) => {
-    setSelectedLanguage(lang);
-    devI18n.setLanguagePreference(lang);
-    mockAnalytics.trackLanguageSwitch(selectedLanguage, lang);
-  };
 
   const handleTestMermaid = () => {
     const isValid = devMermaid.testDiagramRendering(mermaidCode);
@@ -67,12 +60,6 @@ export const DevPanel: React.FC = () => {
 
           <div className={styles.tabs}>
             <button
-              className={`${styles.tab} ${activeTab === 'i18n' ? styles.active : ''}`}
-              onClick={() => setActiveTab('i18n')}
-            >
-              i18n
-            </button>
-            <button
               className={`${styles.tab} ${activeTab === 'mermaid' ? styles.active : ''}`}
               onClick={() => setActiveTab('mermaid')}
             >
@@ -93,27 +80,6 @@ export const DevPanel: React.FC = () => {
           </div>
 
           <div className={styles.tabContent}>
-            {activeTab === 'i18n' && (
-              <div>
-                <h4>Language Switching</h4>
-                <p>Current: <strong>{selectedLanguage}</strong></p>
-                <div className={styles.buttonGroup}>
-                  {devI18n.getSupportedLanguages().map((lang) => (
-                    <button
-                      key={lang}
-                      className={`${styles.langButton} ${selectedLanguage === lang ? styles.active : ''}`}
-                      onClick={() => handleLanguageChange(lang)}
-                    >
-                      {lang.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-                <p className={styles.info}>
-                  Language preference is stored in localStorage
-                </p>
-              </div>
-            )}
-
             {activeTab === 'mermaid' && (
               <div>
                 <h4>Mermaid Diagram Testing</h4>
