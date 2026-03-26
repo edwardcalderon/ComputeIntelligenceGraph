@@ -57,6 +57,9 @@ function EmailPasswordView({ onSuccess }: { onSuccess: () => void }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(45);
+  const [resendError, setResendError] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
 
   const handleSubmit = useCallback(async () => {
     const supabase = getSupabaseClient();
@@ -100,6 +103,8 @@ function EmailPasswordView({ onSuccess }: { onSuccess: () => void }) {
           setShowPassword(false);
           setShowPassword2(false);
           setMessage(null);
+          setResendCooldown(45);
+          setResendError(null);
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -116,63 +121,128 @@ function EmailPasswordView({ onSuccess }: { onSuccess: () => void }) {
     }
   }, [email, password, password2, mode, onSuccess, t]);
 
+  useEffect(() => {
+    if (!submittedEmail || mode !== "signup" || resendCooldown <= 0) return;
+
+    const id = window.setInterval(() => {
+      setResendCooldown((current) => (current > 0 ? current - 1 : 0));
+    }, 1000);
+
+    return () => window.clearInterval(id);
+  }, [submittedEmail, mode, resendCooldown]);
+
+  const handleResendConfirmation = useCallback(async () => {
+    if (!submittedEmail || resendCooldown > 0 || resending) return;
+
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      setResendError(t("auth.passwordClientNotConfigured"));
+      return;
+    }
+
+    setResending(true);
+    setResendError(null);
+
+    try {
+      const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3001";
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: submittedEmail,
+        options: {
+          emailRedirectTo: `${dashboardUrl}/auth/callback`,
+        },
+      });
+
+      if (error) throw error;
+
+      setResendCooldown(45);
+    } catch (err: unknown) {
+      setResendError(err instanceof Error ? err.message : t("auth.resendError"));
+    } finally {
+      setResending(false);
+    }
+  }, [resendCooldown, resending, submittedEmail, t]);
+
+  const isSignupSuccess = Boolean(submittedEmail && mode === "signup");
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-zinc-200 dark:text-zinc-100">
-            {mode === "signin" ? t("auth.passwordSignInTitle") : t("auth.passwordSignUpTitle")}
-          </p>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            {mode === "signin" ? t("auth.passwordSignInHint") : t("auth.passwordSignUpHint")}
-          </p>
-        </div>
-        <button
-          onClick={() => {
-            setMode((m) => (m === "signin" ? "signup" : "signin"));
-            setSubmittedEmail(null);
-            setMessage(null);
-            setError(null);
-          }}
-          className="self-start text-xs font-medium leading-tight text-cyan-600 dark:text-cyan-400 hover:underline sm:text-right"
-        >
-          {mode === "signin" ? (
-            t("auth.passwordSwitchToSignup")
-          ) : (
-            <span className="flex flex-col items-start sm:items-end">
-              <span>{t("auth.passwordSwitchQuestion")}</span>
-              <span>{t("auth.passwordSwitchActionSignin")}</span>
-            </span>
-          )}
-        </button>
-      </div>
 
-      {submittedEmail && mode === "signup" ? (
-        <div className="rounded-2xl border border-emerald-500/25 bg-emerald-950/20 px-4 py-4">
-          <div className="flex items-start gap-3">
-            <div className="mt-0.5 rounded-full bg-emerald-500/15 p-2 text-emerald-400">
-              <CheckIcon />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-emerald-300 dark:text-emerald-200">
-                {t("auth.passwordVerifyEmailTitle")}
-              </p>
-              <p className="mt-1 text-sm text-emerald-100/85 dark:text-emerald-100/80 break-words">
-                {t("auth.passwordVerifyEmailBody", { email: submittedEmail })}
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("signin");
-                  setSubmittedEmail(null);
-                  setError(null);
-                }}
-                className="mt-3 text-xs font-medium text-cyan-300 hover:text-cyan-200 hover:underline"
-              >
-                {t("auth.passwordBackToSignin")}
-              </button>
+      {!isSignupSuccess && (
+        <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-zinc-200 dark:text-zinc-100">
+              {mode === "signin" ? t("auth.passwordSignInTitle") : t("auth.passwordSignUpTitle")}
+            </p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              {mode === "signin" ? t("auth.passwordSignInHint") : t("auth.passwordSignUpHint")}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setMode((m) => (m === "signin" ? "signup" : "signin"));
+              setSubmittedEmail(null);
+              setMessage(null);
+              setError(null);
+              setResendError(null);
+              setResendCooldown(45);
+            }}
+            className="self-start text-xs font-medium leading-tight text-cyan-600 dark:text-cyan-400 hover:underline sm:text-right"
+          >
+            {mode === "signin" ? (
+              t("auth.passwordSwitchToSignup")
+            ) : (
+              <span className="flex flex-col items-start sm:items-end">
+                <span>{t("auth.passwordSwitchQuestion")}</span>
+                <span>{t("auth.passwordSwitchActionSignin")}</span>
+              </span>
+            )}
+          </button>
+        </div>
+      )}
+
+      {isSignupSuccess ? (
+        <div className="flex flex-col gap-3">
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/95 px-4 py-4 text-emerald-950 shadow-sm dark:border-emerald-500/25 dark:bg-emerald-950/20 dark:text-inherit">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 rounded-full bg-emerald-500/15 p-2 text-emerald-600 dark:text-emerald-400">
+                <CheckIcon />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">
+                  {t("auth.passwordVerifyEmailTitle")}
+                </p>
+                <p className="mt-1 break-words text-sm text-emerald-800 dark:text-emerald-100/80">
+                  {t("auth.passwordVerifyEmailBody", { email: submittedEmail ?? "" })}
+                </p>
+
+                <div className="mt-4 flex flex-col gap-2">
+                  {resendError && (
+                    <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-950/30 dark:text-red-400">
+                      {resendError}
+                    </p>
+                  )}
+
+                  {resendCooldown > 0 ? (
+                    <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                      {t("auth.resendIn", { seconds: resendCooldown })}
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => void handleResendConfirmation()}
+                      disabled={resending}
+                      className="inline-flex items-center gap-2 self-start text-xs font-medium text-cyan-700 hover:text-cyan-600 hover:underline disabled:cursor-not-allowed disabled:opacity-50 dark:text-cyan-300 dark:hover:text-cyan-200"
+                    >
+                      {resending ? t("auth.sending") : t("auth.didntReceive")}
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
+
         </div>
       ) : (
         <>

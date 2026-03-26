@@ -65,6 +65,7 @@
   "auth.passwordSignUpTitle": "创建账户",
   "auth.passwordSignUpHint": "为邮箱登录设置一个强密码。",
   "auth.passwordSwitchToSignup": "创建账户",
+  "auth.passwordNoAccountQuestion": "还没有账号？",
   "auth.passwordSwitchToSignin": "已有账户？去登录",
   "auth.passwordSwitchQuestion": "已有账户？",
   "auth.passwordSwitchActionSignin": "去登录",

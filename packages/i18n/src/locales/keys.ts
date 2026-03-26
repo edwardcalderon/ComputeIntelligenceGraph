@@ -61,6 +61,7 @@ export type TranslationKey =
   | "auth.passwordLabel"
   | "auth.passwordMinLength"
   | "auth.passwordMismatch"
+  | "auth.passwordNoAccountQuestion"
   | "auth.passwordPlaceholderSignin"
   | "auth.passwordPlaceholderSignup"
   | "auth.passwordSignInHint"

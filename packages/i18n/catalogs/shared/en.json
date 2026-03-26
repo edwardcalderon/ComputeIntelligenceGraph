@@ -65,6 +65,7 @@
   "auth.passwordSignUpTitle": "Create your account",
   "auth.passwordSignUpHint": "Choose a strong password for your email login.",
   "auth.passwordSwitchToSignup": "Create account",
+  "auth.passwordNoAccountQuestion": "No account yet?",
   "auth.passwordSwitchToSignin": "Have an account? Sign in",
   "auth.passwordSwitchQuestion": "Have an account?",
   "auth.passwordSwitchActionSignin": "Sign in",
