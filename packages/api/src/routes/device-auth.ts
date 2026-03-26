@@ -12,13 +12,13 @@
  * Requirement 12: API — Device Authorization Endpoints
  */
 
-import { FastifyInstance, FastifyRequest, FastifyReply, FastifyPluginCallback } from 'fastify';
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import crypto from 'crypto';
+import fastifyRateLimit from 'fastify-rate-limit';
+import { revokeAuthentikToken } from '@cig/auth';
 import { query } from '../db/client';
 import { authenticate, generateJwt, Permission } from '../auth';
 import { writeAuditEvent } from '../audit';
-
-const fastifyRateLimit = require('fastify-rate-limit') as FastifyPluginCallback;
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -31,22 +31,6 @@ const VERIFICATION_URI = process.env['VERIFICATION_URI'] ?? 'https://cig.lat/dev
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-async function revokeAuthentikToken(issuerUrl: string, clientId: string, token: string): Promise<void> {
-  const body = new URLSearchParams({
-    client_id: clientId,
-    token,
-  });
-
-  await fetch(`${issuerUrl}/application/o/revoke/`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString(),
-    keepalive: true,
-  }).catch(() => {
-    // Ignore revocation errors — the session will expire naturally.
-  });
-}
 
 /** Generate a 32-character lowercase hex device_code. */
 function generateDeviceCode(): string {
@@ -418,8 +402,9 @@ export async function deviceAuthRoutes(app: FastifyInstance): Promise<void> {
         if (process.env['CIG_AUTH_MODE'] === 'managed') {
           const issuerUrl = process.env['AUTHENTIK_ISSUER_URL'] ?? '';
           const clientId = process.env['OIDC_CLIENT_ID'] ?? '';
+          const redirectUri = process.env['OIDC_REDIRECT_URI'] ?? '';
           if (issuerUrl && clientId) {
-            await revokeAuthentikToken(issuerUrl, clientId, token);
+            await revokeAuthentikToken({ issuerUrl, clientId, redirectUri }, token);
           }
         }
 

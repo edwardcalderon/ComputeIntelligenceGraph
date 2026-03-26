@@ -2,7 +2,7 @@
  * Bootstrap endpoints for self-hosted installations.
  *
  * Routes:
- *   GET  /api/v1/bootstrap/status    — returns { requires_bootstrap: boolean }
+ *   GET  /api/v1/bootstrap/status    — returns { requires_bootstrap: boolean, mode: "managed" | "self-hosted" }
  *   POST /api/v1/bootstrap/validate  — accepts { bootstrap_token }, returns { valid: true } or 401
  *   POST /api/v1/bootstrap/complete  — accepts { bootstrap_token, username, email, password }
  *
@@ -22,6 +22,7 @@ import { writeAuditEvent } from '../audit';
 
 const BCRYPT_ROUNDS = 12;
 const MIN_PASSWORD_LENGTH = 12;
+type AuthMode = 'managed' | 'self-hosted';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -39,6 +40,10 @@ function getClientIp(request: FastifyRequest): string {
 /** Returns true when the request originates from localhost. */
 function isLocalhost(ip: string): boolean {
   return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+}
+
+function getAuthMode(): AuthMode {
+  return process.env['CIG_AUTH_MODE'] === 'managed' ? 'managed' : 'self-hosted';
 }
 
 // ---------------------------------------------------------------------------
@@ -73,16 +78,17 @@ async function localhostGuard(
 
 export async function bootstrapRoutes(app: FastifyInstance): Promise<void> {
   // ── GET /api/v1/bootstrap/status ───────────────────────────────────────────
-  // Requirement 15.1 — returns { requires_bootstrap: boolean }
+  // Requirement 15.1 — returns { requires_bootstrap: boolean, mode: "managed" | "self-hosted" }
   app.get(
     '/api/v1/bootstrap/status',
     { preHandler: [localhostGuard] },
     async (_request: FastifyRequest, reply: FastifyReply) => {
+      const mode = getAuthMode();
       const result = await query<{ count: number }>(
         `SELECT COUNT(*) AS count FROM admin_accounts`
       );
       const count = Number(result.rows[0]?.count ?? 0);
-      return reply.send({ requires_bootstrap: count === 0 });
+      return reply.send({ requires_bootstrap: mode === 'self-hosted' && count === 0, mode });
     }
   );
 

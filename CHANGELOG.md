@@ -1,3 +1,25 @@
+## [0.2.6](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.5...v0.2.6) (2026-03-26)
+
+
+### Bug Fixes
+
+* **docs:** resolve all ESLint errors and warnings in CI ([04ea3ef](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/04ea3efe6a5bcabf7735c1f9f0b88105974a61f7))
+
+
+
+
+
+## [0.2.6](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.5...v0.2.6) (2026-03-26)
+
+
+### Bug Fixes
+
+* **docs:** resolve all ESLint errors and warnings in CI ([04ea3ef](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/04ea3efe6a5bcabf7735c1f9f0b88105974a61f7))
+
+
+
+
+
 ## [0.2.4](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.2...v0.2.4) (2026-03-26)
 
 

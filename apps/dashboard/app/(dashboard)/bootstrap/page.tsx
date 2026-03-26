@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useTranslation } from "@cig-technology/i18n/react";
 import {
@@ -22,36 +23,27 @@ export default function BootstrapPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  // Check if bootstrap is needed
-  const { isLoading: checkLoading } = useQuery<BootstrapStatus>({
+  const { data: bootstrapStatus, isLoading: checkLoading, isError: checkFailed } = useQuery<BootstrapStatus>({
     queryKey: ["bootstrap", "status"],
     queryFn: getBootstrapStatus,
     retry: 1,
     refetchOnWindowFocus: false,
     enabled: step === "check",
-    meta: {
-      onSuccess: (data: BootstrapStatus) => {
-        if (data.requires_bootstrap) {
-          setStep("token");
-        }
-      },
-    },
   });
 
-  const { data: bootstrapStatus } = useQuery<BootstrapStatus>({
-    queryKey: ["bootstrap", "status"],
-    queryFn: getBootstrapStatus,
-    retry: 1,
-    enabled: step === "check",
-  });
-
-  // If status loaded and doesn't need bootstrap, show "already done"
-  const alreadyBootstrapped = bootstrapStatus && !bootstrapStatus.requires_bootstrap && step === "check";
-
-  // Move to token step when data loads
-  if (bootstrapStatus?.requires_bootstrap && step === "check") {
-    setStep("token");
-  }
+  const isSelfHosted = bootstrapStatus?.mode === "self-hosted";
+  const isManagedInstance = bootstrapStatus?.mode === "managed";
+  const needsBootstrap = isSelfHosted && (bootstrapStatus?.requires_bootstrap ?? false);
+  const activeStep: Step =
+    needsBootstrap && step === "check" ? "token" : step;
+  const alreadyBootstrapped =
+    activeStep === "check" &&
+    isSelfHosted &&
+    bootstrapStatus !== undefined &&
+    !bootstrapStatus.requires_bootstrap;
+  const managedInstance =
+    activeStep === "check" && isManagedInstance && bootstrapStatus !== undefined;
+  const showStepper = activeStep !== "check";
 
   const validateMutation = useMutation({
     mutationFn: () => validateBootstrapToken(token),
@@ -129,36 +121,38 @@ export default function BootstrapPage() {
         </div>
 
         {/* Step indicators */}
-        <div className="flex items-center justify-center gap-2">
-          {(["token", "admin", "complete"] as const).map((s, i) => {
-            const active = step === s;
-            const done =
-              (s === "token" && (step === "admin" || step === "complete")) ||
-              (s === "admin" && step === "complete");
-            return (
-              <div key={s} className="flex items-center gap-2">
-                {i > 0 && <div className={`w-8 h-px ${done || active ? "bg-cyan-500/40" : "bg-cig-border"}`} />}
-                <div
-                  className={`size-7 rounded-full flex items-center justify-center text-[11px] font-semibold border transition-colors ${
-                    active
-                      ? "bg-cyan-50 dark:bg-cyan-500/15 border-cyan-200 dark:border-cyan-500/30 text-cyan-700 dark:text-cyan-400 dark:shadow-[0_0_10px_rgba(6,182,212,0.2)]"
-                      : done
-                      ? "bg-emerald-50 dark:bg-emerald-500/15 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
-                      : "bg-cig-elevated border-cig text-cig-muted"
-                  }`}
-                >
-                  {done ? (
-                    <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                    </svg>
-                  ) : (
-                    i + 1
-                  )}
+        {showStepper && (
+          <div className="flex items-center justify-center gap-2">
+            {(["token", "admin", "complete"] as const).map((s, i) => {
+              const active = activeStep === s;
+              const done =
+                (s === "token" && (activeStep === "admin" || activeStep === "complete")) ||
+                (s === "admin" && activeStep === "complete");
+              return (
+                <div key={s} className="flex items-center gap-2">
+                  {i > 0 && <div className={`w-8 h-px ${done || active ? "bg-cyan-500/40" : "bg-cig-border"}`} />}
+                  <div
+                    className={`size-7 rounded-full flex items-center justify-center text-[11px] font-semibold border transition-colors ${
+                      active
+                        ? "bg-cyan-50 dark:bg-cyan-500/15 border-cyan-200 dark:border-cyan-500/30 text-cyan-700 dark:text-cyan-400 dark:shadow-[0_0_10px_rgba(6,182,212,0.2)]"
+                        : done
+                        ? "bg-emerald-50 dark:bg-emerald-500/15 border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
+                        : "bg-cig-elevated border-cig text-cig-muted"
+                    }`}
+                  >
+                    {done ? (
+                      <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                      </svg>
+                    ) : (
+                      i + 1
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Error */}
         {error && (
@@ -168,10 +162,44 @@ export default function BootstrapPage() {
         )}
 
         {/* Checking status */}
-        {step === "check" && checkLoading && (
+        {activeStep === "check" && checkLoading && (
           <div className="text-center py-12">
             <div className="inline-flex size-8 border-2 border-cyan-500/40 border-t-transparent rounded-full animate-spin mb-3" />
             <p className="text-sm text-cig-muted">{t("bootstrap.checking")}</p>
+          </div>
+        )}
+
+        {/* Bootstrap status failed */}
+        {activeStep === "check" && checkFailed && !checkLoading && (
+          <div className="rounded-2xl border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/[0.06] p-6 text-center space-y-2">
+            <h2 className="text-lg font-semibold text-cig-primary">{t("bootstrap.statusCheckFailed")}</h2>
+            <p className="text-sm text-cig-secondary">
+              {t("bootstrap.statusCheckFailedDesc")}
+            </p>
+          </div>
+        )}
+
+        {/* Managed instance */}
+        {managedInstance && !checkLoading && !checkFailed && (
+          <div className="rounded-2xl border border-cyan-200 dark:border-cyan-500/20 bg-cyan-50 dark:bg-cyan-500/[0.06] p-8 text-center space-y-4">
+            <div className="inline-flex items-center justify-center size-14 rounded-full bg-cyan-100 dark:bg-cyan-500/15 border border-cyan-200 dark:border-cyan-500/20">
+              <svg className="size-7 text-cyan-600 dark:text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9.75v4.5m0 3h.008v.008H12v-.008Zm0-11.25C7.03 6 3 10.03 3 15s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9Z" />
+              </svg>
+            </div>
+            <h2 className="text-lg font-semibold text-cig-primary">{t("bootstrap.managedInstance")}</h2>
+            <p className="text-sm text-cig-secondary">
+              {t("bootstrap.managedInstanceDesc")}
+            </p>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-cyan-700 dark:text-white bg-cyan-50 dark:bg-gradient-to-br dark:from-cyan-500/20 dark:to-blue-600/20 border border-cyan-200 dark:border-cyan-500/20 hover:bg-cyan-100 dark:hover:border-cyan-500/40 transition-all"
+            >
+              {t("bootstrap.goToDashboard")}
+              <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+              </svg>
+            </Link>
           </div>
         )}
 
@@ -191,7 +219,7 @@ export default function BootstrapPage() {
         )}
 
         {/* Step 1: Token */}
-        {step === "token" && (
+        {activeStep === "token" && (
           <form onSubmit={handleValidate} className="rounded-2xl border border-cig bg-cig-card p-6 space-y-5">
             <div>
               <label className="block text-[11px] font-semibold uppercase tracking-wider text-cig-muted mb-2">
@@ -203,7 +231,6 @@ export default function BootstrapPage() {
                 onChange={(e) => setToken(e.target.value)}
                 placeholder={t("bootstrap.tokenPlaceholder")}
                 className={`${inputClasses} font-mono`}
-                autoFocus
               />
               <p className="mt-2 text-[11px] text-cig-muted">
                 {t("bootstrap.tokenHint", { command: "cig init" })}
@@ -220,7 +247,7 @@ export default function BootstrapPage() {
         )}
 
         {/* Step 2: Admin account */}
-        {step === "admin" && (
+        {activeStep === "admin" && (
           <form onSubmit={handleComplete} className="rounded-2xl border border-cig bg-cig-card p-6 space-y-4">
             <p className="text-sm text-cig-secondary mb-2">
               {t("bootstrap.createAdmin")}
@@ -235,7 +262,6 @@ export default function BootstrapPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="admin"
                 className={inputClasses}
-                autoFocus
               />
             </div>
             <div>
@@ -294,7 +320,7 @@ export default function BootstrapPage() {
         )}
 
         {/* Step 3: Complete */}
-        {step === "complete" && (
+        {activeStep === "complete" && (
           <div className="rounded-2xl border border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/[0.06] p-8 text-center space-y-4">
             <div className="inline-flex items-center justify-center size-14 rounded-full bg-emerald-100 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/20 dark:shadow-[0_0_20px_rgba(16,185,129,0.2)]">
               <svg className="size-7 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -305,7 +331,7 @@ export default function BootstrapPage() {
             <p className="text-sm text-cig-secondary">
               {t("bootstrap.completeDesc")}
             </p>
-            <a
+            <Link
               href="/"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium text-cyan-700 dark:text-white bg-cyan-50 dark:bg-gradient-to-br dark:from-cyan-500/20 dark:to-blue-600/20 border border-cyan-200 dark:border-cyan-500/20 hover:bg-cyan-100 dark:hover:border-cyan-500/40 transition-all"
             >
@@ -313,7 +339,7 @@ export default function BootstrapPage() {
               <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
               </svg>
-            </a>
+            </Link>
           </div>
         )}
       </div>

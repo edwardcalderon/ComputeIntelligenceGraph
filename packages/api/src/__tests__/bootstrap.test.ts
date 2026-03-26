@@ -2,6 +2,7 @@
  * Unit tests for the bootstrap endpoints.
  *
  * Covers:
+ *   - GET /bootstrap/status returns requires_bootstrap + mode in self-hosted and managed modes
  *   - GET /bootstrap/status returns requires_bootstrap: true with empty admin table
  *   - GET /bootstrap/status returns requires_bootstrap: false when admin exists
  *   - POST /bootstrap/validate: valid token, expired token, consumed token
@@ -11,7 +12,7 @@
  * Requirement 15: API — Bootstrap Endpoints
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { createServer } from '../index';
 
@@ -74,6 +75,10 @@ beforeEach(async () => {
   await dbQuery('DELETE FROM audit_events');
 });
 
+afterEach(() => {
+  process.env['CIG_AUTH_MODE'] = 'self-hosted';
+});
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function futureExpiry(): string {
@@ -102,8 +107,9 @@ describe('GET /api/v1/bootstrap/status', () => {
     });
 
     expect(res.statusCode).toBe(200);
-    const body = res.json<{ requires_bootstrap: boolean }>();
+    const body = res.json<{ requires_bootstrap: boolean; mode: 'managed' | 'self-hosted' }>();
     expect(body.requires_bootstrap).toBe(true);
+    expect(body.mode).toBe('self-hosted');
   });
 
   it('returns requires_bootstrap: false when at least one admin account exists', async () => {
@@ -120,8 +126,27 @@ describe('GET /api/v1/bootstrap/status', () => {
     });
 
     expect(res.statusCode).toBe(200);
-    const body = res.json<{ requires_bootstrap: boolean }>();
+    const body = res.json<{ requires_bootstrap: boolean; mode: 'managed' | 'self-hosted' }>();
     expect(body.requires_bootstrap).toBe(false);
+    expect(body.mode).toBe('self-hosted');
+  });
+
+  it('returns mode: managed and requires_bootstrap: false in managed deployments', async () => {
+    process.env['CIG_AUTH_MODE'] = 'managed';
+
+    try {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/v1/bootstrap/status',
+      });
+
+      expect(res.statusCode).toBe(200);
+      const body = res.json<{ requires_bootstrap: boolean; mode: 'managed' | 'self-hosted' }>();
+      expect(body.mode).toBe('managed');
+      expect(body.requires_bootstrap).toBe(false);
+    } finally {
+      process.env['CIG_AUTH_MODE'] = 'self-hosted';
+    }
   });
 });
 
@@ -311,7 +336,9 @@ describe('POST /api/v1/bootstrap/complete', () => {
     });
 
     expect(statusRes.statusCode).toBe(200);
-    expect(statusRes.json<{ requires_bootstrap: boolean }>().requires_bootstrap).toBe(false);
+    const statusBody = statusRes.json<{ requires_bootstrap: boolean; mode: 'managed' | 'self-hosted' }>();
+    expect(statusBody.requires_bootstrap).toBe(false);
+    expect(statusBody.mode).toBe('self-hosted');
   });
 });
 

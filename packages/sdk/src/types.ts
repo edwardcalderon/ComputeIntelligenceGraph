@@ -168,6 +168,7 @@ export interface EnrollmentTokenResponse {
 
 export interface BootstrapStatus {
   requires_bootstrap: boolean;
+  mode: "managed" | "self-hosted";
 }
 
 export interface BootstrapCompletePayload {

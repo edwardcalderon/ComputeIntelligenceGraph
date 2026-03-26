@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import "./globals.css";
 import { Providers } from "./providers";
-import { BootstrapRedirect } from "../components/BootstrapRedirect";
 import { AppUpdateWatcher } from "../components/AppUpdateWatcher";
 
 export const metadata: Metadata = {
@@ -17,9 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Suspense>
           <Providers>
             <AppUpdateWatcher />
-            <BootstrapRedirect>
-              {children}
-            </BootstrapRedirect>
+            {children}
           </Providers>
         </Suspense>
       </body>

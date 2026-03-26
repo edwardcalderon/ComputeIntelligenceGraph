@@ -16,20 +16,32 @@ export function BootstrapRedirect({
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     const checkBootstrap = async () => {
       try {
         const status = await getBootstrapStatus();
-        if (status.requires_bootstrap && pathname !== "/bootstrap") {
-          router.push("/bootstrap");
+        if (
+          !cancelled &&
+          status.mode === "self-hosted" &&
+          status.requires_bootstrap &&
+          pathname !== "/bootstrap"
+        ) {
+          router.replace("/bootstrap");
         }
       } catch (err) {
         console.error("Failed to check bootstrap status:", err);
       } finally {
-        setChecked(true);
+        if (!cancelled) {
+          setChecked(true);
+        }
       }
     };
 
     checkBootstrap();
+    return () => {
+      cancelled = true;
+    };
   }, [router, pathname]);
 
   if (!checked) {
