@@ -252,5 +252,25 @@
   "chat.sendMessage": "Enviar mensaje",
   "chat.shiftEnterHint": "para nueva línea",
   "chat.allSystemsOperational": "Todos los sistemas operativos",
-  "chat.errorFallback": "Algo salió mal."
+  "chat.errorFallback": "Algo salió mal.",
+
+  "nav.notifications": "Notificaciones",
+
+  "notifications.title": "Notificaciones",
+  "notifications.unread": "sin leer",
+  "notifications.markAllRead": "Marcar todo como leído",
+  "notifications.clearAll": "Limpiar todo",
+  "notifications.searchPlaceholder": "Buscar notificaciones…",
+  "notifications.filterAll": "Todos",
+  "notifications.filterSuccess": "Éxito",
+  "notifications.filterError": "Error",
+  "notifications.filterProgress": "Progreso",
+  "notifications.noResults": "Ninguna notificación coincide con tu búsqueda.",
+  "notifications.noNotifications": "Aún no hay notificaciones.",
+  "notifications.viewAll": "Ver todas las notificaciones",
+  "notifications.typeSuccess": "éxito",
+  "notifications.typeError": "error",
+  "notifications.typeProgress": "progreso",
+  "notifications.pageTitle": "Notificaciones",
+  "notifications.pageSubtitle": "Todas las notificaciones del sistema"
 }

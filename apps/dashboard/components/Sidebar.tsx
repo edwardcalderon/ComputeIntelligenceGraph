@@ -30,8 +30,9 @@ const operationsItems: NavItem[] = [
 ];
 
 const accountItems: NavItem[] = [
-  { labelKey: "nav.profile",  href: "/profile",  icon: <ProfileIcon />,  color: "#3b82f6" },
-  { labelKey: "nav.settings", href: "/settings", icon: <SettingsIcon />, color: "#8b5cf6" },
+  { labelKey: "nav.notifications", href: "/notifications", icon: <NotificationsIcon />, color: "#f59e0b" },
+  { labelKey: "nav.profile",       href: "/profile",       icon: <ProfileIcon />,       color: "#3b82f6" },
+  { labelKey: "nav.settings",      href: "/settings",      icon: <SettingsIcon />,      color: "#8b5cf6" },
 ];
 
 function ChevronIcon({ open }: { open: boolean }) {
@@ -229,6 +230,13 @@ function SecurityIcon() {
   return (
     <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+    </svg>
+  );
+}
+function NotificationsIcon() {
+  return (
+    <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
     </svg>
   );
 }

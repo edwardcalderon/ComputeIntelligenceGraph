@@ -252,5 +252,25 @@
   "chat.sendMessage": "Send message",
   "chat.shiftEnterHint": "for new line",
   "chat.allSystemsOperational": "All systems operational",
-  "chat.errorFallback": "Something went wrong."
+  "chat.errorFallback": "Something went wrong.",
+
+  "nav.notifications": "Notifications",
+
+  "notifications.title": "Notifications",
+  "notifications.unread": "unread",
+  "notifications.markAllRead": "Mark all read",
+  "notifications.clearAll": "Clear all",
+  "notifications.searchPlaceholder": "Search notifications…",
+  "notifications.filterAll": "All",
+  "notifications.filterSuccess": "Success",
+  "notifications.filterError": "Error",
+  "notifications.filterProgress": "Progress",
+  "notifications.noResults": "No notifications match your search.",
+  "notifications.noNotifications": "No notifications yet.",
+  "notifications.viewAll": "View all notifications",
+  "notifications.typeSuccess": "success",
+  "notifications.typeError": "error",
+  "notifications.typeProgress": "progress",
+  "notifications.pageTitle": "Notifications",
+  "notifications.pageSubtitle": "All system notifications"
 }

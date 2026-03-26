@@ -13,9 +13,8 @@ import { oidcRoutes } from './routes/oidc';
 import { auditRoutes } from './routes/audit';
 import { sessionRoutes } from './routes/sessions';
 import { scanRoutes } from './routes/scans';
-import { chatRoutes } from './routes/chat';
-
 import { authEmailRoutes } from './routes/auth-email';
+import { chatRoutes } from './routes/chat';
 
 // Shared instances
 const graphEngine = new GraphEngine();
@@ -65,7 +64,7 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
   // ─── Custom Auth Email Endpoints ─────────────────────────────────────────────
   await app.register(authEmailRoutes);
 
-  // ─── Dashboard Chat Assistant ────────────────────────────────────────────────
+  // ─── Chat (RAG + OpenAI) ─────────────────────────────────────────────────────
   await app.register(chatRoutes);
 
   // ─── Resources ──────────────────────────────────────────────────────────────

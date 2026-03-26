@@ -1,6 +1,6 @@
 {
   "name": "@cig/api",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "description": "CIG REST/GraphQL API server",
   "files": [
     "dist"
@@ -19,8 +19,10 @@
   "dependencies": {
     "@aws-sdk/client-cost-explorer": "^3.1009.0",
     "@cig/auth": "workspace:*",
+    "@cig/chatbot": "workspace:*",
     "@cig/discovery": "workspace:*",
     "@cig/graph": "workspace:*",
+    "@langchain/openai": "^0.1.0",
     "@escape.tech/graphql-armor-cost-limit": "^2.0.0",
     "@escape.tech/graphql-armor-max-depth": "^2.0.0",
     "@fastify/cors": "^8.0.0",

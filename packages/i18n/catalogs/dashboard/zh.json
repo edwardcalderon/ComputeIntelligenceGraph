@@ -252,5 +252,25 @@
   "chat.sendMessage": "发送消息",
   "chat.shiftEnterHint": "换行",
   "chat.allSystemsOperational": "所有系统运行正常",
-  "chat.errorFallback": "出现了一些问题。"
+  "chat.errorFallback": "出现了一些问题。",
+
+  "nav.notifications": "通知",
+
+  "notifications.title": "通知",
+  "notifications.unread": "未读",
+  "notifications.markAllRead": "全部标为已读",
+  "notifications.clearAll": "清除全部",
+  "notifications.searchPlaceholder": "搜索通知…",
+  "notifications.filterAll": "全部",
+  "notifications.filterSuccess": "成功",
+  "notifications.filterError": "错误",
+  "notifications.filterProgress": "进行中",
+  "notifications.noResults": "没有符合搜索条件的通知。",
+  "notifications.noNotifications": "暂无通知。",
+  "notifications.viewAll": "查看全部通知",
+  "notifications.typeSuccess": "成功",
+  "notifications.typeError": "错误",
+  "notifications.typeProgress": "进行中",
+  "notifications.pageTitle": "通知",
+  "notifications.pageSubtitle": "所有系统通知"
 }

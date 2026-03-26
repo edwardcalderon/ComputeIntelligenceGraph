@@ -49,6 +49,7 @@ const Footer: React.FC = () => {
   const t = useTranslation();
   const version = process.env.NEXT_PUBLIC_APP_VERSION || "";
   const build = process.env.NEXT_PUBLIC_APP_BUILD || "";
+  const docsUrl = process.env.NEXT_PUBLIC_DOCS_URL || "https://cig.lat/documentation";
 
   const meta = [
     t("footer.licenseNotice", { year: new Date().getFullYear() }),
@@ -66,6 +67,7 @@ const Footer: React.FC = () => {
           brandHref="/"
           subtitle={t("footer.rightsReserved")}
           links={[
+            { label: t("footer.docs"), href: docsUrl, external: true },
             { label: t("footer.privacy"), href: "/privacy" },
             { label: t("footer.terms"), href: "/terms" },
           ]}

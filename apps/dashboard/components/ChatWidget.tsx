@@ -148,14 +148,14 @@ export function ChatWidget() {
 
       {/* FAB — hidden on mobile while panel is open */}
       <div
-        className={`fixed bottom-4 right-4 z-[60] sm:bottom-6 sm:right-6 ${
+        className={`fixed bottom-20 right-4 z-[60] sm:right-6 ${
           isOpen ? "hidden sm:block" : ""
         }`}
       >
         <button
           aria-label={isOpen ? t("chat.closeChat") : t("chat.openChat")}
           onClick={() => setIsOpen((v) => !v)}
-          className="floating-ai-button relative flex h-14 w-14 items-center justify-center rounded-full transition-all duration-500 sm:h-16 sm:w-16"
+          className="floating-ai-button relative flex h-11 w-11 items-center justify-center rounded-full transition-all duration-500"
           style={{
             background:
               "linear-gradient(135deg, rgba(99,102,241,0.85) 0%, rgba(168,85,247,0.85) 100%)",
@@ -171,7 +171,7 @@ export function ChatWidget() {
             {isOpen ? (
               <X className="h-6 w-6 text-white" />
             ) : (
-              <Bot className="h-7 w-7 text-white sm:h-8 sm:w-8" />
+              <Bot className="h-6 w-6 text-white" />
             )}
           </div>
           <div className="absolute inset-0 animate-ping rounded-full bg-indigo-500 opacity-20" />
@@ -189,7 +189,7 @@ export function ChatWidget() {
               ? // Desktop expanded modal
                 "fixed z-50 hidden sm:block rounded-3xl"
               : // Compact: mobile sheet or desktop floating
-                "fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl sm:bottom-24 sm:left-auto sm:right-6 sm:w-[480px] sm:rounded-3xl"
+                "fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl sm:bottom-32 sm:left-auto sm:right-6 sm:w-[480px] sm:rounded-3xl"
           }
           style={
             isExpanded && isMobile
@@ -217,10 +217,10 @@ export function ChatWidget() {
                 : isExpanded
                 ? "rounded-3xl h-full"
                 : "rounded-t-3xl sm:rounded-3xl max-h-[88vh] sm:max-h-none",
-              // Light
-              "border border-slate-200/80 bg-white/95 backdrop-blur-sm shadow-xl shadow-slate-200/60",
-              // Dark overrides
-              "dark:border-zinc-500/50 dark:bg-transparent dark:bg-none dark:backdrop-blur-3xl dark:shadow-2xl dark:shadow-black/40",
+              // Light — solid white, no blur
+              "border border-slate-200 bg-white shadow-xl shadow-slate-200/60",
+              // Dark — solid, no blur
+              "dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-2xl dark:shadow-black/60",
             ].join(" ")}
             style={{
               // Dark gradient applied via inline so we don't fight Tailwind bg utilities
@@ -228,15 +228,12 @@ export function ChatWidget() {
               // JS reads the .dark class to decide whether to paint the gradient.
             }}
           >
-            {/* Dark-mode gradient wash (hidden in light via CSS) */}
+            {/* Dark-mode solid fill (hidden in light via CSS) — no transparency */}
             <div
               className={`pointer-events-none absolute inset-0 opacity-0 dark:opacity-100 transition-opacity ${
                 isExpanded && isMobile ? "rounded-none" : "rounded-t-3xl sm:rounded-3xl"
               }`}
-              style={{
-                background:
-                  "linear-gradient(135deg, rgb(39 39 42 / 0.85), rgb(24 24 27 / 0.95))",
-              }}
+              style={{ background: "rgb(24 24 27)" }}
             />
 
             {/* Colour accent overlay — subtle in both modes */}

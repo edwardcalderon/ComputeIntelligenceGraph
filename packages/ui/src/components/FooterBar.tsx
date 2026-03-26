@@ -3,6 +3,7 @@
 export interface FooterLink {
   label: string;
   href: string;
+  external?: boolean;
 }
 
 export interface FooterBarProps {
@@ -98,6 +99,8 @@ export function FooterBar({
               <a
                 key={link.href}
                 href={link.href}
+                target={link.external ? "_blank" : undefined}
+                rel={link.external ? "noopener noreferrer" : undefined}
                 className="transition-colors hover:text-zinc-950 dark:hover:text-white"
               >
                 {link.label}

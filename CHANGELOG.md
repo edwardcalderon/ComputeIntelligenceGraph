@@ -1,4 +1,4 @@
-## [0.2.9](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.7...v0.2.9) (2026-03-26)
+## [0.2.10](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.8...v0.2.10) (2026-03-26)
 
 
 ### Bug Fixes
@@ -9,12 +9,62 @@
 
 
 
-## [0.2.9](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.7...v0.2.9) (2026-03-26)
+## [0.2.10](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.8...v0.2.10) (2026-03-26)
 
 
 ### Bug Fixes
 
 * **docs:** canvas scroll lock, mobile text, zoom toolbar, fit-all ([d2aca2e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/d2aca2ef107892f4e6ddea1d134f59747db36623))
+
+
+
+
+
+## [0.2.9](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.8...v0.2.9) (2026-03-26)
+
+### Detected changes
+- apps: 27 changed file(s)
+  - apps/dashboard/app/(dashboard)/notifications/page.tsx
+  - apps/dashboard/app/layout.tsx
+  - apps/dashboard/components/ChatWidget.tsx
+  - apps/dashboard/components/NotificationBell.tsx
+  - apps/dashboard/components/Sidebar.tsx
+  - apps/dashboard/public/cig-icon.svg
+  - apps/dashboard/public/favicon.ico
+  - apps/dashboard/public/icon-128x128.png
+  - apps/dashboard/public/icon-144x144.png
+  - apps/dashboard/public/icon-152x152.png
+  - apps/dashboard/public/icon-16x16.png
+  - apps/dashboard/public/icon-180x180.png
+  - apps/dashboard/public/icon-192x192.png
+  - apps/dashboard/public/icon-32x32.png
+  - apps/dashboard/public/icon-384x384.png
+  - apps/dashboard/public/icon-48x48.png
+  - apps/dashboard/public/icon-512x512.png
+  - apps/dashboard/public/icon-72x72.png
+  - apps/dashboard/public/icon-96x96.png
+  - apps/dashboard/public/runtime-version.json
+  - apps/dashboard/public/site.webmanifest
+  - apps/dashboard/public/sw.js
+  - apps/landing/app/page.tsx
+  - apps/landing/components/LandingLayout.tsx
+  - apps/landing/next.config.js
+  - apps/landing/public/runtime-version.json
+  - apps/landing/public/sw.js
+- packages: 9 changed file(s)
+  - packages/api/package.json
+  - packages/api/src/routes.ts
+  - packages/i18n/catalogs/dashboard/en.json
+  - packages/i18n/catalogs/dashboard/es.json
+  - packages/i18n/catalogs/dashboard/zh.json
+  - packages/i18n/catalogs/shared/en.json
+  - packages/i18n/catalogs/shared/es.json
+  - packages/i18n/catalogs/shared/zh.json
+  - packages/ui/src/components/FooterBar.tsx
+- root: pnpm-lock.yaml
+
+
+## [0.2.9](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.8...v0.2.9) (2026-03-26)
 
 
 

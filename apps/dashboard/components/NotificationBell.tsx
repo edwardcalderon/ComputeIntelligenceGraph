@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { useNotification } from "@refinedev/core";
+import { useTranslation } from "@cig-technology/i18n/react";
 
-interface Notification {
+// ─── Shared in-memory store ───────────────────────────────────────────────────
+
+export interface Notification {
   id: string;
   message: string;
   type: "success" | "error" | "progress";
@@ -11,54 +15,79 @@ interface Notification {
   read: boolean;
 }
 
-// Simple in-memory notification store — populated by useNotification interceptor
+type FilterType = "all" | "success" | "error" | "progress";
+
 let _notifications: Notification[] = [];
 let _listeners: (() => void)[] = [];
+
+function broadcast() {
+  _listeners.forEach((l) => l());
+}
 
 export function pushNotification(n: Omit<Notification, "id" | "timestamp" | "read">) {
   _notifications = [
     { ...n, id: crypto.randomUUID(), timestamp: new Date(), read: false },
-    ..._notifications.slice(0, 49), // keep last 50
+    ..._notifications.slice(0, 49),
   ];
-  _listeners.forEach((l) => l());
+  broadcast();
 }
 
-function useNotifications() {
+export function markAllRead() {
+  _notifications = _notifications.map((n) => ({ ...n, read: true }));
+  broadcast();
+}
+
+export function clearNotification(id: string) {
+  _notifications = _notifications.filter((n) => n.id !== id);
+  broadcast();
+}
+
+export function clearAll() {
+  _notifications = [];
+  broadcast();
+}
+
+export function useNotifications() {
   const [, forceUpdate] = useState(0);
   useEffect(() => {
     const cb = () => forceUpdate((n) => n + 1);
     _listeners.push(cb);
-    return () => { _listeners = _listeners.filter((l) => l !== cb); };
+    return () => {
+      _listeners = _listeners.filter((l) => l !== cb);
+    };
   }, []);
   return _notifications;
 }
 
-function markAllRead() {
-  _notifications = _notifications.map((n) => ({ ...n, read: true }));
-  _listeners.forEach((l) => l());
-}
-
-const TYPE_COLORS: Record<string, string> = {
-  success:  "text-green-500",
-  error:    "text-red-500",
-  progress: "text-blue-500",
-};
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const TYPE_DOT: Record<string, string> = {
-  success:  "bg-green-500",
-  error:    "bg-red-500",
+  success: "bg-green-500",
+  error: "bg-red-500",
   progress: "bg-blue-500",
 };
 
-function fmtTime(d: Date): string {
+const TYPE_BADGE: Record<string, string> = {
+  success: "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  error: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  progress: "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+};
+
+export function fmtTime(d: Date): string {
   const diff = Date.now() - d.getTime();
-  if (diff < 60_000)    return "just now";
+  if (diff < 60_000) return "just now";
   if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
+  return d.toLocaleDateString([], { month: "short", day: "numeric" });
 }
 
+// ─── Bell dropdown ────────────────────────────────────────────────────────────
+
 export function NotificationBell() {
+  const t = useTranslation();
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<FilterType>("all");
   const panelRef = useRef<HTMLDivElement>(null);
   const notifications = useNotifications();
   const unread = notifications.filter((n) => !n.read).length;
@@ -74,18 +103,51 @@ export function NotificationBell() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // Mark all read 1.5 s after opening
+  useEffect(() => {
+    if (open && unread > 0) {
+      const t = setTimeout(markAllRead, 1500);
+      return () => clearTimeout(t);
+    }
+  }, [open, unread]);
+
+  const filtered = useMemo(() => {
+    let list = notifications;
+    if (filter !== "all") list = list.filter((n) => n.type === filter);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter((n) => n.message.toLowerCase().includes(q));
+    }
+    return list;
+  }, [notifications, filter, search]);
+
+  const FILTERS: { key: FilterType; label: string }[] = [
+    { key: "all", label: t("notifications.filterAll") },
+    { key: "success", label: t("notifications.filterSuccess") },
+    { key: "error", label: t("notifications.filterError") },
+    { key: "progress", label: t("notifications.filterProgress") },
+  ];
+
   return (
     <div ref={panelRef} className="relative">
+      {/* Bell button */}
       <button
-        onClick={() => {
-          setOpen((o) => !o);
-          if (!open && unread > 0) setTimeout(markAllRead, 1500);
-        }}
+        onClick={() => setOpen((o) => !o)}
         className="relative flex items-center justify-center size-8 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        aria-label="Notifications"
+        aria-label={t("notifications.title")}
       >
-        <svg className="size-5 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+        <svg
+          className="size-5 text-gray-600 dark:text-gray-300"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
+          />
         </svg>
         {unread > 0 && (
           <span className="absolute -top-0.5 -right-0.5 size-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center leading-none">
@@ -94,41 +156,150 @@ export function NotificationBell() {
         )}
       </button>
 
+      {/* Dropdown panel */}
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-80 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl z-50">
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 dark:border-gray-700">
-            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Notifications</span>
-            {notifications.length > 0 && (
-              <button
-                onClick={markAllRead}
-                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-              >
-                Mark all read
-              </button>
-            )}
+        <div className="absolute right-0 top-full mt-1 w-[22rem] sm:w-96 rounded-xl border border-cig bg-cig-card shadow-xl z-50 flex flex-col overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-cig">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-cig-primary">
+                {t("notifications.title")}
+              </span>
+              {unread > 0 && (
+                <span className="inline-flex items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 dark:text-red-400">
+                  {unread} {t("notifications.unread")}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {notifications.length > 0 && (
+                <>
+                  <button
+                    onClick={markAllRead}
+                    className="text-[11px] text-cig-secondary hover:text-cig-primary transition-colors"
+                  >
+                    {t("notifications.markAllRead")}
+                  </button>
+                  <span className="text-cig-muted">·</span>
+                  <button
+                    onClick={clearAll}
+                    className="text-[11px] text-cig-secondary hover:text-red-500 transition-colors"
+                  >
+                    {t("notifications.clearAll")}
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
-          <div className="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
-            {notifications.length === 0 ? (
-              <div className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
-                No notifications yet
+          {/* Search */}
+          <div className="px-3 pt-2.5 pb-1.5">
+            <div className="relative">
+              <svg
+                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-cig-muted"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                />
+              </svg>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("notifications.searchPlaceholder")}
+                className="w-full rounded-lg border border-cig bg-cig-elevated pl-7 pr-7 py-1.5 text-xs text-cig-primary placeholder-cig-muted outline-none focus:border-indigo-400 dark:focus:border-indigo-500 transition-colors"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-cig-muted hover:text-cig-primary"
+                >
+                  <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Filter tabs */}
+          <div className="flex gap-1 px-3 pb-2">
+            {FILTERS.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setFilter(key)}
+                className={[
+                  "rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors",
+                  filter === key
+                    ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"
+                    : "text-cig-secondary hover:bg-cig-hover hover:text-cig-primary",
+                ].join(" ")}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* List */}
+          <div className="max-h-72 overflow-y-auto divide-y divide-cig">
+            {filtered.length === 0 ? (
+              <div className="py-8 text-center text-xs text-cig-muted">
+                {search || filter !== "all"
+                  ? t("notifications.noResults")
+                  : t("notifications.noNotifications")}
               </div>
             ) : (
-              notifications.map((n) => (
+              filtered.map((n) => (
                 <div
                   key={n.id}
-                  className={`flex items-start gap-3 px-4 py-3 ${!n.read ? "bg-blue-50/50 dark:bg-blue-950/20" : ""}`}
+                  className={`group flex items-start gap-3 px-4 py-3 transition-colors ${
+                    !n.read ? "bg-blue-50/40 dark:bg-blue-950/10" : "hover:bg-cig-hover"
+                  }`}
                 >
                   <span className={`mt-1.5 size-2 rounded-full flex-shrink-0 ${TYPE_DOT[n.type]}`} />
                   <div className="min-w-0 flex-1">
-                    <p className={`text-xs font-medium ${TYPE_COLORS[n.type]}`}>
-                      {n.message}
-                    </p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">{fmtTime(n.timestamp)}</p>
+                    <p className="text-xs text-cig-primary leading-snug">{n.message}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span
+                        className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${TYPE_BADGE[n.type]}`}
+                      >
+                        {t(`notifications.type${n.type.charAt(0).toUpperCase()}${n.type.slice(1)}` as never)}
+                      </span>
+                      <span className="text-[10px] text-cig-muted">{fmtTime(n.timestamp)}</span>
+                    </div>
                   </div>
+                  <button
+                    onClick={() => clearNotification(n.id)}
+                    className="mt-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 text-cig-muted hover:text-red-500 transition-all"
+                    aria-label="Dismiss"
+                  >
+                    <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
               ))
             )}
+          </div>
+
+          {/* Footer link */}
+          <div className="border-t border-cig px-4 py-2.5">
+            <Link
+              href="/notifications"
+              onClick={() => setOpen(false)}
+              className="flex items-center justify-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+            >
+              {t("notifications.viewAll")}
+              <svg className="size-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+              </svg>
+            </Link>
           </div>
         </div>
       )}
@@ -136,23 +307,19 @@ export function NotificationBell() {
   );
 }
 
-/**
- * Hook — connect Refine's notification system to our bell.
- * Mount once inside Providers tree.
- */
+// ─── Provider ─────────────────────────────────────────────────────────────────
+
 export function NotificationProvider() {
   const { open: notify } = useNotification();
 
-  // Patch the notify function to also push to our local store
   useEffect(() => {
     const origNotify = notify;
-
-    // We use a custom event so any component can push notifications
-    function handler(e: CustomEvent<{ message: string; type: "success" | "error" | "progress" }>) {
+    function handler(
+      e: CustomEvent<{ message: string; type: "success" | "error" | "progress" }>
+    ) {
       pushNotification(e.detail);
       origNotify?.(e.detail);
     }
-
     window.addEventListener("cig:notify" as never, handler as EventListener);
     return () => window.removeEventListener("cig:notify" as never, handler as EventListener);
   }, [notify]);
@@ -160,7 +327,6 @@ export function NotificationProvider() {
   return null;
 }
 
-/** Dispatch a notification from anywhere without prop drilling. */
 export function notifyUser(
   message: string,
   type: "success" | "error" | "progress" = "progress"
