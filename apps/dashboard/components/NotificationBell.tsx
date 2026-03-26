@@ -54,6 +54,11 @@ export function clearAll() {
   broadcast();
 }
 
+export function markAsUnread(id: string) {
+  _notifications = _notifications.map((n) => (n.id === id ? { ...n, read: false } : n));
+  broadcast();
+}
+
 export function useNotifications() {
   const [, forceUpdate] = useState(0);
   useEffect(() => {
@@ -139,7 +144,7 @@ export function NotificationBell() {
     <div ref={panelRef} className="relative">
       {/* Bell button */}
       <button
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => setOpen(true)}
         className="relative flex items-center justify-center size-8 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         aria-label={t("notifications.title")}
       >
@@ -286,15 +291,26 @@ export function NotificationBell() {
                       <span className="text-[10px] text-cig-muted">{fmtTime(n.timestamp)}</span>
                     </div>
                   </div>
-                  <button
-                    onClick={() => clearNotification(n.id)}
-                    className="mt-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 text-cig-muted hover:text-red-500 transition-all"
-                    aria-label="Dismiss"
-                  >
-                    <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+                  <div className="mt-0.5 flex-shrink-0 flex flex-col items-end gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    {n.read && (
+                      <button
+                        onClick={() => markAsUnread(n.id)}
+                        className="text-[9px] text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 whitespace-nowrap transition-colors"
+                        aria-label="Mark as unread"
+                      >
+                        Mark unread
+                      </button>
+                    )}
+                    <button
+                      onClick={() => clearNotification(n.id)}
+                      className="text-cig-muted hover:text-red-500 transition-colors"
+                      aria-label="Dismiss"
+                    >
+                      <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               ))
             )}

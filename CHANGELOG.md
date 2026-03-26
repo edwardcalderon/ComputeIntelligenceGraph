@@ -1,3 +1,19 @@
+## [0.2.28](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.27...v0.2.28) (2026-03-26)
+
+### Detected changes
+- apps: 3 changed file(s)
+  - apps/dashboard/components/ChatExamplesTab.tsx
+  - apps/dashboard/components/ChatWidget.tsx
+  - apps/dashboard/components/NotificationBell.tsx
+- packages: packages/ui/src/components/chat/AlertCard.tsx
+
+
+## [0.2.28](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.27...v0.2.28) (2026-03-26)
+
+
+
+
+
 ## [0.2.27](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.26...v0.2.27) (2026-03-26)
 
 ### Detected changes

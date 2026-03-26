@@ -368,12 +368,12 @@ export function ChatTemplatesTab({
   }, []);
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-y-auto overflow-x-hidden overscroll-contain" style={{ scrollbarWidth: "thin" }}>
+    <div className="flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain" style={{ scrollbarWidth: "thin" }}>
       <div className="flex-shrink-0">
         <AlertStrip critical={2} attention={2} />
       </div>
 
-      <div className="border-b border-slate-200/80 px-4 pb-4 pt-4 dark:border-zinc-800/70 sm:px-5">
+      <div className="flex-shrink-0 border-b border-slate-200/80 px-4 pb-4 pt-4 dark:border-zinc-800/70 sm:px-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-[11px] font-semibold text-slate-700 dark:text-zinc-200">
@@ -419,8 +419,8 @@ export function ChatTemplatesTab({
       </div>
 
       <div className="min-h-0 flex-1 px-3 pb-4 pt-4 sm:px-4">
-        <div className="flex h-full flex-col rounded-[26px] border border-slate-200/75 bg-white/76 shadow-[0_14px_35px_rgba(15,23,42,0.06)] backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-950/45 dark:shadow-[0_14px_35px_rgba(0,0,0,0.18)]">
-          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200/75 px-4 py-3 dark:border-zinc-800/75">
+        <div className="flex min-h-0 flex-1 flex-col rounded-[26px] border border-slate-200/75 bg-white/76 shadow-[0_14px_35px_rgba(15,23,42,0.06)] backdrop-blur-sm dark:border-zinc-800/80 dark:bg-zinc-950/45 dark:shadow-[0_14px_35px_rgba(0,0,0,0.18)]">
+          <div className="flex flex-shrink-0 flex-wrap items-start justify-between gap-3 border-b border-slate-200/75 px-4 py-3 dark:border-zinc-800/75">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-zinc-500">
                 {activeSection.label}
@@ -471,7 +471,7 @@ export function ChatTemplatesTab({
             })}
           </div>
 
-          <div className="flex items-center justify-center gap-2 px-4 pb-4 pt-1 sm:hidden">
+          <div className="flex flex-shrink-0 items-center justify-center gap-2 px-4 pb-4 pt-1 sm:hidden">
             {visibleTemplates.map((template, index) => {
               const active = index === activeTemplateIndex;
 

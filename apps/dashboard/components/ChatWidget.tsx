@@ -500,8 +500,8 @@ export function ChatWidget() {
             {activeTab === "templates" && (
               <div
                 className={[
-                  "relative z-10 overflow-hidden",
-                  isExpanded ? "flex-1" : "max-h-[55vh] sm:max-h-80",
+                  "relative z-10 flex min-h-0 flex-col",
+                  isExpanded ? "flex-1" : "h-[62vh] sm:h-[34rem]",
                 ].join(" ")}
               >
                 <ChatTemplatesTab onUseTemplate={handleUseTemplate} />
