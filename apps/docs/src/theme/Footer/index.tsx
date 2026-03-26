@@ -4,11 +4,13 @@ import './styles.css';
 
 export default function Footer(): JSX.Element {
   const currentYear = new Date().getFullYear();
+  const version = process.env.NEXT_PUBLIC_APP_VERSION || '';
 
   const footerLinks = [
     { label: 'Documentation', href: '/docs/en/getting-started/' },
     { label: 'GitHub', href: 'https://github.com/edwardcalderon/ComputeIntelligenceGraph' },
     { label: 'Issues', href: 'https://github.com/edwardcalderon/ComputeIntelligenceGraph/issues' },
+    { label: 'Report', href: 'https://github.com/edwardcalderon/ComputeIntelligenceGraph/issues/new' },
     { label: 'Landing', href: 'https://cig.lat' },
   ];
 
@@ -76,7 +78,7 @@ export default function Footer(): JSX.Element {
           </div>
 
           <div className="cig-footer-meta">
-            <div>© {currentYear} CIG Project · Open Source · MIT License</div>
+            <div>© {currentYear} CIG Project · Open Source · MIT License {version && `· v${version}`}</div>
           </div>
         </div>
       </div>

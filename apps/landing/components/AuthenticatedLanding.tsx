@@ -1006,6 +1006,7 @@ export function AuthenticatedLanding() {
           subtitle={t("footer.rightsReserved")}
           links={[
             { label: t("nav.dashboard"), href: DASHBOARD_URL },
+            { label: "Report", href: "https://github.com/edwardcalderon/ComputeIntelligenceGraph/issues/new", external: true },
             { label: t("footer.privacy"), href: "/privacy" },
             { label: t("footer.terms"), href: "/terms" },
           ]}
