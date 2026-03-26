@@ -8,6 +8,7 @@ import { maxDepthPlugin } from '@escape.tech/graphql-armor-max-depth';
 import { costLimitPlugin } from '@escape.tech/graphql-armor-cost-limit';
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { GraphEngine, GraphQueryEngine, ResourceFilters } from '@cig/graph';
+import type { CartographyStatus } from '@cig/discovery';
 import { CartographyClient } from '@cig/discovery';
 
 // ─── Shared instances ─────────────────────────────────────────────────────────
@@ -15,6 +16,41 @@ import { CartographyClient } from '@cig/discovery';
 const graphEngine = new GraphEngine();
 const queryEngine = new GraphQueryEngine();
 const cartographyClient = new CartographyClient();
+
+const DEFAULT_DISCOVERY_INTERVAL_MINUTES = 5;
+
+function resolveDiscoveryIntervalMinutes(): number {
+  const parsed = Number.parseInt(process.env.DISCOVERY_INTERVAL_MINUTES ?? '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_DISCOVERY_INTERVAL_MINUTES;
+}
+
+function resolveNextRun(lastRun: string | null): string | null {
+  if (!lastRun) {
+    return null;
+  }
+
+  const startedAt = new Date(lastRun);
+  if (Number.isNaN(startedAt.getTime())) {
+    return null;
+  }
+
+  startedAt.setMinutes(startedAt.getMinutes() + resolveDiscoveryIntervalMinutes());
+  return startedAt.toISOString();
+}
+
+function buildDiscoveryStatusSnapshot(status: CartographyStatus | null) {
+  const lastRun = status?.last_run_end ?? status?.last_run_start ?? null;
+
+  return {
+    running: status?.running ?? false,
+    lastRunStart: status?.last_run_start ?? null,
+    lastRunEnd: status?.last_run_end ?? null,
+    lastRunSuccess: status?.last_run_success ?? null,
+    lastError: status?.last_error ?? null,
+    runCount: status?.run_count ?? 0,
+    nextRun: resolveNextRun(lastRun),
+  };
+}
 
 // ─── PubSub for subscriptions ─────────────────────────────────────────────────
 
@@ -341,15 +377,13 @@ const resolvers = {
 
     // Requirement 17.4 — discovery queries
     discoveryStatus: async () => {
-      const status = await cartographyClient.getStatus();
-      return {
-        running: status.running,
-        lastRunStart: status.last_run_start,
-        lastRunEnd: status.last_run_end,
-        lastRunSuccess: status.last_run_success,
-        lastError: status.last_error,
-        runCount: status.run_count,
-      };
+      try {
+        const status = await cartographyClient.getStatus();
+        return buildDiscoveryStatusSnapshot(status);
+      } catch (error) {
+        console.warn('[GraphQL] Discovery status unavailable; returning fallback snapshot:', error);
+        return buildDiscoveryStatusSnapshot(null);
+      }
     },
 
     // Requirement 17.5 — cost queries (stub)

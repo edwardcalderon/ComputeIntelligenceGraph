@@ -37,6 +37,23 @@ const graphMocks = vi.hoisted(() => ({
   getDependents: vi.fn().mockResolvedValue([]),
 }));
 
+const discoveryMocks = vi.hoisted(() => ({
+  getStatus: vi.fn().mockResolvedValue({
+    running: false,
+    run_count: 5,
+    last_run_start: '2024-01-01T00:00:00Z',
+    last_run_end: '2024-01-01T00:05:00Z',
+    last_run_success: true,
+    last_error: null,
+  }),
+  getRecentRuns: vi.fn().mockResolvedValue({
+    total_runs: 5,
+    last_success: true,
+    last_run: '2024-01-01T00:05:00Z',
+  }),
+  triggerRun: vi.fn().mockResolvedValue({ status: 'started', timestamp: '2024-01-01T00:00:00Z' }),
+}));
+
 vi.mock('@cig/graph', () => ({
   GraphEngine: vi.fn().mockImplementation(() => ({
     getResource: graphMocks.getResource,
@@ -52,20 +69,9 @@ vi.mock('@cig/graph', () => ({
 
 vi.mock('@cig/discovery', () => ({
   CartographyClient: vi.fn().mockImplementation(() => ({
-    getStatus: vi.fn().mockResolvedValue({
-      running: false,
-      run_count: 5,
-      last_run_start: '2024-01-01T00:00:00Z',
-      last_run_end: '2024-01-01T00:05:00Z',
-      last_run_success: true,
-      last_error: null,
-    }),
-    getRecentRuns: vi.fn().mockResolvedValue({
-      total_runs: 5,
-      last_success: true,
-      last_run: '2024-01-01T00:05:00Z',
-    }),
-    triggerRun: vi.fn().mockResolvedValue({ status: 'started', timestamp: '2024-01-01T00:00:00Z' }),
+    getStatus: discoveryMocks.getStatus,
+    getRecentRuns: discoveryMocks.getRecentRuns,
+    triggerRun: discoveryMocks.triggerRun,
   })),
 }));
 
@@ -293,6 +299,25 @@ describe('API Integration Tests', () => {
       expect(response.statusCode).toBe(200);
       const body = response.json();
       expect(typeof body.running).toBe('boolean');
+    });
+
+    it('falls back to a safe snapshot when discovery is unavailable', async () => {
+      discoveryMocks.getStatus.mockRejectedValueOnce(new Error('cartography down'));
+      discoveryMocks.getRecentRuns.mockRejectedValueOnce(new Error('cartography down'));
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v1/discovery/status',
+        headers: {
+          authorization: makeAuthHeader([Permission.READ_RESOURCES]),
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body.running).toBe(false);
+      expect(body.lastRun).toBeNull();
+      expect(body.nextRun).toBeNull();
     });
   });
 

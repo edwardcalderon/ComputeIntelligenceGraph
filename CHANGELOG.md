@@ -1,3 +1,21 @@
+## [0.2.24](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.23...v0.2.24) (2026-03-26)
+
+### Detected changes
+- apps: 2 changed file(s)
+  - apps/dashboard/lib/siteUrl.ts
+  - apps/docs/docusaurus.config.ts
+- packages: 3 changed file(s)
+  - packages/api/src/graphql.ts
+  - packages/api/src/integration.test.ts
+  - packages/api/src/routes.ts
+
+
+## [0.2.24](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.23...v0.2.24) (2026-03-26)
+
+
+
+
+
 ## [0.2.23](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.22...v0.2.23) (2026-03-26)
 
 ### Detected changes

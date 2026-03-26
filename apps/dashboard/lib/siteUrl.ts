@@ -25,11 +25,9 @@ function formatLocalOriginUrl(hostname: string, protocol: string, port: number):
 
 export function resolveLandingUrl(context: UrlContext = {}): string {
   const hostname =
-    context.hostname ??
-    (typeof window !== "undefined" ? window.location.hostname : undefined);
+    context.hostname;
   const protocol =
-    context.protocol ??
-    (typeof window !== "undefined" ? window.location.protocol : undefined);
+    context.protocol;
 
   if (hostname && isLocalHostname(hostname)) {
     return formatLocalOriginUrl(hostname, protocol ?? "http:", 3000);
@@ -44,11 +42,9 @@ export function resolveLandingLoggedOutUrl(context: UrlContext = {}): string {
 
 export function resolveDocsUrl(context: UrlContext = {}): string {
   const hostname =
-    context.hostname ??
-    (typeof window !== "undefined" ? window.location.hostname : undefined);
+    context.hostname;
   const protocol =
-    context.protocol ??
-    (typeof window !== "undefined" ? window.location.protocol : undefined);
+    context.protocol;
 
   if (hostname && isLocalHostname(hostname)) {
     return `${formatLocalOriginUrl(hostname, protocol ?? "http:", 3000)}/documentation`;
@@ -69,11 +65,9 @@ export function resolveDocsUrl(context: UrlContext = {}): string {
 
 export function resolveDashboardUrl(context: UrlContext = {}): string {
   const hostname =
-    context.hostname ??
-    (typeof window !== "undefined" ? window.location.hostname : undefined);
+    context.hostname;
   const protocol =
-    context.protocol ??
-    (typeof window !== "undefined" ? window.location.protocol : undefined);
+    context.protocol;
 
   if (hostname && isLocalHostname(hostname)) {
     return formatLocalOriginUrl(hostname, protocol ?? "http:", 3001);

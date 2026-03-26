@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { GraphEngine, GraphQueryEngine, ResourceFilters } from '@cig/graph';
+import type { CartographyRecentRuns, CartographyStatus } from '@cig/discovery';
 import { CartographyClient } from '@cig/discovery';
 import { authenticate, authorize, Permission } from './auth';
 import { costAnalyzer } from './costs';
@@ -34,6 +35,46 @@ function parseInteger(value: unknown, fallback: number): number {
 
 function emptyPagedResources() {
   return { items: [], total: 0, hasMore: false };
+}
+
+type DiscoveryStatusSnapshot = {
+  running: boolean;
+  lastRun: string | null;
+  nextRun: string | null;
+};
+
+const DEFAULT_DISCOVERY_INTERVAL_MINUTES = 5;
+
+function resolveDiscoveryIntervalMinutes(): number {
+  const parsed = Number.parseInt(process.env.DISCOVERY_INTERVAL_MINUTES ?? '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_DISCOVERY_INTERVAL_MINUTES;
+}
+
+function resolveNextRun(lastRun: string | null): string | null {
+  if (!lastRun) {
+    return null;
+  }
+
+  const startedAt = new Date(lastRun);
+  if (Number.isNaN(startedAt.getTime())) {
+    return null;
+  }
+
+  startedAt.setMinutes(startedAt.getMinutes() + resolveDiscoveryIntervalMinutes());
+  return startedAt.toISOString();
+}
+
+function buildDiscoveryStatusSnapshot(
+  status: CartographyStatus | null,
+  recentRuns: CartographyRecentRuns | null
+): DiscoveryStatusSnapshot {
+  const lastRun = recentRuns?.last_run ?? status?.last_run_end ?? status?.last_run_start ?? null;
+
+  return {
+    running: status?.running ?? false,
+    lastRun,
+    nextRun: resolveNextRun(lastRun),
+  };
 }
 
 export async function registerRoutes(app: FastifyInstance): Promise<void> {
@@ -155,10 +196,23 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
   app.get(
     '/api/v1/discovery/status',
     { preHandler: readResources },
-    async (_request: FastifyRequest, reply: FastifyReply) => {
-      const status = await cartographyClient.getStatus();
-      const recentRuns = await cartographyClient.getRecentRuns();
-      return reply.send({ ...status, ...recentRuns });
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      let status: CartographyStatus | null = null;
+      let recentRuns: CartographyRecentRuns | null = null;
+
+      try {
+        status = await cartographyClient.getStatus();
+      } catch (error) {
+        request.log.warn({ err: error }, 'Discovery status unavailable; falling back to empty status');
+      }
+
+      try {
+        recentRuns = await cartographyClient.getRecentRuns();
+      } catch (error) {
+        request.log.warn({ err: error }, 'Discovery recent runs unavailable; falling back to status-only snapshot');
+      }
+
+      return reply.send(buildDiscoveryStatusSnapshot(status, recentRuns));
     }
   );
 

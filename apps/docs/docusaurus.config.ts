@@ -47,7 +47,10 @@ const config: Config = {
     },
     {
       tagName: 'script',
-      innerHTML: `window.__CIG_VERSION__ = '${appVersion}';`,
+      attributes: {
+        type: 'text/javascript',
+      },
+      innerHTML: `window.__CIG_VERSION__ = ${JSON.stringify(appVersion)};`,
     },
   ],
 
