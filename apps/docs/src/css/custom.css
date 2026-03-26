@@ -94,6 +94,45 @@
   background-color: var(--ifm-background-surface-color);
 }
 
+/* Mobile sidebar responsiveness */
+@media (max-width: 996px) {
+  .theme-doc-sidebar-container {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 100%;
+    max-width: 80vw;
+    z-index: 100;
+    border-right: 1px solid var(--ifm-color-emphasis-300);
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .theme-doc-sidebar-container.sidebar-visible {
+    transform: translateX(0);
+  }
+
+  /* Ensure sidebar is visible when toggled */
+  .sidebar-visible {
+    display: block !important;
+  }
+}
+
+/* Tablet and up - sidebar always visible */
+@media (min-width: 997px) {
+  .theme-doc-sidebar-container {
+    position: relative;
+    height: auto;
+    width: auto;
+    max-width: none;
+    z-index: auto;
+    transform: none;
+    overflow-y: visible;
+  }
+}
+
 /* Improve sidebar menu item hover states */
 .menu__link:hover {
   background-color: rgba(6, 182, 212, 0.1);
@@ -110,6 +149,59 @@
 
 [data-theme='dark'] .menu__link--active {
   background-color: rgba(34, 211, 238, 0.15);
+}
+
+/* Mobile menu toggle button */
+@media (max-width: 996px) {
+  .navbar__toggle {
+    display: inline-flex;
+    z-index: 101;
+  }
+
+  /* Sidebar overlay for mobile */
+  .theme-doc-sidebar-container::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease-in-out;
+    z-index: 99;
+  }
+
+  .theme-doc-sidebar-container.sidebar-visible::before {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Improve mobile menu scrolling */
+  .menu {
+    padding: 1rem 0;
+  }
+
+  .menu__list {
+    padding: 0;
+  }
+
+  .menu__list-item {
+    margin: 0;
+  }
+
+  .menu__link {
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* Tablet and up - normal menu styling */
+@media (min-width: 997px) {
+  .navbar__toggle {
+    display: none;
+  }
 }
 
 /* Code block improvements */
@@ -166,4 +258,55 @@
 /* Remove default hero padding that adds white space above orbital */
 .main-wrapper > main {
   padding: 0;
+}
+
+/* Mobile layout improvements */
+@media (max-width: 996px) {
+  .main-wrapper {
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .container {
+    max-width: 100%;
+    padding: 1rem;
+  }
+
+  /* Ensure content doesn't get hidden behind sidebar */
+  .docMainContainer {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  /* Improve table of contents on mobile */
+  .table-of-contents {
+    font-size: 0.9rem;
+  }
+
+  .table-of-contents__link {
+    padding: 0.25rem 0;
+  }
+
+  /* Responsive code blocks */
+  .prism-code {
+    font-size: 0.85rem;
+    overflow-x: auto;
+  }
+
+  /* Improve admonitions on mobile */
+  .admonition {
+    margin: 1rem 0;
+    padding: 1rem;
+  }
+}
+
+/* Tablet and up - normal layout */
+@media (min-width: 997px) {
+  .main-wrapper {
+    max-width: 100%;
+  }
+
+  .container {
+    max-width: 1320px;
+  }
 }

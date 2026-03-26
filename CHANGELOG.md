@@ -1,3 +1,25 @@
+## [0.2.12](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.11...v0.2.12) (2026-03-26)
+
+
+### Bug Fixes
+
+* **docs:** canvas 95vw boundary, mobile modal, compact toolbar ([78ff4a4](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/78ff4a49096fbe374c49e8de98216d68adfe338a))
+
+
+
+
+
+## [0.2.12](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.11...v0.2.12) (2026-03-26)
+
+
+### Bug Fixes
+
+* **docs:** canvas 95vw boundary, mobile modal, compact toolbar ([78ff4a4](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/78ff4a49096fbe374c49e8de98216d68adfe338a))
+
+
+
+
+
 ## [0.2.11](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.10...v0.2.11) (2026-03-26)
 
 ### Detected changes

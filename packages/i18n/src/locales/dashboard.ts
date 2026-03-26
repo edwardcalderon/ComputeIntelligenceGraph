@@ -239,7 +239,25 @@ const en: TranslationCatalog = {
   "chat.sendMessage": "Send message",
   "chat.shiftEnterHint": "for new line",
   "chat.allSystemsOperational": "All systems operational",
-  "chat.errorFallback": "Something went wrong."
+  "chat.errorFallback": "Something went wrong.",
+  "nav.notifications": "Notifications",
+  "notifications.title": "Notifications",
+  "notifications.unread": "unread",
+  "notifications.markAllRead": "Mark all read",
+  "notifications.clearAll": "Clear all",
+  "notifications.searchPlaceholder": "Search notifications…",
+  "notifications.filterAll": "All",
+  "notifications.filterSuccess": "Success",
+  "notifications.filterError": "Error",
+  "notifications.filterProgress": "Progress",
+  "notifications.noResults": "No notifications match your search.",
+  "notifications.noNotifications": "No notifications yet.",
+  "notifications.viewAll": "View all notifications",
+  "notifications.typeSuccess": "success",
+  "notifications.typeError": "error",
+  "notifications.typeProgress": "progress",
+  "notifications.pageTitle": "Notifications",
+  "notifications.pageSubtitle": "All system notifications"
 };
 
 const es: TranslationCatalog = {
@@ -480,7 +498,25 @@ const es: TranslationCatalog = {
   "chat.sendMessage": "Enviar mensaje",
   "chat.shiftEnterHint": "para nueva línea",
   "chat.allSystemsOperational": "Todos los sistemas operativos",
-  "chat.errorFallback": "Algo salió mal."
+  "chat.errorFallback": "Algo salió mal.",
+  "nav.notifications": "Notificaciones",
+  "notifications.title": "Notificaciones",
+  "notifications.unread": "sin leer",
+  "notifications.markAllRead": "Marcar todo como leído",
+  "notifications.clearAll": "Limpiar todo",
+  "notifications.searchPlaceholder": "Buscar notificaciones…",
+  "notifications.filterAll": "Todos",
+  "notifications.filterSuccess": "Éxito",
+  "notifications.filterError": "Error",
+  "notifications.filterProgress": "Progreso",
+  "notifications.noResults": "Ninguna notificación coincide con tu búsqueda.",
+  "notifications.noNotifications": "Aún no hay notificaciones.",
+  "notifications.viewAll": "Ver todas las notificaciones",
+  "notifications.typeSuccess": "éxito",
+  "notifications.typeError": "error",
+  "notifications.typeProgress": "progreso",
+  "notifications.pageTitle": "Notificaciones",
+  "notifications.pageSubtitle": "Todas las notificaciones del sistema"
 };
 
 const zh: TranslationCatalog = {
@@ -721,7 +757,25 @@ const zh: TranslationCatalog = {
   "chat.sendMessage": "发送消息",
   "chat.shiftEnterHint": "换行",
   "chat.allSystemsOperational": "所有系统运行正常",
-  "chat.errorFallback": "出现了一些问题。"
+  "chat.errorFallback": "出现了一些问题。",
+  "nav.notifications": "通知",
+  "notifications.title": "通知",
+  "notifications.unread": "未读",
+  "notifications.markAllRead": "全部标为已读",
+  "notifications.clearAll": "清除全部",
+  "notifications.searchPlaceholder": "搜索通知…",
+  "notifications.filterAll": "全部",
+  "notifications.filterSuccess": "成功",
+  "notifications.filterError": "错误",
+  "notifications.filterProgress": "进行中",
+  "notifications.noResults": "没有符合搜索条件的通知。",
+  "notifications.noNotifications": "暂无通知。",
+  "notifications.viewAll": "查看全部通知",
+  "notifications.typeSuccess": "成功",
+  "notifications.typeError": "错误",
+  "notifications.typeProgress": "进行中",
+  "notifications.pageTitle": "通知",
+  "notifications.pageSubtitle": "所有系统通知"
 };
 
 const catalogs: Record<SupportedLocale, TranslationCatalog> = { en, es, zh };
