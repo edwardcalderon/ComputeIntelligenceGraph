@@ -70,7 +70,7 @@ export async function setup(options: SetupCommandOptions = {}): Promise<void> {
   let mode = options.mode;
   let profile = options.profile;
   let apiUrl = options.apiUrl;
-  let wasCancelled = false;
+  let exitMessage = 'Press Enter to return to your shell.';
 
   try {
     intro(`CIG Setup Wizard v${CLI_VERSION}`);
@@ -99,13 +99,11 @@ export async function setup(options: SetupCommandOptions = {}): Promise<void> {
     if (message !== 'Setup was cancelled.' && message !== 'Installation was cancelled.') {
       console.error(`Setup did not complete: ${message}`);
     } else {
-      wasCancelled = true;
+      exitMessage = `${message} Press Enter to quit.`;
       return;
     }
     throw error instanceof Error ? error : new Error(message);
   } finally {
-    if (!wasCancelled) {
-      await pauseBeforeExit();
-    }
+    await pauseBeforeExit(exitMessage);
   }
 }
