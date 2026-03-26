@@ -209,6 +209,12 @@ jobs:
             ? orderedServices.filter((service) => services.has(service))
             : orderedServices;
 
+          if (!buildServices.includes('cartography')) {
+            // Cartography does not have a stable upstream bundle source in this release flow,
+            // so always build it from the repository Dockerfile to keep the bundle self-contained.
+            buildServices.push('cartography');
+          }
+
           appendOutput('version', version);
           appendOutput('release_tag', releaseTag);
           appendOutput('source_sha', head);
