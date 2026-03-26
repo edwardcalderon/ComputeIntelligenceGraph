@@ -1,10 +1,11 @@
 import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import rootPackageJson from '../../package.json';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
-const packageJson = require('./package.json');
+const appVersion = rootPackageJson.version;
 
 const config: Config = {
   title: 'CIG Documentation',
@@ -41,12 +42,12 @@ const config: Config = {
       tagName: 'meta',
       attributes: {
         name: 'cig-version',
-        content: packageJson.version,
+        content: appVersion,
       },
     },
     {
       tagName: 'script',
-      innerHTML: `window.__CIG_VERSION__ = '${packageJson.version}';`,
+      innerHTML: `window.__CIG_VERSION__ = '${appVersion}';`,
     },
   ],
 
@@ -73,6 +74,10 @@ const config: Config = {
   themes: ['@docusaurus/theme-mermaid'],
 
   plugins: [],
+
+  customFields: {
+    appVersion,
+  },
 
   themeConfig: {
     // Replace with your project's social card

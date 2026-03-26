@@ -775,7 +775,7 @@ const Footer: React.FC = () => {
           brandHref="/"
           subtitle={t("footer.rightsReserved")}
           links={[
-            { label: "Report", href: "https://github.com/edwardcalderon/ComputeIntelligenceGraph/issues/new", external: true },
+            { label: t("footer.docs"), href: docsUrl, external: true },
             { label: t("footer.privacy"), href: "/privacy" },
             { label: t("footer.terms"), href: "/terms" },
           ]}

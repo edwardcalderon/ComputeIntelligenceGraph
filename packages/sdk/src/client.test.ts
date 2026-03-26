@@ -38,6 +38,7 @@ describe('CigClient', () => {
               model: 'gpt-4o-mini',
               configured: true,
               reachable: true,
+              providerReachable: true,
               checkedAt: '2026-03-26T09:00:00.000Z',
               latencyMs: 42,
             },

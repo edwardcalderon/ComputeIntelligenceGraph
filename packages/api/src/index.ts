@@ -19,6 +19,7 @@ type ChatHealthStatus = {
   model: string;
   configured: boolean;
   reachable: boolean;
+  providerReachable: boolean;
   checkedAt: string;
   latencyMs: number | null;
 };
@@ -51,7 +52,7 @@ function resolveCorsOrigins(): true | string[] {
   ];
 }
 
-async function resolveChatHealth(): Promise<ChatHealthStatus> {
+async function resolveChatHealth(endpointReady: boolean): Promise<ChatHealthStatus> {
   const model = process.env.OPENAI_CHAT_MODEL?.trim() || OPENAI_MODEL_DEFAULT;
   const apiKey = process.env.OPENAI_API_KEY?.trim() || '';
   const now = Date.now();
@@ -67,7 +68,8 @@ async function resolveChatHealth(): Promise<ChatHealthStatus> {
       provider: 'fallback',
       model,
       configured: false,
-      reachable: false,
+      reachable: endpointReady,
+      providerReachable: false,
       checkedAt,
       latencyMs: null,
     };
@@ -92,7 +94,8 @@ async function resolveChatHealth(): Promise<ChatHealthStatus> {
       provider: 'openai',
       model,
       configured: true,
-      reachable: response.ok,
+      reachable: endpointReady,
+      providerReachable: response.ok,
       checkedAt,
       latencyMs: Date.now() - startedAt,
     };
@@ -103,7 +106,8 @@ async function resolveChatHealth(): Promise<ChatHealthStatus> {
       provider: 'openai',
       model,
       configured: true,
-      reachable: false,
+      reachable: endpointReady,
+      providerReachable: false,
       checkedAt,
       latencyMs: Date.now() - startedAt,
     };
@@ -164,7 +168,9 @@ export async function createServer(): Promise<FastifyInstance> {
 
   // Health check
   app.get('/api/v1/health', async (_request: FastifyRequest, reply: FastifyReply) => {
-    const chat = await resolveChatHealth();
+    const chat = await resolveChatHealth(
+      app.hasRoute({ method: 'POST', url: '/api/v1/chat' })
+    );
     return reply.send({
       status: 'ok',
       version: VERSION,

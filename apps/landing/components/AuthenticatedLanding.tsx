@@ -14,6 +14,8 @@ import { FooterBar } from "@cig/ui/components";
 
 const DASHBOARD_URL =
   process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3002";
+const DOCS_URL =
+  process.env.NEXT_PUBLIC_DOCS_URL ?? "https://cig.lat/documentation";
 
 /* ─── Session-aware navigation ───────────────────────────────────────── */
 
@@ -1006,7 +1008,7 @@ export function AuthenticatedLanding() {
           subtitle={t("footer.rightsReserved")}
           links={[
             { label: t("nav.dashboard"), href: DASHBOARD_URL },
-            { label: "Report", href: "https://github.com/edwardcalderon/ComputeIntelligenceGraph/issues/new", external: true },
+            { label: t("footer.docs"), href: DOCS_URL, external: true },
             { label: t("footer.privacy"), href: "/privacy" },
             { label: t("footer.terms"), href: "/terms" },
           ]}

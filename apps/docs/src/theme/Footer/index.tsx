@@ -1,17 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Link from '@docusaurus/Link';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import './styles.css';
 
 export default function Footer(): JSX.Element {
   const currentYear = new Date().getFullYear();
-  const [version, setVersion] = useState('');
-
-  useEffect(() => {
-    // Try to get version from window or meta tag
-    const versionFromWindow = (window as any).__CIG_VERSION__ || '';
-    const metaVersion = document.querySelector('meta[name="cig-version"]')?.getAttribute('content') || '';
-    setVersion(versionFromWindow || metaVersion || '');
-  }, []);
+  const {siteConfig} = useDocusaurusContext();
+  const version = typeof siteConfig.customFields?.appVersion === 'string' ? siteConfig.customFields.appVersion : '';
 
   const footerLinks = [
     { label: 'Documentation', href: '/docs/en/getting-started/' },

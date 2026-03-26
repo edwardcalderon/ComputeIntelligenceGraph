@@ -1,3 +1,38 @@
+## [0.2.23](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.22...v0.2.23) (2026-03-26)
+
+### Detected changes
+- apps: 12 changed file(s)
+  - apps/dashboard/components/ChatExamplesTab.tsx
+  - apps/dashboard/components/ChatWidget.tsx
+  - apps/dashboard/components/Footer.tsx
+  - apps/dashboard/components/__tests__/ChatExamplesTab.test.tsx
+  - apps/dashboard/components/__tests__/ChatWidget.test.tsx
+  - apps/dashboard/lib/__tests__/siteUrl.test.ts
+  - apps/dashboard/lib/siteUrl.ts
+  - apps/docs/docusaurus.config.ts
+  - apps/docs/src/theme/Footer/index.tsx
+  - apps/landing/app/page.tsx
+  - apps/landing/components/AuthenticatedLanding.tsx
+  - apps/landing/components/LandingLayout.tsx
+- packages: 10 changed file(s)
+  - packages/api/package.json
+  - packages/api/src/index.ts
+  - packages/api/src/integration.test.ts
+  - packages/i18n/catalogs/dashboard/en.json
+  - packages/i18n/catalogs/dashboard/es.json
+  - packages/i18n/catalogs/dashboard/zh.json
+  - packages/i18n/src/locales/dashboard.ts
+  - packages/i18n/src/locales/keys.ts
+  - packages/sdk/src/client.test.ts
+  - packages/sdk/src/types.ts
+
+
+## [0.2.23](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.22...v0.2.23) (2026-03-26)
+
+
+
+
+
 ## [0.2.22](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.21...v0.2.22) (2026-03-26)
 
 ### Detected changes

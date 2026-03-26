@@ -241,6 +241,7 @@ export type TranslationKey =
   | "chat.tabExamples"
   | "chat.title"
   | "chat.uploadFiles"
+  | "chat.useTemplate"
   | "chat.voiceInput"
   | "chat.webLink"
   | "cli.authFailed"

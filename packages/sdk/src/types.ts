@@ -30,6 +30,7 @@ export interface ChatHealthStatus {
   model: string;
   configured: boolean;
   reachable: boolean;
+  providerReachable: boolean;
   checkedAt: string;
   latencyMs: number | null;
 }

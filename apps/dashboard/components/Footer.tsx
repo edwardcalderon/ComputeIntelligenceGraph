@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useTranslation } from "@cig-technology/i18n/react";
-import { resolveLandingUrl } from "../lib/siteUrl";
+import { resolveDocsUrl, resolveLandingUrl } from "../lib/siteUrl";
 
 export function Footer() {
   const t = useTranslation();
@@ -37,17 +38,25 @@ export function Footer() {
             </span>
           )}
           <a
+            href={resolveDocsUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="transition-colors hover:text-zinc-600 dark:hover:text-zinc-400"
+          >
+            {t("footer.docs")}
+          </a>
+          <Link
             href="/privacy"
             className="transition-colors hover:text-zinc-600 dark:hover:text-zinc-400"
           >
             {t("footer.privacy")}
-          </a>
-          <a
+          </Link>
+          <Link
             href="/terms"
             className="transition-colors hover:text-zinc-600 dark:hover:text-zinc-400"
           >
             {t("footer.terms")}
-          </a>
+          </Link>
         </div>
       </div>
     </footer>

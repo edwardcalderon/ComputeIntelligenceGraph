@@ -186,7 +186,8 @@ describe('API Integration Tests', () => {
         provider: 'fallback',
         model: 'gpt-4o-mini',
         configured: false,
-        reachable: false,
+        reachable: true,
+        providerReachable: false,
       });
       expect(typeof body.chat.checkedAt).toBe('string');
     });

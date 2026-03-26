@@ -1,6 +1,6 @@
 {
   "name": "@cig/api",
-  "version": "0.2.22",
+  "version": "0.2.23",
   "description": "CIG REST/GraphQL API server",
   "files": [
     "dist"
@@ -8,8 +8,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc --build && node scripts/copy-migrations.mjs",
-    "dev": "pnpm build && concurrently --names \"tsc,api\" --prefix-colors \"cyan.bold,green.bold\" \"tsc --build --watch --preserveWatchOutput\" \"node scripts/dev-runner.mjs\"",
+    "build": "tsc --build --force && node scripts/copy-migrations.mjs",
+    "dev": "pnpm build && concurrently --names \"tsc,api\" --prefix-colors \"cyan.bold,green.bold\" \"tsc --build --watch --preserveWatchOutput --force\" \"node scripts/dev-runner.mjs\"",
     "start": "node dist/index.js",
     "migrate:up": "pnpm build && node dist/migrate.js",
     "lint": "tsc --noEmit",

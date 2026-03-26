@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 import {
   Bot,
@@ -16,7 +17,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "@cig-technology/i18n/react";
 import { getHealth, sendChatMessage, type ChatMessage, type HealthResponse } from "../lib/api";
-import { ChatExamplesTab } from "./ChatExamplesTab";
+import { ChatTemplatesTab } from "./ChatExamplesTab";
 
 const STORAGE_KEY = "cig-chat-history";
 const MAX_CHARS = 2000;
@@ -54,15 +55,19 @@ export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [activeTab, setActiveTab] = useState<"chat" | "examples">("chat");
+  const [activeTab, setActiveTab] = useState<"chat" | "templates">("chat");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [healthReady, setHealthReady] = useState(false);
+  const [isStatusTooltipOpen, setIsStatusTooltipOpen] = useState(false);
+  const [statusTooltipPosition, setStatusTooltipPosition] = useState<{ left: number; top: number } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const statusPillRef = useRef<HTMLButtonElement>(null);
+  const statusTooltipCloseTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
@@ -121,6 +126,50 @@ export function ChatWidget() {
     setIsExpanded(false);
   }
 
+  function clearStatusTooltipCloseTimer() {
+    if (statusTooltipCloseTimerRef.current !== null) {
+      window.clearTimeout(statusTooltipCloseTimerRef.current);
+      statusTooltipCloseTimerRef.current = null;
+    }
+  }
+
+  function updateStatusTooltipPosition() {
+    const anchor = statusPillRef.current;
+    if (!anchor) {
+      return;
+    }
+
+    const rect = anchor.getBoundingClientRect();
+    const width = Math.min(240, window.innerWidth - 24);
+    const left = Math.max(12, Math.min(rect.left, window.innerWidth - width - 12));
+    const top = Math.min(window.innerHeight - 12, rect.bottom + 10);
+
+    setStatusTooltipPosition({ left, top });
+  }
+
+  function openStatusTooltip() {
+    clearStatusTooltipCloseTimer();
+    setIsStatusTooltipOpen(true);
+    updateStatusTooltipPosition();
+  }
+
+  function closeStatusTooltipSoon() {
+    clearStatusTooltipCloseTimer();
+    statusTooltipCloseTimerRef.current = window.setTimeout(() => {
+      setIsStatusTooltipOpen(false);
+    }, 80);
+  }
+
+  function handleUseTemplate(prompt: string) {
+    setActiveTab("chat");
+    setInput(prompt);
+    setError(null);
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+      textareaRef.current?.setSelectionRange(prompt.length, prompt.length);
+    });
+  }
+
   async function handleSend() {
     const text = input.trim();
     if (!text || isLoading) return;
@@ -168,6 +217,9 @@ export function ChatWidget() {
   const chatModel = health?.chat?.model?.trim() || "gpt-4o-mini";
   const chatProvider = health?.chat?.provider ?? (healthReady ? "fallback" : "openai");
   const chatIsConnected = health?.chat?.reachable ?? false;
+  const chatProviderReachable = health?.chat?.providerReachable ?? false;
+  const chatIndicatorHealthy =
+    chatIsConnected && (!health?.chat?.configured || chatProviderReachable);
   const chatLastChecked = health?.chat?.checkedAt
     ? new Date(health.chat.checkedAt).toLocaleString()
     : null;
@@ -178,6 +230,31 @@ export function ChatWidget() {
     : health?.chat?.configured
     ? "OFFLINE"
     : "FALLBACK";
+  const chatStatusDescription = !healthReady
+    ? "Checking chat backend health..."
+    : !chatIsConnected
+    ? "Chat endpoint is not registered on this API instance."
+    : !health?.chat?.configured
+    ? "Chat endpoint is live in fallback mode."
+    : chatProviderReachable
+    ? "Chat backend is reachable and ready."
+    : "Chat endpoint is live, but OpenAI is not reachable right now.";
+
+  useEffect(() => {
+    if (!isStatusTooltipOpen) {
+      return;
+    }
+
+    updateStatusTooltipPosition();
+    const handleViewportChange = () => updateStatusTooltipPosition();
+    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("scroll", handleViewportChange, true);
+
+    return () => {
+      window.removeEventListener("resize", handleViewportChange);
+      window.removeEventListener("scroll", handleViewportChange, true);
+    };
+  }, [isStatusTooltipOpen, chatModel, chatStatus, chatProvider, chatIndicatorHealthy, chatProviderReachable, chatLastChecked]);
 
   return (
     <>
@@ -312,25 +389,41 @@ export function ChatWidget() {
             {/* ── Header ──────────────────────────────────────────── */}
             <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-slate-100 px-4 pb-3 pt-3 dark:border-zinc-700/40 sm:px-6 sm:pt-4">
               <span className="sr-only">{t("chat.title")}</span>
-              <div className="group relative min-w-0 max-w-full sm:max-w-[68%]">
-                <span
-                  tabIndex={0}
+              <div
+                className="relative z-[80] min-w-0 max-w-full sm:max-w-[68%]"
+                onPointerEnter={openStatusTooltip}
+                onPointerLeave={closeStatusTooltipSoon}
+              >
+                <button
+                  ref={statusPillRef}
+                  type="button"
                   aria-describedby="chat-status-tooltip"
+                  aria-expanded={isStatusTooltipOpen}
+                  aria-controls="chat-status-tooltip"
                   aria-label={`Chat backend status: ${chatModel}, ${chatStatus}`}
                   data-testid="chat-status-pill"
                   className={[
-                    "inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] transition-all duration-200 backdrop-blur-xl",
-                    chatIsConnected
+                    "inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] transition-all duration-200 backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-emerald-300/70 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-emerald-400/40 dark:focus:ring-offset-zinc-900",
+                    chatIndicatorHealthy
                       ? "border-emerald-300/30 bg-white/36 text-slate-700 shadow-[0_6px_20px_rgba(16,185,129,0.06)] dark:border-emerald-400/15 dark:bg-zinc-950/18 dark:text-zinc-100"
                       : "border-slate-200/70 bg-white/28 text-slate-600 shadow-[0_6px_20px_rgba(15,23,42,0.04)] dark:border-zinc-700/55 dark:bg-zinc-950/20 dark:text-zinc-300",
-                  ].join(" ")}
+                    ].join(" ")}
+                  onFocus={openStatusTooltip}
+                  onBlur={closeStatusTooltipSoon}
+                  onClick={() => {
+                    if (isStatusTooltipOpen) {
+                      closeStatusTooltipSoon();
+                      return;
+                    }
+                    openStatusTooltip();
+                  }}
                 >
                   <span className="flex min-w-0 items-center gap-2">
                     <span className="relative flex h-2.5 w-2.5 items-center justify-center">
                       <span
                         className={[
                           "absolute h-2.5 w-2.5 rounded-full",
-                          chatIsConnected
+                          chatIndicatorHealthy
                             ? "animate-ping bg-emerald-400/22"
                             : "bg-slate-400/20",
                         ].join(" ")}
@@ -338,7 +431,7 @@ export function ChatWidget() {
                       <span
                         className={[
                           "relative h-2 w-2 rounded-full",
-                          chatIsConnected
+                          chatIndicatorHealthy
                             ? "bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.1)]"
                             : "bg-slate-400 dark:bg-zinc-500",
                         ].join(" ")}
@@ -350,7 +443,7 @@ export function ChatWidget() {
                     <span
                       className={[
                         "rounded-full border px-1.5 py-0.5 text-[9px] font-semibold tracking-[0.15em] backdrop-blur-md",
-                        chatIsConnected
+                        chatIndicatorHealthy
                           ? "border-emerald-200/55 bg-emerald-500/8 text-emerald-700 dark:border-emerald-400/15 dark:bg-emerald-400/10 dark:text-emerald-300"
                           : "border-slate-300/70 bg-white/30 text-slate-500 dark:border-zinc-600/70 dark:bg-zinc-950/28 dark:text-zinc-400",
                       ].join(" ")}
@@ -358,59 +451,12 @@ export function ChatWidget() {
                       {chatStatus}
                     </span>
                   </span>
-                </span>
+                </button>
 
-                <div
-                  id="chat-status-tooltip"
-                  data-testid="chat-status-tooltip"
-                  role="tooltip"
-                  className="pointer-events-none absolute left-0 top-full z-40 mt-2 w-[min(15rem,calc(100vw-3rem))] translate-y-1 opacity-0 transition-all duration-200 ease-out group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100 sm:w-60"
-                >
-                  <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/92 shadow-[0_18px_42px_rgba(15,23,42,0.14)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/90 dark:shadow-[0_18px_42px_rgba(0,0,0,0.34)]">
-                    <div className="bg-gradient-to-r from-emerald-500/10 via-transparent to-cyan-500/10 px-3 py-3">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={[
-                            "h-2 w-2 rounded-full",
-                            chatIsConnected ? "bg-emerald-400" : "bg-slate-400",
-                          ].join(" ")}
-                        />
-                        <div className="min-w-0">
-                          <p className="truncate text-xs font-semibold text-slate-900 dark:text-white">{chatModel}</p>
-                          <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500 dark:text-zinc-500">
-                            {chatProvider === "openai" ? "OpenAI" : "Fallback"}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        <span
-                          className={[
-                            "inline-flex items-center rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]",
-                            chatIsConnected
-                              ? "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/12 dark:text-emerald-300"
-                              : "bg-slate-500/10 text-slate-600 dark:bg-zinc-800/70 dark:text-zinc-300",
-                          ].join(" ")}
-                        >
-                          {chatStatus}
-                        </span>
-                        <span className="inline-flex items-center rounded-full bg-slate-900/5 px-2 py-1 text-[10px] font-medium text-slate-600 dark:bg-white/5 dark:text-zinc-300">
-                          {chatLastChecked ?? "pending"}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="px-3 pb-3 text-[10px] leading-relaxed text-slate-500 dark:text-zinc-500">
-                      {healthReady
-                        ? chatIsConnected
-                          ? "Chat backend is reachable and ready."
-                          : "Chat backend is not reachable right now."
-                        : "Checking chat backend health..."}
-                    </div>
-                  </div>
-                </div>
               </div>
               {/* Tab switcher */}
               <div className="flex items-center self-center rounded-lg border border-slate-200/80 bg-slate-50 p-0.5 dark:border-zinc-700/50 dark:bg-zinc-800/40">
-                {(["chat", "examples"] as const).map((tab) => (
+                {(["chat", "templates"] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -419,7 +465,7 @@ export function ChatWidget() {
                       activeTab === tab
                         ? "bg-white text-slate-700 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
                         : "text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300",
-                    ].join(" ")}
+                      ].join(" ")}
                   >
                     {t(tab === "chat" ? "chat.tabChat" : "chat.tabExamples")}
                   </button>
@@ -451,14 +497,14 @@ export function ChatWidget() {
             </div>
 
             {/* ── Examples tab ────────────────────────────────────── */}
-            {activeTab === "examples" && (
+            {activeTab === "templates" && (
               <div
                 className={[
                   "relative z-10 overflow-hidden",
                   isExpanded ? "flex-1" : "max-h-[55vh] sm:max-h-80",
                 ].join(" ")}
               >
-                <ChatExamplesTab />
+                <ChatTemplatesTab onUseTemplate={handleUseTemplate} />
               </div>
             )}
 
@@ -467,7 +513,7 @@ export function ChatWidget() {
               className={[
                 "relative z-10 space-y-3 overflow-y-auto px-4 py-4 sm:px-6",
                 isExpanded ? "flex-1" : "max-h-[38vh] sm:max-h-64",
-                activeTab === "examples" ? "hidden" : "",
+                activeTab === "templates" ? "hidden" : "",
               ].join(" ")}
             >
               {messages.length === 0 && (
@@ -524,7 +570,7 @@ export function ChatWidget() {
             </div>
 
             {/* ── Textarea ────────────────────────────────────────── */}
-            <div className={`relative z-10 border-t border-slate-100 dark:border-zinc-700/40${activeTab === "examples" ? " hidden" : ""}`}>
+            <div className={`relative z-10 border-t border-slate-100 dark:border-zinc-700/40${activeTab === "templates" ? " hidden" : ""}`}>
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -539,7 +585,7 @@ export function ChatWidget() {
             </div>
 
             {/* ── Toolbar ─────────────────────────────────────────── */}
-            <div className={`relative z-10 px-3 pb-3 sm:px-4 sm:pb-4${activeTab === "examples" ? " hidden" : ""}`}>
+            <div className={`relative z-10 px-3 pb-3 sm:px-4 sm:pb-4${activeTab === "templates" ? " hidden" : ""}`}>
               <div className="flex items-center justify-between">
                 {/* Left: attachments + voice */}
                 <div className="flex items-center gap-2">
@@ -609,7 +655,69 @@ export function ChatWidget() {
         </div>
       )}
 
-      <style jsx>{`
+      {isStatusTooltipOpen &&
+        statusTooltipPosition &&
+        createPortal(
+          <div
+            id="chat-status-tooltip"
+            data-testid="chat-status-tooltip"
+            role="tooltip"
+            onPointerEnter={openStatusTooltip}
+            onPointerLeave={closeStatusTooltipSoon}
+            className="fixed z-[120] w-[min(13.5rem,calc(100vw-2rem))] origin-top-left transition-all duration-200 ease-out sm:w-[15rem]"
+            style={{
+              left: `${statusTooltipPosition.left}px`,
+              top: `${statusTooltipPosition.top}px`,
+            }}
+          >
+            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-[0_22px_48px_rgba(15,23,42,0.16)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/94 dark:shadow-[0_22px_48px_rgba(0,0,0,0.42)]">
+              <div className="bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.14),transparent_42%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.1),transparent_38%)] px-3 py-2.5">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-[11px] font-semibold text-slate-900 dark:text-white">{chatModel}</p>
+                    <p className="text-[9px] uppercase tracking-[0.16em] text-slate-500 dark:text-zinc-500">
+                      {chatProvider === "openai" ? "OpenAI" : "Fallback"}
+                    </p>
+                  </div>
+                  <span
+                    className={[
+                      "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em]",
+                      chatIndicatorHealthy
+                        ? "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/12 dark:text-emerald-300"
+                        : "bg-slate-500/10 text-slate-600 dark:bg-zinc-800/70 dark:text-zinc-300",
+                    ].join(" ")}
+                  >
+                    {chatStatus}
+                  </span>
+                </div>
+
+                <div className="mt-2 flex flex-wrap gap-1">
+                  <span
+                    className={[
+                      "inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-medium",
+                      chatProviderReachable
+                        ? "bg-cyan-500/10 text-cyan-700 dark:bg-cyan-400/12 dark:text-cyan-300"
+                        : "bg-amber-500/10 text-amber-700 dark:bg-amber-400/12 dark:text-amber-300",
+                    ].join(" ")}
+                  >
+                    {chatProviderReachable ? "OpenAI ready" : "OpenAI down"}
+                  </span>
+                  <span className="inline-flex items-center rounded-full bg-slate-900/5 px-2 py-0.5 text-[9px] font-medium text-slate-600 dark:bg-white/5 dark:text-zinc-300">
+                    {chatLastChecked ?? "pending"}
+                  </span>
+                </div>
+              </div>
+              <div className="border-t border-slate-200/65 px-3 py-2 dark:border-white/8">
+                <p className="text-[9px] leading-relaxed text-slate-500 dark:text-zinc-500">
+                  {chatStatusDescription}
+                </p>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      <style>{`
         @keyframes popIn {
           0% {
             opacity: 0;
