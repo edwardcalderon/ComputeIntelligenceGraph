@@ -1,3 +1,21 @@
+## [0.1.16](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.15...cli-v0.1.16) (2026-03-26)
+
+
+
+
+
+## [0.1.16](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.15...cli-v0.1.16) (2026-03-26)
+
+### Bug Fixes
+
+- fix the cartography bundle build context so the publish workflow can copy `requirements.txt` and `app/` correctly
+- keep cartography built from the repository Dockerfile instead of trying to pull an upstream `latest`
+- keep the bundle manifest generation self-contained when the previous release asset is missing
+
+### Release
+
+- move the CLI release line forward to `0.1.16` after `0.1.15` already shipped to npm
+
 ## [0.1.15](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.14...cli-v0.1.15) (2026-03-26)
 
 
