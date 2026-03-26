@@ -1,3 +1,25 @@
+## [0.2.1](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.0...v0.2.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* **release:** use previous cli tag floor ([9567240](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/9567240cc1c4d1c555e110d66c514235dc006125))
+
+
+
+
+
+## [0.2.1](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.0...v0.2.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* **release:** use previous cli tag floor ([9567240](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/9567240cc1c4d1c555e110d66c514235dc006125))
+
+
+
+
+
 # [0.2.0](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.120...v0.2.0) (2026-03-26)
 
 
