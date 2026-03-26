@@ -1,3 +1,18 @@
+## [0.2.0](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.126...v0.2.0) (2026-03-26)
+
+### Features
+
+* **docs:** launch @cig/docs documentation system (Phase 18)
+  - Docusaurus v3 app at apps/docs with TypeScript
+  - Development server at http://localhost:3004 with HMR and live reload
+  - Error boundary component with full stack traces in dev mode
+  - Development tools panel for testing i18n, Mermaid, search, and analytics locally
+  - Mock analytics, devI18n, devMermaid, devSearch utilities
+  - 32 passing tests (Jest + Testing Library)
+  - Integrated into monorepo via turbo.json and dev:all script
+  - Documentation structure for 7 languages (en, es, pt, fr, de, zh, ja)
+
+
 ## [0.1.126](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.125...v0.1.126) (2026-03-26)
 
 ### Detected changes
