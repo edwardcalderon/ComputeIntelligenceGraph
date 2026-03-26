@@ -1,3 +1,25 @@
+## [0.2.26](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.25...v0.2.26) (2026-03-26)
+
+
+### Bug Fixes
+
+* **docs:** harden sidebar z-index layering to overlay full app ([9c8e0b7](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/9c8e0b72607e8fbd2b1cdb2ecb0721711d7050e4))
+
+
+
+
+
+## [0.2.26](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.25...v0.2.26) (2026-03-26)
+
+
+### Bug Fixes
+
+* **docs:** harden sidebar z-index layering to overlay full app ([9c8e0b7](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/9c8e0b72607e8fbd2b1cdb2ecb0721711d7050e4))
+
+
+
+
+
 ## [0.2.25](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.24...v0.2.25) (2026-03-26)
 
 ### Detected changes
