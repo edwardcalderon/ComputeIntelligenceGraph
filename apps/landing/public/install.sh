@@ -59,6 +59,15 @@ if [[ "$NODE_MAJOR" -lt 22 ]]; then
   exit 1
 fi
 
+if [[ ! -t 0 || ! -t 1 || ! -t 2 ]]; then
+  if [[ -e /dev/tty ]]; then
+    exec </dev/tty >/dev/tty 2>&1
+  else
+    echo "CIG install.sh requires an interactive terminal."
+    exit 1
+  fi
+fi
+
 if command -v npx >/dev/null 2>&1; then
   if CLI_VERSION="$(resolve_published_cli_version)"; then
     echo "Resolved published CIG CLI version: v${CLI_VERSION}"

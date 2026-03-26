@@ -17,4 +17,20 @@ describe('setup command', () => {
 
     expect(install).toHaveBeenCalledWith('http://localhost:8000', 'self-hosted', 'core');
   });
+
+  it('returns cleanly when installation is cancelled', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(install).mockRejectedValueOnce(new Error('Installation was cancelled.'));
+
+    await expect(
+      setup({
+        mode: 'self-hosted',
+        profile: 'core',
+        apiUrl: 'http://localhost:8000',
+      })
+    ).resolves.toBeUndefined();
+
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
 });
