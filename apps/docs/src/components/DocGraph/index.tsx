@@ -98,6 +98,7 @@ function buildEdges(nodes: GraphNode[]): GraphEdge[] {
 
 /* ─── Component ──────────────────────────────────────────────────────── */
 export default function DocGraph(): React.ReactElement {
+  const wrapRef    = useRef<HTMLDivElement>(null);
   const canvasRef  = useRef<HTMLCanvasElement>(null);
   const nodesRef   = useRef<GraphNode[]>([]);
   const rafRef     = useRef<number>(0);
@@ -106,13 +107,16 @@ export default function DocGraph(): React.ReactElement {
   const offsetRef  = useRef({x:0,y:0});
   const scaleRef   = useRef(1);
   const hoveredRef = useRef<string|null>(null);
-  const pulseRef   = useRef(0); // frame counter for animations
+  const pulseRef   = useRef(0);
   const [activeId, setActiveId]   = useState<string|null>(null);
   const [tooltip,  setTooltip]    = useState<{id:string;x:number;y:number}|null>(null);
+  const [zoomPct,  setZoomPct]    = useState(100);
 
   /* ── Init ── */
   const initNodes = useCallback(() => {
-    const cx = window.innerWidth/2, cy = window.innerHeight/2;
+    const wrap = wrapRef.current;
+    const cx = (wrap?.clientWidth  ?? window.innerWidth)  / 2;
+    const cy = (wrap?.clientHeight ?? window.innerHeight) / 2;
     nodesRef.current = RAW_NODES.map(n => ({
       ...n,
       x: cx+(Math.random()-.5)*180, y: cy+(Math.random()-.5)*180,
@@ -125,7 +129,9 @@ export default function DocGraph(): React.ReactElement {
   const tick = useCallback(() => {
     const nodes = nodesRef.current;
     const vis   = nodes.filter(n=>n.visible);
-    const cx = window.innerWidth/2, cy = window.innerHeight/2;
+    const wrap  = wrapRef.current;
+    const cx = (wrap?.clientWidth  ?? window.innerWidth)  / 2;
+    const cy = (wrap?.clientHeight ?? window.innerHeight) / 2;
     pulseRef.current++;
 
     for (let i=0;i<vis.length;i++) for (let j=i+1;j<vis.length;j++) {
@@ -239,13 +245,25 @@ export default function DocGraph(): React.ReactElement {
         ctx.textAlign='center'; ctx.textBaseline='middle';
         ctx.fillText('CIG',n.x,n.y);
       } else {
-        ctx.font=`${n.kind==='section'?14:11}px system-ui`;
+        const isMobile = (wrapRef.current?.clientWidth ?? 800) < 600;
+        const iconSz   = n.kind==='section' ? (isMobile?16:14) : (isMobile?13:11);
+        const labelSz  = n.kind==='section' ? (isMobile?11:9.5) : (isMobile?10:8.5);
+        ctx.font=`${iconSz}px system-ui`;
         ctx.textAlign='center'; ctx.textBaseline='middle';
         ctx.fillText(n.icon,n.x,n.y);
-        ctx.font=`${n.kind==='section'?'600 9.5px':'500 8.5px'} system-ui`;
+        ctx.font=`${n.kind==='section'?'600':'500'} ${labelSz}px system-ui`;
         ctx.fillStyle = isDark ? (isAct||isHov?'#fff':'rgba(255,255,255,0.65)') : (isAct||isHov?'#09090b':'rgba(9,9,11,0.6)');
         ctx.textBaseline='top';
-        ctx.fillText(n.label.toUpperCase(),n.x,n.y+r+5);
+        // wrap long labels on mobile
+        const lbl = n.label.toUpperCase();
+        if (isMobile && lbl.length > 10) {
+          const words = lbl.split(' ');
+          const mid = Math.ceil(words.length/2);
+          ctx.fillText(words.slice(0,mid).join(' '), n.x, n.y+r+4);
+          ctx.fillText(words.slice(mid).join(' '),   n.x, n.y+r+4+labelSz+1);
+        } else {
+          ctx.fillText(lbl, n.x, n.y+r+5);
+        }
       }
 
       /* amber dot = has hidden children */
@@ -269,8 +287,8 @@ export default function DocGraph(): React.ReactElement {
 
   /* ── Resize ── */
   const resize = useCallback(() => {
-    const c=canvasRef.current; if (!c) return;
-    c.width=window.innerWidth; c.height=window.innerHeight;
+    const c=canvasRef.current, w=wrapRef.current; if (!c||!w) return;
+    c.width=w.clientWidth; c.height=w.clientHeight;
   }, []);
 
   /* ── Coord helpers ── */
@@ -315,10 +333,38 @@ export default function DocGraph(): React.ReactElement {
     setActiveId(null);
   }, []);
 
-  /* ── Anchor (re-center) ── */
+  /* ── Zoom helpers ── */
+  const applyZoom = useCallback((factor: number) => {
+    const c=canvasRef.current; if (!c) return;
+    const mx=c.width/2, my=c.height/2;
+    offsetRef.current={x:mx-(mx-offsetRef.current.x)*factor, y:my-(my-offsetRef.current.y)*factor};
+    scaleRef.current=Math.min(3,Math.max(0.25,scaleRef.current*factor));
+    setZoomPct(Math.round(scaleRef.current*100));
+  }, []);
+
+  const zoomIn  = useCallback(() => applyZoom(1.25), [applyZoom]);
+  const zoomOut = useCallback(() => applyZoom(0.8),  [applyZoom]);
+
+  /* ── Fit all visible nodes into view ── */
+  const fitAll = useCallback(() => {
+    const vis=nodesRef.current.filter(n=>n.visible);
+    if (!vis.length) return;
+    const c=canvasRef.current; if (!c) return;
+    const xs=vis.map(n=>n.x), ys=vis.map(n=>n.y);
+    const minX=Math.min(...xs)-60, maxX=Math.max(...xs)+60;
+    const minY=Math.min(...ys)-60, maxY=Math.max(...ys)+60;
+    const scaleX=c.width/(maxX-minX), scaleY=c.height/(maxY-minY);
+    const s=Math.min(scaleX,scaleY,2);
+    scaleRef.current=s;
+    offsetRef.current={x:c.width/2-((minX+maxX)/2)*s, y:c.height/2-((minY+maxY)/2)*s};
+    setZoomPct(Math.round(s*100));
+  }, []);
+
+  /* ── Anchor (re-center root, reset zoom) ── */
   const anchor = useCallback(() => {
-    offsetRef.current={x:0,y:0}; scaleRef.current=1;
-    const cx=window.innerWidth/2, cy=window.innerHeight/2;
+    offsetRef.current={x:0,y:0}; scaleRef.current=1; setZoomPct(100);
+    const wrap=wrapRef.current;
+    const cx=(wrap?.clientWidth??window.innerWidth)/2, cy=(wrap?.clientHeight??window.innerHeight)/2;
     const root=nodesRef.current.find(n=>n.id==='root');
     if (root) { root.x=cx; root.y=cy; root.vx=0; root.vy=0; }
   }, []);
@@ -378,16 +424,18 @@ export default function DocGraph(): React.ReactElement {
     const mx=e.clientX-r.left, my=e.clientY-r.top;
     offsetRef.current={x:mx-(mx-offsetRef.current.x)*f, y:my-(my-offsetRef.current.y)*f};
     scaleRef.current=Math.min(3,Math.max(0.25,scaleRef.current*f));
+    setZoomPct(Math.round(scaleRef.current*100));
   }, []);
 
   /* ── Mount ── */
   useEffect(() => {
     resize(); initNodes();
-    window.addEventListener('resize',resize);
+    const ro = new ResizeObserver(resize);
+    if (wrapRef.current) ro.observe(wrapRef.current);
     const c=canvasRef.current!;
     c.addEventListener('wheel',onWheel,{passive:false});
     rafRef.current=requestAnimationFrame(loop);
-    return () => { cancelAnimationFrame(rafRef.current); window.removeEventListener('resize',resize); c.removeEventListener('wheel',onWheel); };
+    return () => { cancelAnimationFrame(rafRef.current); ro.disconnect(); c.removeEventListener('wheel',onWheel); };
   }, [resize,initNodes,loop,onWheel]);
 
   /* ── Active node data ── */
@@ -396,64 +444,116 @@ export default function DocGraph(): React.ReactElement {
   const tooltipNode = tooltip ? nodesRef.current.find(n=>n.id===tooltip.id) : null;
 
   /* ── Toolbar button style ── */
-  const btnStyle = (accent='#22d3ee'): React.CSSProperties => ({
-    display:'flex', alignItems:'center', gap:6, padding:'6px 12px',
-    background:'rgba(10,10,20,0.85)', border:`1px solid ${accent}44`,
+  const btn = (accent='#22d3ee', sm=false): React.CSSProperties => ({
+    display:'flex', alignItems:'center', justifyContent:'center', gap:5,
+    padding: sm ? '5px 8px' : '6px 11px',
+    background:'rgba(10,10,20,0.88)', border:`1px solid ${accent}44`,
     borderRadius:8, color:accent, fontSize:11, fontWeight:700,
-    letterSpacing:'0.08em', cursor:'pointer', backdropFilter:'blur(12px)',
-    transition:'all 0.2s', whiteSpace:'nowrap' as const,
+    letterSpacing:'0.07em', cursor:'pointer', backdropFilter:'blur(14px)',
+    transition:'border-color 0.2s,box-shadow 0.2s', whiteSpace:'nowrap' as const,
+    WebkitTapHighlightColor:'transparent',
   });
 
   return (
-    <div style={{position:'relative',width:'100%',height:'100vh',overflow:'hidden',fontFamily:'system-ui,sans-serif'}}>
-      <canvas ref={canvasRef} style={{display:'block',touchAction:'none',cursor:'grab'}}
-        onPointerDown={onPointerDown} onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp} onClick={onClick} />
+    <div
+      ref={wrapRef}
+      style={{
+        position:'relative', width:'100%', height:'100vh',
+        overflow:'hidden', touchAction:'none',
+        overscrollBehavior:'contain', fontFamily:'system-ui,sans-serif',
+        userSelect:'none',
+      }}
+    >
+      <canvas
+        ref={canvasRef}
+        style={{display:'block', touchAction:'none', cursor:'grab', width:'100%', height:'100%'}}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onClick={onClick}
+      />
 
       {/* ── Toolbar ── */}
       <div style={{
-        position:'absolute', top:16, left:'50%', transform:'translateX(-50%)',
-        display:'flex', gap:8, zIndex:200, alignItems:'center',
+        position:'absolute', top:12, left:'50%', transform:'translateX(-50%)',
+        display:'flex', gap:6, zIndex:200, alignItems:'center',
+        flexWrap:'wrap', justifyContent:'center', padding:'0 8px',
+        maxWidth:'calc(100vw - 16px)',
       }}>
-        {/* Anchor / re-center */}
-        <button style={btnStyle('#22d3ee')} onClick={anchor} title="Re-center graph">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
-          Anchor
+        {/* Anchor */}
+        <button style={btn('#22d3ee')} onClick={anchor} title="Re-center">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+          <span>Anchor</span>
+        </button>
+
+        {/* Zoom out */}
+        <button style={btn('#94a3b8', true)} onClick={zoomOut} title="Zoom out">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        </button>
+
+        {/* Zoom % */}
+        <span style={{fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.45)',minWidth:36,textAlign:'center',letterSpacing:'0.05em'}}>
+          {zoomPct}%
+        </span>
+
+        {/* Zoom in */}
+        <button style={btn('#94a3b8', true)} onClick={zoomIn} title="Zoom in">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        </button>
+
+        {/* Fit all */}
+        <button style={btn('#a78bfa')} onClick={fitAll} title="Fit all nodes">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          <span>Fit</span>
         </button>
 
         {/* Expand all */}
-        <button style={btnStyle('#34d399')} onClick={expandAll} title="Expand all nodes">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-          Expand All
+        <button style={btn('#34d399')} onClick={expandAll} title="Expand all">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+          <span>Expand</span>
         </button>
 
-        {/* Collapse all */}
-        <button style={btnStyle('#f87171')} onClick={collapseAll} title="Collapse child nodes">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/></svg>
-          Collapse
+        {/* Collapse */}
+        <button style={btn('#f87171')} onClick={collapseAll} title="Collapse">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/></svg>
+          <span>Collapse</span>
         </button>
 
-        {/* Hint */}
-        <span style={{fontSize:10,color:'rgba(255,255,255,0.3)',letterSpacing:'0.06em',paddingLeft:4}}>
-          drag · pan · scroll to zoom · dbl-click to open
-        </span>
+        {/* Active node breadcrumb */}
+        {activeNode && (
+          <div style={{
+            display:'flex', alignItems:'center', gap:5, padding:'5px 10px',
+            background:`${activeNode.color}18`, border:`1px solid ${activeNode.color}55`,
+            borderRadius:8, fontSize:11, color:activeNode.color, fontWeight:700,
+          }}>
+            <span>{activeNode.icon}</span>
+            <span>{activeNode.label}</span>
+            <button onClick={()=>setActiveId(null)} style={{background:'none',border:'none',color:activeNode.color,cursor:'pointer',fontSize:12,padding:0,lineHeight:1,opacity:0.7}}>✕</button>
+          </div>
+        )}
       </div>
 
-      {/* ── Active node card (orbital-style modal) ── */}
+      {/* ── Active node card ── */}
       {activeNode && activeMeta && (
         <div style={{
-          position:'absolute', top:'50%', right:24, transform:'translateY(-50%)',
-          width:272, zIndex:500,
-          background:'rgba(10,10,20,0.96)', backdropFilter:'blur(20px)',
+          position:'absolute',
+          bottom: 0, left: 0, right: 0,
+          // on wider screens: float right middle
+          ...(typeof window !== 'undefined' && window.innerWidth >= 640 ? {
+            bottom:'auto', left:'auto', right:20, top:'50%', transform:'translateY(-50%)',
+            width:272,
+          } : {
+            borderRadius:'14px 14px 0 0', maxHeight:'55vh', overflowY:'auto' as const,
+          }),
+          zIndex:500,
+          background:'rgba(10,10,20,0.97)', backdropFilter:'blur(20px)',
           border:`1px solid ${activeNode.color}44`,
           borderRadius:14, padding:18,
           boxShadow:`0 12px 48px rgba(0,0,0,0.7), 0 0 0 1px ${activeNode.color}22`,
           animation:'cardSlideIn 0.22s ease',
         }}>
-          {/* top connector line */}
           <div style={{position:'absolute',top:-1,left:'50%',transform:'translateX(-50%)',width:'60%',height:1,background:`linear-gradient(to right,transparent,${activeNode.color}66,transparent)`}}/>
 
-          {/* header */}
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
             <span style={{fontSize:9,fontWeight:700,letterSpacing:'0.14em',textTransform:'uppercase',color:'rgba(255,255,255,0.4)'}}>
               {activeMeta.category}
@@ -462,29 +562,20 @@ export default function DocGraph(): React.ReactElement {
               <span style={{fontSize:9,fontWeight:700,letterSpacing:'0.1em',padding:'2px 7px',borderRadius:4,background:STATUS_COLOR[activeNode.status],color:'#000'}}>
                 {activeNode.status.toUpperCase()}
               </span>
-              <button onClick={()=>setActiveId(null)} style={{background:'none',border:'none',color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:14,lineHeight:1,padding:0}}>✕</button>
+              <button onClick={()=>setActiveId(null)} style={{background:'none',border:'none',color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:16,lineHeight:1,padding:'0 2px'}}>✕</button>
             </div>
           </div>
 
-          {/* title */}
-          <div style={{fontSize:15,fontWeight:700,color:'#fff',marginBottom:8}}>
-            {activeNode.icon} {activeNode.label}
-          </div>
+          <div style={{fontSize:15,fontWeight:700,color:'#fff',marginBottom:8}}>{activeNode.icon} {activeNode.label}</div>
+          <p style={{fontSize:11,lineHeight:1.65,color:'rgba(255,255,255,0.68)',margin:'0 0 14px'}}>{activeMeta.description}</p>
 
-          {/* description */}
-          <p style={{fontSize:11,lineHeight:1.65,color:'rgba(255,255,255,0.68)',margin:'0 0 14px'}}>
-            {activeMeta.description}
-          </p>
-
-          {/* energy bar */}
           <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'rgba(255,255,255,0.45)',marginBottom:4}}>
             <span>⚡ Completeness</span><span>{activeMeta.energy}%</span>
           </div>
           <div style={{width:'100%',height:3,background:'rgba(255,255,255,0.08)',borderRadius:2,overflow:'hidden',marginBottom:14}}>
-            <div style={{height:'100%',width:`${activeMeta.energy}%`,background:`linear-gradient(90deg,#7c3aed,${activeNode.color})`,borderRadius:2,transition:'width 0.6s ease'}}/>
+            <div style={{height:'100%',width:`${activeMeta.energy}%`,background:`linear-gradient(90deg,#7c3aed,${activeNode.color})`,borderRadius:2}}/>
           </div>
 
-          {/* cross-refs */}
           {activeMeta.crossRefs.length>0 && (
             <div style={{borderTop:'1px solid rgba(255,255,255,0.08)',paddingTop:10,marginBottom:12}}>
               <div style={{fontSize:9,fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase',color:'rgba(255,255,255,0.35)',marginBottom:6}}>🔗 Connected</div>
@@ -493,7 +584,7 @@ export default function DocGraph(): React.ReactElement {
                   const rel=nodesRef.current.find(n=>n.id===rid);
                   return (
                     <button key={rid} onClick={()=>{toggleChildren(rid);setActiveId(rid);}}
-                      style={{fontSize:10,padding:'3px 8px',border:`1px solid ${rel?.color??'#fff'}33`,borderRadius:4,background:'transparent',color:'rgba(255,255,255,0.65)',cursor:'pointer'}}>
+                      style={{fontSize:10,padding:'4px 9px',border:`1px solid ${rel?.color??'#fff'}33`,borderRadius:4,background:'transparent',color:'rgba(255,255,255,0.65)',cursor:'pointer',WebkitTapHighlightColor:'transparent'}}>
                       {rel?.icon} {rel?.label} →
                     </button>
                   );
@@ -502,28 +593,27 @@ export default function DocGraph(): React.ReactElement {
             </div>
           )}
 
-          {/* CTA */}
-          <a href={activeNode.href} style={{display:'block',textAlign:'center',fontSize:11,fontWeight:700,color:activeNode.color,textDecoration:'none',padding:'7px',border:`1px solid ${activeNode.color}44`,borderRadius:7,transition:'background 0.2s'}}>
+          <a href={activeNode.href} style={{display:'block',textAlign:'center',fontSize:12,fontWeight:700,color:activeNode.color,textDecoration:'none',padding:'8px',border:`1px solid ${activeNode.color}44`,borderRadius:7}}>
             Read docs →
           </a>
         </div>
       )}
 
-      {/* ── Hover tooltip ── */}
+      {/* ── Hover tooltip (desktop only) ── */}
       {tooltipNode && tooltip && !activeId && (
         <div style={{
           position:'fixed', left:tooltip.x+14, top:tooltip.y-10,
           pointerEvents:'none', zIndex:600,
           background:'rgba(10,10,20,0.92)', border:`1px solid ${tooltipNode.color}55`,
           borderRadius:9, padding:'8px 12px', maxWidth:200,
-          boxShadow:`0 6px 24px rgba(0,0,0,0.5)`, backdropFilter:'blur(12px)',
+          boxShadow:'0 6px 24px rgba(0,0,0,0.5)', backdropFilter:'blur(12px)',
         }}>
           <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:4}}>
             <span style={{fontSize:16}}>{tooltipNode.icon}</span>
             <span style={{fontWeight:700,fontSize:12,color:'#fff'}}>{tooltipNode.label}</span>
           </div>
           <div style={{fontSize:10,color:'rgba(255,255,255,0.5)',lineHeight:1.5}}>
-            {tooltipNode.kind==='root'?'Documentation hub':tooltipNode.kind==='section'?'Click to expand · dbl-click to open':'Dbl-click to open'}
+            {tooltipNode.kind==='root'?'Documentation hub':tooltipNode.kind==='section'?'Tap to expand · dbl-tap to open':'Dbl-tap to open'}
           </div>
           {nodesRef.current.some(c=>c.parentId===tooltipNode.id&&!c.visible)&&(
             <div style={{marginTop:5,fontSize:10,color:tooltipNode.color,fontWeight:600}}>⊕ has child pages</div>
@@ -532,14 +622,24 @@ export default function DocGraph(): React.ReactElement {
       )}
 
       {/* ── Legend ── */}
-      <div style={{position:'absolute',bottom:20,left:20,display:'flex',flexDirection:'column',gap:5,fontSize:10,color:'rgba(255,255,255,0.4)',pointerEvents:'none'}}>
-        <div style={{display:'flex',alignItems:'center',gap:6}}><span style={{width:18,height:1.5,background:'rgba(34,211,238,0.4)',display:'inline-block'}}/><span>tree edge</span></div>
-        <div style={{display:'flex',alignItems:'center',gap:6}}><span style={{width:18,height:0,borderTop:'1px dashed rgba(148,163,184,0.4)',display:'inline-block'}}/><span>cross-ref</span></div>
-        <div style={{display:'flex',alignItems:'center',gap:6}}><span style={{width:8,height:8,borderRadius:'50%',background:'#f59e0b',display:'inline-block'}}/><span>has children</span></div>
-        <div style={{display:'flex',alignItems:'center',gap:6}}><span style={{width:8,height:8,borderRadius:'50%',background:'#22d3ee',display:'inline-block'}}/><span>pinned</span></div>
+      <div style={{position:'absolute',bottom:16,left:16,display:'flex',flexDirection:'column',gap:4,fontSize:10,color:'rgba(255,255,255,0.35)',pointerEvents:'none'}}>
+        <div style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:16,height:1.5,background:'rgba(34,211,238,0.4)',display:'inline-block'}}/><span>tree</span></div>
+        <div style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:16,height:0,borderTop:'1px dashed rgba(148,163,184,0.35)',display:'inline-block'}}/><span>cross-ref</span></div>
+        <div style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:7,height:7,borderRadius:'50%',background:'#f59e0b',display:'inline-block'}}/><span>expandable</span></div>
       </div>
 
-      <style>{`@keyframes cardSlideIn{from{opacity:0;transform:translateY(calc(-50% - 8px))}to{opacity:1;transform:translateY(-50%)}}`}</style>
+      <style>{`
+        @keyframes cardSlideIn {
+          from { opacity:0; transform:translateY(calc(-50% - 10px)); }
+          to   { opacity:1; transform:translateY(-50%); }
+        }
+        @media (max-width:639px) {
+          @keyframes cardSlideIn {
+            from { opacity:0; transform:translateY(20px); }
+            to   { opacity:1; transform:translateY(0); }
+          }
+        }
+      `}</style>
     </div>
   );
 }
