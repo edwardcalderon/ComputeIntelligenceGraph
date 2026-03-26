@@ -5,7 +5,7 @@ const chromadb_1 = require("chromadb");
 const COLLECTION_NAME = 'infrastructure_resources';
 // Singleton client instance (connection pooling via reuse)
 let clientInstance = null;
-let collectionInstance = null;
+const collectionCache = new Map();
 function normalizeCloudHost(host) {
     const trimmed = host.trim();
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
@@ -18,6 +18,7 @@ function resolveChromaConnectionConfig() {
     const cloudTenant = process.env.CHROMA_TENANT?.trim();
     const cloudDatabase = process.env.CHROMA_DATABASE?.trim();
     const cloudHost = process.env.CHROMA_HOST?.trim();
+    const collectionName = process.env.CHROMA_COLLECTION?.trim() || COLLECTION_NAME;
     if (cloudApiKey) {
         if (!cloudTenant || !cloudDatabase) {
             throw new Error('CHROMA_TENANT and CHROMA_DATABASE are required when CHROMA_API_KEY is set.');
@@ -28,12 +29,14 @@ function resolveChromaConnectionConfig() {
             tenant: cloudTenant,
             database: cloudDatabase,
             cloudHost: normalizeCloudHost(cloudHost || 'api.trychroma.com'),
+            collectionName,
         };
     }
     const url = process.env.CHROMA_URL ?? 'http://localhost:8000';
     return {
         mode: 'local',
         path: url,
+        collectionName,
     };
 }
 exports.resolveChromaConnectionConfig = resolveChromaConnectionConfig;
@@ -59,14 +62,16 @@ class VectorStore {
         this.client = clientInstance;
     }
     async connect() {
-        if (collectionInstance) {
-            this.collection = collectionInstance;
+        const { collectionName } = resolveChromaConnectionConfig();
+        const cachedCollection = collectionCache.get(collectionName);
+        if (cachedCollection) {
+            this.collection = cachedCollection;
             return;
         }
         this.collection = await this.client.getOrCreateCollection({
-            name: COLLECTION_NAME,
+            name: collectionName,
         });
-        collectionInstance = this.collection;
+        collectionCache.set(collectionName, this.collection);
     }
     ensureConnected() {
         if (!this.collection) {

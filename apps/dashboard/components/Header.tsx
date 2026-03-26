@@ -1,18 +1,18 @@
 "use client";
 
 import { useAppStore } from "../lib/store";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useTranslation } from "@cig-technology/i18n/react";
 import { NotificationBell } from "./NotificationBell";
 import { LocaleSwitcher } from "./LocaleSwitcher";
+import { getBrowserAccessToken } from "../lib/cigClient";
 import { getPendingDeviceRequests, type DeviceAuthResponse } from "../lib/api";
 
 export function Header() {
   const { toggleSidebar, theme, setTheme } = useAppStore();
   const t = useTranslation();
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -20,15 +20,12 @@ export function Header() {
     else root.classList.remove("dark");
   }, [theme]);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const { data } = useQuery<DeviceAuthResponse>({
     queryKey: ["device-auth", "pending"],
     queryFn: getPendingDeviceRequests,
-    refetchInterval: 5_000,
-    enabled: mounted,
+    refetchInterval: (query) => (query.state.error ? false : 5_000),
+    retry: false,
+    enabled: typeof window !== "undefined" && Boolean(getBrowserAccessToken()),
   });
 
   const activeRequests = (data?.items ?? []).filter(

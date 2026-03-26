@@ -1,3 +1,49 @@
+## [0.2.25](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.24...v0.2.25) (2026-03-26)
+
+### Detected changes
+- .github: .github/workflows/deploy-api.yml
+- apps: 7 changed file(s)
+  - apps/dashboard/app/(dashboard)/devices/page.tsx
+  - apps/dashboard/app/(dashboard)/page.tsx
+  - apps/dashboard/components/Header.tsx
+  - apps/dashboard/lib/__tests__/cigClient.test.ts
+  - apps/dashboard/lib/cigClient.ts
+  - apps/dashboard/public/runtime-version.json
+  - apps/dashboard/public/sw.js
+- config: config/env/manifest.cjs
+- root: docker-compose.yml
+- docs: docs/deployment/api-aws.md
+- packages: 22 changed file(s)
+  - packages/api/src/__tests__/managed-auth.test.ts
+  - packages/api/src/auth.ts
+  - packages/api/src/websocket.ts
+  - packages/chatbot/src/chatbot.test.ts
+  - packages/chatbot/src/rag.d.ts
+  - packages/chatbot/src/rag.js
+  - packages/chatbot/src/rag.ts
+  - packages/chatbot/src/vectordb.d.ts
+  - packages/chatbot/src/vectordb.js
+  - packages/chatbot/src/vectordb.test.ts
+  - packages/chatbot/src/vectordb.ts
+  - packages/cli/src/__tests__/compose-generator.property.test.ts
+  - packages/cli/src/compose-generator.ts
+  - packages/infra/infra.config.test.ts
+  - packages/infra/infra.config.ts
+  - packages/infra/src/config/ConfigManager.test.ts
+  - packages/infra/src/config/ConfigManager.ts
+  - packages/infra/src/deployers/ApiDeployer.test.ts
+  - packages/infra/src/deployers/ApiDeployer.ts
+  - packages/infra/src/deployers/apiRuntime.test.ts
+  - packages/infra/src/deployers/apiRuntime.ts
+  - packages/infra/src/types.ts
+
+
+## [0.2.25](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.24...v0.2.25) (2026-03-26)
+
+
+
+
+
 ## [0.2.24](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.23...v0.2.24) (2026-03-26)
 
 ### Detected changes

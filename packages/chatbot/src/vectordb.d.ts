@@ -10,6 +10,7 @@ export interface ChromaConnectionConfig {
     tenant?: string;
     database?: string;
     cloudHost?: string;
+    collectionName: string;
 }
 export declare function resolveChromaConnectionConfig(): ChromaConnectionConfig;
 export declare class VectorStore {

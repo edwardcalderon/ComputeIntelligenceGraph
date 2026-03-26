@@ -84,6 +84,8 @@ export function buildApiSstEnvironment(
     API_NEO4J_BOLT_URI: resolved?.neo4jBoltUri ?? config.neo4jBoltUri ?? '',
     API_NEO4J_PASSWORD_SECRET_ARN:
       resolved?.neo4jPasswordSecretArn ?? config.neo4jPasswordSecretArn ?? '',
+    API_OPENAI_API_KEY_SECRET_ARN:
+      resolved?.openAiApiKeySecretArn ?? config.openAiApiKeySecretArn ?? '',
     API_AUTHENTIK_ISSUER_URL_SECRET_ARN:
       resolved?.authentikSecretRefs.issuerUrlSecretArn ??
       config.authentikSecretRefs?.issuerUrlSecretArn ??

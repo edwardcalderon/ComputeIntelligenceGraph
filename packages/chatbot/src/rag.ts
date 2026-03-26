@@ -64,6 +64,12 @@ export class RAGPipeline {
     await this.vectorStore.addDocumentsWithEmbeddings([doc], [embedding]);
   }
 
+  async indexResources(resources: ResourceDoc[]): Promise<void> {
+    for (const resource of resources) {
+      await this.indexResource(resource);
+    }
+  }
+
   async removeResource(id: string): Promise<void> {
     await this.vectorStore.deleteDocument(id);
   }

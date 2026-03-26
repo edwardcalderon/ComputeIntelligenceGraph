@@ -33,6 +33,7 @@ interface ApiStackConfig {
   jwtSecretArn: string;
   neo4jBoltUri: string;
   neo4jPasswordSecretArn: string;
+  openAiApiKeySecretArn: string;
   authentikIssuerSecretArn: string;
   authentikJwksSecretArn: string;
   authentikTokenEndpointSecretArn: string;
@@ -140,6 +141,10 @@ export function loadApiStackConfig(): ApiStackConfig {
     'API_SMTP_PASSWORD_SECRET_ARN',
     'SMTP_PASSWORD_SECRET_ARN'
   );
+  const openAiApiKeySecretArn = firstEnv(
+    'API_OPENAI_API_KEY_SECRET_ARN',
+    'OPENAI_API_KEY_SECRET_ARN'
+  );
   const smtpPort = smtpPortRaw ? Number(smtpPortRaw) : 587;
   if (smtpPortRaw && !Number.isFinite(smtpPort)) {
     throw new Error('API_SMTP_PORT / SMTP_PORT must be a number');
@@ -155,10 +160,11 @@ export function loadApiStackConfig(): ApiStackConfig {
       smtpAuthEnabled && !smtpPasswordSecretArn
         ? 'API_SMTP_PASSWORD_SECRET_ARN / SMTP_PASSWORD_SECRET_ARN'
         : undefined,
+      !openAiApiKeySecretArn ? 'API_OPENAI_API_KEY_SECRET_ARN / OPENAI_API_KEY_SECRET_ARN' : undefined,
     ].filter((value): value is string => Boolean(value));
 
     if (missing.length > 0) {
-      throw new Error(`Missing SMTP runtime config: ${missing.join(', ')}`);
+      throw new Error(`Missing runtime config: ${missing.join(', ')}`);
     }
   }
 
@@ -188,6 +194,8 @@ export function loadApiStackConfig(): ApiStackConfig {
     jwtSecretArn: bootstrapOnly ? 'bootstrap-jwt-secret' : requiredEnv('API_JWT_SECRET_ARN'),
     neo4jBoltUri: bootstrapOnly ? 'bolt://bootstrap:7687' : requiredEnv('API_NEO4J_BOLT_URI'),
     neo4jPasswordSecretArn: bootstrapOnly ? 'bootstrap-neo4j-secret' : requiredEnv('API_NEO4J_PASSWORD_SECRET_ARN'),
+    openAiApiKeySecretArn:
+      bootstrapOnly ? 'bootstrap-openai-api-key' : requiredEnv('API_OPENAI_API_KEY_SECRET_ARN'),
     authentikIssuerSecretArn:
       bootstrapOnly ? 'bootstrap-authentik-issuer' : requiredEnv('API_AUTHENTIK_ISSUER_URL_SECRET_ARN'),
     authentikJwksSecretArn:
@@ -231,6 +239,7 @@ export function secretArns(config: ApiStackConfig): string[] {
     config.databaseUrlSecretArn,
     config.jwtSecretArn,
     config.neo4jPasswordSecretArn,
+    config.openAiApiKeySecretArn,
     config.authentikIssuerSecretArn,
     config.authentikJwksSecretArn,
     config.authentikTokenEndpointSecretArn,
@@ -455,6 +464,7 @@ export function createInfrastructure() {
               { name: 'NEO4J_URI', value: config.neo4jBoltUri },
               { name: 'NEO4J_USER', value: 'neo4j' },
               { name: 'NEO4J_DATABASE', value: 'neo4j' },
+              { name: 'OPENAI_CHAT_MODEL', value: process.env.OPENAI_CHAT_MODEL ?? 'gpt-4o-mini' },
               { name: 'SMTP_HOST', value: config.smtpHost },
               { name: 'SMTP_PORT', value: String(config.smtpPort) },
               { name: 'SMTP_SECURE', value: String(config.smtpSecure) },
@@ -486,6 +496,10 @@ export function createInfrastructure() {
               {
                 name: 'OIDC_CLIENT_SECRET',
                 valueFrom: config.oidcClientSecretSecretArn,
+              },
+              {
+                name: 'OPENAI_API_KEY',
+                valueFrom: config.openAiApiKeySecretArn,
               },
               ...(config.supabaseUrlSecretArn
                 ? [{ name: 'SUPABASE_URL', valueFrom: config.supabaseUrlSecretArn }]

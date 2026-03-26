@@ -43,6 +43,7 @@ describe('api runtime helpers', () => {
         desiredCount: 1,
         databaseUrlSecretArn: 'arn:aws:secretsmanager:::db',
         jwtSecretArn: 'arn:aws:secretsmanager:::jwt',
+        openAiApiKeySecretArn: 'arn:aws:secretsmanager:::openai',
         authentikSecretRefs: {
           issuerUrlSecretArn: 'arn:aws:secretsmanager:::issuer',
           jwksUriSecretArn: 'arn:aws:secretsmanager:::jwks',
@@ -69,6 +70,7 @@ describe('api runtime helpers', () => {
         neo4jSecurityGroupId: 'sg-neo4j',
         neo4jBoltUri: 'bolt://10.0.2.10:7687',
         neo4jPasswordSecretArn: 'arn:aws:secretsmanager:::neo4j',
+        openAiApiKeySecretArn: 'arn:aws:secretsmanager:::openai',
         smtpHost: 'mail.example.com',
         smtpPort: 587,
         smtpSecure: true,
@@ -85,6 +87,7 @@ describe('api runtime helpers', () => {
     expect(runtime.securityGroupIds).toEqual(['sg-api']);
     expect(runtime.neo4jBoltUri).toBe('bolt://10.0.2.10:7687');
     expect(runtime.neo4jPasswordSecretArn).toBe('arn:aws:secretsmanager:::neo4j');
+    expect(runtime.openAiApiKeySecretArn).toBe('arn:aws:secretsmanager:::openai');
     expect(runtime.smtpHost).toBe('mail.example.com');
     expect(runtime.smtpPort).toBe(587);
     expect(runtime.smtpSecure).toBe(true);

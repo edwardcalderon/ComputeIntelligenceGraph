@@ -151,6 +151,10 @@ export function resolveApiRuntimeConfig(
       config.neo4jPasswordSecretArn ?? outputs?.neo4jPasswordSecretArn,
       'neo4jPasswordSecretArn'
     ),
+    openAiApiKeySecretArn: requireString(
+      config.openAiApiKeySecretArn,
+      'openAiApiKeySecretArn'
+    ),
     authentikSecretRefs: resolveAuthentikSecretRefs(config.authentikSecretRefs),
     smtpHost: requireString(config.smtpHost, 'smtpHost'),
     smtpPort: requireNumber(config.smtpPort, 'smtpPort'),

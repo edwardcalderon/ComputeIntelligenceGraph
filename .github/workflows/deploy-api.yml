@@ -544,6 +544,7 @@ jobs:
           SUPABASE_URL_VALUE: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY_VALUE: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           JWT_SECRET_VALUE: ${{ secrets.JWT_SECRET }}
+          OPENAI_API_KEY_VALUE: ${{ secrets.OPENAI_API_KEY }}
         run: |
           DATABASE_URL_VALUE="${SUPABASE_DIRECT_URL_POOLER_VALUE:-$DATABASE_URL_VALUE}"
 
@@ -574,6 +575,11 @@ jobs:
               exit 1
               ;;
           esac
+
+          if [ -z "$OPENAI_API_KEY_VALUE" ]; then
+            echo 'Set the GitHub Actions secret OPENAI_API_KEY before deploying the API runtime.' >&2
+            exit 1
+          fi
 
           set -a
           # Keep runtime values out of GITHUB_ENV so GitHub Actions does not print them in step metadata.
@@ -613,6 +619,7 @@ jobs:
           ensure_secret "/cig/prod/api/authentik-token-endpoint" "$AUTHENTIK_TOKEN_ENDPOINT" API_AUTHENTIK_TOKEN_ENDPOINT_SECRET_ARN
           ensure_secret "/cig/prod/api/oidc-client-id" "$OIDC_CLIENT_ID" API_OIDC_CLIENT_ID_SECRET_ARN
           ensure_secret "/cig/prod/api/oidc-client-secret" "$OIDC_CLIENT_SECRET" API_OIDC_CLIENT_SECRET_SECRET_ARN
+          ensure_secret "/cig/prod/api/openai-api-key" "$OPENAI_API_KEY_VALUE" API_OPENAI_API_KEY_SECRET_ARN
 
           SMTP_PASSWORD_SECRET_ARN=$(aws secretsmanager describe-secret \
             --secret-id "/cig/prod/api/smtp-password" \

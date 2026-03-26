@@ -492,6 +492,8 @@ export interface ApiRuntimeConfig {
   neo4jBoltUri: string;
   /** Secret ARN containing the Neo4j password */
   neo4jPasswordSecretArn: string;
+  /** Secret ARN containing OPENAI_API_KEY */
+  openAiApiKeySecretArn: string;
   /** Authentik runtime secret references */
   authentikSecretRefs: ApiAuthentikSecretRefs;
   /** SMTP host used by the OTP backend */
@@ -570,6 +572,8 @@ export interface ApiDeploymentConfig {
   neo4jBoltUri?: string;
   /** Secret ARN containing Neo4j password */
   neo4jPasswordSecretArn?: string;
+  /** Secret ARN containing OPENAI_API_KEY */
+  openAiApiKeySecretArn?: string;
   /** Authentik secret references */
   authentikSecretRefs?: Partial<ApiAuthentikSecretRefs>;
   /** SMTP host used by the OTP backend */

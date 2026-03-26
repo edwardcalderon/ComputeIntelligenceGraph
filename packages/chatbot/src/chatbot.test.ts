@@ -110,6 +110,30 @@ describe('RAGPipeline', () => {
     );
   });
 
+  it('indexResources indexes each resource in sequence', async () => {
+    const { pipeline, mockStore, mockEmbeddingService } = makePipeline();
+    const resources: ResourceDoc[] = [
+      {
+        id: 'res-1',
+        name: 'my-ec2',
+        type: 'EC2',
+        provider: 'aws',
+      },
+      {
+        id: 'res-2',
+        name: 'my-bucket',
+        type: 'S3',
+        provider: 'aws',
+      },
+    ];
+
+    await pipeline.indexResources(resources);
+
+    expect(mockEmbeddingService.embedResource).toHaveBeenNthCalledWith(1, resources[0]);
+    expect(mockEmbeddingService.embedResource).toHaveBeenNthCalledWith(2, resources[1]);
+    expect(mockStore.addDocumentsWithEmbeddings).toHaveBeenCalledTimes(2);
+  });
+
   it('retrieve calls embedText and queries the vector store', async () => {
     const { pipeline, mockStore, mockEmbeddingService } = makePipeline();
     mockStore.query.mockResolvedValueOnce([

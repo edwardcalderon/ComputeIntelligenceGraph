@@ -25,6 +25,7 @@ describe('ApiDeployer', () => {
       jwtSecretArn: 'arn:aws:secretsmanager:::jwt',
       neo4jBoltUri: 'bolt://10.0.2.10:7687',
       neo4jPasswordSecretArn: 'arn:aws:secretsmanager:::neo4j',
+      openAiApiKeySecretArn: 'arn:aws:secretsmanager:::openai',
       authentikSecretRefs: {
         issuerUrlSecretArn: 'arn:aws:secretsmanager:::issuer',
         jwksUriSecretArn: 'arn:aws:secretsmanager:::jwks',
@@ -50,6 +51,7 @@ describe('ApiDeployer', () => {
     expect(env.API_PUBLIC_SUBNET_IDS).toBe('subnet-public-a,subnet-public-b');
     expect(env.API_PRIVATE_SUBNET_IDS).toBe('subnet-private-a,subnet-private-b');
     expect(env.API_SECURITY_GROUP_IDS).toBe('sg-api');
+    expect(env.API_OPENAI_API_KEY_SECRET_ARN).toBe('arn:aws:secretsmanager:::openai');
     expect(env.API_CORS_ORIGINS).toBe('https://app.cig.lat');
     expect(env.API_SMTP_HOST).toBe('mail.example.com');
     expect(env.API_SMTP_PORT).toBe('587');
@@ -86,6 +88,7 @@ describe('ApiDeployer', () => {
       smtpFromEmail: 'smtp-login@example.com',
       smtpAuthEnabled: true,
       smtpPasswordSecretArn: 'arn:aws:secretsmanager:::smtp-password',
+      openAiApiKeySecretArn: 'arn:aws:secretsmanager:::openai',
       bootstrapOnly: true,
       createPipeline: false,
     });
@@ -105,6 +108,7 @@ describe('ApiDeployer', () => {
           API_SMTP_FROM_EMAIL: 'smtp-login@example.com',
           API_SMTP_AUTH_ENABLED: 'true',
           API_SMTP_PASSWORD_SECRET_ARN: 'arn:aws:secretsmanager:::smtp-password',
+          API_OPENAI_API_KEY_SECRET_ARN: 'arn:aws:secretsmanager:::openai',
           SST_STAGE: 'production',
         }),
       })

@@ -34,6 +34,7 @@ const ENV_KEYS_USED_BY_CONFIG_MANAGER = [
   'API_JWT_SECRET_ARN',
   'API_NEO4J_BOLT_URI',
   'API_NEO4J_PASSWORD_SECRET_ARN',
+  'API_OPENAI_API_KEY_SECRET_ARN',
   'API_AUTHENTIK_ISSUER_URL_SECRET_ARN',
   'API_AUTHENTIK_JWKS_URI_SECRET_ARN',
   'API_AUTHENTIK_TOKEN_ENDPOINT_SECRET_ARN',
@@ -171,6 +172,7 @@ describe('ConfigManager', () => {
       process.env.API_AUTHENTIK_TOKEN_ENDPOINT_SECRET_ARN = 'arn:aws:secretsmanager:::token';
       process.env.API_OIDC_CLIENT_ID_SECRET_ARN = 'arn:aws:secretsmanager:::client-id';
       process.env.API_OIDC_CLIENT_SECRET_SECRET_ARN = 'arn:aws:secretsmanager:::client-secret';
+      process.env.API_OPENAI_API_KEY_SECRET_ARN = 'arn:aws:secretsmanager:::openai-key';
       process.env.API_CORS_ORIGINS = 'https://app.cig.lat,https://cig.lat';
       process.env.API_SMTP_HOST = 'mail.example.com';
       process.env.API_SMTP_PORT = '587';
@@ -207,6 +209,7 @@ describe('ConfigManager', () => {
         oidcClientIdSecretArn: 'arn:aws:secretsmanager:::client-id',
         oidcClientSecretSecretArn: 'arn:aws:secretsmanager:::client-secret'
       });
+      expect(config.api?.openAiApiKeySecretArn).toBe('arn:aws:secretsmanager:::openai-key');
       expect(config.api?.smtpHost).toBe('mail.example.com');
       expect(config.api?.smtpPort).toBe(587);
       expect(config.api?.smtpSecure).toBe(true);

@@ -18,6 +18,7 @@ describe('VectorStore Chroma connection config', () => {
       tenant: 'tenant-123',
       database: 'cig',
       cloudHost: 'https://api.trychroma.com',
+      collectionName: 'infrastructure_resources',
     });
   });
 
@@ -27,6 +28,7 @@ describe('VectorStore Chroma connection config', () => {
     expect(resolveChromaConnectionConfig()).toEqual({
       mode: 'local',
       path: 'http://localhost:8000',
+      collectionName: 'infrastructure_resources',
     });
   });
 
@@ -37,5 +39,16 @@ describe('VectorStore Chroma connection config', () => {
     expect(() => resolveChromaConnectionConfig()).toThrow(
       'CHROMA_TENANT and CHROMA_DATABASE are required when CHROMA_API_KEY is set.'
     );
+  });
+
+  it('honors a custom collection name when provided', () => {
+    vi.stubEnv('CHROMA_URL', 'http://localhost:8000');
+    vi.stubEnv('CHROMA_COLLECTION', 'cig_custom_collection');
+
+    expect(resolveChromaConnectionConfig()).toEqual({
+      mode: 'local',
+      path: 'http://localhost:8000',
+      collectionName: 'cig_custom_collection',
+    });
   });
 });

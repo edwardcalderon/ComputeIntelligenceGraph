@@ -151,6 +151,11 @@ module.exports = {
       secret: true,
       targets: { api: 'OPENAI_API_KEY', agents: 'OPENAI_API_KEY', chatbot: 'OPENAI_API_KEY' },
     },
+    API_OPENAI_API_KEY_SECRET_ARN: {
+      description: 'AWS Secrets Manager ARN for the API OpenAI key',
+      example: 'arn:aws:secretsmanager:us-east-2:123456789012:secret:cig/api/openai',
+      targets: { infra: 'API_OPENAI_API_KEY_SECRET_ARN' },
+    },
 
     // ── Discovery ──────────────────────────────────────────────────────────
     DISCOVERY_INTERVAL_MINUTES: {

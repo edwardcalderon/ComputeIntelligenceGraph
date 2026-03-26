@@ -6,7 +6,7 @@
 import { FastifyInstance } from 'fastify';
 import websocketPlugin, { SocketStream } from '@fastify/websocket';
 import type { WebSocket as WsWebSocket } from 'ws';
-import { verifyJwt } from './auth.js';
+import { verifyBearerToken } from './auth.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -62,7 +62,7 @@ const API_KEY_HEADER = 'x-api-key';
 export async function registerWebSocket(app: FastifyInstance): Promise<void> {
   await app.register(websocketPlugin);
 
-  app.get('/ws', { websocket: true }, (connection: SocketStream, request) => {
+  app.get('/ws', { websocket: true }, async (connection: SocketStream, request) => {
     const ws = connection.socket;
 
     // ── Authentication ──────────────────────────────────────────────────────
@@ -74,10 +74,10 @@ export async function registerWebSocket(app: FastifyInstance): Promise<void> {
 
     if (token) {
       try {
-        verifyJwt(token);
+        await verifyBearerToken(token);
         authenticated = true;
       } catch {
-        // invalid JWT — fall through
+        // invalid JWT / upstream token — fall through
       }
     }
 

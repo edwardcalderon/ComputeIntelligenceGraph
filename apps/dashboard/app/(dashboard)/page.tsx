@@ -6,6 +6,7 @@ import { useTranslation } from "@cig-technology/i18n/react";
 import { StatCard } from "../../components/StatCard";
 import { getResourcesPaged, getDiscoveryStatus, PagedResources, DiscoveryStatus } from "../../lib/api";
 import { buildAuthenticatedWebSocketUrl } from "../../lib/browserApi";
+import { getBrowserAccessToken } from "../../lib/cigClient";
 const RESOURCE_TYPES = ["compute", "storage", "network", "database"] as const;
 const PROVIDERS = ["aws", "gcp", "kubernetes", "docker"] as const;
 const TYPE_COLORS: Record<string, string> = { compute: "#06b6d4", storage: "#3b82f6", network: "#a855f7", database: "#10b981" };
@@ -34,7 +35,13 @@ export default function OverviewPage() {
     })),
   });
   const { data: inactiveData, isLoading: inactiveLoading } = useQuery<PagedResources>({ queryKey: ["resources", "state", "inactive"], queryFn: () => getResourcesPaged("limit=1&state=inactive") });
-  const { data: discoveryData, isLoading: discoveryLoading } = useQuery<DiscoveryStatus>({ queryKey: ["discovery", "status"], queryFn: getDiscoveryStatus, refetchInterval: 30_000 });
+  const { data: discoveryData, isLoading: discoveryLoading } = useQuery<DiscoveryStatus>({
+    queryKey: ["discovery", "status"],
+    queryFn: getDiscoveryStatus,
+    retry: false,
+    refetchInterval: (query) => (query.state.error ? false : 30_000),
+    enabled: Boolean(getBrowserAccessToken()),
+  });
 
   useEffect(() => {
     if (!wsUrl) {

@@ -6,11 +6,11 @@ export interface VectorDocument {
   metadata: Record<string, unknown>;
 }
 
-const COLLECTION_NAME = 'infrastructure_resources';
+const DEFAULT_COLLECTION_NAME = 'infrastructure_resources';
 
 // Singleton client instance (connection pooling via reuse)
 let clientInstance: ChromaClient | null = null;
-let collectionInstance: Collection | null = null;
+const collectionCache = new Map<string, Collection>();
 
 export interface ChromaConnectionConfig {
   mode: 'cloud' | 'local';
@@ -19,6 +19,7 @@ export interface ChromaConnectionConfig {
   tenant?: string;
   database?: string;
   cloudHost?: string;
+  collectionName: string;
 }
 
 function normalizeCloudHost(host: string): string {
@@ -35,6 +36,7 @@ export function resolveChromaConnectionConfig(): ChromaConnectionConfig {
   const cloudTenant = process.env.CHROMA_TENANT?.trim();
   const cloudDatabase = process.env.CHROMA_DATABASE?.trim();
   const cloudHost = process.env.CHROMA_HOST?.trim();
+  const collectionName = process.env.CHROMA_COLLECTION?.trim() || DEFAULT_COLLECTION_NAME;
 
   if (cloudApiKey) {
     if (!cloudTenant || !cloudDatabase) {
@@ -49,6 +51,7 @@ export function resolveChromaConnectionConfig(): ChromaConnectionConfig {
       tenant: cloudTenant,
       database: cloudDatabase,
       cloudHost: normalizeCloudHost(cloudHost || 'api.trychroma.com'),
+      collectionName,
     };
   }
 
@@ -56,6 +59,7 @@ export function resolveChromaConnectionConfig(): ChromaConnectionConfig {
   return {
     mode: 'local',
     path: url,
+    collectionName,
   };
 }
 
@@ -86,14 +90,15 @@ export class VectorStore {
   }
 
   async connect(): Promise<void> {
-    if (collectionInstance) {
-      this.collection = collectionInstance;
+    const { collectionName } = resolveChromaConnectionConfig();
+    const cachedCollection = collectionCache.get(collectionName);
+
+    if (cachedCollection) {
+      this.collection = cachedCollection;
       return;
     }
-    this.collection = await this.client.getOrCreateCollection({
-      name: COLLECTION_NAME,
-    });
-    collectionInstance = this.collection;
+    this.collection = await this.client.getOrCreateCollection({ name: collectionName });
+    collectionCache.set(collectionName, this.collection);
   }
 
   private ensureConnected(): Collection {

@@ -92,6 +92,7 @@ function generateServiceConfig(
       environment: {
         PORT: '8000',
         LOG_LEVEL: 'info',
+        OPENAI_API_KEY: '${OPENAI_API_KEY:-}',
       },
       healthcheck: {
         test: ['CMD', 'curl', '-f', 'http://localhost:8000/health'],

@@ -12,6 +12,7 @@ import {
   type DeviceAuthResponse,
   type DeviceSession,
 } from "../../../lib/api";
+import { getBrowserAccessToken } from "../../../lib/cigClient";
 
 function formatRelativeTime(isoDate: string): string {
   const diff = Date.now() - new Date(isoDate).getTime();
@@ -66,7 +67,9 @@ export default function DevicesPage() {
   } = useQuery<DeviceAuthResponse>({
     queryKey: ["device-auth", "pending"],
     queryFn: getPendingDeviceRequests,
-    refetchInterval: 5_000,
+    refetchInterval: (query) => (query.state.error ? false : 5_000),
+    retry: false,
+    enabled: Boolean(getBrowserAccessToken()),
   });
 
   const fetchSessions = useCallback(async (showLoader = false) => {
@@ -89,7 +92,7 @@ export default function DevicesPage() {
     void fetchSessions(true);
 
     const interval = setInterval(() => {
-      if (document.visibilityState === "visible") {
+      if (document.visibilityState === "visible" && getBrowserAccessToken()) {
         void fetchSessions();
       }
     }, 5000);

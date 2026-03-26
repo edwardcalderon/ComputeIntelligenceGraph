@@ -32,6 +32,7 @@ beforeEach(() => {
   process.env.API_AUTHENTIK_TOKEN_ENDPOINT_SECRET_ARN = 'arn:aws:secretsmanager:::token';
   process.env.API_OIDC_CLIENT_ID_SECRET_ARN = 'arn:aws:secretsmanager:::client-id';
   process.env.API_OIDC_CLIENT_SECRET_SECRET_ARN = 'arn:aws:secretsmanager:::client-secret';
+  process.env.API_OPENAI_API_KEY_SECRET_ARN = 'arn:aws:secretsmanager:::openai-key';
   process.env.API_CORS_ORIGINS = 'https://app.cig.lat';
   process.env.API_SMTP_HOST = 'mail.example.com';
   process.env.API_SMTP_PORT = '587';

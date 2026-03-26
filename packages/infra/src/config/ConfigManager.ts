@@ -200,6 +200,7 @@ export class ConfigManager {
       process.env.API_JWT_SECRET_ARN ||
       process.env.API_NEO4J_BOLT_URI ||
       process.env.API_NEO4J_PASSWORD_SECRET_ARN ||
+      process.env.API_OPENAI_API_KEY_SECRET_ARN ||
       process.env.API_AUTHENTIK_ISSUER_URL_SECRET_ARN ||
       process.env.API_AUTHENTIK_JWKS_URI_SECRET_ARN ||
       process.env.API_AUTHENTIK_TOKEN_ENDPOINT_SECRET_ARN ||
@@ -275,6 +276,9 @@ export class ConfigManager {
       }
       if (process.env.API_NEO4J_PASSWORD_SECRET_ARN) {
         config.api.neo4jPasswordSecretArn = process.env.API_NEO4J_PASSWORD_SECRET_ARN;
+      }
+      if (process.env.API_OPENAI_API_KEY_SECRET_ARN) {
+        config.api.openAiApiKeySecretArn = process.env.API_OPENAI_API_KEY_SECRET_ARN;
       }
 
       const authentikRefs: Partial<ApiAuthentikSecretRefs> = {};

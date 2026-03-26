@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import crypto from 'crypto';
+import { verifyIdToken } from './middleware/oidc-verify';
 
 // Permission model (Requirements 16.8, 17.8)
 export enum Permission {
@@ -22,6 +23,8 @@ export interface JwtPayload {
 export interface ApiKeyEntry {
   permissions: Permission[];
 }
+
+const MANAGED_ADMIN_GROUPS = new Set(['admin', 'admins', 'cig-admin', 'cig-admins']);
 
 // In-memory API key store: hashedKey -> entry
 const apiKeyStore = new Map<string, ApiKeyEntry>();
@@ -60,6 +63,47 @@ export function verifyJwt(token: string): JwtPayload {
   return jwt.verify(token, secret) as JwtPayload;
 }
 
+function permissionsFromManagedGroups(groups: string[]): Permission[] {
+  const normalizedGroups = groups.map((group) => group.toLowerCase());
+  const permissions = [Permission.READ_RESOURCES];
+
+  if (normalizedGroups.some((group) => MANAGED_ADMIN_GROUPS.has(group))) {
+    permissions.push(
+      Permission.WRITE_RESOURCES,
+      Permission.EXECUTE_ACTIONS,
+      Permission.MANAGE_DISCOVERY,
+      Permission.ADMIN
+    );
+  }
+
+  return [...new Set(permissions)];
+}
+
+function canVerifyManagedToken(): boolean {
+  return Boolean(process.env.AUTHENTIK_JWKS_URI && process.env.OIDC_CLIENT_ID);
+}
+
+export async function verifyBearerToken(token: string): Promise<JwtPayload> {
+  try {
+    return verifyJwt(token);
+  } catch (localError) {
+    const managedMode = process.env.CIG_AUTH_MODE === 'managed';
+    if (!managedMode && !canVerifyManagedToken()) {
+      throw localError;
+    }
+
+    try {
+      const managedClaims = await verifyIdToken(token);
+      return {
+        sub: managedClaims.sub,
+        permissions: permissionsFromManagedGroups(managedClaims.groups),
+      };
+    } catch {
+      throw localError;
+    }
+  }
+}
+
 // Fastify preHandler: authenticate via Bearer JWT or X-API-Key header
 export async function authenticate(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   const authHeader = request.headers['authorization'];
@@ -68,7 +112,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.slice(7);
     try {
-      const payload = verifyJwt(token);
+      const payload = await verifyBearerToken(token);
       (request as any).user = payload;
       return;
     } catch {

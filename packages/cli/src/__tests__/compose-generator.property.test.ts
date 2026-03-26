@@ -194,7 +194,7 @@ describe('Pinned service image refs', () => {
 
       const composePath = path.join(outputDir, 'docker-compose.yml');
       const composeData = JSON.parse(fs.readFileSync(composePath, 'utf-8')) as {
-        services: Record<string, { image: string }>;
+        services: Record<string, { image: string; environment?: Record<string, string> }>;
       };
       const serviceImages = manifest.service_images as Record<string, string>;
 
@@ -228,6 +228,9 @@ describe('Pinned service image refs', () => {
       expect(composeData.services.neo4j.image).toBe('neo4j:5');
       expect(composeData.services.discovery.image).toBe('docker.io/cigtechnology/cig-discovery:latest');
       expect(composeData.services.cartography.image).toBe('docker.io/cigtechnology/cig-cartography:latest');
+      expect(composeData.services.api.environment).toMatchObject({
+        OPENAI_API_KEY: '${OPENAI_API_KEY:-}',
+      });
     } finally {
       fs.rmSync(outputDir, { recursive: true, force: true });
     }
