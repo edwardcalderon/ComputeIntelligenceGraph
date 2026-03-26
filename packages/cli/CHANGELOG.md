@@ -1,3 +1,18 @@
+## [0.1.11](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.10...cli-v0.1.11) (2026-03-26)
+
+
+
+
+
+## [0.1.11](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.10...cli-v0.1.11) (2026-03-25)
+
+### Bug Fixes
+
+* keep the public curl installer from feeling idle while it resolves the published npm CLI version
+* keep the interactive setup wizard attached to a real TTY so arrow keys and Enter work reliably
+
+
+
 ## [0.1.10](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.9...cli-v0.1.10) (2026-03-26)
 
 
