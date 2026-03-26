@@ -40,18 +40,11 @@ container provenance data.
 - Package: https://www.npmjs.com/package/@cig-technology/cli
 - GitHub releases: https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases
 
-## 📋 Latest Changes (v0.1.14)
+## 📋 Latest Changes (v0.1.18)
 
 ### Bug Fixes
 
-- fall back to pinned Docker Hub bundle digests when the published CLI image manifest is missing or malformed
-- treat Docker Hub as the source of truth for self-hosted install image resolution when the GitHub release asset cannot be used
-- add regression coverage for the GitHub release manifest fallback path
-
-### Release
-
-- keep the public installer resilient when `cli-v0.1.13/images.json` is not yet published
-- update the CLI installer docs to describe the Docker Hub source-of-truth fallback
+* **cli:** align neo4j bundle image handling ([f974a8d](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f974a8d9483b1e9cf6f2b3e05de49b01ff7101c4))
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 

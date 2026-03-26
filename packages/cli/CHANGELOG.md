@@ -1,3 +1,14 @@
+## [0.1.18](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.17...cli-v0.1.18) (2026-03-26)
+
+
+### Bug Fixes
+
+* **cli:** align neo4j bundle image handling ([f974a8d](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f974a8d9483b1e9cf6f2b3e05de49b01ff7101c4))
+
+
+
+
+
 ## [0.1.17](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.16...cli-v0.1.17) (2026-03-26)
 
 
