@@ -148,16 +148,16 @@ function EmailPasswordView({ onSuccess }: { onSuccess: () => void }) {
       </div>
 
       {submittedEmail && mode === "signup" ? (
-        <div className="rounded-2xl border border-emerald-500/25 bg-emerald-950/20 px-4 py-4">
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/95 px-4 py-4 text-emerald-950 shadow-sm dark:border-emerald-500/25 dark:bg-emerald-950/20 dark:text-inherit">
           <div className="flex items-start gap-3">
-            <div className="mt-0.5 rounded-full bg-emerald-500/15 p-2 text-emerald-400">
+            <div className="mt-0.5 rounded-full bg-emerald-500/15 p-2 text-emerald-600 dark:text-emerald-400">
               <CheckIcon />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-emerald-300 dark:text-emerald-200">
+              <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">
                 {t("auth.passwordVerifyEmailTitle")}
               </p>
-              <p className="mt-1 text-sm text-emerald-100/85 dark:text-emerald-100/80 break-words">
+              <p className="mt-1 break-words text-sm text-emerald-800 dark:text-emerald-100/80">
                 {t("auth.passwordVerifyEmailBody", { email: submittedEmail })}
               </p>
               <button
@@ -167,7 +167,7 @@ function EmailPasswordView({ onSuccess }: { onSuccess: () => void }) {
                   setSubmittedEmail(null);
                   setError(null);
                 }}
-                className="mt-3 text-xs font-medium text-cyan-300 hover:text-cyan-200 hover:underline"
+                className="mt-3 text-xs font-medium text-cyan-700 hover:text-cyan-600 hover:underline dark:text-cyan-300 dark:hover:text-cyan-200"
               >
                 {t("auth.passwordBackToSignin")}
               </button>

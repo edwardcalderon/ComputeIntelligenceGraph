@@ -1,6 +1,6 @@
 {
   "name": "@cig/dashboard",
-  "version": "0.1.122",
+  "version": "0.1.123",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -15,10 +15,10 @@
     "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
+    "@cig-technology/i18n": "1.0.0",
     "@cig/auth": "workspace:*",
     "@cig/sdk": "workspace:*",
     "@cig/ui": "workspace:^",
-    "@cig-technology/i18n": "1.0.0",
     "@edcalderon/auth": "^1.4.1",
     "@reactflow/background": "^11.3.14",
     "@reactflow/controls": "^11.2.14",
@@ -26,13 +26,14 @@
     "@refinedev/core": "^5.0.11",
     "@refinedev/nextjs-router": "^7.0.5",
     "@refinedev/react-hook-form": "^5.0.4",
+    "@supabase/supabase-js": "^2.49.4",
     "@tanstack/react-query": "^5.40.0",
+    "lucide-react": "^0.454.0",
     "next": "14.2.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "reactflow": "^11.11.4",
-    "zustand": "^4.5.0",
-    "@supabase/supabase-js": "^2.49.4"
+    "zustand": "^4.5.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",

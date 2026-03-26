@@ -1,3 +1,39 @@
+## [0.1.123](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.122...v0.1.123) (2026-03-26)
+
+
+### Bug Fixes
+
+* **cli:** clean up 0.1.8 release notes ([5bbc069](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/5bbc069353470a7f69ee8ae38573a776ca5c9fff))
+* **cli:** keep interactive installer attached to tty ([303916e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/303916edbd53e9901a43e347dde954e8a78edb1b))
+* **cli:** keep setup cancel flow open ([fc4dfe5](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/fc4dfe5c6b17e29bb91b205b4c74acd530773b2d))
+* **cli:** keep setup wizard open until dismiss ([991fc9e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/991fc9ebcebed2c7514597dc955450682acd2423))
+* **cli:** stage workspace lockfile in release ([4375110](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/4375110807d42af474dc1f9210423eb5dfb6e9ab))
+* **install:** show npm version resolution progress ([0f310aa](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/0f310aab2e1a63daf95aec8bdd9f2a418b67196f))
+* **release:** allow tagged releases after follow-up commits ([414dae5](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/414dae53cba73058953c78ff54b5e10c30d8ffd0))
+* **release:** support cli release tags in guard ([d250a66](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/d250a660980e0f2079bc4f6c83e767d1fe9b38d9))
+
+
+
+
+
+## [0.1.123](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.122...v0.1.123) (2026-03-26)
+
+
+### Bug Fixes
+
+* **cli:** clean up 0.1.8 release notes ([5bbc069](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/5bbc069353470a7f69ee8ae38573a776ca5c9fff))
+* **cli:** keep interactive installer attached to tty ([303916e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/303916edbd53e9901a43e347dde954e8a78edb1b))
+* **cli:** keep setup cancel flow open ([fc4dfe5](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/fc4dfe5c6b17e29bb91b205b4c74acd530773b2d))
+* **cli:** keep setup wizard open until dismiss ([991fc9e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/991fc9ebcebed2c7514597dc955450682acd2423))
+* **cli:** stage workspace lockfile in release ([4375110](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/4375110807d42af474dc1f9210423eb5dfb6e9ab))
+* **install:** show npm version resolution progress ([0f310aa](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/0f310aab2e1a63daf95aec8bdd9f2a418b67196f))
+* **release:** allow tagged releases after follow-up commits ([414dae5](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/414dae53cba73058953c78ff54b5e10c30d8ffd0))
+* **release:** support cli release tags in guard ([d250a66](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/d250a660980e0f2079bc4f6c83e767d1fe9b38d9))
+
+
+
+
+
 ## [0.1.122](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.121...v0.1.122) (2026-03-25)
 
 ### Detected changes
@@ -351,24 +387,6 @@
 
 
 
-
-## [0.1.100](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.99...v0.1.100) (2026-03-25)
-
-
-### Bug Fixes
-
-* **auth:** improved OTP flow redirect, auth auto-sync event, and upgraded OTP email template with full CIG branding ([32d7e1f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/32d7e1f109468c70f020b465699658eaf220b5ed))
-
-
-
-
-
-## [0.1.100](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.99...v0.1.100) (2026-03-25)
-
-
-### Bug Fixes
-
-* **auth:** improved OTP flow redirect, auth auto-sync event, and upgraded OTP email template with full CIG branding ([32d7e1f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/32d7e1f109468c70f020b465699658eaf220b5ed))
 
 
 
