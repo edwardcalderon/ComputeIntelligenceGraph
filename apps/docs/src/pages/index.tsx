@@ -1,44 +1,40 @@
-import type {ReactNode} from 'react';
-import clsx from 'clsx';
+import type { ReactNode } from 'react';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
-import HomepageFeatures from '@site/src/components/HomepageFeatures';
-import Heading from '@theme/Heading';
+import OrbitalTimeline from '@site/src/components/OrbitalTimeline';
 
 import styles from './index.module.css';
 
-function HomepageHeader() {
-  const {siteConfig} = useDocusaurusContext();
-  return (
-    <header className={clsx('hero hero--primary', styles.heroBanner)}>
-      <div className="container">
-        <Heading as="h1" className="hero__title">
-          {siteConfig.title}
-        </Heading>
-        <p className="hero__subtitle">{siteConfig.tagline}</p>
-        <div className={styles.buttons}>
-          <Link
-            className="button button--secondary button--lg"
-            to="/docs/intro">
-            Docusaurus Tutorial - 5min ⏱️
-          </Link>
-        </div>
-      </div>
-    </header>
-  );
-}
-
 export default function Home(): ReactNode {
-  const {siteConfig} = useDocusaurusContext();
+  const { siteConfig } = useDocusaurusContext();
   return (
     <Layout
-      title={`Hello from ${siteConfig.title}`}
-      description="Description will go into a meta tag in <head />">
-      <HomepageHeader />
-      <main>
-        <HomepageFeatures />
-      </main>
+      title={siteConfig.title}
+      description="Compute Intelligence Graph — interactive documentation"
+    >
+      {/* Full-screen orbital hero */}
+      <OrbitalTimeline />
+
+      {/* Below-fold quick links */}
+      <section className={styles.quickLinks}>
+        <div className="container">
+          <div className={styles.quickLinksGrid}>
+            <Link className={styles.quickCard} to="/docs/en/getting-started">
+              🚀 <span>Getting Started</span>
+            </Link>
+            <Link className={styles.quickCard} to="/docs/en/architecture">
+              🏗️ <span>Architecture</span>
+            </Link>
+            <Link className={styles.quickCard} to="/docs/en/api-reference">
+              ⚡ <span>API Reference</span>
+            </Link>
+            <Link className={styles.quickCard} to="/docs/en/developer-guide">
+              🛠️ <span>Developer Guide</span>
+            </Link>
+          </div>
+        </div>
+      </section>
     </Layout>
   );
 }

@@ -24,7 +24,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
     };
   }
 
-  public static getDerivedStateFromError(error: Error): Partial<State> {
+  public static getDerivedStateFromError(_error: Error): Partial<State> {
     return { hasError: true };
   }
 

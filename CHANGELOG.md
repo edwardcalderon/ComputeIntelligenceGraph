@@ -1,3 +1,27 @@
+## [0.2.3](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.2...v0.2.3) (2026-03-26)
+
+
+### Bug Fixes
+
+* **ci:** always build cartography bundle image ([02614a8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/02614a884ea0833f19868bbac24a94b21d0dcb53))
+* **ci:** correct cartography bundle build context ([df9704e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/df9704e5b2189e85efa4691ba007829d5f9654cc))
+
+
+
+
+
+## [0.2.3](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.2...v0.2.3) (2026-03-26)
+
+
+### Bug Fixes
+
+* **ci:** always build cartography bundle image ([02614a8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/02614a884ea0833f19868bbac24a94b21d0dcb53))
+* **ci:** correct cartography bundle build context ([df9704e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/df9704e5b2189e85efa4691ba007829d5f9654cc))
+
+
+
+
+
 ## [0.2.2](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.0...v0.2.2) (2026-03-26)
 
 
