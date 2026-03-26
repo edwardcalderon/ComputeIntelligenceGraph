@@ -133,7 +133,7 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile overlay */}
+      {/* Mobile overlay - closes sidebar when clicked */}
       {sidebarOpen && (
         <button
           type="button"
@@ -145,16 +145,16 @@ export function Sidebar() {
 
       <aside
         className={[
-          "fixed inset-y-0 left-0 z-30 flex w-60 flex-col transition-transform duration-200",
+          "fixed inset-y-0 left-0 z-30 flex w-60 flex-col transition-transform duration-200 ease-out",
           "bg-cig-sidebar border-r border-cig",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
-          "lg:static lg:translate-x-0",
+          "lg:static lg:translate-x-0 lg:transition-none",
         ].join(" ")}
       >
         {/* Logo */}
         <a
           href={resolveLandingUrl()}
-          className="group flex h-14 items-center gap-3 px-5 border-b border-cig transition-colors hover:bg-cig-hover"
+          className="group flex h-14 items-center gap-3 px-5 border-b border-cig transition-colors hover:bg-cig-hover flex-shrink-0"
         >
           <div className="relative flex items-center justify-center size-8 rounded-lg bg-cyan-500/10 dark:bg-cyan-500/10 border border-cyan-500/20">
             <div className="size-2 rounded-full bg-cyan-500 dark:bg-cyan-400 dark:shadow-[0_0_8px_rgba(6,182,212,0.6)]" />
@@ -188,7 +188,7 @@ export function Sidebar() {
         </nav>
 
         {/* User menu */}
-        <div className="border-t border-cig">
+        <div className="border-t border-cig flex-shrink-0">
           <UserMenu />
         </div>
       </aside>

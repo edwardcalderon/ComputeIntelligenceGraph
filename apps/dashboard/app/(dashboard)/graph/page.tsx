@@ -109,7 +109,7 @@ function DetailPanel({ resource, onClose }: { resource: Resource; onClose: () =>
   const t = useTranslation();
   const colors = TYPE_COLORS[resource.type] ?? TYPE_COLORS.default;
   return (
-    <div className="absolute right-4 top-4 z-10 w-72 rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900">
+    <div className="absolute right-2 top-12 sm:right-4 sm:top-4 z-10 w-72 max-w-[calc(100vw-1rem)] rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900">
       <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-700">
         <span
           className="rounded-full px-2 py-0.5 text-xs font-bold uppercase"
@@ -125,7 +125,7 @@ function DetailPanel({ resource, onClose }: { resource: Resource; onClose: () =>
           ✕
         </button>
       </div>
-      <div className="space-y-2 p-4 text-sm">
+      <div className="space-y-2 p-4 text-sm max-h-[60vh] overflow-y-auto">
         <div>
           <span className="text-xs font-semibold uppercase text-gray-400">{t("graph.detailName")}</span>
           <p className="mt-0.5 font-medium text-gray-900 dark:text-gray-100">{resource.name || "—"}</p>
@@ -307,11 +307,11 @@ function GraphContent() {
   );
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Header + Filters */}
-      <div className="flex flex-wrap items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-900">
-        <div className="mr-auto">
-          <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t("graph.title")}</h1>
+    <div className="flex h-full flex-col overflow-hidden">
+      {/* Header + Filters - scrollable on mobile */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-3 py-2 sm:gap-3 sm:px-4 sm:py-3 dark:border-gray-700 dark:bg-gray-900 overflow-x-auto">
+        <div className="mr-auto flex-shrink-0">
+          <h1 className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">{t("graph.title")}</h1>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {t("graph.nodeCount", { nodes: resources.length })} · {t("graph.edgeCount", { edges: edges.length })}
           </p>
@@ -321,7 +321,7 @@ function GraphContent() {
         <select
           value={filterType}
           onChange={(e) => { setFilterType(e.target.value); setSelectedId(null); }}
-          className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+          className="rounded-md border border-gray-300 bg-white px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 flex-shrink-0"
         >
           <option value="">{t("graph.allTypes")}</option>
           {TYPES.map((tp) => (
@@ -333,7 +333,7 @@ function GraphContent() {
         <select
           value={filterProvider}
           onChange={(e) => { setFilterProvider(e.target.value); setSelectedId(null); }}
-          className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+          className="rounded-md border border-gray-300 bg-white px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm shadow-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 flex-shrink-0"
         >
           <option value="">{t("graph.allProviders")}</option>
           {PROVIDERS.map((p) => (
@@ -344,14 +344,14 @@ function GraphContent() {
         {(filterType || filterProvider) && (
           <button
             onClick={() => { setFilterType(""); setFilterProvider(""); setSelectedId(null); }}
-            className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-600 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
+            className="rounded-md border border-gray-300 bg-white px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm text-gray-600 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 flex-shrink-0"
           >
             {t("graph.clear")}
           </button>
         )}
 
-        {/* Legend */}
-        <div className="flex items-center gap-2 border-l border-gray-200 pl-3 dark:border-gray-700">
+        {/* Legend - hidden on mobile, shown on larger screens */}
+        <div className="hidden sm:flex items-center gap-2 border-l border-gray-200 pl-3 dark:border-gray-700">
           {Object.entries(TYPE_COLORS).filter(([k]) => k !== "default").map(([type, c]) => (
             <span key={type} className="flex items-center gap-1 text-xs">
               <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: c.border }} />
@@ -361,8 +361,8 @@ function GraphContent() {
         </div>
       </div>
 
-      {/* Graph canvas */}
-      <div className="relative flex-1">
+      {/* Graph canvas - full height with proper overflow handling */}
+      <div className="relative flex-1 min-h-0 w-full overflow-hidden">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -388,10 +388,10 @@ function GraphContent() {
           />
         </ReactFlow>
 
-        {/* Provider legend */}
-        <div className="pointer-events-none absolute right-4 top-4 z-10 rounded-lg border border-gray-200 bg-white/90 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/90">
-          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("graph.providers")}</p>
-          <div className="space-y-1">
+        {/* Provider legend - repositioned for mobile */}
+        <div className="pointer-events-none absolute right-2 top-2 sm:right-4 sm:top-4 z-10 rounded-lg border border-gray-200 bg-white/90 px-2 py-1.5 sm:px-3 sm:py-2 shadow-sm backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/90 max-w-xs">
+          <p className="mb-1 sm:mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{t("graph.providers")}</p>
+          <div className="space-y-0.5 sm:space-y-1">
             {Object.entries(PROVIDER_LABELS).map(([key, label]) => (
               <div key={key} className="flex items-center gap-2">
                 <span
@@ -411,7 +411,7 @@ function GraphContent() {
           </div>
         )}
 
-        {/* Detail panel */}
+        {/* Detail panel - repositioned for mobile */}
         {selectedResource && (
           <DetailPanel resource={selectedResource} onClose={() => setSelectedId(null)} />
         )}
@@ -434,7 +434,7 @@ function GraphLoadingFallback() {
 
 export default function GraphPage() {
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] flex-col">
+    <div className="flex h-full flex-col overflow-hidden">
       <Suspense fallback={<GraphLoadingFallback />}>
         <GraphContent />
       </Suspense>
