@@ -68,7 +68,7 @@ const config: Config = {
       title: 'CIG Documentation',
       logo: {
         alt: 'CIG Logo',
-        src: 'img/logo.svg',
+        src: 'img/cig-logo.svg',
       },
       items: [
         {
@@ -84,42 +84,7 @@ const config: Config = {
         },
       ],
     },
-    footer: {
-      style: 'dark',
-      links: [
-        {
-          title: 'Documentation',
-          items: [
-            {
-              label: 'Getting Started',
-              to: '/docs/getting-started',
-            },
-            {
-              label: 'Architecture',
-              to: '/docs/architecture',
-            },
-            {
-              label: 'API Reference',
-              to: '/docs/api-reference',
-            },
-          ],
-        },
-        {
-          title: 'Community',
-          items: [
-            {
-              label: 'GitHub',
-              href: 'https://github.com/edwardcalderon/ComputeIntelligenceGraph',
-            },
-            {
-              label: 'Issues',
-              href: 'https://github.com/edwardcalderon/ComputeIntelligenceGraph/issues',
-            },
-          ],
-        },
-      ],
-      copyright: `Copyright © ${new Date().getFullYear()} CIG Project. Built with Docusaurus.`,
-    },
+    // Footer is now handled by custom theme component at src/theme/Footer/index.tsx
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
