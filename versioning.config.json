@@ -2,6 +2,7 @@
   "rootPackageJson": "package.json",
   "packages": [
     "apps/dashboard",
+    "apps/docs",
     "apps/landing",
     "apps/wizard-ui",
     "packages/agents",
@@ -35,6 +36,10 @@
         "apps/dashboard": {
           "name": "dashboard",
           "scripts": ["dev", "build", "test", "lint"]
+        },
+        "apps/docs": {
+          "name": "docs",
+          "scripts": ["dev", "build", "test"]
         },
         "apps/landing": {
           "name": "landing",
