@@ -1,3 +1,21 @@
+## [0.1.15](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.14...cli-v0.1.15) (2026-03-26)
+
+
+
+
+
+## [0.1.15](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.14...cli-v0.1.15) (2026-03-26)
+
+### Bug Fixes
+
+- keep the public installer moving when the published image manifest is missing or malformed
+- keep cartography self-contained in the published bundle by building it from the repository Dockerfile
+- keep Docker Hub as the source of truth for the remaining bundle images
+
+### Release
+
+- carry the CLI release line forward to `0.1.15` after `0.1.14` was already published to npm
+
 ## [0.1.14](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.13...cli-v0.1.14) (2026-03-26)
 
 ### Bug Fixes
