@@ -1,7 +1,21 @@
-## [0.1.127](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.12...cli-v0.1.127) (2026-03-26)
+## [0.1.13](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.127...cli-v0.1.13) (2026-03-26)
 
 
 
+
+
+## [0.1.13](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.12...cli-v0.1.13) (2026-03-26)
+
+### Bug Fixes
+
+- standardize self-hosted Docker image references on the `docker.io/cigtechnology` org
+- align CLI compose generation with the published Docker manifest and keep a fallback regression test in place
+- update the compute and GCP bootstrap bundles to use the same published image namespace
+
+### Release
+
+- keep the CLI release line on the package-local `0.1.13` sequence instead of the monorepo root semver line
+- exclude `packages/cli` from root version syncing so future root releases do not rewrite the CLI package version
 
 
 ## [0.1.12](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.11...cli-v0.1.12) (2026-03-26)

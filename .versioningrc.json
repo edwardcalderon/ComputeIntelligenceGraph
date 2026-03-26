@@ -6,7 +6,8 @@
   "ignore": [
     "**/node_modules/**",
     "**/dist/**",
-    "**/.next/**"
+    "**/.next/**",
+    "packages/cli/**"
   ],
   "syncVersion": true,
   "preventPrivateLeaks": true,

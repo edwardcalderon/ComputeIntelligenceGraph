@@ -7,7 +7,6 @@
     "packages/agents",
     "packages/api",
     "packages/chatbot",
-    "packages/cli",
     "packages/config",
     "packages/discovery",
     "packages/graph",
@@ -17,6 +16,7 @@
   "conventionalCommits": true,
   "syncDependencies": true,
   "ignorePackages": [
+    "@cig-technology/cli",
     "@cig/iac",
     "@cig-technology/i18n"
   ],

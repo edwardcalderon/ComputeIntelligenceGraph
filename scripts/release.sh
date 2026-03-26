@@ -440,6 +440,8 @@ else
 fi
 
 # ── Step 5: Bump version across all packages ───────────────────────────────
+CLI_VERSION_BEFORE_STEP5=$(node -p "require('./packages/cli/package.json').version")
+
 if $BUILD_RELEASE; then
   step "5/8 Preparing build release"
   if ! $DRY_RUN; then
@@ -461,6 +463,15 @@ else
     info "[dry-run] Would run: pnpm exec versioning ${BUMP_TYPE} --no-commit --no-tag"
   fi
   write_release_metadata "${NEXT_VERSION}" "${RELEASE_TAG}" "${BUMP_TYPE}"
+fi
+
+if ! $DRY_RUN; then
+  CLI_VERSION_AFTER_STEP5=$(node -p "require('./packages/cli/package.json').version")
+  if [[ "$CLI_VERSION_AFTER_STEP5" != "$CLI_VERSION_BEFORE_STEP5" ]]; then
+    error "packages/cli/package.json changed from ${CLI_VERSION_BEFORE_STEP5} to ${CLI_VERSION_AFTER_STEP5} during the root release."
+    error "Use pnpm run cli:release:* for package-local CLI releases instead of the monorepo release script."
+    exit 1
+  fi
 fi
 
 if ! $DRY_RUN; then
