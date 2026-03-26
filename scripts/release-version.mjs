@@ -173,3 +173,29 @@ export function findHighestReleaseTag(tags, prefix = DEFAULT_TAG_PREFIX) {
 
   return highest;
 }
+
+export function findHighestReleaseTagBelow(tags, floorTag, prefix = DEFAULT_TAG_PREFIX) {
+  const floorNormalized = normalizeReleaseTag(floorTag, prefix);
+
+  if (!floorNormalized) {
+    return '';
+  }
+
+  let highest = '';
+
+  for (const tag of tags) {
+    if (!normalizeReleaseTag(tag, prefix)) {
+      continue;
+    }
+
+    if (compareReleaseTagVersions(tag, floorNormalized.tag, prefix) >= 0) {
+      continue;
+    }
+
+    if (!highest || compareReleaseTagVersions(tag, highest, prefix) > 0) {
+      highest = tag;
+    }
+  }
+
+  return highest;
+}

@@ -55,9 +55,10 @@ jobs:
           VERSION_INPUT: ${{ github.event.inputs.version }}
           REBUILD_ALL: ${{ github.event.inputs.rebuild_all }}
         run: |
-          node <<'NODE'
-          const fs = require('node:fs');
-          const { execSync } = require('node:child_process');
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { execSync } from 'node:child_process';
+          import { findHighestReleaseTagBelow } from './scripts/release-version.mjs';
 
           const outputPath = process.env.GITHUB_OUTPUT;
           const head = process.env.GITHUB_SHA;
@@ -121,7 +122,7 @@ jobs:
             );
           }
 
-          const previousReleaseTag = listTags().find((tag) => tag !== releaseTag) || '';
+          const previousReleaseTag = findHighestReleaseTagBelow(listTags(), releaseTag, 'cli-v');
 
           const changedFiles = rebuildAll || !previousReleaseTag
             ? execSync('git ls-files', { encoding: 'utf8' })
@@ -367,8 +368,11 @@ jobs:
         shell: bash
         run: |
           mkdir -p artifacts
-          curl -fsSL "https://github.com/${GITHUB_REPOSITORY}/releases/download/${{ needs.prepare.outputs.previous_release_tag }}/images.json" \
-            -o artifacts/previous-images.json
+          previous_manifest_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${{ needs.prepare.outputs.previous_release_tag }}/images.json"
+          if ! curl -fsSL "$previous_manifest_url" -o artifacts/previous-images.json; then
+            echo "Previous bundle manifest not found at $previous_manifest_url; resolving missing services from Docker Hub latest tags." >&2
+            rm -f artifacts/previous-images.json
+          fi
 
       - name: Build images.json
         shell: bash
@@ -379,15 +383,24 @@ jobs:
           REGISTRY: docker.io/${{ env.DOCKERHUB_USERNAME }}
           BUILD_SERVICES_JSON: ${{ needs.prepare.outputs.build_services_json }}
         run: |
-          node <<'NODE'
-          const fs = require('node:fs');
-          const path = require('node:path');
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
 
           const version = process.env.VERSION;
           const releaseTag = process.env.RELEASE_TAG;
           const sourceSha = process.env.SOURCE_SHA;
           const registry = process.env.REGISTRY;
           const buildServices = new Set(JSON.parse(process.env.BUILD_SERVICES_JSON || '[]'));
+          const registryNamespace = registry.replace(/^docker\.io\//, '');
+          const serviceImageNames = {
+            api: 'cig-api',
+            dashboard: 'cig-dashboard',
+            discovery: 'cig-discovery',
+            cartography: 'cig-cartography',
+            chatbot: 'cig-chatbot',
+          };
+          const dockerHubTokenCache = new Map();
 
           function walk(dir) {
             if (!fs.existsSync(dir)) {
@@ -401,6 +414,60 @@ jobs:
               }
               return [fullPath];
             });
+          }
+
+          async function fetchDockerHubToken(repositoryPath) {
+            if (dockerHubTokenCache.has(repositoryPath)) {
+              return dockerHubTokenCache.get(repositoryPath);
+            }
+
+            const tokenUrl = new URL('https://auth.docker.io/token');
+            tokenUrl.searchParams.set('service', 'registry.docker.io');
+            tokenUrl.searchParams.set('scope', `repository:${repositoryPath}:pull`);
+
+            const response = await fetch(tokenUrl);
+            if (!response.ok) {
+              throw new Error(`Failed to request Docker Hub token for ${repositoryPath}: ${response.status} ${response.statusText}`);
+            }
+
+            const payload = await response.json();
+            const token = payload.token || payload.access_token;
+
+            if (typeof token !== 'string' || token.trim() === '') {
+              throw new Error(`Docker Hub did not return an access token for ${repositoryPath}.`);
+            }
+
+            dockerHubTokenCache.set(repositoryPath, token);
+            return token;
+          }
+
+          async function resolveLatestDigest(service) {
+            const imageName = serviceImageNames[service];
+            if (!imageName) {
+              throw new Error(`Unknown service: ${service}`);
+            }
+
+            const repositoryPath = `${registryNamespace}/${imageName}`;
+            const token = await fetchDockerHubToken(repositoryPath);
+            const manifestUrl = `https://registry-1.docker.io/v2/${repositoryPath}/manifests/latest`;
+            const response = await fetch(manifestUrl, {
+              method: 'GET',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: 'application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.index.v1+json',
+              },
+            });
+
+            if (!response.ok) {
+              throw new Error(`Failed to resolve latest digest for ${repositoryPath}: ${response.status} ${response.statusText}`);
+            }
+
+            const digest = response.headers.get('docker-content-digest');
+            if (typeof digest !== 'string' || digest.trim() === '') {
+              throw new Error(`Docker Hub did not return a digest for ${repositoryPath}:latest.`);
+            }
+
+            return `docker.io/${registryNamespace}/${imageName}@${digest}`;
           }
 
           const manifest = {
@@ -434,12 +501,8 @@ jobs:
           const requiredServices = ['api', 'dashboard', 'discovery', 'cartography', 'chatbot'];
           for (const service of requiredServices) {
             if (typeof manifest.images[service] !== 'string' || manifest.images[service].trim() === '') {
-              throw new Error(`Published image manifest is missing a pinned image for ${service}.`);
+              manifest.images[service] = await resolveLatestDigest(service);
             }
-          }
-
-          if (buildServices.size === 0 && !fs.existsSync(previousManifestPath)) {
-            throw new Error('No previous bundle manifest was available to carry forward unchanged images.');
           }
 
           fs.mkdirSync('dist', { recursive: true });

@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   compareReleaseTagVersions,
   findHighestReleaseTag,
+  findHighestReleaseTagBelow,
   normalizeReleaseTag,
   validateReleaseTagFloor,
   validateReleaseTagVersion,
@@ -99,5 +100,12 @@ test('findHighestReleaseTag picks the highest tag for a prefix', () => {
   assert.equal(
     findHighestReleaseTag(['cli-v0.1.121', 'cli-v0.1.123', 'cli-v0.1.122+build.1'], 'cli-v'),
     'cli-v0.1.123',
+  );
+});
+
+test('findHighestReleaseTagBelow returns the highest tag strictly below the floor', () => {
+  assert.equal(
+    findHighestReleaseTagBelow(['cli-v0.1.127', 'cli-v0.1.13', 'cli-v0.1.12', 'cli-v0.1.11'], 'cli-v0.1.13', 'cli-v'),
+    'cli-v0.1.12',
   );
 });
