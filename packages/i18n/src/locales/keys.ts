@@ -445,6 +445,7 @@ export type TranslationKey =
   | "nav.deviceApproval"
   | "nav.devices"
   | "nav.discovery"
+  | "nav.docs"
   | "nav.graph"
   | "nav.notifications"
   | "nav.overview"

@@ -1,3 +1,25 @@
+## [0.2.29](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.27...v0.2.29) (2026-03-26)
+
+
+### Features
+
+* **docs:** custom beautiful responsive sidebar override ([6d00988](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/6d009889cacd3d994ff8486a2dc4028e8953fbc0))
+
+
+
+
+
+## [0.2.29](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.27...v0.2.29) (2026-03-26)
+
+
+### Features
+
+* **docs:** custom beautiful responsive sidebar override ([6d00988](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/6d009889cacd3d994ff8486a2dc4028e8953fbc0))
+
+
+
+
+
 ## [0.2.28](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.27...v0.2.28) (2026-03-26)
 
 ### Detected changes
