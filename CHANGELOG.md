@@ -1,3 +1,66 @@
+# [0.2.0](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.120...v0.2.0) (2026-03-26)
+
+
+### Bug Fixes
+
+* **cli:** clean up 0.1.8 release notes ([5bbc069](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/5bbc069353470a7f69ee8ae38573a776ca5c9fff))
+* **cli:** keep interactive installer attached to tty ([303916e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/303916edbd53e9901a43e347dde954e8a78edb1b))
+* **cli:** keep setup cancel flow open ([fc4dfe5](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/fc4dfe5c6b17e29bb91b205b4c74acd530773b2d))
+* **cli:** keep setup wizard open until dismiss ([991fc9e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/991fc9ebcebed2c7514597dc955450682acd2423))
+* **cli:** stage workspace lockfile in release ([4375110](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/4375110807d42af474dc1f9210423eb5dfb6e9ab))
+* **install:** keep piped installer interactive ([3a56c34](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/3a56c343405c86885c3707b15fc4a7ca77124d2b))
+* **install:** show npm version resolution progress ([0f310aa](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/0f310aab2e1a63daf95aec8bdd9f2a418b67196f))
+* **release:** allow tagged releases after follow-up commits ([414dae5](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/414dae53cba73058953c78ff54b5e10c30d8ffd0))
+* **release:** support cli release tags in guard ([d250a66](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/d250a660980e0f2079bc4f6c83e767d1fe9b38d9))
+
+
+### Features
+
+* **docs:** release v0.2.0 - @cig/docs documentation system ([d85da56](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/d85da56e3698186b5e4ca6830759c521a4f8102e))
+
+
+
+
+
+# [0.2.0](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.120...v0.2.0) (2026-03-26)
+
+
+### Bug Fixes
+
+* **cli:** clean up 0.1.8 release notes ([5bbc069](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/5bbc069353470a7f69ee8ae38573a776ca5c9fff))
+* **cli:** keep interactive installer attached to tty ([303916e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/303916edbd53e9901a43e347dde954e8a78edb1b))
+* **cli:** keep setup cancel flow open ([fc4dfe5](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/fc4dfe5c6b17e29bb91b205b4c74acd530773b2d))
+* **cli:** keep setup wizard open until dismiss ([991fc9e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/991fc9ebcebed2c7514597dc955450682acd2423))
+* **cli:** stage workspace lockfile in release ([4375110](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/4375110807d42af474dc1f9210423eb5dfb6e9ab))
+* **install:** keep piped installer interactive ([3a56c34](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/3a56c343405c86885c3707b15fc4a7ca77124d2b))
+* **install:** show npm version resolution progress ([0f310aa](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/0f310aab2e1a63daf95aec8bdd9f2a418b67196f))
+* **release:** allow tagged releases after follow-up commits ([414dae5](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/414dae53cba73058953c78ff54b5e10c30d8ffd0))
+* **release:** support cli release tags in guard ([d250a66](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/d250a660980e0f2079bc4f6c83e767d1fe9b38d9))
+
+
+### Features
+
+* **docs:** release v0.2.0 - @cig/docs documentation system ([d85da56](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/d85da56e3698186b5e4ca6830759c521a4f8102e))
+
+
+
+
+
+## [0.2.0](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.126...v0.2.0) (2026-03-26)
+
+### Features
+
+* **docs:** launch @cig/docs documentation system (Phase 18)
+  - Docusaurus v3 app at apps/docs with TypeScript
+  - Development server at http://localhost:3004 with HMR and live reload
+  - Error boundary component with full stack traces in dev mode
+  - Development tools panel for testing i18n, Mermaid, search, and analytics locally
+  - Mock analytics, devI18n, devMermaid, devSearch utilities
+  - 32 passing tests (Jest + Testing Library)
+  - Integrated into monorepo via turbo.json and dev:all script
+  - Documentation structure for 7 languages (en, es, pt, fr, de, zh, ja)
+
+
 ## [0.1.126](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.125...v0.1.126) (2026-03-26)
 
 ### Detected changes
