@@ -243,6 +243,8 @@ export type TranslationKey =
   | "chat.noSavedSessions"
   | "chat.openChat"
   | "chat.placeholder"
+  | "chat.renameSession"
+  | "chat.renameSessionRequired"
   | "chat.sendMessage"
   | "chat.sessionDraftDescription"
   | "chat.sessionDraftLabel"

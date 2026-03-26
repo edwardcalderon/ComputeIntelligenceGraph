@@ -3,6 +3,7 @@ import type {
   BootstrapCompleteResponse,
   BootstrapStatus,
   ChatResponse,
+  ChatSessionSummary,
   ChatSessionDetailResponse,
   ChatSessionListResponse,
   CostBreakdown,
@@ -20,6 +21,7 @@ import type {
   SessionListResponse,
   HealthResponse,
   TargetsResponse,
+  RenameChatSessionPayload,
 } from "./types";
 
 type AccessTokenResolver = () => string | null | undefined | Promise<string | null | undefined>;
@@ -206,6 +208,19 @@ export class CigClient {
       `/api/v1/chat/sessions/${encodeURIComponent(sessionId)}`,
       {
         method: "DELETE",
+      }
+    );
+  }
+
+  renameChatSession(
+    sessionId: string,
+    payload: RenameChatSessionPayload
+  ): Promise<ChatSessionSummary> {
+    return this.request<ChatSessionSummary>(
+      `/api/v1/chat/sessions/${encodeURIComponent(sessionId)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(payload),
       }
     );
   }

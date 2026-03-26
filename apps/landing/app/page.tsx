@@ -11,6 +11,7 @@ import { PreferencesMenu } from "../components/PreferencesMenu";
 import { useCIGAuth } from "../components/AuthProvider";
 import { useTranslation } from "@cig-technology/i18n/react";
 import { FooterBar } from "@cig/ui/components";
+import { useResolvedDocsUrl } from "@cig/ui";
 import {
   Cloud,
   GitGraph,
@@ -35,8 +36,6 @@ import {
 function cn(...classes: (string | false | undefined)[]) {
   return classes.filter(Boolean).join(" ");
 }
-
-const docsUrl = process.env.NEXT_PUBLIC_DOCS_URL || "https://cig.lat/documentation";
 
 /* ─── Scroll-reveal hook (IntersectionObserver) ───────────────────────── */
 
@@ -155,6 +154,7 @@ const HeroPhaseIcon: React.FC<{ phase: number }> = ({ phase }) => {
 
 const HeroSection: React.FC = () => {
   const t = useTranslation();
+  const docsUrl = useResolvedDocsUrl();
   const [phase, setPhase] = useState(-1); // -1 = initial idle
   const [showScrollHint, setShowScrollHint] = useState(true);
 
@@ -538,16 +538,16 @@ interface ResourceLink {
   icon: React.ReactNode;
 }
 
-const resourceLinks: ResourceLink[] = [
-  { href: "https://github.com/edwardcalderon/ComputeIntelligenceGraph", labelKey: "resources.github", icon: <Github size={22} /> },
-  { href: docsUrl, labelKey: "resources.docs", icon: <BookOpen size={22} /> },
-  { href: "/install", labelKey: "resources.installGuide", icon: <Search size={22} /> },
-  { href: "/install.sh", labelKey: "resources.installScript", icon: <Terminal size={22} /> },
-];
-
 const ResourcesBlock: React.FC = () => {
   const t = useTranslation();
+  const docsUrl = useResolvedDocsUrl();
   const { ref, visible } = useReveal<HTMLDivElement>();
+  const resourceLinks: ResourceLink[] = [
+    { href: "https://github.com/edwardcalderon/ComputeIntelligenceGraph", labelKey: "resources.github", icon: <Github size={22} /> },
+    { href: docsUrl, labelKey: "resources.docs", icon: <BookOpen size={22} /> },
+    { href: "/install", labelKey: "resources.installGuide", icon: <Search size={22} /> },
+    { href: "/install.sh", labelKey: "resources.installScript", icon: <Terminal size={22} /> },
+  ];
   return (
     <div
       ref={ref}
@@ -758,6 +758,7 @@ const Footer: React.FC = () => {
   const t = useTranslation();
   const version = process.env.NEXT_PUBLIC_APP_VERSION || "";
   const build = process.env.NEXT_PUBLIC_APP_BUILD || "";
+  const docsUrl = useResolvedDocsUrl();
 
   const meta = [
     t("footer.licenseNotice", { year: new Date().getFullYear() }),

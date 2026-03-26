@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { FooterBar } from "@cig/ui/components";
+import { useResolvedDocsUrl } from "@cig/ui";
 import { AuthButton } from "./AuthButton";
 import { PreferencesMenu } from "./PreferencesMenu";
 import { useTranslation } from "@cig-technology/i18n/react";
@@ -49,7 +50,7 @@ const Footer: React.FC = () => {
   const t = useTranslation();
   const version = process.env.NEXT_PUBLIC_APP_VERSION || "";
   const build = process.env.NEXT_PUBLIC_APP_BUILD || "";
-  const docsUrl = process.env.NEXT_PUBLIC_DOCS_URL || "https://cig.lat/documentation";
+  const docsUrl = useResolvedDocsUrl();
 
   const meta = [
     t("footer.licenseNotice", { year: new Date().getFullYear() }),

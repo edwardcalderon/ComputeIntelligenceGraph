@@ -87,6 +87,9 @@ export const getChatSessionMessages = (sessionId: string) =>
 export const deleteChatSession = (sessionId: string) =>
   getClient().deleteChatSession(sessionId);
 
+export const renameChatSession = (sessionId: string, title: string) =>
+  getClient().renameChatSession(sessionId, { title });
+
 export const sendChatMessage = (message: string, sessionId?: string) =>
   getClient().sendChatMessage(message, sessionId);
 

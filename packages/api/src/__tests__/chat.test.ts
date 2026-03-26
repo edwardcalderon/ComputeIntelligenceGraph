@@ -4,6 +4,7 @@ import { GraphQueryEngine, Provider, ResourceState, ResourceType, type Resource_
 import { createServer } from '../index';
 import { clearPersistedChatSessionsForTests } from '../chat-store';
 import { generateJwt, Permission } from '../auth';
+import { answerChatQuestion } from '../chat';
 
 function makeAuthHeader(): string {
   const token = generateJwt({
@@ -159,6 +160,54 @@ describe('POST /api/v1/chat', () => {
     expect(messages.items[2]?.content).toBe('expand prod-api');
   });
 
+  it('renames a stored session', async () => {
+    searchResourcesSpy.mockResolvedValueOnce([makeResource()]);
+
+    const created = await app.inject({
+      method: 'POST',
+      url: '/api/v1/chat',
+      headers: {
+        authorization: makeAuthHeader(),
+      },
+      payload: {
+        message: 'show me the production api',
+      },
+    });
+
+    const sessionId = created.json<{ sessionId: string }>().sessionId;
+
+    const renameResponse = await app.inject({
+      method: 'PATCH',
+      url: `/api/v1/chat/sessions/${sessionId}`,
+      headers: {
+        authorization: makeAuthHeader(),
+      },
+      payload: {
+        title: 'Production alerts',
+      },
+    });
+
+    expect(renameResponse.statusCode).toBe(200);
+    expect(renameResponse.json<{ title: string }>().title).toBe('Production alerts');
+
+    const sessionsResponse = await app.inject({
+      method: 'GET',
+      url: '/api/v1/chat/sessions',
+      headers: {
+        authorization: makeAuthHeader(),
+      },
+    });
+
+    const sessions = sessionsResponse.json<{
+      items: Array<{ id: string; title: string }>;
+      total: number;
+    }>();
+
+    expect(sessions.total).toBe(1);
+    expect(sessions.items[0]?.id).toBe(sessionId);
+    expect(sessions.items[0]?.title).toBe('Production alerts');
+  });
+
   it('asks for clarification and allows a stored session to be deleted', async () => {
     searchResourcesSpy.mockResolvedValueOnce([]);
 
@@ -176,11 +225,28 @@ describe('POST /api/v1/chat', () => {
     expect(response.statusCode).toBe(200);
     const body = response.json<{
       sessionId?: string;
+      answer: string;
       needsClarification: boolean;
       clarifyingQuestion?: string;
     }>();
     expect(body.needsClarification).toBe(true);
     expect(body.clarifyingQuestion).toContain('provider');
+    expect(body.answer).toContain('I could not match');
+
+    const messagesResponse = await app.inject({
+      method: 'GET',
+      url: `/api/v1/chat/sessions/${body.sessionId}/messages`,
+      headers: {
+        authorization: makeAuthHeader(),
+      },
+    });
+
+    expect(messagesResponse.statusCode).toBe(200);
+    const messages = messagesResponse.json<{
+      items: Array<{ role: 'user' | 'assistant'; content: string }>;
+    }>();
+    expect(messages.items[1]?.content).toContain('I could not match');
+    expect(messages.items[1]?.content).toContain('provider');
 
     const deleteResponse = await app.inject({
       method: 'DELETE',
@@ -201,5 +267,26 @@ describe('POST /api/v1/chat', () => {
     });
 
     expect(sessionsResponse.json<{ total: number }>().total).toBe(0);
+  });
+});
+
+describe('answerChatQuestion', () => {
+  beforeEach(() => {
+    process.env['OPENAI_API_KEY'] = '';
+  });
+
+  it('returns a conversational reply for general questions without infrastructure context', async () => {
+    const response = await answerChatQuestion('what are you?', []);
+
+    expect(response.needsClarification).toBe(false);
+    expect(response.answer.toLowerCase()).toContain('cig assistant');
+  });
+
+  it('uses a domain-specific clarification for cost questions without matches', async () => {
+    const response = await answerChatQuestion('show me the cost of my databases', []);
+
+    expect(response.needsClarification).toBe(true);
+    expect(response.answer.toLowerCase()).toContain('could not match');
+    expect(response.clarifyingQuestion).toContain('provider, service, region, or resource');
   });
 });

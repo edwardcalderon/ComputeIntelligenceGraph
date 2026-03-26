@@ -8,6 +8,7 @@ import {
   getChatSessionMessages,
   getChatSessions,
   getHealth,
+  renameChatSession,
   sendChatMessage,
 } from "../../lib/api";
 
@@ -17,6 +18,7 @@ const mockedDeleteChatSession = jest.mocked(deleteChatSession);
 const mockedGetChatSessionMessages = jest.mocked(getChatSessionMessages);
 const mockedGetChatSessions = jest.mocked(getChatSessions);
 const mockedGetHealth = jest.mocked(getHealth);
+const mockedRenameChatSession = jest.mocked(renameChatSession);
 const mockedSendChatMessage = jest.mocked(sendChatMessage);
 
 jest.mock("../../lib/api", () => ({
@@ -24,6 +26,7 @@ jest.mock("../../lib/api", () => ({
   getChatSessionMessages: jest.fn(),
   getChatSessions: jest.fn(),
   getHealth: jest.fn(),
+  renameChatSession: jest.fn(),
   sendChatMessage: jest.fn(),
 }));
 
@@ -37,6 +40,7 @@ describe("ChatWidget", () => {
     mockedGetChatSessionMessages.mockReset();
     mockedGetChatSessions.mockReset();
     mockedGetHealth.mockReset();
+    mockedRenameChatSession.mockReset();
     mockedSendChatMessage.mockReset();
     sessionStorage.clear();
     jest.spyOn(window, "confirm").mockImplementation(() => true);
@@ -171,6 +175,80 @@ describe("ChatWidget", () => {
 
     expect(mockedDeleteChatSession).toHaveBeenCalledWith("chat-1");
     expect(sessionStorage.getItem("cig-chat-active-session")).toBe("chat-2");
+  });
+
+  it("renames a saved session and keeps the updated title in the rail", async () => {
+    const firstSession = {
+      id: "chat-1",
+      title: "Prod alerts",
+      lastMessagePreview: "Two critical issues in us-east-1.",
+      lastMessageAt: "2026-03-26T09:00:00.000Z",
+      createdAt: "2026-03-26T09:00:00.000Z",
+      updatedAt: "2026-03-26T09:00:00.000Z",
+    };
+    const renamedSession = {
+      ...firstSession,
+      title: "Production alerts",
+      updatedAt: "2026-03-26T09:05:00.000Z",
+    };
+
+    mockedGetHealth.mockResolvedValue({
+      status: "ok",
+      version: "0.2.35",
+      timestamp: "2026-03-26T09:00:00.000Z",
+      chat: {
+        provider: "openai",
+        model: "gpt-4o-mini",
+        configured: true,
+        reachable: true,
+        providerReachable: true,
+        checkedAt: "2026-03-26T09:00:00.000Z",
+        latencyMs: 42,
+      },
+    });
+    mockedGetChatSessions
+      .mockResolvedValueOnce({ items: [firstSession], total: 1 })
+      .mockResolvedValueOnce({ items: [renamedSession], total: 1 });
+    mockedGetChatSessionMessages.mockResolvedValue({
+      session: firstSession,
+      items: [
+        {
+          id: "msg-1",
+          role: "assistant",
+          content: "Saved answer",
+          timestamp: "2026-03-26T09:00:00.000Z",
+        },
+      ],
+      total: 1,
+    });
+    mockedRenameChatSession.mockResolvedValue(renamedSession);
+
+    render(<ChatWidget />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "chat.openChat" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Prod alerts").length).toBeGreaterThan(0);
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "chat.renameSession" }));
+    });
+
+    const renameInput = screen.getByRole("textbox", { name: "chat.renameSession" });
+    fireEvent.change(renameInput, { target: { value: "Production alerts" } });
+
+    await act(async () => {
+      fireEvent.keyDown(renameInput, { key: "Enter" });
+    });
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Production alerts").length).toBeGreaterThan(0);
+    });
+
+    expect(mockedRenameChatSession).toHaveBeenCalledWith("chat-1", "Production alerts");
   });
 
   it("sends a first message from the draft flow and binds the returned session id", async () => {

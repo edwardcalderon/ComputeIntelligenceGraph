@@ -258,6 +258,8 @@
   "chat.sessionsTitle": "会话",
   "chat.sessionsSubtitle": "选择一个话题线程，或开始新的会话。",
   "chat.newSession": "新建会话",
+  "chat.renameSession": "重命名会话",
+  "chat.renameSessionRequired": "保存前请先输入会话标题。",
   "chat.deleteSession": "删除会话",
   "chat.deleteSessionConfirm": "要删除这个聊天会话及其历史记录吗？",
   "chat.loadingSessions": "正在加载聊天历史...",

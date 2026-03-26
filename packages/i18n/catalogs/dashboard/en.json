@@ -258,6 +258,8 @@
   "chat.sessionsTitle": "Sessions",
   "chat.sessionsSubtitle": "Pick a thread or start a new one.",
   "chat.newSession": "New chat",
+  "chat.renameSession": "Rename session",
+  "chat.renameSessionRequired": "Enter a session title before saving.",
   "chat.deleteSession": "Delete session",
   "chat.deleteSessionConfirm": "Delete this chat session and its history?",
   "chat.loadingSessions": "Loading chat history...",

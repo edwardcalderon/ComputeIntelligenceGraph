@@ -1,6 +1,7 @@
 "use client";
 
-import { MessageSquarePlus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Check, MessageSquarePlus, Pencil, Trash2, X } from "lucide-react";
 import { useTranslation } from "@cig-technology/i18n/react";
 import type { ChatSessionSummary } from "../lib/api";
 
@@ -47,8 +48,14 @@ function SessionItem({
   draft = false,
   deleteLabel,
   draftLabel,
+  renameLabel,
+  pending = false,
+  editing = false,
   onClick,
   onDelete,
+  onStartEdit,
+  onRename,
+  onCancelEdit,
 }: {
   title: string;
   preview: string | null;
@@ -57,9 +64,26 @@ function SessionItem({
   draft?: boolean;
   deleteLabel: string;
   draftLabel: string;
+  renameLabel: string;
+  pending?: boolean;
+  editing?: boolean;
   onClick: () => void;
   onDelete?: () => void;
+  onStartEdit?: () => void;
+  onRename?: (title: string) => void;
+  onCancelEdit?: () => void;
 }) {
+  const [value, setValue] = useState(title);
+
+  function submitRename() {
+    const nextTitle = value.trim();
+    if (!nextTitle || !onRename) {
+      return;
+    }
+
+    onRename(nextTitle);
+  }
+
   return (
     <div
       className={[
@@ -69,43 +93,110 @@ function SessionItem({
           : "border-transparent bg-transparent hover:border-slate-200 hover:bg-white/85 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/85",
       ].join(" ")}
     >
-      <button
-        type="button"
-        onClick={onClick}
-        className="flex min-w-0 flex-1 items-start gap-2 text-left"
-      >
-        <span
-          className={[
-            "mt-1.5 h-2 w-2 shrink-0 rounded-full",
-            active
-              ? "bg-violet-500 shadow-[0_0_0_3px_rgba(109,40,217,0.12)] dark:bg-violet-300"
-              : "bg-slate-300 dark:bg-zinc-600",
-          ].join(" ")}
-        />
-        <span className="min-w-0 flex-1">
-          <span className="flex items-center justify-between gap-2">
-            <span className="truncate text-sm font-medium text-slate-800 dark:text-zinc-100">
-              {title}
-            </span>
-            <span className="shrink-0 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-zinc-500">
-              {draft ? draftLabel : timestamp ?? ""}
-            </span>
+      <span
+        className={[
+          "mt-1.5 h-2 w-2 shrink-0 rounded-full",
+          active
+            ? "bg-violet-500 shadow-[0_0_0_3px_rgba(109,40,217,0.12)] dark:bg-violet-300"
+            : "bg-slate-300 dark:bg-zinc-600",
+        ].join(" ")}
+      />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          {editing ? (
+            <input
+              value={value}
+              onChange={(event) => setValue(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  submitRename();
+                }
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  setValue(title);
+                  onCancelEdit?.();
+                }
+              }}
+              aria-label={renameLabel}
+              className="min-w-0 flex-1 rounded-md border border-violet-200 bg-white px-2 py-1 text-sm font-medium text-slate-800 outline-none ring-0 placeholder:text-slate-400 focus:border-violet-300 dark:border-violet-400/30 dark:bg-zinc-900 dark:text-zinc-100"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={onClick}
+              className="min-w-0 flex-1 text-left"
+            >
+              <span className="block truncate text-sm font-medium text-slate-800 dark:text-zinc-100">
+                {title}
+              </span>
+            </button>
+          )}
+          <span className="shrink-0 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-400 dark:text-zinc-500">
+            {draft ? draftLabel : timestamp ?? ""}
           </span>
-          <span className="mt-1 block truncate text-[11px] leading-5 text-slate-500 dark:text-zinc-400">
-            {preview || "Start a fresh thread."}
-          </span>
-        </span>
-      </button>
-
-      {onDelete ? (
+        </div>
         <button
           type="button"
-          onClick={onDelete}
-          aria-label={deleteLabel}
-          className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:text-zinc-500 dark:hover:bg-red-500/10 dark:hover:text-red-300"
+          onClick={onClick}
+          className="mt-1 block min-w-0 text-left"
+          disabled={editing}
         >
-          <Trash2 className="h-3.5 w-3.5" />
+          <span className="block truncate text-[11px] leading-5 text-slate-500 dark:text-zinc-400">
+            {preview || "Start a fresh thread."}
+          </span>
         </button>
+      </div>
+
+      {!draft ? (
+        <div className="mt-0.5 flex shrink-0 items-center gap-1">
+          {editing ? (
+            <>
+              <button
+                type="button"
+                onClick={submitRename}
+                aria-label={renameLabel}
+                disabled={pending}
+                className="inline-flex h-7 w-7 items-center justify-center rounded-full text-emerald-600 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
+              >
+                <Check className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setValue(title);
+                  onCancelEdit?.();
+                }}
+                aria-label="Cancel"
+                disabled={pending}
+                className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={onStartEdit}
+                aria-label={renameLabel}
+                className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-violet-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-violet-300"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+              {onDelete ? (
+                <button
+                  type="button"
+                  onClick={onDelete}
+                  aria-label={deleteLabel}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:text-zinc-500 dark:hover:bg-red-500/10 dark:hover:text-red-300"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              ) : null}
+            </>
+          )}
+        </div>
       ) : null}
     </div>
   );
@@ -157,22 +248,28 @@ export function ChatSessionPanel({
   sessions,
   activeSessionId,
   isLoading,
+  pendingSessionId,
   onSelectSession,
   onDeleteSession,
+  onRenameSession,
   onStartDraft,
   desktopOpen = true,
 }: {
   sessions: ChatSessionSummary[];
   activeSessionId: string | null;
   isLoading: boolean;
+  pendingSessionId?: string | null;
   onSelectSession: (sessionId: string | null) => void;
   onDeleteSession: (sessionId: string) => void;
+  onRenameSession: (sessionId: string, title: string) => void | Promise<void>;
   onStartDraft: () => void;
   desktopOpen?: boolean;
 }) {
   const t = useTranslation();
   const deleteLabel = t("chat.deleteSession");
+  const renameLabel = t("chat.renameSession");
   const draftLabel = t("chat.sessionDraftLabel");
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const displaySessions =
     activeSessionId === null
       ? [
@@ -280,7 +377,7 @@ export function ChatSessionPanel({
           ) : (
             displaySessions.map((session) => (
               <SessionItem
-                key={session.id}
+                key={`${session.id}:${session.title}`}
                 title={session.title}
                 preview={session.lastMessagePreview}
                 timestamp={formatSessionTime(session.lastMessageAt ?? session.updatedAt)}
@@ -292,9 +389,26 @@ export function ChatSessionPanel({
                 draft={session.id === DRAFT_SESSION_ID}
                 deleteLabel={deleteLabel}
                 draftLabel={draftLabel}
+                renameLabel={renameLabel}
+                pending={pendingSessionId === session.id}
+                editing={editingSessionId === session.id}
                 onClick={() =>
                   onSelectSession(session.id === DRAFT_SESSION_ID ? null : session.id)
                 }
+                onStartEdit={
+                  session.id === DRAFT_SESSION_ID
+                    ? undefined
+                    : () => setEditingSessionId(session.id)
+                }
+                onRename={
+                  session.id === DRAFT_SESSION_ID
+                    ? undefined
+                    : async (title) => {
+                        await onRenameSession(session.id, title);
+                        setEditingSessionId(null);
+                      }
+                }
+                onCancelEdit={() => setEditingSessionId(null)}
                 onDelete={
                   session.id === DRAFT_SESSION_ID
                     ? undefined

@@ -161,6 +161,10 @@ export interface ChatSessionSummary {
   updatedAt: string;
 }
 
+export interface RenameChatSessionPayload {
+  title: string;
+}
+
 export interface ChatSessionListResponse {
   items: ChatSessionSummary[];
   total: number;

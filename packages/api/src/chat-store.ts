@@ -60,6 +60,15 @@ function deriveTitle(seed?: string | null): string {
   return truncate(normalized, MAX_TITLE_LENGTH);
 }
 
+function sanitizeTitle(title: string): string {
+  const normalized = normalizeWhitespace(title);
+  if (!normalized) {
+    throw new Error('Chat session title is required');
+  }
+
+  return truncate(normalized, MAX_TITLE_LENGTH);
+}
+
 function derivePreview(content: string): string {
   return truncate(normalizeWhitespace(content), MAX_PREVIEW_LENGTH);
 }
@@ -294,6 +303,37 @@ export async function appendChatExchange(
   const updated = await getSessionRow(userId, sessionId);
   if (!updated) {
     throw new Error('Chat session was updated but could not be reloaded');
+  }
+
+  return mapSession(updated);
+}
+
+export async function renameChatSession(
+  userId: string,
+  sessionId: string,
+  title: string
+): Promise<ChatSessionSummary | null> {
+  await ensureChatTables();
+
+  const existing = await getSessionRow(userId, sessionId);
+  if (!existing) {
+    return null;
+  }
+
+  const nextTitle = sanitizeTitle(title);
+  const now = new Date().toISOString();
+
+  await query(
+    `UPDATE chat_sessions
+        SET title = ?,
+            updated_at = ?
+      WHERE user_id = ? AND id = ?`,
+    [nextTitle, now, userId, sessionId]
+  );
+
+  const updated = await getSessionRow(userId, sessionId);
+  if (!updated) {
+    throw new Error('Chat session was renamed but could not be reloaded');
   }
 
   return mapSession(updated);

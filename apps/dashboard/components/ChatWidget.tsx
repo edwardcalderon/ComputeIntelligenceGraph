@@ -23,6 +23,7 @@ import {
   getChatSessionMessages,
   getChatSessions,
   getHealth,
+  renameChatSession,
   sendChatMessage,
   type ChatMessage,
   type ChatSessionSummary,
@@ -60,6 +61,25 @@ function writeStoredActiveSessionId(sessionId: string | null) {
   sessionStorage.setItem(ACTIVE_SESSION_STORAGE_KEY, sessionId);
 }
 
+function buildAssistantMessageContent(response: {
+  answer: string;
+  needsClarification: boolean;
+  clarifyingQuestion?: string;
+}): string {
+  const answer = response.answer?.trim();
+  const clarifyingQuestion = response.clarifyingQuestion?.trim();
+
+  if (response.needsClarification && clarifyingQuestion) {
+    if (!answer || answer === clarifyingQuestion) {
+      return clarifyingQuestion;
+    }
+
+    return `${answer}\n\n${clarifyingQuestion}`;
+  }
+
+  return answer || clarifyingQuestion || "";
+}
+
 export function ChatWidget() {
   const t = useTranslation();
 
@@ -75,6 +95,7 @@ export function ChatWidget() {
   const [input, setInput] = useState("");
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [pendingSessionId, setPendingSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasHydratedSessions, setHasHydratedSessions] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -141,9 +162,12 @@ export function ChatWidget() {
       const next = await getChatSessions();
       setSessionHistoryAvailable(true);
       setSessions(next.items);
+      const shouldPreserveDraft = preferredSessionId === null;
 
       const resolvedSessionId =
-        preferredSessionId && next.items.some((session) => session.id === preferredSessionId)
+        shouldPreserveDraft
+          ? null
+          : preferredSessionId && next.items.some((session) => session.id === preferredSessionId)
           ? preferredSessionId
           : next.items[0]?.id ?? null;
 
@@ -327,6 +351,7 @@ export function ChatWidget() {
     }
 
     setIsLoadingSessions(true);
+    setPendingSessionId(sessionId);
     setError(null);
 
     try {
@@ -343,7 +368,28 @@ export function ChatWidget() {
     } catch (err) {
       setError(err instanceof Error ? err.message : t("chat.errorFallback"));
     } finally {
+      setPendingSessionId(null);
       setIsLoadingSessions(false);
+    }
+  }
+
+  async function handleRenameSession(sessionId: string, title: string) {
+    const nextTitle = title.trim();
+    if (!nextTitle) {
+      setError(t("chat.renameSessionRequired"));
+      return;
+    }
+
+    setPendingSessionId(sessionId);
+    setError(null);
+
+    try {
+      await renameChatSession(sessionId, nextTitle);
+      await refreshSessions(activeSessionId ?? sessionId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("chat.errorFallback"));
+    } finally {
+      setPendingSessionId(null);
     }
   }
 
@@ -364,10 +410,7 @@ export function ChatWidget() {
 
     try {
       const res = await sendChatMessage(text, activeSessionId ?? undefined);
-      const content =
-        res.needsClarification && res.clarifyingQuestion
-          ? res.clarifyingQuestion
-          : res.answer;
+      const content = buildAssistantMessageContent(res);
       const assistantMsg: ChatMessage = {
         role: "assistant",
         content,
@@ -727,8 +770,10 @@ export function ChatWidget() {
                     sessions={sessions}
                     activeSessionId={activeSessionId}
                     isLoading={isLoadingSessions}
+                    pendingSessionId={pendingSessionId}
                     onSelectSession={handleSelectSession}
                     onDeleteSession={handleDeleteSession}
+                    onRenameSession={handleRenameSession}
                     onStartDraft={handleStartDraft}
                     desktopOpen={isExpanded || isSessionsOpen}
                   />

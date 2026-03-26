@@ -11,11 +11,10 @@ import { ThemeToggle } from "./ThemeToggle";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { useTheme } from "../app/providers";
 import { FooterBar } from "@cig/ui/components";
+import { useResolvedDocsUrl } from "@cig/ui";
 
 const DASHBOARD_URL =
   process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3002";
-const DOCS_URL =
-  process.env.NEXT_PUBLIC_DOCS_URL ?? "https://cig.lat/documentation";
 
 /* ─── Session-aware navigation ───────────────────────────────────────── */
 
@@ -862,6 +861,7 @@ const STATUS_BADGE_DEFS = [
 
 export function AuthenticatedLanding() {
   const t = useTranslation();
+  const docsUrl = useResolvedDocsUrl();
   const { theme } = useTheme();
   useCIGAuth(); // keeps session alive; user data used in AuthButton
   const isDark = theme === "dark";
@@ -1008,7 +1008,7 @@ export function AuthenticatedLanding() {
           subtitle={t("footer.rightsReserved")}
           links={[
             { label: t("nav.dashboard"), href: DASHBOARD_URL },
-            { label: t("footer.docs"), href: DOCS_URL, external: true },
+            { label: t("footer.docs"), href: docsUrl, external: true },
             { label: t("footer.privacy"), href: "/privacy" },
             { label: t("footer.terms"), href: "/terms" },
           ]}

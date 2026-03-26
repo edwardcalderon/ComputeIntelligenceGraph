@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useCallback, useState } from "react";
+import { useResolvedDocsUrl, useResolvedLandingUrl } from "@cig/ui";
 import {
   ArrowLeft,
   ArrowRight,
   BadgeCheck,
+  BookOpen,
   Check,
   Copy,
   Download,
@@ -50,6 +52,8 @@ const checklistKeys = [
 export default function InstallContent() {
   const t = useTranslation();
   const [copied, setCopied] = useState(false);
+  const docsUrl = useResolvedDocsUrl();
+  const landingUrl = useResolvedLandingUrl();
   const installCommand = "curl -fsSL https://cig.lat/install.sh | bash";
 
   const handleCopy = useCallback(async () => {
@@ -241,7 +245,7 @@ export default function InstallContent() {
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">
               {t("install.quickLinks.title")}
             </p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <Link
                 href="/install.sh"
                 download
@@ -254,12 +258,22 @@ export default function InstallContent() {
                 <ArrowRight size={16} className="text-zinc-500" />
               </Link>
               <a
-                href="https://cig.lat"
+                href={landingUrl}
                 className="flex items-center justify-between rounded-2xl border border-zinc-200/70 bg-zinc-50/80 px-4 py-4 text-sm font-semibold text-zinc-800 transition-all hover:border-cyan-300 hover:bg-cyan-50/80 dark:border-zinc-800/80 dark:bg-zinc-900/70 dark:text-zinc-200 dark:hover:border-cyan-700 dark:hover:bg-cyan-950/35"
               >
                 <span className="inline-flex items-center gap-2">
                   <Download size={16} className="text-violet-500" />
                   {t("install.quickLinks.landing")}
+                </span>
+                <ArrowRight size={16} className="text-zinc-500" />
+              </a>
+              <a
+                href={docsUrl}
+                className="flex items-center justify-between rounded-2xl border border-zinc-200/70 bg-zinc-50/80 px-4 py-4 text-sm font-semibold text-zinc-800 transition-all hover:border-cyan-300 hover:bg-cyan-50/80 dark:border-zinc-800/80 dark:bg-zinc-900/70 dark:text-zinc-200 dark:hover:border-cyan-700 dark:hover:bg-cyan-950/35"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <BookOpen size={16} className="text-cyan-500" />
+                  {t("resources.docs")}
                 </span>
                 <ArrowRight size={16} className="text-zinc-500" />
               </a>

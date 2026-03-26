@@ -258,6 +258,8 @@
   "chat.sessionsTitle": "Sesiones",
   "chat.sessionsSubtitle": "Elige un hilo o inicia uno nuevo.",
   "chat.newSession": "Nuevo chat",
+  "chat.renameSession": "Renombrar sesión",
+  "chat.renameSessionRequired": "Escribe un título para la sesión antes de guardar.",
   "chat.deleteSession": "Eliminar sesión",
   "chat.deleteSessionConfirm": "¿Eliminar esta sesión de chat y su historial?",
   "chat.loadingSessions": "Cargando historial del chat...",

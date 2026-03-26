@@ -13,11 +13,35 @@ import {
   getChatHistory,
   getChatSessionMessages,
   listChatSessions,
+  renameChatSession,
 } from '../chat-store';
 
 interface ChatRequestBody {
   message?: string;
   sessionId?: string;
+}
+
+interface RenameSessionBody {
+  title?: string;
+}
+
+function buildAssistantMessageContent(response: {
+  answer: string;
+  needsClarification: boolean;
+  clarifyingQuestion?: string;
+}): string {
+  const answer = response.answer?.trim();
+  const clarifyingQuestion = response.clarifyingQuestion?.trim();
+
+  if (response.needsClarification && clarifyingQuestion) {
+    if (!answer || answer === clarifyingQuestion) {
+      return clarifyingQuestion;
+    }
+
+    return `${answer}\n\n${clarifyingQuestion}`;
+  }
+
+  return answer || clarifyingQuestion || '';
 }
 
 const queryEngine = new GraphQueryEngine();
@@ -76,6 +100,42 @@ export async function chatRoutes(app: FastifyInstance): Promise<void> {
     }
   );
 
+  app.patch(
+    '/api/v1/chat/sessions/:id',
+    { preHandler: [authenticate, authorize([Permission.READ_RESOURCES])] },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const { id } = request.params as { id: string };
+      const { title } = (request.body as RenameSessionBody | undefined) ?? {};
+      const user = (request as any).user as { sub: string } | undefined;
+      const userId = user?.sub ?? 'unknown';
+
+      if (!title?.trim()) {
+        return reply.status(400).send({
+          error: 'Missing required field: title',
+          statusCode: 400,
+        });
+      }
+
+      try {
+        const updated = await renameChatSession(userId, id, title);
+
+        if (!updated) {
+          return reply.status(404).send({
+            error: 'Chat session not found',
+            statusCode: 404,
+          });
+        }
+
+        return reply.send(updated);
+      } catch (error) {
+        return reply.status(400).send({
+          error: error instanceof Error ? error.message : 'Failed to rename chat session',
+          statusCode: 400,
+        });
+      }
+    }
+  );
+
   app.post(
     '/api/v1/chat',
     { preHandler: [authenticate, authorize([Permission.READ_RESOURCES])] },
@@ -106,10 +166,7 @@ export async function chatRoutes(app: FastifyInstance): Promise<void> {
       }
 
       const response = await answerChatQuestion(message, resources, history);
-      const assistantContent =
-        response.needsClarification && response.clarifyingQuestion
-          ? response.clarifyingQuestion
-          : response.answer;
+      const assistantContent = buildAssistantMessageContent(response);
 
       const updatedSession = await appendChatExchange(userId, session.id, message, assistantContent);
       return reply.send({ ...response, sessionId: updatedSession.id });
