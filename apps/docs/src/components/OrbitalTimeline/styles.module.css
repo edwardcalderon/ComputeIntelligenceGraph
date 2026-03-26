@@ -6,9 +6,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #000;
+  background: #fff;
   overflow: hidden;
   cursor: default;
+}
+
+[data-theme='dark'] .wrapper {
+  background: #000;
 }
 
 /* ── Orbit ring ── */
@@ -17,8 +21,12 @@
   width: 420px;
   height: 420px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   pointer-events: none;
+}
+
+[data-theme='dark'] .orbitRing {
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 /* ── Core ── */
@@ -99,8 +107,8 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
@@ -108,7 +116,17 @@
   transition: transform 0.3s ease, border-color 0.3s, box-shadow 0.3s;
 }
 
+[data-theme='dark'] .nodeBtn {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.7);
+}
+
 .nodeBtnActive {
+  background: rgba(6, 182, 212, 0.15);
+  border-color: rgba(6, 182, 212, 0.5) !important;
+}
+
+[data-theme='dark'] .nodeBtnActive {
   background: rgba(255, 255, 255, 0.1);
 }
 
@@ -125,8 +143,13 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   white-space: nowrap;
+  color: #3f3f46;
   transition: color 0.3s;
   pointer-events: none;
+}
+
+[data-theme='dark'] .nodeLabel {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 /* ── Card ── */
@@ -136,14 +159,20 @@
   left: 50%;
   transform: translateX(-50%);
   width: 260px;
-  background: rgba(10, 10, 20, 0.95);
+  background: rgba(255, 255, 255, 0.97);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 12px;
   padding: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.05);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0,0,0,0.04);
   animation: cardIn 0.25s ease;
   z-index: 400;
+}
+
+[data-theme='dark'] .card {
+  background: rgba(10, 10, 20, 0.95);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.05);
 }
 
 @keyframes cardIn {
@@ -158,6 +187,10 @@
   transform: translateX(-50%);
   width: 1px;
   height: 10px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='dark'] .cardConnector {
   background: rgba(255, 255, 255, 0.3);
 }
 
@@ -173,6 +206,10 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='dark'] .cardCategory {
   color: rgba(255, 255, 255, 0.45);
 }
 
@@ -188,15 +225,23 @@
 .cardTitle {
   font-size: 14px;
   font-weight: 700;
-  color: #fff;
+  color: #09090b;
   margin-bottom: 8px;
+}
+
+[data-theme='dark'] .cardTitle {
+  color: #fff;
 }
 
 .cardDesc {
   font-size: 11px;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(0, 0, 0, 0.6);
   margin: 0 0 12px;
+}
+
+[data-theme='dark'] .cardDesc {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 /* ── Energy bar ── */
@@ -204,17 +249,25 @@
   display: flex;
   justify-content: space-between;
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(0, 0, 0, 0.45);
   margin-bottom: 4px;
+}
+
+[data-theme='dark'] .energyRow {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .energyTrack {
   width: 100%;
   height: 3px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.08);
   border-radius: 2px;
   overflow: hidden;
   margin-bottom: 12px;
+}
+
+[data-theme='dark'] .energyTrack {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .energyFill {
@@ -225,9 +278,13 @@
 
 /* ── Related ── */
 .related {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
   padding-top: 10px;
   margin-bottom: 12px;
+}
+
+[data-theme='dark'] .related {
+  border-top-color: rgba(255, 255, 255, 0.08);
 }
 
 .relatedLabel {
@@ -235,8 +292,12 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(0, 0, 0, 0.35);
   margin-bottom: 6px;
+}
+
+[data-theme='dark'] .relatedLabel {
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .relatedBtns {
@@ -248,17 +309,29 @@
 .relatedBtn {
   font-size: 10px;
   padding: 3px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 4px;
   background: transparent;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(0, 0, 0, 0.6);
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 }
 
 .relatedBtn:hover {
+  background: rgba(6, 182, 212, 0.08);
+  color: #0e7490;
+  border-color: rgba(6, 182, 212, 0.3);
+}
+
+[data-theme='dark'] .relatedBtn {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme='dark'] .relatedBtn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 /* ── CTA ── */
@@ -287,9 +360,13 @@
   bottom: 32px;
   font-size: 11px;
   letter-spacing: 0.1em;
-  color: rgba(255, 255, 255, 0.25);
+  color: rgba(0, 0, 0, 0.25);
   pointer-events: none;
   animation: hintFade 3s ease-in-out infinite;
+}
+
+[data-theme='dark'] .hint {
+  color: rgba(255, 255, 255, 0.25);
 }
 
 @keyframes hintFade {
