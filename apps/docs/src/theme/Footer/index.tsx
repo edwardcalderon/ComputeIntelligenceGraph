@@ -9,7 +9,6 @@ export default function Footer(): JSX.Element {
   const version = typeof siteConfig.customFields?.appVersion === 'string' ? siteConfig.customFields.appVersion : '';
 
   const footerLinks = [
-    { label: 'Documentation', href: '/docs/en/getting-started/' },
     { label: 'GitHub', href: 'https://github.com/edwardcalderon/ComputeIntelligenceGraph' },
     { label: 'Issues', href: 'https://github.com/edwardcalderon/ComputeIntelligenceGraph/issues' },
     { label: 'Report', href: 'https://github.com/edwardcalderon/ComputeIntelligenceGraph/issues/new' },
