@@ -15,10 +15,9 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: 'https://docs.cig.lat',
-  // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/',
+  url: 'https://cig.lat',
+  // Served at cig.lat/documentation via the landing GitHub Pages deployment
+  baseUrl: '/documentation/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
