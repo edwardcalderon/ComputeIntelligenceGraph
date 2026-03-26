@@ -1,3 +1,17 @@
+## [0.2.40](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.39...v0.2.40) (2026-03-26)
+
+### Detected changes
+- apps: 2 changed file(s)
+  - apps/docs/src/css/custom.css
+  - apps/docs/src/theme/DocSidebar/styles.css
+
+
+## [0.2.40](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.39...v0.2.40) (2026-03-26)
+
+
+
+
+
 ## [0.2.39](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.38...v0.2.39) (2026-03-26)
 
 ### Detected changes
