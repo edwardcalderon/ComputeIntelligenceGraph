@@ -1,3 +1,33 @@
+## [0.2.4](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.2...v0.2.4) (2026-03-26)
+
+
+### Bug Fixes
+
+* **ci:** always build cartography bundle image ([02614a8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/02614a884ea0833f19868bbac24a94b21d0dcb53))
+* **ci:** correct cartography bundle build context ([df9704e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/df9704e5b2189e85efa4691ba007829d5f9654cc))
+* **ci:** correct cartography publish dockerfile path ([79f4882](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/79f4882aa6b57300bd6e4607ec6986c95650b50b))
+* **ci:** publish bundle asset on workflow dispatch ([fc73ceb](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/fc73cebe3ffeb66e98b9d3ff621785daf55320be))
+* **ci:** publish pinned neo4j image in bundle manifest ([05ccc92](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/05ccc9251c84610124751828771f743c50a52406))
+
+
+
+
+
+## [0.2.4](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.2...v0.2.4) (2026-03-26)
+
+
+### Bug Fixes
+
+* **ci:** always build cartography bundle image ([02614a8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/02614a884ea0833f19868bbac24a94b21d0dcb53))
+* **ci:** correct cartography bundle build context ([df9704e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/df9704e5b2189e85efa4691ba007829d5f9654cc))
+* **ci:** correct cartography publish dockerfile path ([79f4882](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/79f4882aa6b57300bd6e4607ec6986c95650b50b))
+* **ci:** publish bundle asset on workflow dispatch ([fc73ceb](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/fc73cebe3ffeb66e98b9d3ff621785daf55320be))
+* **ci:** publish pinned neo4j image in bundle manifest ([05ccc92](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/05ccc9251c84610124751828771f743c50a52406))
+
+
+
+
+
 ## [0.2.3](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.2...v0.2.3) (2026-03-26)
 
 

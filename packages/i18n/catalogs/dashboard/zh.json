@@ -230,5 +230,23 @@
   "userMenu.userLabel": "用户菜单",
 
   "footer.site": "cig.lat",
-  "footer.dashboardLabel": "CIG 仪表盘"
+  "footer.dashboardLabel": "CIG 仪表盘",
+
+  "chat.openChat": "打开聊天",
+  "chat.closeChat": "关闭聊天",
+  "chat.title": "AI 助手",
+  "chat.expand": "展开",
+  "chat.collapse": "收起",
+  "chat.expandMobile": "展开聊天",
+  "chat.collapseMobile": "收起聊天",
+  "chat.emptyState": "随时询问关于您的基础设施的任何问题。",
+  "chat.placeholder": "您今天想探索什么？请随意提问...",
+  "chat.uploadFiles": "上传文件",
+  "chat.webLink": "网页链接",
+  "chat.codeRepo": "代码库",
+  "chat.voiceInput": "语音输入",
+  "chat.sendMessage": "发送消息",
+  "chat.shiftEnterHint": "换行",
+  "chat.allSystemsOperational": "所有系统运行正常",
+  "chat.errorFallback": "出现了一些问题。"
 }

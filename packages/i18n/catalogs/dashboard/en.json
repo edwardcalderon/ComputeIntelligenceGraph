@@ -230,5 +230,23 @@
   "userMenu.userLabel": "User menu",
 
   "footer.site": "cig.lat",
-  "footer.dashboardLabel": "CIG Dashboard"
+  "footer.dashboardLabel": "CIG Dashboard",
+
+  "chat.openChat": "Open chat",
+  "chat.closeChat": "Close chat",
+  "chat.title": "AI Assistant",
+  "chat.expand": "Expand",
+  "chat.collapse": "Collapse",
+  "chat.expandMobile": "Expand chat",
+  "chat.collapseMobile": "Collapse chat",
+  "chat.emptyState": "Ask anything about your infrastructure.",
+  "chat.placeholder": "What would you like to explore today? Ask anything...",
+  "chat.uploadFiles": "Upload files",
+  "chat.webLink": "Web link",
+  "chat.codeRepo": "Code repo",
+  "chat.voiceInput": "Voice input",
+  "chat.sendMessage": "Send message",
+  "chat.shiftEnterHint": "for new line",
+  "chat.allSystemsOperational": "All systems operational",
+  "chat.errorFallback": "Something went wrong."
 }
