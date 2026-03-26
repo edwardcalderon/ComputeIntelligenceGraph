@@ -27,6 +27,7 @@ describe('image manifest resolver', () => {
       images: {
         api: 'docker.io/cigtechnology/cig-api@sha256:1111111111111111111111111111111111111111111111111111111111111111',
         dashboard: 'docker.io/cigtechnology/cig-dashboard@sha256:2222222222222222222222222222222222222222222222222222222222222222',
+        neo4j: 'docker.io/library/neo4j@sha256:40bf5ae9282213087e4d6036aab3ec443fe9c974d3dd4f14a11892c63157238f',
         discovery: 'docker.io/cigtechnology/cig-discovery@sha256:3333333333333333333333333333333333333333333333333333333333333333',
         cartography: 'docker.io/cigtechnology/cig-cartography@sha256:4444444444444444444444444444444444444444444444444444444444444444',
       },
@@ -58,6 +59,7 @@ describe('image manifest resolver', () => {
     const digests: Record<string, string> = {
       'cig-api': 'sha256:1111111111111111111111111111111111111111111111111111111111111111',
       'cig-dashboard': 'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+      neo4j: 'sha256:40bf5ae9282213087e4d6036aab3ec443fe9c974d3dd4f14a11892c63157238f',
       'cig-discovery': 'sha256:3333333333333333333333333333333333333333333333333333333333333333',
       'cig-cartography': 'sha256:4444444444444444444444444444444444444444444444444444444444444444',
       'cig-chatbot': 'sha256:5555555555555555555555555555555555555555555555555555555555555555',
@@ -105,12 +107,16 @@ describe('image manifest resolver', () => {
     expect(result.images.api).toBe(
       'docker.io/cigtechnology/cig-api@sha256:1111111111111111111111111111111111111111111111111111111111111111'
     );
+    expect(result.images.neo4j).toBe(
+      'docker.io/library/neo4j@sha256:40bf5ae9282213087e4d6036aab3ec443fe9c974d3dd4f14a11892c63157238f'
+    );
   });
 
   it('falls back to Docker Hub latest tags when the release asset is malformed', async () => {
     const digests: Record<string, string> = {
       'cig-api': 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
       'cig-dashboard': 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      neo4j: 'sha256:40bf5ae9282213087e4d6036aab3ec443fe9c974d3dd4f14a11892c63157238f',
       'cig-discovery': 'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
       'cig-cartography': 'sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
       'cig-chatbot': 'sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
@@ -125,6 +131,7 @@ describe('image manifest resolver', () => {
             version: '0.1.11',
             images: {
               api: 'docker.io/cigtechnology/cig-api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+              neo4j: 'docker.io/library/neo4j@sha256:40bf5ae9282213087e4d6036aab3ec443fe9c974d3dd4f14a11892c63157238f',
             },
           }),
           {
@@ -166,6 +173,9 @@ describe('image manifest resolver', () => {
     expect(result.resolutionSource).toBe('docker-hub-latest');
     expect(result.images.chatbot).toBe(
       'docker.io/cigtechnology/cig-chatbot@sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+    );
+    expect(result.images.neo4j).toBe(
+      'docker.io/library/neo4j@sha256:40bf5ae9282213087e4d6036aab3ec443fe9c974d3dd4f14a11892c63157238f'
     );
   });
 });

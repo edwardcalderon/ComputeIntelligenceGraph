@@ -116,9 +116,7 @@ describe('Property 13: Compose generation completeness', () => {
           const composeData = JSON.parse(composeContent);
 
           // Verify structure
-          expect(composeData).toHaveProperty('version');
           expect(composeData).toHaveProperty('services');
-          expect(typeof composeData.version).toBe('string');
           expect(typeof composeData.services).toBe('object');
         } finally {
           fs.rmSync(outputDir, { recursive: true, force: true });
@@ -184,6 +182,7 @@ describe('Pinned service image refs', () => {
       service_images: {
         api: 'docker.io/cigtechnology/cig-api@sha256:1111111111111111111111111111111111111111111111111111111111111111',
         dashboard: 'docker.io/cigtechnology/cig-dashboard@sha256:2222222222222222222222222222222222222222222222222222222222222222',
+        neo4j: 'docker.io/library/neo4j@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
         discovery: 'docker.io/cigtechnology/cig-discovery@sha256:3333333333333333333333333333333333333333333333333333333333333333',
         cartography: 'docker.io/cigtechnology/cig-cartography@sha256:4444444444444444444444444444444444444444444444444444444444444444',
       },
@@ -201,6 +200,7 @@ describe('Pinned service image refs', () => {
 
       expect(composeData.services.api.image).toBe(serviceImages.api);
       expect(composeData.services.dashboard.image).toBe(serviceImages.dashboard);
+      expect(composeData.services.neo4j.image).toBe(serviceImages.neo4j);
       expect(composeData.services.discovery.image).toBe(serviceImages.discovery);
       expect(composeData.services.cartography.image).toBe(serviceImages.cartography);
     } finally {
@@ -225,6 +225,7 @@ describe('Pinned service image refs', () => {
 
       expect(composeData.services.api.image).toBe('docker.io/cigtechnology/cig-api:latest');
       expect(composeData.services.dashboard.image).toBe('docker.io/cigtechnology/cig-dashboard:latest');
+      expect(composeData.services.neo4j.image).toBe('neo4j:5');
       expect(composeData.services.discovery.image).toBe('docker.io/cigtechnology/cig-discovery:latest');
       expect(composeData.services.cartography.image).toBe('docker.io/cigtechnology/cig-cartography:latest');
     } finally {
@@ -236,12 +237,13 @@ describe('Pinned service image refs', () => {
     const manifest: InstallManifest = {
       profile: 'full',
       services: ['api', 'dashboard', 'neo4j', 'discovery', 'cartography', 'chatbot'],
-      service_images: {
-        api: 'docker.io/cigtechnology/cig-api@sha256:1111111111111111111111111111111111111111111111111111111111111111',
-        dashboard: 'docker.io/cigtechnology/cig-dashboard@sha256:2222222222222222222222222222222222222222222222222222222222222222',
-        discovery: 'docker.io/cigtechnology/cig-discovery@sha256:3333333333333333333333333333333333333333333333333333333333333333',
-        cartography: 'docker.io/cigtechnology/cig-cartography@sha256:4444444444444444444444444444444444444444444444444444444444444444',
-        chatbot: 'docker.io/cigtechnology/cig-chatbot@sha256:5555555555555555555555555555555555555555555555555555555555555555',
+        service_images: {
+          api: 'docker.io/cigtechnology/cig-api@sha256:1111111111111111111111111111111111111111111111111111111111111111',
+          dashboard: 'docker.io/cigtechnology/cig-dashboard@sha256:2222222222222222222222222222222222222222222222222222222222222222',
+          neo4j: 'docker.io/library/neo4j@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          discovery: 'docker.io/cigtechnology/cig-discovery@sha256:3333333333333333333333333333333333333333333333333333333333333333',
+          cartography: 'docker.io/cigtechnology/cig-cartography@sha256:4444444444444444444444444444444444444444444444444444444444444444',
+          chatbot: 'docker.io/cigtechnology/cig-chatbot@sha256:5555555555555555555555555555555555555555555555555555555555555555',
       },
     };
 
@@ -256,6 +258,7 @@ describe('Pinned service image refs', () => {
       const serviceImages = manifest.service_images as Record<string, string>;
 
       expect(composeData.services.chatbot.image).toBe(serviceImages.chatbot);
+      expect(composeData.services.neo4j.image).toBe(serviceImages.neo4j);
     } finally {
       fs.rmSync(outputDir, { recursive: true, force: true });
     }

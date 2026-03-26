@@ -40,7 +40,6 @@ interface ServiceConfig {
 }
 
 interface ComposeConfig {
-  version: string;
   services: Record<string, ServiceConfig>;
   volumes?: Record<string, Record<string, never>>;
 }
@@ -115,7 +114,7 @@ function generateServiceConfig(
       },
     },
     neo4j: {
-      image: 'neo4j:5.0',
+      image: serviceImages?.neo4j ?? 'neo4j:5',
       ports: ['7474:7474', '7687:7687'],
       environment: {
         NEO4J_AUTH: 'neo4j/password',
@@ -196,7 +195,6 @@ function generateComposeYml(manifest: InstallManifest): ComposeConfig {
   }
 
   const compose: ComposeConfig = {
-    version: '3.8',
     services,
   };
 

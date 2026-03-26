@@ -18,6 +18,7 @@ const SERVICE_IMAGE_NAMES: Record<string, string> = {
   discovery: 'cig-discovery',
   cartography: 'cig-cartography',
   chatbot: 'cig-chatbot',
+  neo4j: 'library/neo4j',
 };
 
 export function resolveImageManifestUrl(version: string): string {
@@ -76,12 +77,13 @@ async function resolveDockerHubToken(repositoryPath: string, fetchImpl: typeof f
   return token;
 }
 
-async function resolveDockerHubLatestDigest(
+async function resolveDockerHubDigest(
   repositoryPath: string,
+  reference: string,
   fetchImpl: typeof fetch
 ): Promise<string> {
   const token = await resolveDockerHubToken(repositoryPath, fetchImpl);
-  const manifestUrl = `https://registry-1.docker.io/v2/${repositoryPath}/manifests/latest`;
+  const manifestUrl = `https://registry-1.docker.io/v2/${repositoryPath}/manifests/${reference}`;
   const response = await fetchImpl(manifestUrl, {
     method: 'GET',
     headers: {
@@ -91,12 +93,12 @@ async function resolveDockerHubLatestDigest(
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to resolve latest digest for ${repositoryPath}: ${response.status} ${response.statusText}`);
+    throw new Error(`Failed to resolve digest for ${repositoryPath}:${reference}: ${response.status} ${response.statusText}`);
   }
 
   const digest = response.headers.get('docker-content-digest');
   if (typeof digest !== 'string' || digest.trim() === '') {
-    throw new Error(`Docker Hub did not return a digest for ${repositoryPath}:latest.`);
+    throw new Error(`Docker Hub did not return a digest for ${repositoryPath}:${reference}.`);
   }
 
   return `docker.io/${repositoryPath}@${digest}`;
@@ -109,8 +111,9 @@ async function resolveDockerHubFallbackManifest(
   const images: Record<string, string> = {};
 
   for (const [service, imageName] of Object.entries(SERVICE_IMAGE_NAMES)) {
-    const repositoryPath = buildDockerHubRepository(imageName);
-    images[service] = await resolveDockerHubLatestDigest(repositoryPath, fetchImpl);
+    const repositoryPath = imageName.startsWith('library/') ? imageName : buildDockerHubRepository(imageName);
+    const reference = imageName.startsWith('library/') ? '5' : 'latest';
+    images[service] = await resolveDockerHubDigest(repositoryPath, reference, fetchImpl);
   }
 
   return {
@@ -137,7 +140,7 @@ function assertManifestShape(manifest: unknown, version: string): PublishedImage
   }
 
   const images = data.images as Record<string, unknown>;
-  for (const service of ['api', 'dashboard', 'discovery', 'cartography']) {
+  for (const service of ['api', 'dashboard', 'discovery', 'cartography', 'neo4j']) {
     if (typeof images[service] !== 'string' || String(images[service]).trim() === '') {
       throw new Error(`Published image manifest is missing a pinned image for ${service}.`);
     }
