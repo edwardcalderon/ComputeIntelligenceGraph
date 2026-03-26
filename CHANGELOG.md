@@ -1,3 +1,25 @@
+## [0.2.9](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.7...v0.2.9) (2026-03-26)
+
+
+### Bug Fixes
+
+* **docs:** canvas scroll lock, mobile text, zoom toolbar, fit-all ([d2aca2e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/d2aca2ef107892f4e6ddea1d134f59747db36623))
+
+
+
+
+
+## [0.2.9](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.7...v0.2.9) (2026-03-26)
+
+
+### Bug Fixes
+
+* **docs:** canvas scroll lock, mobile text, zoom toolbar, fit-all ([d2aca2e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/d2aca2ef107892f4e6ddea1d134f59747db36623))
+
+
+
+
+
 ## [0.2.8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.7...v0.2.8) (2026-03-26)
 
 ### Detected changes
