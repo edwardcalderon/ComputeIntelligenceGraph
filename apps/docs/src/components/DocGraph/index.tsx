@@ -111,6 +111,7 @@ export default function DocGraph(): React.ReactElement {
   const [activeId, setActiveId]   = useState<string|null>(null);
   const [tooltip,  setTooltip]    = useState<{id:string;x:number;y:number}|null>(null);
   const [zoomPct,  setZoomPct]    = useState(100);
+  const [isMobileLayout, setIsMobileLayout] = useState(false);
 
   /* ── Init ── */
   const initNodes = useCallback(() => {
@@ -289,6 +290,7 @@ export default function DocGraph(): React.ReactElement {
   const resize = useCallback(() => {
     const c=canvasRef.current, w=wrapRef.current; if (!c||!w) return;
     c.width=w.clientWidth; c.height=w.clientHeight;
+    setIsMobileLayout(w.clientWidth < 640);
   }, []);
 
   /* ── Coord helpers ── */
@@ -444,202 +446,195 @@ export default function DocGraph(): React.ReactElement {
   const tooltipNode = tooltip ? nodesRef.current.find(n=>n.id===tooltip.id) : null;
 
   /* ── Toolbar button style ── */
-  const btn = (accent='#22d3ee', sm=false): React.CSSProperties => ({
-    display:'flex', alignItems:'center', justifyContent:'center', gap:5,
-    padding: sm ? '5px 8px' : '6px 11px',
+  const btn = (accent='#22d3ee', iconOnly=false): React.CSSProperties => ({
+    display:'flex', alignItems:'center', justifyContent:'center', gap:4,
+    padding: iconOnly ? '7px' : '6px 10px',
     background:'rgba(10,10,20,0.88)', border:`1px solid ${accent}44`,
     borderRadius:8, color:accent, fontSize:11, fontWeight:700,
-    letterSpacing:'0.07em', cursor:'pointer', backdropFilter:'blur(14px)',
-    transition:'border-color 0.2s,box-shadow 0.2s', whiteSpace:'nowrap' as const,
-    WebkitTapHighlightColor:'transparent',
+    letterSpacing:'0.06em', cursor:'pointer', backdropFilter:'blur(14px)',
+    transition:'border-color 0.15s', whiteSpace:'nowrap' as const,
+    WebkitTapHighlightColor:'transparent', flexShrink:0,
   });
 
+  /* ── Card positioning: bottom sheet on mobile, right panel on desktop ── */
+  const cardStyle: React.CSSProperties = isMobileLayout ? {
+    position:'absolute', bottom:0, left:0, right:0,
+    borderRadius:'14px 14px 0 0', maxHeight:'60vh', overflowY:'auto',
+    zIndex:500,
+    background:'rgba(10,10,20,0.97)', backdropFilter:'blur(20px)',
+    border:`1px solid ${activeNode?.color??'#22d3ee'}44`,
+    padding:18,
+    boxShadow:`0 -8px 40px rgba(0,0,0,0.6)`,
+    animation:'cardSlideUp 0.22s ease',
+  } : {
+    position:'absolute', top:'50%', right:20, transform:'translateY(-50%)',
+    width:272, zIndex:500,
+    background:'rgba(10,10,20,0.97)', backdropFilter:'blur(20px)',
+    border:`1px solid ${activeNode?.color??'#22d3ee'}44`,
+    borderRadius:14, padding:18,
+    boxShadow:`0 12px 48px rgba(0,0,0,0.7), 0 0 0 1px ${activeNode?.color??'#22d3ee'}22`,
+    animation:'cardSlideIn 0.22s ease',
+  };
+
   return (
-    <div
-      ref={wrapRef}
-      style={{
-        position:'relative', width:'100%', height:'100vh',
-        overflow:'hidden', touchAction:'none',
-        overscrollBehavior:'contain', fontFamily:'system-ui,sans-serif',
-        userSelect:'none',
-      }}
-    >
-      <canvas
-        ref={canvasRef}
-        style={{display:'block', touchAction:'none', cursor:'grab', width:'100%', height:'100%'}}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onClick={onClick}
-      />
-
-      {/* ── Toolbar ── */}
+    <>
+      {/* ── Outer page wrapper: allows scrolling past the canvas ── */}
       <div style={{
-        position:'absolute', top:12, left:'50%', transform:'translateX(-50%)',
-        display:'flex', gap:6, zIndex:200, alignItems:'center',
-        flexWrap:'wrap', justifyContent:'center', padding:'0 8px',
-        maxWidth:'calc(100vw - 16px)',
+        display:'flex', justifyContent:'center',
+        padding:'0 2.5vw', boxSizing:'border-box',
+        touchAction:'auto',
       }}>
-        {/* Anchor */}
-        <button style={btn('#22d3ee')} onClick={anchor} title="Re-center">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
-          <span>Anchor</span>
-        </button>
+        {/* ── Canvas wrapper: 95vw, scroll-isolated ── */}
+        <div
+          ref={wrapRef}
+          style={{
+            position:'relative',
+            width:'95vw', height:'85vh', minHeight:480,
+            overflow:'hidden',
+            touchAction:'none',
+            overscrollBehavior:'contain',
+            fontFamily:'system-ui,sans-serif',
+            userSelect:'none',
+            borderRadius:16,
+            border:'1px solid rgba(255,255,255,0.06)',
+          }}
+        >
+          <canvas
+            ref={canvasRef}
+            style={{display:'block', touchAction:'none', cursor:'grab', width:'100%', height:'100%'}}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onClick={onClick}
+          />
 
-        {/* Zoom out */}
-        <button style={btn('#94a3b8', true)} onClick={zoomOut} title="Zoom out">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
-        </button>
-
-        {/* Zoom % */}
-        <span style={{fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.45)',minWidth:36,textAlign:'center',letterSpacing:'0.05em'}}>
-          {zoomPct}%
-        </span>
-
-        {/* Zoom in */}
-        <button style={btn('#94a3b8', true)} onClick={zoomIn} title="Zoom in">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
-        </button>
-
-        {/* Fit all */}
-        <button style={btn('#a78bfa')} onClick={fitAll} title="Fit all nodes">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-          <span>Fit</span>
-        </button>
-
-        {/* Expand all */}
-        <button style={btn('#34d399')} onClick={expandAll} title="Expand all">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-          <span>Expand</span>
-        </button>
-
-        {/* Collapse */}
-        <button style={btn('#f87171')} onClick={collapseAll} title="Collapse">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/></svg>
-          <span>Collapse</span>
-        </button>
-
-        {/* Active node breadcrumb */}
-        {activeNode && (
+          {/* ── Toolbar ── */}
           <div style={{
-            display:'flex', alignItems:'center', gap:5, padding:'5px 10px',
-            background:`${activeNode.color}18`, border:`1px solid ${activeNode.color}55`,
-            borderRadius:8, fontSize:11, color:activeNode.color, fontWeight:700,
+            position:'absolute', top:10, left:'50%', transform:'translateX(-50%)',
+            display:'flex', gap:4, zIndex:200, alignItems:'center',
+            flexWrap:'nowrap',
+            background:'rgba(10,10,20,0.75)', backdropFilter:'blur(16px)',
+            border:'1px solid rgba(255,255,255,0.08)',
+            borderRadius:10, padding:'5px 8px',
+            maxWidth:'calc(100% - 16px)',
+            overflowX:'auto',
           }}>
-            <span>{activeNode.icon}</span>
-            <span>{activeNode.label}</span>
-            <button onClick={()=>setActiveId(null)} style={{background:'none',border:'none',color:activeNode.color,cursor:'pointer',fontSize:12,padding:0,lineHeight:1,opacity:0.7}}>✕</button>
-          </div>
-        )}
-      </div>
-
-      {/* ── Active node card ── */}
-      {activeNode && activeMeta && (
-        <div style={{
-          position:'absolute',
-          bottom: 0, left: 0, right: 0,
-          // on wider screens: float right middle
-          ...(typeof window !== 'undefined' && window.innerWidth >= 640 ? {
-            bottom:'auto', left:'auto', right:20, top:'50%', transform:'translateY(-50%)',
-            width:272,
-          } : {
-            borderRadius:'14px 14px 0 0', maxHeight:'55vh', overflowY:'auto' as const,
-          }),
-          zIndex:500,
-          background:'rgba(10,10,20,0.97)', backdropFilter:'blur(20px)',
-          border:`1px solid ${activeNode.color}44`,
-          borderRadius:14, padding:18,
-          boxShadow:`0 12px 48px rgba(0,0,0,0.7), 0 0 0 1px ${activeNode.color}22`,
-          animation:'cardSlideIn 0.22s ease',
-        }}>
-          <div style={{position:'absolute',top:-1,left:'50%',transform:'translateX(-50%)',width:'60%',height:1,background:`linear-gradient(to right,transparent,${activeNode.color}66,transparent)`}}/>
-
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
-            <span style={{fontSize:9,fontWeight:700,letterSpacing:'0.14em',textTransform:'uppercase',color:'rgba(255,255,255,0.4)'}}>
-              {activeMeta.category}
-            </span>
-            <div style={{display:'flex',gap:6,alignItems:'center'}}>
-              <span style={{fontSize:9,fontWeight:700,letterSpacing:'0.1em',padding:'2px 7px',borderRadius:4,background:STATUS_COLOR[activeNode.status],color:'#000'}}>
-                {activeNode.status.toUpperCase()}
-              </span>
-              <button onClick={()=>setActiveId(null)} style={{background:'none',border:'none',color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:16,lineHeight:1,padding:'0 2px'}}>✕</button>
-            </div>
+            <button style={btn('#22d3ee', isMobileLayout)} onClick={anchor} title="Re-center">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+              {!isMobileLayout && <span>Anchor</span>}
+            </button>
+            <span style={{width:1,height:16,background:'rgba(255,255,255,0.1)',flexShrink:0}}/>
+            <button style={btn('#94a3b8', true)} onClick={zoomOut} title="Zoom out">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+            </button>
+            <span style={{fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.5)',minWidth:32,textAlign:'center',letterSpacing:'0.04em',flexShrink:0}}>{zoomPct}%</span>
+            <button style={btn('#94a3b8', true)} onClick={zoomIn} title="Zoom in">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+            </button>
+            <span style={{width:1,height:16,background:'rgba(255,255,255,0.1)',flexShrink:0}}/>
+            <button style={btn('#a78bfa', isMobileLayout)} onClick={fitAll} title="Fit all nodes">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+              {!isMobileLayout && <span>Fit</span>}
+            </button>
+            <button style={btn('#34d399', isMobileLayout)} onClick={expandAll} title="Expand all">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+              {!isMobileLayout && <span>Expand</span>}
+            </button>
+            <button style={btn('#f87171', isMobileLayout)} onClick={collapseAll} title="Collapse">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/></svg>
+              {!isMobileLayout && <span>Collapse</span>}
+            </button>
+            {activeNode && (
+              <>
+                <span style={{width:1,height:16,background:'rgba(255,255,255,0.1)',flexShrink:0}}/>
+                <div style={{display:'flex',alignItems:'center',gap:4,padding:'4px 8px',background:`${activeNode.color}18`,border:`1px solid ${activeNode.color}55`,borderRadius:7,fontSize:10,color:activeNode.color,fontWeight:700,flexShrink:0}}>
+                  <span>{activeNode.icon}</span>
+                  {!isMobileLayout && <span>{activeNode.label}</span>}
+                  <button onClick={()=>setActiveId(null)} style={{background:'none',border:'none',color:activeNode.color,cursor:'pointer',fontSize:11,padding:0,lineHeight:1,opacity:0.7,WebkitTapHighlightColor:'transparent'}}>✕</button>
+                </div>
+              </>
+            )}
           </div>
 
-          <div style={{fontSize:15,fontWeight:700,color:'#fff',marginBottom:8}}>{activeNode.icon} {activeNode.label}</div>
-          <p style={{fontSize:11,lineHeight:1.65,color:'rgba(255,255,255,0.68)',margin:'0 0 14px'}}>{activeMeta.description}</p>
+          {/* ── Active node card ── */}
+          {activeNode && activeMeta && (
+            <div style={cardStyle}>
+              {!isMobileLayout && <div style={{position:'absolute',top:-1,left:'50%',transform:'translateX(-50%)',width:'60%',height:1,background:`linear-gradient(to right,transparent,${activeNode.color}66,transparent)`}}/>}
+              {isMobileLayout && <div style={{width:36,height:4,borderRadius:2,background:'rgba(255,255,255,0.2)',margin:'0 auto 14px'}}/>}
 
-          <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'rgba(255,255,255,0.45)',marginBottom:4}}>
-            <span>⚡ Completeness</span><span>{activeMeta.energy}%</span>
-          </div>
-          <div style={{width:'100%',height:3,background:'rgba(255,255,255,0.08)',borderRadius:2,overflow:'hidden',marginBottom:14}}>
-            <div style={{height:'100%',width:`${activeMeta.energy}%`,background:`linear-gradient(90deg,#7c3aed,${activeNode.color})`,borderRadius:2}}/>
-          </div>
-
-          {activeMeta.crossRefs.length>0 && (
-            <div style={{borderTop:'1px solid rgba(255,255,255,0.08)',paddingTop:10,marginBottom:12}}>
-              <div style={{fontSize:9,fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase',color:'rgba(255,255,255,0.35)',marginBottom:6}}>🔗 Connected</div>
-              <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
-                {activeMeta.crossRefs.map(rid=>{
-                  const rel=nodesRef.current.find(n=>n.id===rid);
-                  return (
-                    <button key={rid} onClick={()=>{toggleChildren(rid);setActiveId(rid);}}
-                      style={{fontSize:10,padding:'4px 9px',border:`1px solid ${rel?.color??'#fff'}33`,borderRadius:4,background:'transparent',color:'rgba(255,255,255,0.65)',cursor:'pointer',WebkitTapHighlightColor:'transparent'}}>
-                      {rel?.icon} {rel?.label} →
-                    </button>
-                  );
-                })}
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+                <span style={{fontSize:9,fontWeight:700,letterSpacing:'0.14em',textTransform:'uppercase',color:'rgba(255,255,255,0.4)'}}>{activeMeta.category}</span>
+                <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                  <span style={{fontSize:9,fontWeight:700,letterSpacing:'0.1em',padding:'2px 7px',borderRadius:4,background:STATUS_COLOR[activeNode.status],color:'#000'}}>{activeNode.status.toUpperCase()}</span>
+                  <button onClick={()=>setActiveId(null)} style={{background:'none',border:'none',color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:18,lineHeight:1,padding:'0 2px',WebkitTapHighlightColor:'transparent'}}>✕</button>
+                </div>
               </div>
+
+              <div style={{fontSize:15,fontWeight:700,color:'#fff',marginBottom:8}}>{activeNode.icon} {activeNode.label}</div>
+              <p style={{fontSize:11,lineHeight:1.65,color:'rgba(255,255,255,0.68)',margin:'0 0 14px'}}>{activeMeta.description}</p>
+
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'rgba(255,255,255,0.45)',marginBottom:4}}>
+                <span>⚡ Completeness</span><span>{activeMeta.energy}%</span>
+              </div>
+              <div style={{width:'100%',height:3,background:'rgba(255,255,255,0.08)',borderRadius:2,overflow:'hidden',marginBottom:14}}>
+                <div style={{height:'100%',width:`${activeMeta.energy}%`,background:`linear-gradient(90deg,#7c3aed,${activeNode.color})`,borderRadius:2}}/>
+              </div>
+
+              {activeMeta.crossRefs.length>0 && (
+                <div style={{borderTop:'1px solid rgba(255,255,255,0.08)',paddingTop:10,marginBottom:12}}>
+                  <div style={{fontSize:9,fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase',color:'rgba(255,255,255,0.35)',marginBottom:6}}>🔗 Connected</div>
+                  <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
+                    {activeMeta.crossRefs.map(rid=>{
+                      const rel=nodesRef.current.find(n=>n.id===rid);
+                      return (
+                        <button key={rid} onClick={()=>{toggleChildren(rid);setActiveId(rid);}}
+                          style={{fontSize:10,padding:'5px 10px',border:`1px solid ${rel?.color??'#fff'}33`,borderRadius:4,background:'transparent',color:'rgba(255,255,255,0.65)',cursor:'pointer',WebkitTapHighlightColor:'transparent'}}>
+                          {rel?.icon} {rel?.label} →
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <a href={activeNode.href} style={{display:'block',textAlign:'center',fontSize:12,fontWeight:700,color:activeNode.color,textDecoration:'none',padding:'9px',border:`1px solid ${activeNode.color}44`,borderRadius:7}}>
+                Read docs →
+              </a>
             </div>
           )}
 
-          <a href={activeNode.href} style={{display:'block',textAlign:'center',fontSize:12,fontWeight:700,color:activeNode.color,textDecoration:'none',padding:'8px',border:`1px solid ${activeNode.color}44`,borderRadius:7}}>
-            Read docs →
-          </a>
-        </div>
-      )}
-
-      {/* ── Hover tooltip (desktop only) ── */}
-      {tooltipNode && tooltip && !activeId && (
-        <div style={{
-          position:'fixed', left:tooltip.x+14, top:tooltip.y-10,
-          pointerEvents:'none', zIndex:600,
-          background:'rgba(10,10,20,0.92)', border:`1px solid ${tooltipNode.color}55`,
-          borderRadius:9, padding:'8px 12px', maxWidth:200,
-          boxShadow:'0 6px 24px rgba(0,0,0,0.5)', backdropFilter:'blur(12px)',
-        }}>
-          <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:4}}>
-            <span style={{fontSize:16}}>{tooltipNode.icon}</span>
-            <span style={{fontWeight:700,fontSize:12,color:'#fff'}}>{tooltipNode.label}</span>
-          </div>
-          <div style={{fontSize:10,color:'rgba(255,255,255,0.5)',lineHeight:1.5}}>
-            {tooltipNode.kind==='root'?'Documentation hub':tooltipNode.kind==='section'?'Tap to expand · dbl-tap to open':'Dbl-tap to open'}
-          </div>
-          {nodesRef.current.some(c=>c.parentId===tooltipNode.id&&!c.visible)&&(
-            <div style={{marginTop:5,fontSize:10,color:tooltipNode.color,fontWeight:600}}>⊕ has child pages</div>
+          {/* ── Hover tooltip (desktop only) ── */}
+          {tooltipNode && tooltip && !activeId && !isMobileLayout && (
+            <div style={{position:'fixed',left:tooltip.x+14,top:tooltip.y-10,pointerEvents:'none',zIndex:600,background:'rgba(10,10,20,0.92)',border:`1px solid ${tooltipNode.color}55`,borderRadius:9,padding:'8px 12px',maxWidth:200,boxShadow:'0 6px 24px rgba(0,0,0,0.5)',backdropFilter:'blur(12px)'}}>
+              <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:4}}>
+                <span style={{fontSize:16}}>{tooltipNode.icon}</span>
+                <span style={{fontWeight:700,fontSize:12,color:'#fff'}}>{tooltipNode.label}</span>
+              </div>
+              <div style={{fontSize:10,color:'rgba(255,255,255,0.5)',lineHeight:1.5}}>
+                {tooltipNode.kind==='root'?'Documentation hub':tooltipNode.kind==='section'?'Click to expand · dbl-click to open':'Dbl-click to open'}
+              </div>
+              {nodesRef.current.some(c=>c.parentId===tooltipNode.id&&!c.visible)&&(
+                <div style={{marginTop:5,fontSize:10,color:tooltipNode.color,fontWeight:600}}>⊕ has child pages</div>
+              )}
+            </div>
           )}
+
+          {/* ── Legend (desktop only) ── */}
+          {!isMobileLayout && (
+            <div style={{position:'absolute',bottom:14,left:14,display:'flex',flexDirection:'column',gap:4,fontSize:10,color:'rgba(255,255,255,0.3)',pointerEvents:'none'}}>
+              <div style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:16,height:1.5,background:'rgba(34,211,238,0.4)',display:'inline-block'}}/><span>tree</span></div>
+              <div style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:16,height:0,borderTop:'1px dashed rgba(148,163,184,0.35)',display:'inline-block'}}/><span>cross-ref</span></div>
+              <div style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:7,height:7,borderRadius:'50%',background:'#f59e0b',display:'inline-block'}}/><span>expandable</span></div>
+            </div>
+          )}
+
+          <style>{`
+            @keyframes cardSlideIn { from{opacity:0;transform:translateY(calc(-50% - 10px))} to{opacity:1;transform:translateY(-50%)} }
+            @keyframes cardSlideUp  { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+          `}</style>
         </div>
-      )}
-
-      {/* ── Legend ── */}
-      <div style={{position:'absolute',bottom:16,left:16,display:'flex',flexDirection:'column',gap:4,fontSize:10,color:'rgba(255,255,255,0.35)',pointerEvents:'none'}}>
-        <div style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:16,height:1.5,background:'rgba(34,211,238,0.4)',display:'inline-block'}}/><span>tree</span></div>
-        <div style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:16,height:0,borderTop:'1px dashed rgba(148,163,184,0.35)',display:'inline-block'}}/><span>cross-ref</span></div>
-        <div style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:7,height:7,borderRadius:'50%',background:'#f59e0b',display:'inline-block'}}/><span>expandable</span></div>
       </div>
-
-      <style>{`
-        @keyframes cardSlideIn {
-          from { opacity:0; transform:translateY(calc(-50% - 10px)); }
-          to   { opacity:1; transform:translateY(-50%); }
-        }
-        @media (max-width:639px) {
-          @keyframes cardSlideIn {
-            from { opacity:0; transform:translateY(20px); }
-            to   { opacity:1; transform:translateY(0); }
-          }
-        }
-      `}</style>
-    </div>
+    </>
   );
 }
+
