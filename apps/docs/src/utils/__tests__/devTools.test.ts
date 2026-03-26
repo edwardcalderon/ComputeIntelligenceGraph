@@ -145,7 +145,7 @@ describe('Development Tools', () => {
     });
 
     it('should reject non-array input', () => {
-      const result = devSearch.testSearchIndex(null as any);
+      const result = devSearch.testSearchIndex(null as unknown as Array<{ id: string; title: string; content: string }>);
       expect(result).toBe(false);
     });
   });

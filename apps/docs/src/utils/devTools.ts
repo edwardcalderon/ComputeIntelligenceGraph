@@ -14,7 +14,7 @@ export const mockAnalytics = {
     }
   },
 
-  trackEvent: (eventName: string, eventData?: Record<string, any>) => {
+  trackEvent: (eventName: string, eventData?: Record<string, unknown>) => {
     if (process.env.NODE_ENV === 'development') {
       console.log('[Analytics] Event:', { eventName, eventData, timestamp: new Date().toISOString() });
     }
@@ -168,7 +168,7 @@ export const isDevelopment = (): boolean => {
 export const initDevTools = () => {
   if (isDevelopment() && typeof window !== 'undefined') {
     // Expose dev tools to window for console access
-    (window as any).__devTools = {
+    (window as Window & { __devTools?: unknown }).__devTools = {
       analytics: mockAnalytics,
       i18n: devI18n,
       mermaid: devMermaid,

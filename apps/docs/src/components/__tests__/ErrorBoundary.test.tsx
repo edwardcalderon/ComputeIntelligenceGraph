@@ -23,7 +23,7 @@ describe('ErrorBoundary', () => {
   });
 
   it('should render children when there is no error', () => {
-    const { container } = render(
+    render(
       React.createElement(ErrorBoundary, null, React.createElement(NormalComponent))
     );
 
@@ -31,7 +31,7 @@ describe('ErrorBoundary', () => {
   });
 
   it('should catch errors and display error message', () => {
-    const { container } = render(
+    render(
       React.createElement(ErrorBoundary, null, React.createElement(ThrowError))
     );
 
@@ -39,7 +39,7 @@ describe('ErrorBoundary', () => {
   });
 
   it('should display error details in expandable section', () => {
-    const { container } = render(
+    render(
       React.createElement(ErrorBoundary, null, React.createElement(ThrowError))
     );
 
@@ -48,7 +48,7 @@ describe('ErrorBoundary', () => {
   });
 
   it('should display error message content', () => {
-    const { container } = render(
+    render(
       React.createElement(ErrorBoundary, null, React.createElement(ThrowError))
     );
 
@@ -56,7 +56,7 @@ describe('ErrorBoundary', () => {
   });
 
   it('should display console hint', () => {
-    const { container } = render(
+    render(
       React.createElement(ErrorBoundary, null, React.createElement(ThrowError))
     );
 
@@ -66,7 +66,7 @@ describe('ErrorBoundary', () => {
   it('should log error to console', () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
-    const { container } = render(
+    render(
       React.createElement(ErrorBoundary, null, React.createElement(ThrowError))
     );
 
@@ -79,7 +79,7 @@ describe('ErrorBoundary', () => {
   });
 
   it('should render multiple children without error', () => {
-    const { container } = render(
+    render(
       React.createElement(
         ErrorBoundary,
         null,

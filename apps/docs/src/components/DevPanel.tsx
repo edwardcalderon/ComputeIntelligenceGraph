@@ -13,7 +13,7 @@ export const DevPanel: React.FC = () => {
   const [selectedLanguage, setSelectedLanguage] = useState(devI18n.getLanguagePreference() || 'en');
   const [mermaidCode, setMermaidCode] = useState('graph TD\n  A[Start] --> B[End]');
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<Array<{ id: string; title: string; score: number }>>([]);
 
   if (!isDevelopment()) {
     return null;
