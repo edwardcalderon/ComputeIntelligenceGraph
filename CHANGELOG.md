@@ -1,3 +1,25 @@
+## [0.2.19](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.18...v0.2.19) (2026-03-26)
+
+
+### Bug Fixes
+
+* **docs:** improve sidebar z-index layering for mobile ([6f64c57](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/6f64c574fb43ed0f6ff2d05df3bcd61a63a93d40))
+
+
+
+
+
+## [0.2.19](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.18...v0.2.19) (2026-03-26)
+
+
+### Bug Fixes
+
+* **docs:** improve sidebar z-index layering for mobile ([6f64c57](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/6f64c574fb43ed0f6ff2d05df3bcd61a63a93d40))
+
+
+
+
+
 ## [0.2.18](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.17...v0.2.18) (2026-03-26)
 
 ### Detected changes
