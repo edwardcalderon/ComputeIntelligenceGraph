@@ -894,12 +894,6 @@ function EmailOtpVerifyView({
         {t("auth.emailMagicSignInHint")}
       </p>
 
-      {verifying && (
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center animate-pulse">
-          {t("auth.verifying")}
-        </p>
-      )}
-
       {verified && !verifying && (
         <p className="text-xs text-emerald-500 dark:text-emerald-400 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 px-3 py-2 text-center">
           {t("auth.otpVerified") || "OTP verified. You are signed in."}

@@ -230,5 +230,23 @@
   "userMenu.userLabel": "Menú de usuario",
 
   "footer.site": "cig.lat",
-  "footer.dashboardLabel": "Panel CIG"
+  "footer.dashboardLabel": "Panel CIG",
+
+  "chat.openChat": "Abrir chat",
+  "chat.closeChat": "Cerrar chat",
+  "chat.title": "Asistente IA",
+  "chat.expand": "Expandir",
+  "chat.collapse": "Contraer",
+  "chat.expandMobile": "Expandir chat",
+  "chat.collapseMobile": "Contraer chat",
+  "chat.emptyState": "Pregunta cualquier cosa sobre tu infraestructura.",
+  "chat.placeholder": "¿Qué deseas explorar hoy? Pregunta lo que quieras...",
+  "chat.uploadFiles": "Subir archivos",
+  "chat.webLink": "Enlace web",
+  "chat.codeRepo": "Repositorio de código",
+  "chat.voiceInput": "Entrada de voz",
+  "chat.sendMessage": "Enviar mensaje",
+  "chat.shiftEnterHint": "para nueva línea",
+  "chat.allSystemsOperational": "Todos los sistemas operativos",
+  "chat.errorFallback": "Algo salió mal."
 }
