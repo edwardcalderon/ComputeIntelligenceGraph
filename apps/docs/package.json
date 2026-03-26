@@ -1,6 +1,6 @@
 {
   "name": "@cig/docs",
-  "version": "0.2.35",
+  "version": "0.2.36",
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",

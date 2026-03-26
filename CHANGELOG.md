@@ -1,3 +1,25 @@
+## [0.2.36](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.35...v0.2.36) (2026-03-26)
+
+
+### Bug Fixes
+
+* **docs:** add top/bottom padding to canvas wrapper, reduce width to 90vw ([97b9346](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/97b934677dd66968f903d02fdc6af2bb71a94e5b))
+
+
+
+
+
+## [0.2.36](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.35...v0.2.36) (2026-03-26)
+
+
+### Bug Fixes
+
+* **docs:** add top/bottom padding to canvas wrapper, reduce width to 90vw ([97b9346](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/97b934677dd66968f903d02fdc6af2bb71a94e5b))
+
+
+
+
+
 ## [0.2.35](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.34...v0.2.35) (2026-03-26)
 
 ### Detected changes
