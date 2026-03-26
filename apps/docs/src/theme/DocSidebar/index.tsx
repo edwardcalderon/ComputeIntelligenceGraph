@@ -102,12 +102,12 @@ function SidebarCategory({ item, onClose, depth = 0 }: { item: SidebarItem; onCl
 
 // ─── Main Sidebar ─────────────────────────────────────────────────────────────
 
-export default function DocSidebar({ sidebar, path, onCollapse, isHidden }: Props): JSX.Element {
+export default function DocSidebar({ sidebar, path: _path, onCollapse: _onCollapse, isHidden: _isHidden }: Props): JSX.Element {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [version, setVersion] = useState('');
 
   useEffect(() => {
-    setVersion((window as any).__CIG_VERSION__ || '');
+    setVersion((window as Window & { __CIG_VERSION__?: string }).__CIG_VERSION__ || '');
   }, []);
 
   const close = useCallback(() => setMobileOpen(false), []);
