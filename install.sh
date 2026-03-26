@@ -1,5 +1,16 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
+
+log() {
+  printf '%s\n' "$*" >&2
+}
+
+if [[ "${CIG_INSTALL_TRACE:-0}" == "1" ]]; then
+  export PS4='+ ${BASH_SOURCE##*/}:${LINENO}: '
+  set -x
+fi
+
+trap 'status=$?; log "CIG install.sh failed at line ${LINENO}: ${BASH_COMMAND} (exit ${status})"; exit ${status}' ERR
 
 print_usage() {
   cat <<'EOF'
@@ -11,6 +22,9 @@ fallback, and finally an installed `cig` binary as a fallback.
 
 Web installer:
   curl -fsSL https://cig.lat/install.sh | bash
+
+Debug tracing:
+  CIG_INSTALL_TRACE=1 curl -fsSL https://cig.lat/install.sh | bash
 
 Install guide:
   https://cig.lat/install
@@ -65,21 +79,22 @@ fi
 
 if [[ ! -t 0 || ! -t 1 || ! -t 2 ]]; then
   if [[ -e /dev/tty ]]; then
-    exec </dev/tty >/dev/tty 2>&1
+    USE_TTY_REDIRECT=true
+    log "Installer prompts will use /dev/tty."
   else
-    echo "CIG install.sh requires an interactive terminal."
+    log "CIG install.sh requires an interactive terminal."
     exit 1
   fi
 fi
 
 LOCAL_CLI=""
 if command -v npx >/dev/null 2>&1; then
-  echo "Resolving published CIG CLI version from npm..."
+  log "Resolving published CIG CLI version from npm..."
   if CLI_VERSION="$(resolve_published_cli_version)"; then
-    echo "Resolved published CIG CLI version: v${CLI_VERSION}"
+    log "Resolved published CIG CLI version: v${CLI_VERSION}"
     CLI_CMD=(npx --yes "@cig-technology/cli@${CLI_VERSION}")
   else
-    echo "Could not resolve the published CIG CLI version. Falling back to @latest."
+    log "Could not resolve the published CIG CLI version. Falling back to @latest."
     CLI_CMD=(npx --yes @cig-technology/cli@latest)
   fi
 else
@@ -100,10 +115,14 @@ else
   elif command -v cig >/dev/null 2>&1; then
     CLI_CMD=(cig)
   else
-    echo "Could not find the published npm package, a local build, or an installed cig binary."
+    log "Could not find the published npm package, a local build, or an installed cig binary."
     exit 1
   fi
 fi
 
-echo "Launching CIG setup wizard..."
-"${CLI_CMD[@]}" setup "$@"
+log "Launching CIG setup wizard..."
+if [[ "${USE_TTY_REDIRECT:-false}" == "true" ]]; then
+  "${CLI_CMD[@]}" setup "$@" </dev/tty >/dev/tty 2>&1
+else
+  "${CLI_CMD[@]}" setup "$@"
+fi
