@@ -403,7 +403,7 @@ export function ChatWidget() {
                   aria-label={`Chat backend status: ${chatModel}, ${chatStatus}`}
                   data-testid="chat-status-pill"
                   className={[
-                    "inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] transition-all duration-200 backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-emerald-300/70 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-emerald-400/40 dark:focus:ring-offset-zinc-900",
+                    "inline-flex max-w-full items-center gap-2 rounded-full border px-1.5 py-1 sm:px-3 sm:py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] transition-all duration-200 backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-emerald-300/70 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-emerald-400/40 dark:focus:ring-offset-zinc-900",
                     chatIndicatorHealthy
                       ? "border-emerald-300/30 bg-white/36 text-slate-700 shadow-[0_6px_20px_rgba(16,185,129,0.06)] dark:border-emerald-400/15 dark:bg-zinc-950/18 dark:text-zinc-100"
                       : "border-slate-200/70 bg-white/28 text-slate-600 shadow-[0_6px_20px_rgba(15,23,42,0.04)] dark:border-zinc-700/55 dark:bg-zinc-950/20 dark:text-zinc-300",
@@ -437,12 +437,12 @@ export function ChatWidget() {
                         ].join(" ")}
                       />
                     </span>
-                    <span className="max-w-[6.5rem] truncate normal-case tracking-normal sm:max-w-[7.5rem] sm:tracking-[0.1em]">
+                    <span className="hidden max-w-[6.5rem] truncate normal-case tracking-normal sm:inline sm:max-w-[7.5rem] sm:tracking-[0.1em]">
                       {chatModel}
                     </span>
                     <span
                       className={[
-                        "rounded-full border px-1.5 py-0.5 text-[9px] font-semibold tracking-[0.15em] backdrop-blur-md",
+                        "hidden rounded-full border px-1.5 py-0.5 text-[9px] font-semibold tracking-[0.15em] backdrop-blur-md sm:inline",
                         chatIndicatorHealthy
                           ? "border-emerald-200/55 bg-emerald-500/8 text-emerald-700 dark:border-emerald-400/15 dark:bg-emerald-400/10 dark:text-emerald-300"
                           : "border-slate-300/70 bg-white/30 text-slate-500 dark:border-zinc-600/70 dark:bg-zinc-950/28 dark:text-zinc-400",
