@@ -1,58 +1,57 @@
-/* ── Desktop Sidebar ────────────────────────────────────────────────────────── */
+/* ── Desktop Sidebar ─────────────────────────────────────────────────────────
+ *
+ * Docusaurus wraps <DocSidebar> in:
+ *   <aside class="docSidebarContainer">       (width:300px, clip-path:inset(0))
+ *     <div class="sidebarViewport">            (sticky, height:100%, max-height:100vh)
+ *       <DocSidebar />                         ← WE ARE HERE
+ *
+ * We use height:100% to fill sidebarViewport. The viewport is sticky and
+ * already constrained to 100vh, so we get a full-height scrollable sidebar.
+ * ─────────────────────────────────────────────────────────────────────────── */
 
-.cig-sb--desktop {
-  /* Fill the sticky container Docusaurus provides (display:flex flex-col height:100vh) */
+.cig-sb-desktop {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
+  height: 100%;
   overflow: hidden;
   background: var(--cig-sidebar-bg, #f8fafc);
 }
 
-@media (max-width: 996px) {
-  .cig-sb--desktop {
-    display: none;
-  }
+[data-theme='dark'] .cig-sb-desktop {
+  background: var(--cig-sidebar-bg, #111118);
 }
 
-/* ── Mobile toggle button (portaled to body) ──────────────────────────────── */
+/* ── Mobile toggle button (portaled to body) ─────────────────────────────── */
 
 .cig-sb-mobile-toggle {
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: calc(var(--ifm-navbar-height, 3.75rem) + 0.75rem);
+  left: 1rem;
+  z-index: 400;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.625rem;
+  border: 1.5px solid var(--ifm-color-primary, #06b6d4);
+  background: rgba(6, 182, 212, 0.12);
+  color: var(--ifm-color-primary, #06b6d4);
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(6, 182, 212, 0.25);
+  transition: background 0.15s, box-shadow 0.15s;
 }
 
-@media (max-width: 996px) {
-  .cig-sb-mobile-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: fixed;
-    top: calc(var(--ifm-navbar-height, 3.75rem) + 0.75rem);
-    left: 1rem;
-    z-index: 400;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 0.625rem;
-    border: 1.5px solid var(--ifm-color-primary, #06b6d4);
-    background: rgba(6, 182, 212, 0.12);
-    color: var(--ifm-color-primary, #06b6d4);
-    cursor: pointer;
-    box-shadow: 0 2px 12px rgba(6, 182, 212, 0.25);
-    transition: background 0.15s, box-shadow 0.15s;
-  }
+.cig-sb-mobile-toggle:hover {
+  background: rgba(6, 182, 212, 0.2);
+  box-shadow: 0 2px 18px rgba(6, 182, 212, 0.4);
+}
 
-  .cig-sb-mobile-toggle:hover {
-    background: rgba(6, 182, 212, 0.2);
-    box-shadow: 0 2px 18px rgba(6, 182, 212, 0.4);
-  }
-
-  [data-theme='dark'] .cig-sb-mobile-toggle {
-    border-color: rgba(34, 211, 238, 0.5);
-    background: rgba(34, 211, 238, 0.1);
-    color: #22d3ee;
-    box-shadow: 0 2px 12px rgba(34, 211, 238, 0.2);
-  }
+[data-theme='dark'] .cig-sb-mobile-toggle {
+  border-color: rgba(34, 211, 238, 0.5);
+  background: rgba(34, 211, 238, 0.1);
+  color: #22d3ee;
+  box-shadow: 0 2px 12px rgba(34, 211, 238, 0.2);
 }
 
 .cig-sb-menu-icon {
@@ -60,7 +59,7 @@
   height: 1.125rem;
 }
 
-/* ── Overlay ────────────────────────────────────────────────────────────────── */
+/* ── Overlay ─────────────────────────────────────────────────────────────── */
 
 .cig-sb-overlay {
   position: fixed;
@@ -73,84 +72,34 @@
 
 /* ── Mobile Drawer (portaled to body) ────────────────────────────────────── */
 
-.cig-sb--mobile {
-  display: none;
+.cig-sb-mobile {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100dvh;
+  width: min(300px, 88vw);
+  z-index: 9999;
+  background: var(--cig-sidebar-bg, #f8fafc);
+  box-shadow: 4px 0 32px rgba(0, 0, 0, 0.18);
+  transform: translateX(-110%);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
 }
 
-@media (max-width: 996px) {
-  .cig-sb--mobile {
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100dvh;
-    width: min(300px, 88vw);
-    z-index: 9999;
-    background: var(--cig-sidebar-bg, #f8fafc);
-    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.18);
-    transform: translateX(-110%);
-    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-    overflow: hidden;
-  }
-
-  .cig-sb--mobile.open {
-    transform: translateX(0);
-  }
-
-  [data-theme='dark'] .cig-sb--mobile {
-    background: var(--cig-sidebar-bg, #111118);
-    box-shadow: 4px 0 40px rgba(0, 0, 0, 0.55);
-  }
+.cig-sb-mobile.open {
+  transform: translateX(0);
 }
 
-/* Close button */
-.cig-sb-close-btn {
-  display: none;
+[data-theme='dark'] .cig-sb-mobile {
+  background: var(--cig-sidebar-bg, #111118);
+  box-shadow: 4px 0 40px rgba(0, 0, 0, 0.55);
 }
 
-@media (max-width: 996px) {
-  .cig-sb-close-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    align-self: flex-end;
-    flex-shrink: 0;
-    margin: 0.75rem 0.75rem 0;
-    width: 2rem;
-    height: 2rem;
-    border-radius: 0.5rem;
-    border: 1px solid var(--cig-sidebar-border, #e4e4e7);
-    background: transparent;
-    color: var(--ifm-font-color-secondary, #52525b);
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-  }
+/* ── Mobile inner (flex child that holds SidebarContent) ─────────────────── */
 
-  .cig-sb-close-btn:hover {
-    background: rgba(0, 0, 0, 0.05);
-    color: var(--ifm-font-color-base, #18181b);
-  }
-
-  [data-theme='dark'] .cig-sb-close-btn {
-    border-color: rgba(255, 255, 255, 0.08);
-    color: #a1a1aa;
-  }
-
-  [data-theme='dark'] .cig-sb-close-btn:hover {
-    background: rgba(255, 255, 255, 0.06);
-    color: #fafafa;
-  }
-}
-
-.cig-sb-close-icon {
-  width: 1rem;
-  height: 1rem;
-}
-
-/* ── Inner container ─────────────────────────────────────────────────────── */
-
-.cig-sb-inner {
+.cig-sb-mobile-inner {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -158,7 +107,46 @@
   overflow: hidden;
 }
 
-/* ── Brand ──────────────────────────────────────────────────────────────── */
+/* ── Close button ────────────────────────────────────────────────────────── */
+
+.cig-sb-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-end;
+  flex-shrink: 0;
+  margin: 0.75rem 0.75rem 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--cig-sidebar-border, #e4e4e7);
+  background: transparent;
+  color: var(--ifm-font-color-secondary, #52525b);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.cig-sb-close-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--ifm-font-color-base, #18181b);
+}
+
+[data-theme='dark'] .cig-sb-close-btn {
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #a1a1aa;
+}
+
+[data-theme='dark'] .cig-sb-close-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fafafa;
+}
+
+.cig-sb-close-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* ── Brand ───────────────────────────────────────────────────────────────── */
 
 .cig-sb-brand {
   display: flex;

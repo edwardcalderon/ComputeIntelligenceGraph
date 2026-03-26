@@ -76,14 +76,11 @@
 .navbar__logo { height: 2rem; width: 2rem; }
 
 /* ─── Sidebar Container ───────────────────────────────────────────────────── */
+/* Let Docusaurus own its sidebar container layout (display:block, width, clip-path).
+ * Our custom DocSidebar fills the sidebarViewport with height:100%.
+ * Only override cosmetic properties. */
 .theme-doc-sidebar-container {
-  background: var(--cig-sidebar-bg) !important;
   border-right: 1px solid var(--cig-sidebar-border) !important;
-  /* Prevent the container from double-scrolling — our nav handles internal scroll */
-  overflow: hidden !important;
-  /* Ensure flex fill works in the layout's flex row */
-  display: flex !important;
-  flex-direction: column !important;
 }
 
 

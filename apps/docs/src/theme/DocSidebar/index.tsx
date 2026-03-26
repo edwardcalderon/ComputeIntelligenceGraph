@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { createPortal } from 'react-dom';
 import Link from '@docusaurus/Link';
 import { useLocation } from '@docusaurus/router';
@@ -44,14 +44,14 @@ function ChevronIcon({ open }: { open: boolean }) {
 
 // ─── Sidebar Link ─────────────────────────────────────────────────────────────
 
-function SidebarLink({ item, onClose }: { item: NavItem; onClose: () => void }) {
+function SidebarLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
   const location = useLocation();
   const href = item.href ?? '';
   const isActive = href !== '' && (location.pathname === href || location.pathname.startsWith(href + '/'));
 
   return (
     <li className="cig-sb-item">
-      <Link to={href} onClick={onClose} className={`cig-sb-link${isActive ? ' active' : ''}`}>
+      <Link to={href} onClick={onNavigate} className={`cig-sb-link${isActive ? ' active' : ''}`}>
         {isActive && <span className="cig-sb-active-bar" />}
         <span className="cig-sb-link-text">{item.label}</span>
       </Link>
@@ -61,12 +61,19 @@ function SidebarLink({ item, onClose }: { item: NavItem; onClose: () => void }) 
 
 // ─── Sidebar Category ─────────────────────────────────────────────────────────
 
-function SidebarCategory({ item, onClose, depth = 0 }: { item: NavItem; onClose: () => void; depth?: number }) {
+function SidebarCategory({ item, onNavigate, depth = 0 }: { item: NavItem; onNavigate?: () => void; depth?: number }) {
   const location = useLocation();
   const children = item.items ?? [];
-  const hasActiveChild = children.some(
-    (child) => child.href != null && (location.pathname === child.href || location.pathname.startsWith(child.href + '/'))
-  );
+
+  function isDescendantActive(items: NavItem[]): boolean {
+    return items.some(
+      (child) =>
+        (child.href != null && (location.pathname === child.href || location.pathname.startsWith(child.href + '/'))) ||
+        (child.items != null && isDescendantActive(child.items))
+    );
+  }
+
+  const hasActiveChild = isDescendantActive(children);
   const [open, setOpen] = useState(hasActiveChild || depth === 0);
 
   return (
@@ -83,9 +90,9 @@ function SidebarCategory({ item, onClose, depth = 0 }: { item: NavItem; onClose:
         <ul className="cig-sb-list cig-sb-list--nested">
           {children.map((child, i) =>
             child.type === 'category' ? (
-              <SidebarCategory key={i} item={child} onClose={onClose} depth={depth + 1} />
+              <SidebarCategory key={i} item={child} onNavigate={onNavigate} depth={depth + 1} />
             ) : (
-              <SidebarLink key={i} item={child} onClose={onClose} />
+              <SidebarLink key={i} item={child} onNavigate={onNavigate} />
             )
           )}
         </ul>
@@ -96,22 +103,22 @@ function SidebarCategory({ item, onClose, depth = 0 }: { item: NavItem; onClose:
 
 // ─── Sidebar Content ──────────────────────────────────────────────────────────
 
-function SidebarContent({
+const SidebarContent = memo(function SidebarContent({
   sidebar,
   version,
   landingUrl,
-  onClose,
+  onNavigate,
 }: {
   sidebar: NavItem[];
   version: string;
   landingUrl: string;
-  onClose: () => void;
+  onNavigate?: () => void;
 }) {
   return (
-    <div className="cig-sb-inner">
+    <>
       {/* Brand */}
       <div className="cig-sb-brand">
-        <Link to="/" className="cig-sb-brand-link" onClick={onClose}>
+        <Link to="/" className="cig-sb-brand-link" onClick={onNavigate}>
           <span className="cig-sb-brand-icon">
             <svg viewBox="20 20 216 216" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <defs>
@@ -156,9 +163,9 @@ function SidebarContent({
         <ul className="cig-sb-list">
           {sidebar.map((item, i) =>
             item.type === 'category' ? (
-              <SidebarCategory key={i} item={item} onClose={onClose} />
+              <SidebarCategory key={i} item={item} onNavigate={onNavigate} />
             ) : (
-              <SidebarLink key={i} item={item} onClose={onClose} />
+              <SidebarLink key={i} item={item} onNavigate={onNavigate} />
             )
           )}
         </ul>
@@ -191,31 +198,30 @@ function SidebarContent({
           cig.lat
         </a>
       </div>
-    </div>
+    </>
   );
-}
+});
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export default function DocSidebar({ sidebar, path: _path, onCollapse: _onCollapse, isHidden: _isHidden }: Props): JSX.Element {
+export default function DocSidebar({ sidebar }: Props): JSX.Element {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [version, setVersion] = useState('');
   const [landingUrl, setLandingUrl] = useState('https://cig.lat');
   const location = useLocation();
 
-  // Portal guard: only render after hydration
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     setVersion((window as Window & { __CIG_VERSION__?: string }).__CIG_VERSION__ ?? '');
-    // In development, point the landing link to the local landing port
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      setLandingUrl(`http://${window.location.hostname}:3001`);
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      setLandingUrl(`http://${host}:3001`);
     }
   }, []);
 
-  const close = useCallback(() => setMobileOpen(false), []);
+  const closeMobile = useCallback(() => setMobileOpen(false), []);
 
   // Close drawer on route change
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
@@ -230,12 +236,22 @@ export default function DocSidebar({ sidebar, path: _path, onCollapse: _onCollap
 
   return (
     <>
-      {/* Desktop sidebar — renders inside Docusaurus's sticky container */}
-      <aside className="cig-sb cig-sb--desktop" aria-label="Documentation sidebar">
-        <SidebarContent sidebar={items} version={version} landingUrl={landingUrl} onClose={close} />
-      </aside>
+      {/* ── Desktop sidebar ──────────────────────────────────────────────────
+       * Renders inline inside Docusaurus's layout:
+       *   <aside class="docSidebarContainer">  (width:300px, clip-path:inset(0))
+       *     <div class="sidebarViewport">      (sticky, height:100%, max-height:100vh)
+       *       <DocSidebar />                   ← HERE
+       *
+       * We use height:100% to fill the viewport. Hidden on mobile via CSS.
+       * ──────────────────────────────────────────────────────────────────── */}
+      <div className="cig-sb-desktop">
+        <SidebarContent sidebar={items} version={version} landingUrl={landingUrl} />
+      </div>
 
-      {/* Mobile toggle + drawer — portaled to body to escape container's display:none */}
+      {/* ── Mobile sidebar ───────────────────────────────────────────────────
+       * Portaled to document.body so it escapes the container's display:none.
+       * Only rendered after hydration (mounted guard).
+       * ──────────────────────────────────────────────────────────────────── */}
       {mounted && createPortal(
         <>
           <button
@@ -243,25 +259,25 @@ export default function DocSidebar({ sidebar, path: _path, onCollapse: _onCollap
             onClick={() => setMobileOpen(true)}
             aria-label="Open navigation"
             aria-expanded={mobileOpen}
-            aria-controls="cig-sb-mobile-drawer"
           >
             <MenuIcon />
           </button>
 
           {mobileOpen && (
-            <div className="cig-sb-overlay" onClick={close} aria-hidden="true" />
+            <div className="cig-sb-overlay" onClick={closeMobile} aria-hidden="true" />
           )}
 
           <aside
-            id="cig-sb-mobile-drawer"
-            className={`cig-sb cig-sb--mobile${mobileOpen ? ' open' : ''}`}
+            className={`cig-sb-mobile${mobileOpen ? ' open' : ''}`}
             aria-hidden={!mobileOpen}
             aria-label="Documentation navigation"
           >
-            <button className="cig-sb-close-btn" onClick={close} aria-label="Close navigation">
+            <button className="cig-sb-close-btn" onClick={closeMobile} aria-label="Close navigation">
               <CloseIcon />
             </button>
-            <SidebarContent sidebar={items} version={version} landingUrl={landingUrl} onClose={close} />
+            <div className="cig-sb-mobile-inner">
+              <SidebarContent sidebar={items} version={version} landingUrl={landingUrl} onNavigate={closeMobile} />
+            </div>
           </aside>
         </>,
         document.body
