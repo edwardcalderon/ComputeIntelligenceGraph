@@ -74,6 +74,7 @@ fi
 
 LOCAL_CLI=""
 if command -v npx >/dev/null 2>&1; then
+  echo "Resolving published CIG CLI version from npm..."
   if CLI_VERSION="$(resolve_published_cli_version)"; then
     echo "Resolved published CIG CLI version: v${CLI_VERSION}"
     CLI_CMD=(npx --yes "@cig-technology/cli@${CLI_VERSION}")
