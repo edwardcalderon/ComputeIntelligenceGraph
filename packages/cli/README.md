@@ -36,11 +36,12 @@ binaries and provenance data.
 - Package: https://www.npmjs.com/package/@cig-technology/cli
 - GitHub releases: https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases
 
-## 📋 Latest Changes (v0.1.9)
+## 📋 Latest Changes (v0.1.10)
 
 ### Bug Fixes
 
-* **cli:** keep setup wizard open until dismiss ([991fc9e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/991fc9ebcebed2c7514597dc955450682acd2423))
+* **cli:** keep interactive installer attached to tty ([303916e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/303916edbd53e9901a43e347dde954e8a78edb1b))
+* **cli:** keep setup cancel flow open ([fc4dfe5](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/fc4dfe5c6b17e29bb91b205b4c74acd530773b2d))
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 

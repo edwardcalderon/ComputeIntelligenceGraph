@@ -1,3 +1,15 @@
+## [0.1.10](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.9...cli-v0.1.10) (2026-03-26)
+
+
+### Bug Fixes
+
+* **cli:** keep interactive installer attached to tty ([303916e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/303916edbd53e9901a43e347dde954e8a78edb1b))
+* **cli:** keep setup cancel flow open ([fc4dfe5](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/fc4dfe5c6b17e29bb91b205b4c74acd530773b2d))
+
+
+
+
+
 ## [0.1.9](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.8...cli-v0.1.9) (2026-03-25)
 
 
