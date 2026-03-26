@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIGBot — Diccionario Visual</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --p:#6C3DE8;--p-dk:#3C3489;--p-lt:#EEEDFE;--p-md:#9F77F5;--p-xlt:#faf9ff;
+  --g:#1D9E75;--g-lt:#EAF3DE;--g-dk:#27500A;
+  --r:#E24B4A;--r-lt:#FCEBEB;--r-dk:#791F1F;
+  --a:#EF9F27;--a-lt:#FAEEDA;--a-dk:#854F0B;
+  --b:#378ADD;--b-lt:#E6F1FB;--b-dk:#0C447C;
+  --navy:#1a1a2e;--muted:#777;--border:#e8e4f8;--white:#fff;
+  --font:'DM Sans',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:#f0eefa;color:var(--navy);padding:40px 24px 72px;display:flex;flex-direction:column;align-items:center;gap:32px}
+
+/* ── Header ── */
+.hd{text-align:center;max-width:560px}
+.hd-tag{display:inline-block;background:var(--p-lt);color:var(--p-dk);font-size:11px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;padding:4px 14px;border-radius:20px;margin-bottom:14px}
+.hd h1{font-size:28px;font-weight:600;color:var(--navy);margin-bottom:8px;line-height:1.2}
+.hd p{font-size:14px;color:var(--muted);line-height:1.6}
+
+/* ── Section ── */
+.section{width:100%;max-width:900px;display:flex;flex-direction:column;gap:12px}
+.sec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);padding-left:4px;display:flex;align-items:center;gap:8px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ── Dictionary row ── */
+.dict-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:640px){.dict-grid{grid-template-columns:1fr}}
+
+.dict-row{background:var(--white);border-radius:14px;border:0.5px solid var(--border);display:flex;align-items:stretch;overflow:hidden}
+
+/* Preview cell */
+.prev{width:88px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:14px 10px;border-right:1px solid var(--border)}
+
+/* Definition cell */
+.def{padding:12px 14px;flex:1;display:flex;flex-direction:column;gap:4px}
+.def-name{font-size:13px;font-weight:600;color:var(--navy)}
+.def-desc{font-size:11.5px;color:var(--muted);line-height:1.5}
+.def-code{margin-top:4px;display:flex;flex-wrap:wrap;gap:4px}
+.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;font-family:var(--mono)}
+.tag-r{background:var(--r-lt);color:var(--r-dk)}
+.tag-a{background:var(--a-lt);color:var(--a-dk)}
+.tag-g{background:var(--g-lt);color:var(--g-dk)}
+.tag-p{background:var(--p-lt);color:var(--p-dk)}
+.tag-b{background:var(--b-lt);color:var(--b-dk)}
+.tag-n{background:#f1eee8;color:#444}
+
+/* ── Preview components ── */
+
+/* Alert item preview */
+.ai-prev{display:flex;align-items:center;gap:5px;padding:5px 6px;border-radius:8px;width:100%}
+.ai-ic-p{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.ai-text{flex:1;min-width:0}
+.ai-t-p{font-size:9px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai-s-p{font-size:8px;color:#888}
+.ai-v-p{font-size:13px;font-weight:700;flex-shrink:0}
+
+/* Chip preview */
+.chip-p{display:flex;align-items:center;gap:4px;border-radius:10px;padding:4px 9px;font-size:11px;font-weight:600}
+.dot-p{width:6px;height:6px;border-radius:50%}
+
+/* Bar preview */
+.bar-p{width:100%}
+.bar-track-p{height:10px;background:var(--p-lt);border-radius:5px;overflow:hidden;margin-top:3px}
+.bar-fill-p{height:100%;border-radius:5px}
+
+/* Bubble previews */
+.bub-user{background:var(--p);border-radius:12px 12px 3px 12px;padding:6px 9px;font-size:9px;color:#fff;line-height:1.3;max-width:68px;align-self:flex-end}
+.bub-bot{background:var(--white);border:1px solid var(--border);border-radius:3px 12px 12px 12px;padding:6px 9px;font-size:9px;color:var(--navy);line-height:1.3;max-width:68px}
+.tick-p{font-size:8px;color:#a8d5ff}
+
+/* Card header preview */
+.ch-p{padding:5px 8px;border-radius:6px;display:flex;align-items:center;justify-content:space-between}
+.ct-p{font-size:8px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;display:flex;align-items:center;gap:4px}
+.cd-p{width:5px;height:5px;border-radius:50%}
+
+/* Status bar */
+.sbar-p{height:4px;border-radius:2px;width:100%}
+
+/* Timeline dot preview */
+.tl-prev{display:flex;align-items:flex-start;gap:6px}
+.tl-line-p{display:flex;flex-direction:column;align-items:center;width:12px}
+.tl-dot-p{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.tl-con-p{width:2px;height:18px;background:var(--border);margin-top:2px}
+.tl-txt{font-size:8.5px;padding-top:1px}
+
+/* Gauge mini */
+.gauge-mini{display:flex;justify-content:center;align-items:center}
+
+/* Sparkline mini */
+.spark-mini{width:100%;height:28px}
+
+/* KPI chip */
+.kpi-p{border-radius:7px;padding:5px 7px;text-align:center;width:100%}
+.kv-p{font-size:13px;font-weight:700}
+.kl-p{font-size:8px;color:var(--muted);margin-top:1px}
+
+/* Stars preview */
+.stars-p{display:flex;gap:1px;direction:rtl}
+.star-lit{color:#EF9F27;font-size:14px}
+.star-dim{color:#d4ccf0;font-size:14px}
+
+/* Sum badge */
+.sum-p{display:flex;flex-direction:column;align-items:center;border-radius:7px;padding:5px 8px;width:100%}
+.sum-v{font-size:16px;font-weight:700}
+.sum-l{font-size:8.5px;color:var(--muted);margin-top:1px}
+
+/* Deny preview */
+.deny-p{border-radius:6px;overflow:hidden;border:1.5px solid var(--r);width:100%}
+.deny-h-p{background:var(--r-lt);padding:3px 7px;font-size:8px;font-weight:700;color:var(--r-dk);text-transform:uppercase;letter-spacing:.3px}
+.deny-b-p{padding:4px 7px;font-size:8.5px;color:var(--r-dk);line-height:1.3}
+
+/* Color swatch */
+.swatch{width:32px;height:32px;border-radius:8px;border:0.5px solid rgba(0,0,0,.08)}
+.swatch-row{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
+
+/* Footer */
+.footer{font-size:11.5px;color:var(--muted);text-align:center}
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <div class="hd-tag">Diccionario visual · 2026</div>
+  <h1>CIGBot — Guía de símbolos</h1>
+  <p>Referencia completa de cada elemento visual: qué significa, cuándo aparece y qué color o forma lo identifica.</p>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     1. ICONOS DE SEVERIDAD
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="sec-title">1 · Iconos de severidad — íconos en alertas</div>
+  <div class="dict-grid">
+
+    <!-- ▲▲ Crítico -->
+    <div class="dict-row">
+      <div class="prev">
+        <div class="ai-prev" style="background:var(--r-lt)">
+          <div class="ai-ic-p ic-r" style="background:#F7C1C1;color:var(--r-dk);font-size:11px">▲▲</div>
+          <div class="ai-text"><div class="ai-t-p" style="color:var(--navy)">Stock crítico</div><div class="ai-s-p">2 bajo mínimo</div></div>
+          <div class="ai-v-p" style="color:var(--r-dk)">2</div>
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">▲▲ Doble triángulo — Crítico</div>
+        <div class="def-desc">Dos triángulos rojos. Situación que requiere acción inmediata: stock bajo mínimo, pedido bloqueado. Fondo de fila rojo claro (#FCEBEB), ícono rosa (#F7C1C1), valor en rojo oscuro.</div>
+        <div class="def-code">
+          <span class="tag tag-r">fondo #FCEBEB</span>
+          <span class="tag tag-r">ícono #F7C1C1</span>
+          <span class="tag tag-r">valor #791F1F</span>
+          <span class="tag tag-n">nivel: crítico</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ▲ Atención -->
+    <div class="dict-row">
+      <div class="prev">
+        <div class="ai-prev" style="background:var(--a-lt)">
+          <div class="ai-ic-p" style="background:#FAC775;color:var(--a-dk);font-size:13px">▲</div>
+          <div class="ai-text"><div class="ai-t-p" style="color:var(--navy)">Créditos mora</div><div class="ai-s-p">13 casos</div></div>
+          <div class="ai-v-p" style="color:var(--a-dk)">13</div>
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">▲ Triángulo simple — Atención</div>
+        <div class="def-desc">Un triángulo ámbar. Situación que merece seguimiento pero no es urgente: mora en créditos, meta en riesgo. Fondo ámbar claro (#FAEEDA), ícono dorado (#FAC775), valor en marrón oscuro.</div>
+        <div class="def-code">
+          <span class="tag tag-a">fondo #FAEEDA</span>
+          <span class="tag tag-a">ícono #FAC775</span>
+          <span class="tag tag-a">valor #854F0B</span>
+          <span class="tag tag-n">nivel: atención</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ◑ Parcial -->
+    <div class="dict-row">
+      <div class="prev">
+        <div class="ai-prev" style="background:var(--a-lt)">
+          <div class="ai-ic-p" style="background:#FAC775;color:var(--a-dk);font-size:14px">◑</div>
+          <div class="ai-text"><div class="ai-t-p" style="color:var(--navy)">Meta diciembre</div><div class="ai-s-p">76% completada</div></div>
+          <div class="ai-v-p" style="color:var(--a-dk)">76%</div>
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">◑ Círculo partido — Parcial / En progreso</div>
+        <div class="def-desc">Semicírculo ámbar. Indica avance parcial en metas o procesos que aún no alcanzan el umbral verde. Mismo esquema de color que atención, se diferencia por la forma del ícono.</div>
+        <div class="def-code">
+          <span class="tag tag-a">fondo #FAEEDA</span>
+          <span class="tag tag-a">ícono #FAC775</span>
+          <span class="tag tag-n">nivel: en progreso</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✓ Normal -->
+    <div class="dict-row">
+      <div class="prev">
+        <div class="ai-prev" style="background:var(--g-lt)">
+          <div class="ai-ic-p" style="background:#C0DD97;color:var(--g-dk);font-size:13px">✓</div>
+          <div class="ai-text"><div class="ai-t-p" style="color:var(--navy)">Pedidos tránsito</div><div class="ai-s-p">Todo normal</div></div>
+          <div class="ai-v-p" style="color:var(--g-dk)">12</div>
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">✓ Check — Normal / OK</div>
+        <div class="def-desc">Marca de verificación verde. Módulo operando dentro de parámetros. Fondo verde claro (#EAF3DE), ícono verde medio (#C0DD97), valor en verde oscuro. No requiere acción.</div>
+        <div class="def-code">
+          <span class="tag tag-g">fondo #EAF3DE</span>
+          <span class="tag tag-g">ícono #C0DD97</span>
+          <span class="tag tag-g">valor #27500A</span>
+          <span class="tag tag-n">nivel: ok</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     2. CHIPS DE LA BARRA DE ALERTAS
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="sec-title">2 · Chips — barra de alertas superior (siempre visible)</div>
+  <div class="dict-grid">
+
+    <!-- Chip crítico -->
+    <div class="dict-row">
+      <div class="prev">
+        <div class="chip-p" style="background:#2e0d0d;color:#F09595">
+          <div class="dot-p" style="background:#E24B4A"></div>2 críticas
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">Chip rojo — Alertas críticas</div>
+        <div class="def-desc">Aparece en la barra oscura superior del chat. Punto rojo vivo + conteo. Fondo muy oscuro (#2e0d0d) para contraste sobre navy. El número se actualiza en tiempo real.</div>
+        <div class="def-code">
+          <span class="tag tag-r">fondo #2e0d0d</span>
+          <span class="tag tag-r">texto #F09595</span>
+          <span class="tag tag-r">punto #E24B4A</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chip atención -->
+    <div class="dict-row">
+      <div class="prev">
+        <div class="chip-p" style="background:#2e1e0a;color:#FAC775">
+          <div class="dot-p" style="background:#EF9F27"></div>2 atención
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">Chip ámbar — Alertas de atención</div>
+        <div class="def-desc">Mismo formato que el chip rojo pero en tono ámbar oscuro. Indica módulos que requieren seguimiento. Fondo #2e1e0a sobre la barra navy del chat.</div>
+        <div class="def-code">
+          <span class="tag tag-a">fondo #2e1e0a</span>
+          <span class="tag tag-a">texto #FAC775</span>
+          <span class="tag tag-a">punto #EF9F27</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chip ok -->
+    <div class="dict-row">
+      <div class="prev">
+        <div class="chip-p" style="background:#0d2e1f;color:#5DCAA5">
+          <div class="dot-p" style="background:#1D9E75"></div>ok
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">Chip verde — Estado OK</div>
+        <div class="def-desc">Sin número, solo la palabra "ok". Confirma que el módulo restante opera con normalidad. Fondo verde muy oscuro (#0d2e1f). Si todos los módulos son ok, solo aparece este chip.</div>
+        <div class="def-code">
+          <span class="tag tag-g">fondo #0d2e1f</span>
+          <span class="tag tag-g">texto #5DCAA5</span>
+          <span class="tag tag-g">punto #1D9E75</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de estado -->
+    <div class="dict-row">
+      <div class="prev" style="flex-direction:column;gap:4px">
+        <div class="sbar-p" style="background:linear-gradient(90deg,#E24B4A 0%,#EF9F27 45%,#1D9E75 78%)"></div>
+        <div style="font-size:8px;color:var(--muted);text-align:center">barra gradiente</div>
+      </div>
+      <div class="def">
+        <div class="def-name">Barra de estado gradiente</div>
+        <div class="def-desc">Franja de 4px en la parte superior de la tarjeta de alertas. El gradiente rojo→ámbar→verde resume visualmente la distribución de severidades de un vistazo, antes de leer el contenido.</div>
+        <div class="def-code">
+          <span class="tag tag-r">inicio #E24B4A</span>
+          <span class="tag tag-a">medio #EF9F27</span>
+          <span class="tag tag-g">fin #1D9E75</span>
+          <span class="tag tag-n">altura 4px</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     3. CABECERAS DE TARJETA
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="sec-title">3 · Cabeceras de tarjeta — identifican el módulo y tipo de dato</div>
+  <div class="dict-grid">
+
+    <!-- Header ERP -->
+    <div class="dict-row">
+      <div class="prev">
+        <div style="width:100%">
+          <div class="ch-p" style="background:var(--p-lt)">
+            <div class="ct-p"><div class="cd-p" style="background:var(--p)"></div><span style="color:var(--p-dk)">ERP · Ventas</span></div>
+            <span style="font-size:8px;color:var(--p-md)">Nov 2024</span>
+          </div>
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">Header morado — Módulo ERP</div>
+        <div class="def-desc">Fondo lila claro (#EEEDFE). Punto morado + etiqueta "ERP · módulo" en morado oscuro. La etiqueta derecha indica el periodo o timestamp. Se usa para datos operativos: ventas, inventario, metas, crédito.</div>
+        <div class="def-code">
+          <span class="tag tag-p">fondo #EEEDFE</span>
+          <span class="tag tag-p">punto #6C3DE8</span>
+          <span class="tag tag-p">texto #3C3489</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header KMS -->
+    <div class="dict-row">
+      <div class="prev">
+        <div style="width:100%">
+          <div class="ch-p" style="background:#EEEDFE">
+            <div class="ct-p"><div class="cd-p" style="background:#533AB7"></div><span style="color:var(--p-dk)">KMS · POL-001</span></div>
+            <span style="font-size:8px;color:#7F77DD">vigente</span>
+          </div>
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">Header índigo — Módulo KMS</div>
+        <div class="def-desc">Mismo fondo lila que ERP, pero el punto es índigo más oscuro (#533AB7) para distinguirlo. Etiqueta muestra "KMS · COD-REF". A la derecha: estado del documento (vigente, derogado, en revisión).</div>
+        <div class="def-code">
+          <span class="tag tag-p">fondo #EEEDFE</span>
+          <span class="tag tag-p">punto #533AB7</span>
+          <span class="tag tag-n">tipo: política</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header alerta -->
+    <div class="dict-row">
+      <div class="prev">
+        <div style="width:100%">
+          <div class="ch-p" style="background:var(--p-lt)">
+            <div class="ct-p"><div class="cd-p" style="background:var(--p)"></div><span style="color:var(--p-dk)">Panel de alertas</span></div>
+            <span style="font-size:8px;color:var(--p-md)">Ahora</span>
+          </div>
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">Header morado · "Ahora" — Panel de alertas</div>
+        <div class="def-desc">Igual al header ERP pero sin módulo específico ("Panel de alertas"). El timestamp "Ahora" indica que los datos son en tiempo real, no históricos. Siempre encabeza la primera tarjeta del día.</div>
+        <div class="def-code">
+          <span class="tag tag-p">fondo #EEEDFE</span>
+          <span class="tag tag-n">timestamp: Ahora</span>
+          <span class="tag tag-n">tipo: multi-módulo</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header bloqueo -->
+    <div class="dict-row">
+      <div class="prev">
+        <div style="width:100%">
+          <div class="ch-p" style="background:var(--r-lt)">
+            <div class="ct-p"><div class="cd-p" style="background:var(--r)"></div><span style="color:var(--r-dk)">ERP · PED-8821</span></div>
+            <span style="font-size:8px;color:var(--r)">Bloqueado</span>
+          </div>
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">Header rojo — Acceso denegado / Bloqueado</div>
+        <div class="def-desc">Fondo rojo claro (#FCEBEB), punto rojo, texto en rojo oscuro. La etiqueta derecha muestra "Bloqueado" o el código de error. Además, el borde de toda la tarjeta cambia a rojo (#E24B4A).</div>
+        <div class="def-code">
+          <span class="tag tag-r">fondo #FCEBEB</span>
+          <span class="tag tag-r">borde tarjeta #E24B4A</span>
+          <span class="tag tag-n">tipo: bloqueo</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     4. BURBUJAS DE CHAT
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="sec-title">4 · Burbujas de chat — mensajes del usuario y del bot</div>
+  <div class="dict-grid">
+
+    <!-- Burbuja usuario -->
+    <div class="dict-row">
+      <div class="prev" style="flex-direction:column;align-items:flex-end;gap:3px">
+        <div class="bub-user">ventas hoy <span class="tick-p">✓✓</span></div>
+      </div>
+      <div class="def">
+        <div class="def-name">Burbuja morada — Mensaje del usuario</div>
+        <div class="def-desc">Fondo morado (#6C3DE8), texto blanco. Esquinas: 16/16/3/16px (esquina inferior derecha recta, indica "salida"). Los dobles ticks azul claro (✓✓) confirman que el bot recibió y procesó el mensaje.</div>
+        <div class="def-code">
+          <span class="tag tag-p">fondo #6C3DE8</span>
+          <span class="tag tag-n">radio 16 16 3 16</span>
+          <span class="tag tag-n">✓✓ = procesado</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Burbuja bot -->
+    <div class="dict-row">
+      <div class="prev" style="flex-direction:column;align-items:flex-start;gap:3px">
+        <div class="bub-bot">Aquí tu resultado de ventas…</div>
+      </div>
+      <div class="def">
+        <div class="def-name">Tarjeta blanca — Respuesta del bot</div>
+        <div class="def-desc">Fondo blanco, borde lila claro. Esquinas: 3/16/16/16px (esquina superior izquierda recta, indica "entrada"). Las respuestas complejas usan tarjetas estructuradas en lugar de texto libre.</div>
+        <div class="def-code">
+          <span class="tag tag-n">fondo #FFFFFF</span>
+          <span class="tag tag-p">borde #e8e4f8</span>
+          <span class="tag tag-n">radio 3 16 16 16</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tick simple -->
+    <div class="dict-row">
+      <div class="prev" style="flex-direction:column;align-items:flex-end;gap:6px">
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end">
+          <div class="bub-user" style="font-size:8.5px;padding:4px 7px">consulta… <span style="font-size:7px;color:#d4c8ff">✓</span></div>
+          <div class="bub-user" style="font-size:8.5px;padding:4px 7px">consulta… <span style="font-size:7px;color:#a8d5ff">✓✓</span></div>
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">✓ vs ✓✓ — Estado de entrega</div>
+        <div class="def-desc">Un tick gris-lila (✓) significa que el mensaje fue enviado pero el bot aún no lo procesó. Dos ticks azul claro (✓✓) confirman que el bot recibió, procesó y está generando la respuesta.</div>
+        <div class="def-code">
+          <span class="tag tag-n">✓ enviado #d4c8ff</span>
+          <span class="tag tag-b">✓✓ procesado #a8d5ff</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Separador de fecha -->
+    <div class="dict-row">
+      <div class="prev">
+        <div style="background:rgba(108,61,232,.15);color:var(--p-dk);font-size:9px;padding:3px 10px;border-radius:12px;font-weight:500">Hoy</div>
+      </div>
+      <div class="def">
+        <div class="def-name">Píldora central — Separador de fecha</div>
+        <div class="def-desc">Etiqueta centrada en el chat. Fondo morado translúcido (15% opacidad), texto morado oscuro. Aparece automáticamente al inicio de cada nueva sesión o al cruzar la medianoche. Nunca interactiva.</div>
+        <div class="def-code">
+          <span class="tag tag-p">fondo rgba(108,61,232,.15)</span>
+          <span class="tag tag-p">texto #3C3489</span>
+          <span class="tag tag-n">solo lectura</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     5. GRÁFICOS Y MÉTRICAS
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="sec-title">5 · Gráficos y métricas — dentro de tarjetas de respuesta</div>
+  <div class="dict-grid">
+
+    <!-- Barra proporcional -->
+    <div class="dict-row">
+      <div class="prev" style="flex-direction:column;gap:4px;width:100%;padding:10px">
+        <div style="display:flex;align-items:center;gap:5px;width:100%">
+          <span style="font-size:8px;color:#444;width:36px;flex-shrink:0">Online</span>
+          <div class="bar-track-p" style="flex:1"><div class="bar-fill-p" style="width:72%;background:var(--p)"></div></div>
+          <span style="font-size:9px;font-weight:600;color:var(--navy);width:24px;text-align:right">72%</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;width:100%">
+          <span style="font-size:8px;color:#444;width:36px;flex-shrink:0">B2B</span>
+          <div class="bar-track-p" style="flex:1"><div class="bar-fill-p" style="width:44%;background:var(--p-md)"></div></div>
+          <span style="font-size:9px;font-weight:600;color:var(--navy);width:24px;text-align:right">44%</span>
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">Barra proporcional horizontal</div>
+        <div class="def-desc">Muestra distribución porcentual de categorías (canales de venta, tramos de descuento, etc.). Pista gris-lila (#EEEDFE), relleno en tonos morados. La anchura del relleno es proporcional al valor.</div>
+        <div class="def-code">
+          <span class="tag tag-p">pista #EEEDFE</span>
+          <span class="tag tag-p">relleno #6C3DE8 → #9F77F5</span>
+          <span class="tag tag-n">altura 13px</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delta de tendencia -->
+    <div class="dict-row">
+      <div class="prev" style="flex-direction:column;gap:5px;align-items:center">
+        <div style="font-size:20px;font-weight:700;color:var(--navy);letter-spacing:-1px">$84.2M</div>
+        <div style="display:flex;gap:4px;align-items:center">
+          <span style="background:var(--g-lt);color:var(--g-dk);font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px">▲ 12%</span>
+          <span style="background:var(--r-lt);color:var(--r-dk);font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px">▼ 5%</span>
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">Número grande + Delta de tendencia</div>
+        <div class="def-desc">El valor principal ocupa toda la línea en 26px bold. Debajo, una píldora con triángulo ▲ verde (crecimiento) o ▼ rojo (caída) + porcentaje de variación respecto al periodo anterior.</div>
+        <div class="def-code">
+          <span class="tag tag-g">▲ crecimiento #EAF3DE / #27500A</span>
+          <span class="tag tag-r">▼ caída #FCEBEB / #791F1F</span>
+          <span class="tag tag-n">valor: 26px bold</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sparkline -->
+    <div class="dict-row">
+      <div class="prev" style="flex-direction:column;gap:2px;width:100%;padding:8px 10px">
+        <svg class="spark-mini" viewBox="0 0 100 28" preserveAspectRatio="none" style="width:100%;height:28px">
+          <defs><linearGradient id="sg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6C3DE8" stop-opacity=".15"/><stop offset="100%" stop-color="#6C3DE8" stop-opacity="0"/></linearGradient></defs>
+          <path d="M0,22 L17,19 L33,15 L50,17 L67,9 L83,5 L100,7 L100,28 L0,28Z" fill="url(#sg2)"/>
+          <path d="M0,22 L17,19 L33,15 L50,17 L67,9 L83,5 L100,7" fill="none" stroke="#6C3DE8" stroke-width="1.5"/>
+          <circle cx="83" cy="5" r="2.5" fill="#6C3DE8"/>
+        </svg>
+        <div style="display:flex;justify-content:space-between;font-size:7px;color:#aaa"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+      </div>
+      <div class="def">
+        <div class="def-name">Sparkline — Línea de tendencia</div>
+        <div class="def-desc">Gráfico de línea compacto para mostrar evolución temporal. Área bajo la curva en morado translúcido. El punto más alto lleva un círculo marcador. Eje X muestra días abreviados (L M X J V S D).</div>
+        <div class="def-code">
+          <span class="tag tag-p">línea #6C3DE8</span>
+          <span class="tag tag-p">área rgba(108,61,232,.15)</span>
+          <span class="tag tag-p">marcador = máximo</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gauge donut -->
+    <div class="dict-row">
+      <div class="prev">
+        <svg width="72" height="48" viewBox="0 0 72 48">
+          <path d="M8,44 A34,34 0 0,1 64,44" fill="none" stroke="#EAF3DE" stroke-width="8" stroke-linecap="round"/>
+          <path d="M8,44 A34,34 0 0,1 64,44" fill="none" stroke="#1D9E75" stroke-width="8" stroke-linecap="round" stroke-dasharray="80 106" stroke-dashoffset="0"/>
+          <text x="36" y="38" text-anchor="middle" font-size="11" font-weight="700" fill="#1a1a2e" font-family="DM Sans,sans-serif">76%</text>
+        </svg>
+      </div>
+      <div class="def">
+        <div class="def-name">Gauge donut — % de cumplimiento</div>
+        <div class="def-desc">Arco semicircular. Pista gris-verde (#EAF3DE), relleno según nivel: verde ≥80%, ámbar 50–79%, rojo &lt;50%. El porcentaje se muestra en el centro. Debajo: filas de contexto (logrado, días, ritmo).</div>
+        <div class="def-code">
+          <span class="tag tag-g">≥80% verde #1D9E75</span>
+          <span class="tag tag-a">50–79% ámbar #EF9F27</span>
+          <span class="tag tag-r">&lt;50% rojo #E24B4A</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI chip -->
+    <div class="dict-row">
+      <div class="prev" style="flex-direction:column;gap:5px;width:100%;padding:8px 10px">
+        <div class="kpi-p" style="background:var(--p-lt)"><div class="kv-p" style="color:var(--p-dk)">$84.2M</div><div class="kl-p">Total acum.</div></div>
+        <div class="kpi-p" style="background:var(--g-lt)"><div class="kv-p" style="color:var(--g-dk)">+12.4%</div><div class="kl-p">vs sem. ant.</div></div>
+      </div>
+      <div class="def">
+        <div class="def-name">Chip KPI — Métrica de resumen</div>
+        <div class="def-desc">Caja de métrica compacta. Valor en 14px bold arriba, etiqueta descriptiva en 8px abajo. Se usan en grupos de 3 antes de una sparkline. El color del fondo indica si el dato es neutro (morado), positivo (verde) o de alerta (ámbar).</div>
+        <div class="def-code">
+          <span class="tag tag-p">neutro #EEEDFE</span>
+          <span class="tag tag-g">positivo #EAF3DE</span>
+          <span class="tag tag-a">alerta #FAEEDA</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Suma resumen -->
+    <div class="dict-row">
+      <div class="prev" style="gap:4px;width:100%;padding:8px 10px">
+        <div class="sum-p" style="background:var(--r-lt)"><div class="sum-v" style="color:var(--r-dk)">2</div><div class="sum-l">Crítico</div></div>
+        <div class="sum-p" style="background:var(--a-lt)"><div class="sum-v" style="color:var(--a-dk)">2</div><div class="sum-l">Atención</div></div>
+        <div class="sum-p" style="background:var(--g-lt)"><div class="sum-v" style="color:var(--g-dk)">1</div><div class="sum-l">Normal</div></div>
+      </div>
+      <div class="def">
+        <div class="def-name">Fila de suma — Resumen de alertas</div>
+        <div class="def-desc">Tres celdas al pie del panel de alertas. Cada una agrupa el conteo total por nivel de severidad. Siempre van en orden: Crítico (rojo) · Atención (ámbar) · Normal (verde), con número en bold grande.</div>
+        <div class="def-code">
+          <span class="tag tag-r">crítico #FCEBEB</span>
+          <span class="tag tag-a">atención #FAEEDA</span>
+          <span class="tag tag-g">normal #EAF3DE</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     6. TIMELINE DE TRAZABILIDAD
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="sec-title">6 · Timeline — trazabilidad de eventos y bloqueos</div>
+  <div class="dict-grid">
+
+    <!-- Dot morado (inicio) -->
+    <div class="dict-row">
+      <div class="prev">
+        <div class="tl-prev">
+          <div class="tl-line-p"><div class="tl-dot-p" style="background:var(--p)"></div><div class="tl-con-p"></div></div>
+          <div class="tl-txt"><div style="font-size:8px;color:var(--muted)">08:41 · Sistema</div><div style="font-size:9.5px;font-weight:600;color:var(--p-dk)">PED-8821 creado</div></div>
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">Punto morado — Evento de creación</div>
+        <div class="def-desc">Primer nodo del timeline. Punto morado = el sistema registró el inicio del proceso (pedido creado, solicitud generada). La línea vertical gris que cuelga conecta con el siguiente evento.</div>
+        <div class="def-code">
+          <span class="tag tag-p">punto #6C3DE8</span>
+          <span class="tag tag-n">conector #e8e4f8</span>
+          <span class="tag tag-n">tipo: inicio</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dot azul (proceso) -->
+    <div class="dict-row">
+      <div class="prev">
+        <div class="tl-prev">
+          <div class="tl-line-p"><div class="tl-dot-p" style="background:var(--b)"></div><div class="tl-con-p"></div></div>
+          <div class="tl-txt"><div style="font-size:8px;color:var(--muted)">08:41 · Motor</div><div style="font-size:9.5px;font-weight:600;color:var(--b-dk)">Validación crédito</div></div>
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">Punto azul — Proceso / Validación</div>
+        <div class="def-desc">Nodo de un paso de procesamiento interno (validación, consulta, cálculo). Punto azul (#378ADD), texto en azul oscuro. Indica que el sistema ejecutó una regla o consulta automática sin fallo.</div>
+        <div class="def-code">
+          <span class="tag tag-b">punto #378ADD</span>
+          <span class="tag tag-b">texto #0C447C</span>
+          <span class="tag tag-n">tipo: proceso</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dot rojo (fallo) -->
+    <div class="dict-row">
+      <div class="prev">
+        <div class="tl-prev">
+          <div class="tl-line-p"><div class="tl-dot-p" style="background:var(--r)"></div><div class="tl-con-p"></div></div>
+          <div class="tl-txt"><div style="font-size:8px;color:var(--muted)">08:41 · Regla</div><div style="font-size:9.5px;font-weight:600;color:var(--r-dk)">Crédito insuf.</div></div>
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">Punto rojo — Fallo / Regla activada</div>
+        <div class="def-desc">Nodo de error. Punto rojo (#E24B4A), texto en rojo oscuro. Indica el momento exacto en que una regla de negocio no se cumplió y detuvo el flujo. Siempre incluye el código de la regla (ej. CAR-04 §2.3).</div>
+        <div class="def-code">
+          <span class="tag tag-r">punto #E24B4A</span>
+          <span class="tag tag-r">texto #791F1F</span>
+          <span class="tag tag-n">tipo: fallo</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dot ámbar (acción pendiente) -->
+    <div class="dict-row">
+      <div class="prev">
+        <div class="tl-prev">
+          <div class="tl-line-p"><div class="tl-dot-p" style="background:var(--a)"></div></div>
+          <div class="tl-txt"><div style="font-size:8px;color:var(--muted)">08:42 · Notif.</div><div style="font-size:9.5px;font-weight:600;color:var(--a-dk)">Escalado Gerente</div></div>
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">Punto ámbar — Acción pendiente / Escalado</div>
+        <div class="def-desc">Último nodo del timeline. Sin línea conectora debajo (es el final). Punto ámbar = hay una acción humana pendiente (aprobación, ajuste, notificación). El proceso continúa fuera del sistema automático.</div>
+        <div class="def-code">
+          <span class="tag tag-a">punto #EF9F27</span>
+          <span class="tag tag-a">texto #854F0B</span>
+          <span class="tag tag-n">tipo: pendiente</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Caja causa raíz -->
+    <div class="dict-row">
+      <div class="prev" style="padding:8px 10px">
+        <div style="background:var(--r-lt);border-radius:6px;padding:5px 7px;font-size:8.5px;color:var(--r-dk);line-height:1.4;width:100%">
+          <strong>Causa raíz:</strong> Saldo $3.2M · Mínimo $5.0M · CAR-04 §2.3
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">Caja de causa raíz</div>
+        <div class="def-desc">Bloque rojo al pie del timeline de trazabilidad. Resume en una sola línea: valor actual, valor requerido y la política que disparó el bloqueo. Es el único elemento que combina datos numéricos con referencia normativa.</div>
+        <div class="def-code">
+          <span class="tag tag-r">fondo #FCEBEB</span>
+          <span class="tag tag-r">texto #791F1F</span>
+          <span class="tag tag-n">formato: dato · dato · POL §n</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cita KMS -->
+    <div class="dict-row">
+      <div class="prev" style="padding:8px 10px">
+        <div style="border-left:3px solid var(--p);padding:5px 8px;background:var(--p-lt);border-radius:0 7px 7px 0;font-size:8.5px;color:var(--p-dk);font-style:italic;line-height:1.4;width:100%">
+          Requiere aprobación del gerente de zona antes de aplicar.
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">Bloque de cita KMS</div>
+        <div class="def-desc">Caja con borde izquierdo morado grueso (3px) sobre fondo lila claro. Se usa para citar literalmente el texto de una política o manual. El estilo itálico diferencia la cita del texto del bot.</div>
+        <div class="def-code">
+          <span class="tag tag-p">borde-izq 3px #6C3DE8</span>
+          <span class="tag tag-p">fondo #EEEDFE</span>
+          <span class="tag tag-p">texto itálico #3C3489</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     7. SISTEMA DE CALIFICACIÓN
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="sec-title">7 · Sistema de calificación — pie de cada tarjeta</div>
+  <div class="dict-grid">
+
+    <!-- Estrellas vacías -->
+    <div class="dict-row">
+      <div class="prev" style="flex-direction:column;gap:6px">
+        <div style="display:flex;gap:2px">
+          <span class="star-dim">★</span><span class="star-dim">★</span><span class="star-dim">★</span><span class="star-dim">★</span><span class="star-dim">★</span>
+        </div>
+        <div style="font-size:8px;color:var(--muted)">sin calificar</div>
+      </div>
+      <div class="def">
+        <div class="def-name">★★★★★ Sin calificar — estado inicial</div>
+        <div class="def-desc">Las 5 estrellas aparecen en lila muy claro (#d4ccf0) cuando la tarjeta aún no ha sido calificada. El usuario puede hacer hover para previsualizar cuántas estrelas va a elegir (efecto acumulativo de derecha a izquierda).</div>
+        <div class="def-code">
+          <span class="tag tag-n">color vacío #d4ccf0</span>
+          <span class="tag tag-n">dirección: rtl</span>
+          <span class="tag tag-n">hover: acumulativo</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estrellas llenas -->
+    <div class="dict-row">
+      <div class="prev" style="flex-direction:column;gap:6px">
+        <div style="display:flex;gap:2px">
+          <span class="star-lit">★</span><span class="star-lit">★</span><span class="star-lit">★</span><span class="star-dim">★</span><span class="star-dim">★</span>
+        </div>
+        <div style="font-size:8px;color:var(--muted)">3 de 5 seleccionado</div>
+      </div>
+      <div class="def">
+        <div class="def-name">★★★☆☆ Calificado — estrellas activas</div>
+        <div class="def-desc">Las estrellas seleccionadas y las anteriores se iluminan en ámbar (#EF9F27). El clic es permanente dentro de la sesión. Cada tarjeta tiene su propio grupo de estrellas independiente (name="fb1", "fb2"…).</div>
+        <div class="def-code">
+          <span class="tag tag-a">color activo #EF9F27</span>
+          <span class="tag tag-n">input: radio button oculto</span>
+          <span class="tag tag-n">log: kpi_logs.db</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feedback footer normal -->
+    <div class="dict-row">
+      <div class="prev" style="padding:6px 8px">
+        <div style="display:flex;align-items:center;gap:5px;background:var(--p-xlt);padding:5px 8px;border-top:1px solid var(--p-lt);border-radius:6px;width:100%">
+          <span style="font-size:8.5px;color:var(--muted);flex:1">¿Qué tan útil fue?</span>
+          <div style="display:flex;gap:1px">
+            <span class="star-dim" style="font-size:12px">★</span><span class="star-dim" style="font-size:12px">★</span><span class="star-dim" style="font-size:12px">★</span><span class="star-dim" style="font-size:12px">★</span><span class="star-dim" style="font-size:12px">★</span>
+          </div>
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">Footer de feedback — Tarjeta normal</div>
+        <div class="def-desc">Franja al pie de cada tarjeta ERP/KMS. Fondo lila muy claro (#faf9ff), borde superior lila claro. Texto "¿Qué tan útil fue?" a la izquierda y las 5 estrellas a la derecha. Altura fija ~32px.</div>
+        <div class="def-code">
+          <span class="tag tag-p">fondo #faf9ff</span>
+          <span class="tag tag-p">borde-top #EEEDFE</span>
+          <span class="tag tag-n">altura ~32px</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feedback footer bloqueo -->
+    <div class="dict-row">
+      <div class="prev" style="padding:6px 8px">
+        <div style="display:flex;align-items:center;gap:5px;background:var(--r-lt);padding:5px 8px;border-top:1px solid var(--r-lt);border-radius:6px;width:100%">
+          <span style="font-size:8.5px;color:var(--r-dk);flex:1">¿Qué tan útil fue?</span>
+          <div style="display:flex;gap:1px">
+            <span class="star-dim" style="font-size:12px">★</span><span class="star-dim" style="font-size:12px">★</span><span class="star-dim" style="font-size:12px">★</span><span class="star-dim" style="font-size:12px">★</span><span class="star-dim" style="font-size:12px">★</span>
+          </div>
+        </div>
+      </div>
+      <div class="def">
+        <div class="def-name">Footer de feedback — Tarjeta de bloqueo</div>
+        <div class="def-desc">Cuando la tarjeta es de acceso denegado o bloqueo, el footer hereda el color rojo claro (#FCEBEB) y el texto cambia a rojo oscuro (#791F1F). Las estrellas siguen siendo ámbar al activarse.</div>
+        <div class="def-code">
+          <span class="tag tag-r">fondo #FCEBEB</span>
+          <span class="tag tag-r">texto #791F1F</span>
+          <span class="tag tag-a">estrellas activas #EF9F27</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     8. PALETA DE COLORES COMPLETA
+════════════════════════════════════════════ -->
+<div class="section">
+  <div class="sec-title">8 · Paleta de colores — valores hexadecimales de referencia</div>
+
+  <div style="background:var(--white);border-radius:16px;border:0.5px solid var(--border);padding:20px 24px;display:flex;flex-direction:column;gap:18px">
+
+    <!-- Morado -->
+    <div style="display:flex;align-items:center;gap:16px">
+      <div style="width:60px;font-size:11px;font-weight:600;color:var(--navy)">Morado</div>
+      <div class="swatch-row">
+        <div style="text-align:center"><div class="swatch" style="background:#EEEDFE"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">lt #EEEDFE</div></div>
+        <div style="text-align:center"><div class="swatch" style="background:#9F77F5"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">md #9F77F5</div></div>
+        <div style="text-align:center"><div class="swatch" style="background:#6C3DE8"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">base #6C3DE8</div></div>
+        <div style="text-align:center"><div class="swatch" style="background:#533AB7"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">kms #533AB7</div></div>
+        <div style="text-align:center"><div class="swatch" style="background:#3C3489"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">dk #3C3489</div></div>
+      </div>
+      <div style="font-size:10.5px;color:var(--muted);flex:1">ERP · KMS · burbujas usuario · cabeceras · borde de tarjeta</div>
+    </div>
+
+    <!-- Verde -->
+    <div style="display:flex;align-items:center;gap:16px">
+      <div style="width:60px;font-size:11px;font-weight:600;color:var(--navy)">Verde</div>
+      <div class="swatch-row">
+        <div style="text-align:center"><div class="swatch" style="background:#EAF3DE"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">lt #EAF3DE</div></div>
+        <div style="text-align:center"><div class="swatch" style="background:#C0DD97"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">md #C0DD97</div></div>
+        <div style="text-align:center"><div class="swatch" style="background:#1D9E75"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">base #1D9E75</div></div>
+        <div style="text-align:center"><div class="swatch" style="background:#27500A"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">dk #27500A</div></div>
+      </div>
+      <div style="font-size:10.5px;color:var(--muted);flex:1">Normal · OK · gauge ≥80% · delta positivo · sparkline B2B · estrella activa (–)</div>
+    </div>
+
+    <!-- Rojo -->
+    <div style="display:flex;align-items:center;gap:16px">
+      <div style="width:60px;font-size:11px;font-weight:600;color:var(--navy)">Rojo</div>
+      <div class="swatch-row">
+        <div style="text-align:center"><div class="swatch" style="background:#FCEBEB"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">lt #FCEBEB</div></div>
+        <div style="text-align:center"><div class="swatch" style="background:#F7C1C1"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">md #F7C1C1</div></div>
+        <div style="text-align:center"><div class="swatch" style="background:#E24B4A"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">base #E24B4A</div></div>
+        <div style="text-align:center"><div class="swatch" style="background:#791F1F"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">dk #791F1F</div></div>
+      </div>
+      <div style="font-size:10.5px;color:var(--muted);flex:1">Crítico · bloqueo · acceso denegado · gauge &lt;50% · delta negativo · timeline fallo</div>
+    </div>
+
+    <!-- Ámbar -->
+    <div style="display:flex;align-items:center;gap:16px">
+      <div style="width:60px;font-size:11px;font-weight:600;color:var(--navy)">Ámbar</div>
+      <div class="swatch-row">
+        <div style="text-align:center"><div class="swatch" style="background:#FAEEDA"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">lt #FAEEDA</div></div>
+        <div style="text-align:center"><div class="swatch" style="background:#FAC775"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">md #FAC775</div></div>
+        <div style="text-align:center"><div class="swatch" style="background:#EF9F27"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">base #EF9F27</div></div>
+        <div style="text-align:center"><div class="swatch" style="background:#854F0B"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">dk #854F0B</div></div>
+      </div>
+      <div style="font-size:10.5px;color:var(--muted);flex:1">Atención · parcial ◑ · gauge 50–79% · sparkline presencial · estrellas activas · timeline pendiente</div>
+    </div>
+
+    <!-- Azul -->
+    <div style="display:flex;align-items:center;gap:16px">
+      <div style="width:60px;font-size:11px;font-weight:600;color:var(--navy)">Azul</div>
+      <div class="swatch-row">
+        <div style="text-align:center"><div class="swatch" style="background:#E6F1FB"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">lt #E6F1FB</div></div>
+        <div style="text-align:center"><div class="swatch" style="background:#378ADD"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">base #378ADD</div></div>
+        <div style="text-align:center"><div class="swatch" style="background:#0C447C"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">dk #0C447C</div></div>
+      </div>
+      <div style="font-size:10.5px;color:var(--muted);flex:1">Timeline proceso/validación · ticks de entrega (✓✓) · separadores informativos</div>
+    </div>
+
+    <!-- Navy / Gris -->
+    <div style="display:flex;align-items:center;gap:16px">
+      <div style="width:60px;font-size:11px;font-weight:600;color:var(--navy)">Navy / Gris</div>
+      <div class="swatch-row">
+        <div style="text-align:center"><div class="swatch" style="background:#1a1a2e"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">navy #1a1a2e</div></div>
+        <div style="text-align:center"><div class="swatch" style="background:#e8e4f8"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">borde #e8e4f8</div></div>
+        <div style="text-align:center"><div class="swatch" style="background:#f3f0ff"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">chat #f3f0ff</div></div>
+        <div style="text-align:center"><div class="swatch" style="background:#f0eefa"></div><div style="font-size:8px;color:var(--muted);margin-top:2px">bg #f0eefa</div></div>
+      </div>
+      <div style="font-size:10.5px;color:var(--muted);flex:1">Marco del teléfono · barra de alertas · fondo del chat · fondo de página · conectores del timeline</div>
+    </div>
+
+  </div>
+</div>
+
+
+<div class="footer">CIGBot · Diccionario visual de símbolos · Sistemas Inteligentes 2026</div>
+
+</body>
+</html>

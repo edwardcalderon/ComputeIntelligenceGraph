@@ -7,3 +7,4 @@ export * from "./UpdateDialog";
 export * from "./ScanLine";
 export * from "./SignedOut";
 export * from "./TagBadge";
+export * from "./chat";

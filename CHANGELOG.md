@@ -1,3 +1,44 @@
+## [0.2.20](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.19...v0.2.20) (2026-03-26)
+
+### Detected changes
+- apps: 3 changed file(s)
+  - apps/dashboard/components/ChatExamplesTab.tsx
+  - apps/dashboard/components/ChatWidget.tsx
+  - apps/docs/package.json
+- packages: 24 changed file(s)
+  - packages/i18n/catalogs/dashboard/en.json
+  - packages/i18n/catalogs/dashboard/es.json
+  - packages/i18n/catalogs/dashboard/zh.json
+  - packages/ui/src/components/chat/AlertCard.tsx
+  - packages/ui/src/components/chat/AlertItem.tsx
+  - packages/ui/src/components/chat/AlertStrip.tsx
+  - packages/ui/src/components/chat/BarChartCard.tsx
+  - packages/ui/src/components/chat/CardHeader.tsx
+  - packages/ui/src/components/chat/ChatBubble.tsx
+  - packages/ui/src/components/chat/ChatCard.tsx
+  - packages/ui/src/components/chat/GaugeCard.tsx
+  - packages/ui/src/components/chat/KpiBox.tsx
+  - packages/ui/src/components/chat/Sparkline.tsx
+  - packages/ui/src/components/chat/SparklineCard.tsx
+  - packages/ui/src/components/chat/StarFeedback.tsx
+  - packages/ui/src/components/chat/StatusBar.tsx
+  - packages/ui/src/components/chat/StatusChip.tsx
+  - packages/ui/src/components/chat/SummaryBadges.tsx
+  - packages/ui/src/components/chat/TimelineCard.tsx
+  - packages/ui/src/components/chat/index.ts
+  - packages/ui/src/components/chat/reference/CIG-Bot Guia Simbolos.html
+  - packages/ui/src/components/chat/reference/CIG-Bot Visualización.html
+  - packages/ui/src/components/chat/types.ts
+  - packages/ui/src/components/index.ts
+- root: versioning.config.json
+
+
+## [0.2.20](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.19...v0.2.20) (2026-03-26)
+
+
+
+
+
 ## [0.2.19](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.18...v0.2.19) (2026-03-26)
 
 

@@ -4,6 +4,7 @@
     "apps/dashboard",
     "apps/docs",
     "apps/landing",
+    "apps/docs", 
     "apps/wizard-ui",
     "packages/agents",
     "packages/api",

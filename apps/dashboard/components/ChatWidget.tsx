@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "@cig-technology/i18n/react";
 import { getHealth, sendChatMessage, type ChatMessage, type HealthResponse } from "../lib/api";
+import { ChatExamplesTab } from "./ChatExamplesTab";
 
 const STORAGE_KEY = "cig-chat-history";
 const MAX_CHARS = 2000;
@@ -53,6 +54,7 @@ export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [activeTab, setActiveTab] = useState<"chat" | "examples">("chat");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -308,7 +310,7 @@ export function ChatWidget() {
             </button>
 
             {/* ── Header ──────────────────────────────────────────── */}
-            <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-slate-100 px-4 pb-3 pt-3 dark:border-zinc-700/40 sm:px-6 sm:pt-4">
+            <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-slate-100 px-4 pb-3 pt-3 dark:border-zinc-700/40 sm:px-6 sm:pt-4">
               <span className="sr-only">{t("chat.title")}</span>
               <div className="group relative min-w-0 max-w-full sm:max-w-[68%]">
                 <span
@@ -406,7 +408,25 @@ export function ChatWidget() {
                   </div>
                 </div>
               </div>
-              <div className="ml-auto flex items-center gap-2 self-center">
+              {/* Tab switcher */}
+              <div className="flex items-center self-center rounded-lg border border-slate-200/80 bg-slate-50 p-0.5 dark:border-zinc-700/50 dark:bg-zinc-800/40">
+                {(["chat", "examples"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={[
+                      "rounded-md px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide transition-all",
+                      activeTab === tab
+                        ? "bg-white text-slate-700 shadow-sm dark:bg-zinc-700 dark:text-zinc-100"
+                        : "text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300",
+                    ].join(" ")}
+                  >
+                    {t(tab === "chat" ? "chat.tabChat" : "chat.tabExamples")}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2 self-center">
                 {/* Expand / collapse — desktop only */}
                 <button
                   onClick={() => setIsExpanded((v) => !v)}
@@ -430,11 +450,24 @@ export function ChatWidget() {
               </div>
             </div>
 
+            {/* ── Examples tab ────────────────────────────────────── */}
+            {activeTab === "examples" && (
+              <div
+                className={[
+                  "relative z-10 overflow-hidden",
+                  isExpanded ? "flex-1" : "max-h-[55vh] sm:max-h-80",
+                ].join(" ")}
+              >
+                <ChatExamplesTab />
+              </div>
+            )}
+
             {/* ── Messages ────────────────────────────────────────── */}
             <div
               className={[
                 "relative z-10 space-y-3 overflow-y-auto px-4 py-4 sm:px-6",
                 isExpanded ? "flex-1" : "max-h-[38vh] sm:max-h-64",
+                activeTab === "examples" ? "hidden" : "",
               ].join(" ")}
             >
               {messages.length === 0 && (
@@ -491,7 +524,7 @@ export function ChatWidget() {
             </div>
 
             {/* ── Textarea ────────────────────────────────────────── */}
-            <div className="relative z-10 border-t border-slate-100 dark:border-zinc-700/40">
+            <div className={`relative z-10 border-t border-slate-100 dark:border-zinc-700/40${activeTab === "examples" ? " hidden" : ""}`}>
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -506,7 +539,7 @@ export function ChatWidget() {
             </div>
 
             {/* ── Toolbar ─────────────────────────────────────────── */}
-            <div className="relative z-10 px-3 pb-3 sm:px-4 sm:pb-4">
+            <div className={`relative z-10 px-3 pb-3 sm:px-4 sm:pb-4${activeTab === "examples" ? " hidden" : ""}`}>
               <div className="flex items-center justify-between">
                 {/* Left: attachments + voice */}
                 <div className="flex items-center gap-2">

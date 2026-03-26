@@ -253,6 +253,11 @@
   "chat.shiftEnterHint": "para nueva línea",
   "chat.allSystemsOperational": "Todos los sistemas operativos",
   "chat.errorFallback": "Algo salió mal.",
+  "chat.tabChat": "Chat",
+  "chat.tabExamples": "Ejemplos",
+  "chat.examplesTitle": "Respuestas comunes",
+  "chat.examplesSubtitle": "Tarjetas de muestra que el asistente puede devolver por tipo de consulta.",
+  "chat.exampleTrigger": "Pregunta:",
 
   "nav.notifications": "Notificaciones",
 

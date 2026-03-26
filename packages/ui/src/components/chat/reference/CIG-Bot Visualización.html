@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIGBot — Interfaz Empresarial</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --p:#6C3DE8;--p-dk:#3C3489;--p-lt:#EEEDFE;--p-md:#9F77F5;--p-xlt:#faf9ff;
+  --g:#1D9E75;--g-lt:#EAF3DE;--g-dk:#27500A;
+  --r:#E24B4A;--r-lt:#FCEBEB;--r-dk:#791F1F;
+  --a:#EF9F27;--a-lt:#FAEEDA;--a-dk:#854F0B;
+  --b:#378ADD;--b-lt:#E6F1FB;--b-dk:#0C447C;
+  --navy:#1a1a2e;--muted:#888;--border:#e8e4f8;
+  --chat:#f3f0ff;--white:#fff;
+  --font:'DM Sans',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:#f0eefa;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:32px 20px 60px;gap:24px}
+
+/* ── Page header ── */
+.page-header{text-align:center;max-width:600px}
+.page-tag{display:inline-block;background:var(--p-lt);color:var(--p-dk);font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;padding:4px 14px;border-radius:20px;margin-bottom:12px}
+.page-header h1{font-size:26px;font-weight:600;color:var(--navy);line-height:1.2;margin-bottom:8px}
+.page-header p{font-size:14px;color:var(--muted);line-height:1.6}
+
+/* ── Legend ── */
+.legend{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.leg{display:flex;align-items:center;gap:6px;background:var(--white);border:0.5px solid rgba(0,0,0,.1);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--navy)}
+.leg-dot{width:8px;height:8px;border-radius:50%}
+
+/* ── Layout ── */
+.layout{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap;justify-content:center;width:100%;max-width:1000px}
+
+/* ── Phone ── */
+.phone-col{display:flex;flex-direction:column;align-items:center;gap:10px}
+.phone-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.phone{width:300px;background:var(--white);border-radius:38px;border:7px solid var(--navy);overflow:hidden;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(108,61,232,.15)}
+
+/* ── TG Bar ── */
+.tg-bar{background:var(--p);padding:10px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.tg-av{width:35px;height:35px;border-radius:50%;background:var(--white);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--p);flex-shrink:0}
+.tg-name{color:var(--white);font-size:14px;font-weight:600}
+.tg-st{color:#d4c8ff;font-size:11px}
+
+/* ── Alert strip ── */
+.alert-strip{background:var(--navy);padding:6px 12px;display:flex;gap:7px;align-items:center;flex-shrink:0;border-bottom:1px solid #2a2f3e}
+.as-label{font-size:9px;font-weight:700;color:#636b85;text-transform:uppercase;letter-spacing:.5px;flex-shrink:0}
+.as-chips{display:flex;gap:5px;flex:1;justify-content:flex-end}
+.asc{display:flex;align-items:center;gap:4px;border-radius:10px;padding:3px 8px;font-size:10px;font-weight:600}
+.asc-r{background:#2e0d0d;color:#F09595}
+.asc-a{background:#2e1e0a;color:#FAC775}
+.asc-g{background:#0d2e1f;color:#5DCAA5}
+.asc-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.ad-r{background:#E24B4A}.ad-a{background:#EF9F27}.ad-g{background:#1D9E75}
+
+/* ── Chat area ── */
+.chat{flex:1;overflow-y:auto;padding:10px;background:var(--chat);display:flex;flex-direction:column;gap:7px;scroll-behavior:smooth}
+.chat::-webkit-scrollbar{width:3px}
+.chat::-webkit-scrollbar-thumb{background:rgba(108,61,232,.2);border-radius:2px}
+.date-sep{align-self:center;background:rgba(108,61,232,.15);color:var(--p-dk);font-size:10px;padding:3px 10px;border-radius:20px;margin:2px 0}
+.mu{align-self:flex-end;background:var(--p);border-radius:16px 16px 3px 16px;padding:8px 12px;max-width:82%;font-size:12.5px;color:var(--white);line-height:1.4}
+.tick{font-size:10px;color:#a8d5ff;margin-left:3px}
+.mb{align-self:flex-start;max-width:98%}
+.ts{font-size:10px;color:#b0a8d0;align-self:flex-start;padding-left:4px;margin-top:-3px}
+
+/* ── Cards ── */
+.card{background:var(--white);border-radius:3px 16px 16px 16px;overflow:hidden;border:1px solid var(--border)}
+.ch{padding:7px 12px;display:flex;align-items:center;justify-content:space-between}
+.ct{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;display:flex;align-items:center;gap:5px}
+.cd{width:6px;height:6px;border-radius:50%}
+.cts{font-size:10px}
+.cb{padding:10px 12px}
+
+/* ── Alert card ── */
+.status-bar{height:4px;width:100%}
+.alert-item{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:10px;margin-bottom:5px}
+.alert-item:last-child{margin-bottom:0}
+.ai-ic{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.ai-main{flex:1}
+.ai-t{font-size:12px;font-weight:600;color:var(--navy)}
+.ai-s{font-size:10.5px;color:#666;margin-top:1px}
+.ai-v{font-size:15px;font-weight:700;text-align:right;flex-shrink:0}
+.it-r{background:var(--r-lt)}.ic-r{background:#F7C1C1}.iv-r{color:var(--r-dk)}
+.it-a{background:var(--a-lt)}.ic-a{background:#FAC775}.iv-a{color:var(--a-dk)}
+.it-g{background:var(--g-lt)}.ic-g{background:#C0DD97}.iv-g{color:var(--g-dk)}
+.sum-row{display:flex;gap:5px;margin-top:8px}
+.sum-b{flex:1;border-radius:8px;padding:6px 8px;text-align:center}
+.sv{font-size:16px;font-weight:700}
+.sl{font-size:9.5px;color:var(--muted);margin-top:1px}
+.sb-r{background:var(--r-lt)}.sv-r{color:var(--r-dk)}
+.sb-a{background:var(--a-lt)}.sv-a{color:var(--a-dk)}
+.sb-g{background:var(--g-lt)}.sv-g{color:var(--g-dk)}
+
+/* ── Bar chart ── */
+.big-num{font-size:26px;font-weight:700;color:var(--navy);letter-spacing:-1px;line-height:1}
+.big-sub{font-size:11px;color:var(--muted);margin-top:3px;margin-bottom:10px;display:flex;align-items:center;gap:5px}
+.delta{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:10px}
+.d-up{background:var(--g-lt);color:var(--g-dk)}
+.d-dn{background:var(--r-lt);color:var(--r-dk)}
+.chart-row{display:flex;flex-direction:column;gap:5px}
+.cr-i{display:flex;align-items:center;gap:7px}
+.cr-name{font-size:11px;color:#444;width:74px;flex-shrink:0}
+.cr-track{flex:1;height:13px;background:var(--p-lt);border-radius:6px;overflow:hidden}
+.cr-fill{height:100%;border-radius:6px}
+.cr-val{font-size:11px;font-weight:600;color:var(--navy);width:40px;text-align:right;flex-shrink:0}
+
+/* ── Sparkline KPI ── */
+.kpi-row{display:flex;gap:5px;margin-bottom:8px}
+.kpi-box{flex:1;border-radius:8px;padding:6px 7px;text-align:center}
+.kv{font-size:14px;font-weight:700}
+.kl{font-size:8px;color:var(--muted);margin-top:1px}
+.spark-label{display:flex;justify-content:space-between;font-size:8px;color:#aaa;margin-top:2px}
+
+/* ── Gauge ── */
+.gauge-section{display:flex;justify-content:center;margin-bottom:4px}
+.gauge-detail{display:flex;flex-direction:column;gap:4px;margin-top:4px}
+.gauge-row{display:flex;justify-content:space-between;align-items:center;font-size:10px}
+
+/* ── Timeline ── */
+.tl-item{display:flex;gap:8px}
+.tl-line{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:16px}
+.tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.tl-conn{width:2px;flex:1;background:var(--border);margin-top:2px;min-height:8px}
+.tl-content{padding-bottom:9px;flex:1}
+.tl-time{font-size:8.5px;color:var(--muted)}
+.tl-title{font-size:11px;font-weight:600;color:var(--navy)}
+.tl-desc{font-size:10px;color:#666;line-height:1.4;margin-top:1px}
+.cause-box{margin-top:6px;background:var(--r-lt);border-radius:6px;padding:5px 8px;font-size:10px;color:var(--r-dk);line-height:1.4}
+
+/* ── Stars feedback ── */
+.feedback{display:flex;align-items:center;gap:6px;padding:6px 12px;border-top:1px solid var(--p-lt);background:var(--p-xlt)}
+.fb-q{font-size:10px;color:var(--muted);flex:1}
+.stars{display:flex;gap:1px;direction:rtl}
+.stars input{display:none}
+.stars label{font-size:16px;color:#d4ccf0;cursor:pointer;line-height:1;transition:color .12s}
+.stars label:hover,.stars label:hover~label,.stars input:checked~label{color:#EF9F27}
+
+/* ── Input bar ── */
+.ibar{padding:8px 10px;background:var(--white);display:flex;gap:8px;align-items:center;flex-shrink:0;border-top:1px solid var(--border)}
+.ifield{flex:1;border:1px solid var(--border);border-radius:20px;padding:8px 12px;font-size:12px;background:var(--p-xlt);color:var(--navy);outline:none;font-family:var(--font)}
+.ifield::placeholder{color:#c4bce8}
+.sbtn{width:32px;height:32px;border-radius:50%;background:var(--p);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sbtn svg{width:14px;height:14px;fill:var(--white)}
+
+/* ── Annotation panel ── */
+.ann-panel{width:280px;display:flex;flex-direction:column;gap:12px}
+.ann-card{background:var(--white);border:0.5px solid rgba(0,0,0,.1);border-radius:12px;padding:14px 16px}
+.ann-card h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px}
+.ann-item{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:0.5px solid #f0f0f0}
+.ann-item:last-child{border:none;padding-bottom:0}
+.ann-ic{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+.ann-t{font-size:12px;font-weight:600;color:var(--navy);margin-bottom:2px}
+.ann-d{font-size:11px;color:var(--muted);line-height:1.4}
+
+.footer{max-width:700px;text-align:center;font-size:12px;color:var(--muted);line-height:1.7}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="page-tag">Propuesta de diseño · 2026</div>
+  <h1>CIGBot — Chatbot Empresarial en Telegram</h1>
+  <p>Interfaz adaptativa con panel de alertas semáforo, tendencia de ventas, seguimiento de meta y trazabilidad de bloqueos.</p>
+</div>
+
+<div class="legend">
+  <div class="leg"><div class="leg-dot" style="background:var(--p)"></div>ERP · datos operativos</div>
+  <div class="leg"><div class="leg-dot" style="background:var(--r)"></div>▲ crítico</div>
+  <div class="leg"><div class="leg-dot" style="background:var(--a)"></div>◑ atención</div>
+  <div class="leg"><div class="leg-dot" style="background:var(--g)"></div>✓ normal</div>
+  <div class="leg">★ calificación 1–5</div>
+</div>
+
+<div class="layout">
+
+  <!-- ═══ PHONE ═══ -->
+  <div class="phone-col">
+    <div class="phone-label">Mockup interactivo</div>
+    <div class="phone">
+
+      <!-- TG bar -->
+      <div class="tg-bar">
+        <div class="tg-av">C</div>
+        <div style="flex:1">
+          <div class="tg-name">CIGBot</div>
+          <div class="tg-st">en línea · Rol: Gerente ventas</div>
+        </div>
+      </div>
+
+      <!-- Alert strip -->
+      <div class="alert-strip">
+        <span class="as-label">Alertas</span>
+        <div class="as-chips">
+          <div class="asc asc-r"><div class="asc-dot ad-r"></div>2 críticas</div>
+          <div class="asc asc-a"><div class="asc-dot ad-a"></div>2 atención</div>
+          <div class="asc asc-g"><div class="asc-dot ad-g"></div>ok</div>
+        </div>
+      </div>
+
+      <!-- Chat -->
+      <div class="chat" id="chat">
+        <div class="date-sep">Hoy</div>
+
+        <!-- ══ 1. ALERTAS ══ -->
+        <div class="mu">resumen alertas hoy <span class="tick">✓✓</span></div>
+        <div class="mb">
+          <div class="card">
+            <div class="status-bar" style="background:linear-gradient(90deg,#E24B4A 0%,#EF9F27 45%,#1D9E75 78%)"></div>
+            <div class="ch" style="background:var(--p-lt)">
+              <div class="ct"><div class="cd" style="background:var(--p)"></div><span style="color:var(--p-dk)">Panel de alertas</span></div>
+              <span class="cts" style="color:var(--p-md)">Ahora</span>
+            </div>
+            <div class="cb">
+              <div class="alert-item it-r">
+                <div class="ai-ic ic-r" style="color:var(--r-dk)">▲▲</div>
+                <div class="ai-main"><div class="ai-t">Stock crítico</div><div class="ai-s">2 productos bajo mínimo</div></div>
+                <div class="ai-v iv-r">2</div>
+              </div>
+              <div class="alert-item it-r">
+                <div class="ai-ic ic-r" style="color:var(--r-dk)">▲▲</div>
+                <div class="ai-main"><div class="ai-t">Pedido bloqueado</div><div class="ai-s">PED-8821 · crédito insuf.</div></div>
+                <div class="ai-v iv-r">1</div>
+              </div>
+              <div class="alert-item it-a">
+                <div class="ai-ic ic-a" style="color:var(--a-dk)">▲</div>
+                <div class="ai-main"><div class="ai-t">Créditos mora</div><div class="ai-s">13 casos · $37.4M</div></div>
+                <div class="ai-v iv-a">13</div>
+              </div>
+              <div class="alert-item it-a">
+                <div class="ai-ic ic-a" style="color:var(--a-dk)">◑</div>
+                <div class="ai-main"><div class="ai-t">Meta diciembre</div><div class="ai-s">76% completada</div></div>
+                <div class="ai-v iv-a">76%</div>
+              </div>
+              <div class="alert-item it-g">
+                <div class="ai-ic ic-g" style="color:var(--g-dk)">✓</div>
+                <div class="ai-main"><div class="ai-t">Pedidos en tránsito</div><div class="ai-s">Todo operando normal</div></div>
+                <div class="ai-v iv-g">12</div>
+              </div>
+              <div class="sum-row">
+                <div class="sum-b sb-r"><div class="sv sv-r">2</div><div class="sl">Crítico</div></div>
+                <div class="sum-b sb-a"><div class="sv sv-a">2</div><div class="sl">Atención</div></div>
+                <div class="sum-b sb-g"><div class="sv sv-g">1</div><div class="sl">Normal</div></div>
+              </div>
+            </div>
+            <div class="feedback">
+              <span class="fb-q">¿Qué tan útil fue?</span>
+              <div class="stars">
+                <input type="radio" name="fb1" id="s1-5"><label for="s1-5">★</label>
+                <input type="radio" name="fb1" id="s1-4"><label for="s1-4">★</label>
+                <input type="radio" name="fb1" id="s1-3"><label for="s1-3">★</label>
+                <input type="radio" name="fb1" id="s1-2"><label for="s1-2">★</label>
+                <input type="radio" name="fb1" id="s1-1"><label for="s1-1">★</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ts">09:00 · multi-módulo</div>
+
+        <!-- ══ 2. VENTAS 7 DÍAS ══ -->
+        <div class="mu">resumen ventas últimos 7 días <span class="tick">✓✓</span></div>
+        <div class="mb">
+          <div class="card">
+            <div class="ch" style="background:var(--p-lt)">
+              <div class="ct"><div class="cd" style="background:var(--p)"></div><span style="color:var(--p-dk)">ERP · Ventas · Tendencia</span></div>
+              <span class="cts" style="color:var(--p-md)">7 días</span>
+            </div>
+            <div class="cb">
+              <div class="kpi-row">
+                <div class="kpi-box" style="background:var(--p-lt)"><div class="kv" style="color:var(--p-dk)">$84.2M</div><div class="kl">Total acum.</div></div>
+                <div class="kpi-box" style="background:var(--g-lt)"><div class="kv" style="color:var(--g-dk)">+12.4%</div><div class="kl">vs sem. ant.</div></div>
+                <div class="kpi-box" style="background:var(--a-lt)"><div class="kv" style="color:var(--a-dk)">$12.0M</div><div class="kl">Mejor día</div></div>
+              </div>
+              <!-- Sparkline -->
+              <div style="position:relative;height:52px;width:100%">
+                <svg width="100%" height="52" viewBox="0 0 230 52" preserveAspectRatio="none">
+                  <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6C3DE8" stop-opacity=".18"/><stop offset="100%" stop-color="#6C3DE8" stop-opacity="0"/></linearGradient></defs>
+                  <path d="M0,40 L33,35 L66,28 L99,32 L132,18 L165,10 L198,14 L230,7 L230,52 L0,52Z" fill="url(#sg)"/>
+                  <path d="M0,40 L33,35 L66,28 L99,32 L132,18 L165,10 L198,14 L230,7" fill="none" stroke="#6C3DE8" stroke-width="1.5"/>
+                  <circle cx="165" cy="10" r="3" fill="#6C3DE8"/>
+                </svg>
+              </div>
+              <div class="spark-label"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+              <!-- Mini sparklines por canal -->
+              <div style="display:flex;flex-direction:column;gap:4px;margin-top:8px">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="font-size:9px;width:52px;color:#555;flex-shrink:0">Online</span>
+                  <svg width="90" height="16" viewBox="0 0 90 16"><path d="M0,12 L15,9 L30,6 L45,7 L60,3 L75,2 L90,3" fill="none" stroke="#6C3DE8" stroke-width="1.2"/></svg>
+                  <span style="font-size:9px;font-weight:600;color:var(--g-dk);margin-left:auto">↑ 18%</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="font-size:9px;width:52px;color:#555;flex-shrink:0">Presencial</span>
+                  <svg width="90" height="16" viewBox="0 0 90 16"><path d="M0,5 L15,7 L30,9 L45,8 L60,11 L75,9 L90,13" fill="none" stroke="#EF9F27" stroke-width="1.2"/></svg>
+                  <span style="font-size:9px;font-weight:600;color:var(--r-dk);margin-left:auto">↓ 5%</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="font-size:9px;width:52px;color:#555;flex-shrink:0">B2B</span>
+                  <svg width="90" height="16" viewBox="0 0 90 16"><path d="M0,10 L15,8 L30,6 L45,5 L60,5 L75,3 L90,2" fill="none" stroke="#1D9E75" stroke-width="1.2"/></svg>
+                  <span style="font-size:9px;font-weight:600;color:var(--g-dk);margin-left:auto">↑ 22%</span>
+                </div>
+              </div>
+            </div>
+            <div class="feedback">
+              <span class="fb-q">¿Qué tan útil fue?</span>
+              <div class="stars">
+                <input type="radio" name="fb2" id="s2-5"><label for="s2-5">★</label>
+                <input type="radio" name="fb2" id="s2-4"><label for="s2-4">★</label>
+                <input type="radio" name="fb2" id="s2-3"><label for="s2-3">★</label>
+                <input type="radio" name="fb2" id="s2-2"><label for="s2-2">★</label>
+                <input type="radio" name="fb2" id="s2-1"><label for="s2-1">★</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ts">09:02 · ERP · ventas</div>
+
+        <!-- ══ 3. META DEL MES ══ -->
+        <div class="mu">¿cómo vamos con la meta del mes? <span class="tick">✓✓</span></div>
+        <div class="mb">
+          <div class="card">
+            <div class="ch" style="background:var(--p-lt)">
+              <div class="ct"><div class="cd" style="background:var(--p)"></div><span style="color:var(--p-dk)">ERP · Meta mensual</span></div>
+              <span class="cts" style="color:var(--p-md)">Dic 2024</span>
+            </div>
+            <div class="cb">
+              <div class="gauge-section">
+                <svg width="180" height="108" viewBox="0 0 180 108">
+                  <!-- Arco fondo -->
+                  <path d="M22,96 A78,78 0 0,1 158,96" fill="none" stroke="#EAF3DE" stroke-width="15" stroke-linecap="round"/>
+                  <!-- Arco progreso 76% → dasharray proporcional al arco total (≈245px) -->
+                  <path d="M22,96 A78,78 0 0,1 158,96" fill="none" stroke="#1D9E75" stroke-width="15" stroke-linecap="round" stroke-dasharray="186 245" stroke-dashoffset="0"/>
+                  <!-- Marcadores 25/50/75% -->
+                  <line x1="22" y1="96" x2="28" y2="84" stroke="#fff" stroke-width="1.5" opacity=".6"/>
+                  <line x1="90" y1="18" x2="90" y2="30" stroke="#fff" stroke-width="1.5" opacity=".6"/>
+                  <line x1="158" y1="96" x2="152" y2="84" stroke="#fff" stroke-width="1.5" opacity=".6"/>
+                  <!-- Valor central -->
+                  <text x="90" y="82" text-anchor="middle" font-size="24" font-weight="700" fill="#1a1a2e" font-family="DM Sans,sans-serif">76%</text>
+                  <text x="90" y="97" text-anchor="middle" font-size="10" fill="#888" font-family="DM Sans,sans-serif">de la meta</text>
+                </svg>
+              </div>
+              <div class="gauge-detail">
+                <div class="gauge-row">
+                  <span style="color:#555">Logrado</span>
+                  <span style="font-weight:600;color:var(--g-dk)">$38.0M / $50.0M</span>
+                </div>
+                <div class="gauge-row">
+                  <span style="color:#555">Días restantes</span>
+                  <span style="font-weight:600;color:var(--navy)">8 días hábiles</span>
+                </div>
+                <div class="gauge-row">
+                  <span style="color:#555">Ritmo necesario</span>
+                  <span style="font-weight:600;color:var(--a-dk)">$1.5M / día</span>
+                </div>
+                <div class="gauge-row">
+                  <span style="color:#555">Ritmo actual</span>
+                  <span style="font-weight:600;color:var(--g-dk)">$1.6M / día ↑</span>
+                </div>
+              </div>
+            </div>
+            <div class="feedback">
+              <span class="fb-q">¿Qué tan útil fue?</span>
+              <div class="stars">
+                <input type="radio" name="fb3" id="s3-5"><label for="s3-5">★</label>
+                <input type="radio" name="fb3" id="s3-4"><label for="s3-4">★</label>
+                <input type="radio" name="fb3" id="s3-3"><label for="s3-3">★</label>
+                <input type="radio" name="fb3" id="s3-2"><label for="s3-2">★</label>
+                <input type="radio" name="fb3" id="s3-1"><label for="s3-1">★</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ts">09:05 · ERP · metas</div>
+
+        <!-- ══ 4. BLOQUEO PEDIDO ══ -->
+        <div class="mu">¿por qué se bloqueó el pedido 8821? <span class="tick">✓✓</span></div>
+        <div class="mb">
+          <div class="card" style="border-color:var(--r)">
+            <div class="ch" style="background:var(--r-lt)">
+              <div class="ct"><div class="cd" style="background:var(--r)"></div><span style="color:var(--r-dk)">ERP · Trazabilidad · PED-8821</span></div>
+              <span class="cts" style="color:var(--r)">Bloqueado</span>
+            </div>
+            <div class="cb">
+              <!-- Timeline causal -->
+              <div style="display:flex;flex-direction:column;gap:0">
+                <div class="tl-item">
+                  <div class="tl-line"><div class="tl-dot" style="background:var(--p)"></div><div class="tl-conn"></div></div>
+                  <div class="tl-content">
+                    <div class="tl-time">08:41 · Sistema</div>
+                    <div class="tl-title" style="color:var(--p-dk)">PED-8821 creado</div>
+                    <div class="tl-desc">Cliente: Dist. Andina · $6.8M</div>
+                  </div>
+                </div>
+                <div class="tl-item">
+                  <div class="tl-line"><div class="tl-dot" style="background:var(--b)"></div><div class="tl-conn"></div></div>
+                  <div class="tl-content">
+                    <div class="tl-time">08:41 · Motor de crédito</div>
+                    <div class="tl-title" style="color:var(--b-dk)">Validación de crédito</div>
+                    <div class="tl-desc">Saldo disponible: $3.2M — Mínimo: $5.0M</div>
+                  </div>
+                </div>
+                <div class="tl-item">
+                  <div class="tl-line"><div class="tl-dot" style="background:var(--r)"></div><div class="tl-conn"></div></div>
+                  <div class="tl-content">
+                    <div class="tl-time">08:41 · Automático</div>
+                    <div class="tl-title" style="color:var(--r-dk)">Límite de crédito insuficiente</div>
+                    <div class="tl-desc">Regla CAR-04 §2.3 — diferencia: −$1.8M</div>
+                  </div>
+                </div>
+                <div class="tl-item">
+                  <div class="tl-line"><div class="tl-dot" style="background:var(--a)"></div></div>
+                  <div class="tl-content">
+                    <div class="tl-time">08:42 · Notificación</div>
+                    <div class="tl-title" style="color:var(--a-dk)">Escalado a Gerente de zona</div>
+                    <div class="tl-desc">Pendiente aprobación manual o ajuste de cupo.</div>
+                  </div>
+                </div>
+              </div>
+              <div class="cause-box">
+                <strong>Causa raíz:</strong> Saldo disponible $3.2M · Límite requerido $5.0M · Política CAR-04 §2.3
+              </div>
+            </div>
+            <div class="feedback" style="border-color:var(--r-lt);background:var(--r-lt)">
+              <span class="fb-q" style="color:var(--r-dk)">¿Qué tan útil fue?</span>
+              <div class="stars">
+                <input type="radio" name="fb4" id="s4-5"><label for="s4-5">★</label>
+                <input type="radio" name="fb4" id="s4-4"><label for="s4-4">★</label>
+                <input type="radio" name="fb4" id="s4-3"><label for="s4-3">★</label>
+                <input type="radio" name="fb4" id="s4-2"><label for="s4-2">★</label>
+                <input type="radio" name="fb4" id="s4-1"><label for="s4-1">★</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ts">09:08 · ERP · crédito · CAR-04</div>
+
+      </div><!-- /chat -->
+
+      <div class="ibar">
+        <input class="ifield" type="text" id="inp" placeholder="Escribe tu consulta..." onkeydown="if(event.key==='Enter')send()">
+        <button class="sbtn" onclick="send()"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></button>
+      </div>
+
+    </div><!-- /phone -->
+  </div><!-- /phone-col -->
+
+  <!-- ═══ ANNOTATIONS ═══ -->
+  <div class="ann-panel">
+
+    <div class="ann-card">
+      <h3>Tarjetas en esta conversación</h3>
+      <div class="ann-item">
+        <div class="ann-ic" style="background:var(--p-lt);color:var(--p)">ALT</div>
+        <div><div class="ann-t">Panel de alertas</div><div class="ann-d">Semáforo con barra de estado, íconos por módulo y conteo. Siempre es el primer mensaje del día.</div></div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-ic" style="background:var(--p-lt);color:var(--p)">SPK</div>
+        <div><div class="ann-t">Ventas últimos 7 días</div><div class="ann-d">KPIs resumen + sparkline total + mini-tendencias por canal (Online, Presencial, B2B).</div></div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-ic" style="background:var(--g-lt);color:var(--g-dk)">GAU</div>
+        <div><div class="ann-t">Meta del mes</div><div class="ann-d">Gauge donut con % de cumplimiento. Color cambia por umbral: verde ≥80%, ámbar 50–79%, rojo &lt;50%.</div></div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-ic" style="background:var(--r-lt);color:var(--r-dk)">TRZ</div>
+        <div><div class="ann-t">Trazabilidad de bloqueo</div><div class="ann-d">Timeline causal con cada paso del motor de reglas. Cita la política exacta (CAR-04 §2.3).</div></div>
+      </div>
+    </div>
+
+    <div class="ann-card">
+      <h3>Sistema de calificación</h3>
+      <div class="ann-item">
+        <div class="ann-ic" style="background:var(--a-lt);color:var(--a-dk)">★</div>
+        <div><div class="ann-t">Escala 1 – 5 estrellas</div><div class="ann-d">Cada tarjeta tiene su propia calificación independiente. El hover ilumina de forma acumulativa.</div></div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-ic" style="background:var(--p-lt);color:var(--p)">LOG</div>
+        <div><div class="ann-t">KPI Logger</div><div class="ann-d">Guarda en kpi_logs.db: interaccion_id, intención, tarjeta y calificación (1–5).</div></div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-ic" style="background:var(--g-lt);color:var(--g-dk)">LLM</div>
+        <div><div class="ann-t">Mejora del modelo</div><div class="ann-d">Calificaciones ≤ 2 acumuladas por intención disparan revisión del prompt del LLM.</div></div>
+      </div>
+    </div>
+
+    <div class="ann-card">
+      <h3>Fuentes de datos</h3>
+      <div class="ann-item">
+        <div class="ann-ic" style="background:var(--p-lt);color:var(--p)">ERP</div>
+        <div><div class="ann-t">Módulos conectados</div><div class="ann-d">Inventario, Ventas, Metas, Crédito y motor de reglas (CAR-04). Conector FastAPI.</div></div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-ic" style="background:#EEEDFE;color:#3C3489">KMS</div>
+        <div><div class="ann-t">Políticas internas</div><div class="ann-d">Base documental indexada. Cada respuesta cita sección exacta del documento fuente.</div></div>
+      </div>
+    </div>
+
+  </div><!-- /ann-panel -->
+
+</div><!-- /layout -->
+
+<div class="footer">
+  CIGBot · Chatbot Empresarial con Integración ERP / KMS · Propuesta de interfaz Telegram · Sistemas Inteligentes 2026
+</div>
+
+<script>
+function send() {
+  const inp = document.getElementById('inp');
+  const chat = document.getElementById('chat');
+  const txt = inp.value.trim();
+  if (!txt) return;
+  const um = document.createElement('div');
+  um.className = 'mu';
+  um.innerHTML = txt + ' <span class="tick">✓</span>';
+  chat.appendChild(um);
+  const n = Date.now();
+  const bm = document.createElement('div');
+  bm.className = 'mb';
+  setTimeout(() => {
+    bm.innerHTML = `<div class="card">
+      <div class="ch" style="background:var(--p-lt)">
+        <div class="ct"><div class="cd" style="background:var(--p)"></div><span style="color:var(--p-dk)">ERP · procesando</span></div>
+        <span class="cts" style="color:var(--p-md)">ahora</span>
+      </div>
+      <div class="cb" style="font-size:12px;color:var(--navy);line-height:1.5">
+        Consulta recibida: <em>"${txt}"</em><br>
+        <span style="font-size:10.5px;color:var(--muted)">Conecta el backend FastAPI para obtener datos reales.</span>
+      </div>
+      <div class="feedback">
+        <span class="fb-q">¿Qué tan útil fue?</span>
+        <div class="stars">
+          <input type="radio" name="fb${n}" id="sn${n}5"><label for="sn${n}5">★</label>
+          <input type="radio" name="fb${n}" id="sn${n}4"><label for="sn${n}4">★</label>
+          <input type="radio" name="fb${n}" id="sn${n}3"><label for="sn${n}3">★</label>
+          <input type="radio" name="fb${n}" id="sn${n}2"><label for="sn${n}2">★</label>
+          <input type="radio" name="fb${n}" id="sn${n}1"><label for="sn${n}1">★</label>
+        </div>
+      </div>
+    </div>`;
+    chat.appendChild(bm);
+    chat.scrollTop = chat.scrollHeight;
+  }, 900);
+  inp.value = '';
+  chat.scrollTop = chat.scrollHeight;
+}
+</script>
+</body>
+</html>

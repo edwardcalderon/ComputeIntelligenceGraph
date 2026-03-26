@@ -253,6 +253,11 @@
   "chat.shiftEnterHint": "换行",
   "chat.allSystemsOperational": "所有系统运行正常",
   "chat.errorFallback": "出现了一些问题。",
+  "chat.tabChat": "对话",
+  "chat.tabExamples": "示例",
+  "chat.examplesTitle": "常见响应",
+  "chat.examplesSubtitle": "助手可根据不同查询类型返回的示例卡片。",
+  "chat.exampleTrigger": "试着问：",
 
   "nav.notifications": "通知",
 

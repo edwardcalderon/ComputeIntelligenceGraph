@@ -253,6 +253,11 @@
   "chat.shiftEnterHint": "for new line",
   "chat.allSystemsOperational": "All systems operational",
   "chat.errorFallback": "Something went wrong.",
+  "chat.tabChat": "Chat",
+  "chat.tabExamples": "Examples",
+  "chat.examplesTitle": "Common Responses",
+  "chat.examplesSubtitle": "Sample cards the assistant can return for each query type.",
+  "chat.exampleTrigger": "Try asking:",
 
   "nav.notifications": "Notifications",
 
