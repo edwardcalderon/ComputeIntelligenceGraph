@@ -4,6 +4,8 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
+const packageJson = require('./package.json');
+
 const config: Config = {
   title: 'CIG Documentation',
   tagline: 'Compute Intelligence Graph',
@@ -33,6 +35,20 @@ const config: Config = {
     defaultLocale: 'en',
     locales: ['en'],
   },
+
+  headTags: [
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'cig-version',
+        content: packageJson.version,
+      },
+    },
+    {
+      tagName: 'script',
+      innerHTML: `window.__CIG_VERSION__ = '${packageJson.version}';`,
+    },
+  ],
 
   presets: [
     [
