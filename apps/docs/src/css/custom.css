@@ -103,7 +103,7 @@
     height: 100vh;
     width: 100%;
     max-width: 85vw;
-    z-index: 999;
+    z-index: 9999;
     background: var(--ifm-background-color);
     border-right: 1px solid var(--ifm-color-emphasis-300);
     overflow-y: auto;
@@ -228,7 +228,7 @@
 @media (max-width: 996px) {
   .navbar__toggle {
     display: inline-flex;
-    z-index: 1000;
+    z-index: 10000;
     padding: 0.5rem;
     border-radius: 0.375rem;
     transition: all 0.2s;
@@ -250,7 +250,7 @@
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 998;
+    z-index: 9998;
     backdrop-filter: blur(2px);
   }
 
@@ -379,53 +379,36 @@
   padding: 0;
 }
 
-/* Mobile layout improvements */
-@media (max-width: 996px) {
-  .main-wrapper {
-    max-width: 100%;
-    margin: 0;
-  }
-
-  .container {
-    max-width: 100%;
-    padding: 1rem;
-  }
-
-  /* Ensure content doesn't get hidden behind sidebar */
-  .docMainContainer {
-    width: 100%;
-    margin-left: 0;
-  }
-
-  /* Improve table of contents on mobile */
-  .table-of-contents {
-    font-size: 0.9rem;
-  }
-
-  .table-of-contents__link {
-    padding: 0.25rem 0;
-  }
-
-  /* Responsive code blocks */
-  .prism-code {
-    font-size: 0.85rem;
-    overflow-x: auto;
-  }
-
-  /* Improve admonitions on mobile */
-  .admonition {
-    margin: 1rem 0;
-    padding: 1rem;
-  }
+/* Canvas/content container improvements */
+.docMainContainer {
+  width: 100%;
+  max-width: 90%;
+  margin: 0 auto;
+  padding: 0;
+  position: relative;
+  z-index: 1;
 }
 
-/* Tablet and up - normal layout */
-@media (min-width: 997px) {
-  .main-wrapper {
-    max-width: 100%;
-  }
+.docItemContainer {
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
 
-  .container {
-    max-width: 1320px;
-  }
+/* Improve spacing around main content */
+.markdown {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+/* Better spacing for code blocks and content */
+.docMainContainer > div {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+/* Reduce bottom margin near footer */
+.docMainContainer > *:last-child {
+  margin-bottom: 0.5rem;
 }
