@@ -1,3 +1,25 @@
+## [0.2.34](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.33...v0.2.34) (2026-03-26)
+
+
+### Bug Fixes
+
+* **docs:** remove broken DocSidebar override, use CSS-only sidebar styling ([39ebeba](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/39ebeba5e98cb1d42835fb3b6c240a520757eb26))
+
+
+
+
+
+## [0.2.34](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.33...v0.2.34) (2026-03-26)
+
+
+### Bug Fixes
+
+* **docs:** remove broken DocSidebar override, use CSS-only sidebar styling ([39ebeba](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/39ebeba5e98cb1d42835fb3b6c240a520757eb26))
+
+
+
+
+
 ## [0.2.33](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.32...v0.2.33) (2026-03-26)
 
 ### Detected changes
