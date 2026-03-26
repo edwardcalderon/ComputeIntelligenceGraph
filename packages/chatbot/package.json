@@ -1,6 +1,6 @@
 {
   "name": "@cig/chatbot",
-  "version": "0.1.125",
+  "version": "0.1.126",
   "description": "CIG conversational interface with RAG pipeline",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

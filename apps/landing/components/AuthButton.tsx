@@ -190,14 +190,18 @@ function EmailPasswordView({ onSuccess }: { onSuccess: () => void }) {
             }}
             className="self-start text-xs font-medium leading-tight text-cyan-600 dark:text-cyan-400 hover:underline sm:text-right"
           >
-            {mode === "signin" ? (
-              t("auth.passwordSwitchToSignup")
-            ) : (
-              <span className="flex flex-col items-start sm:items-end">
-                <span>{t("auth.passwordSwitchQuestion")}</span>
-                <span>{t("auth.passwordSwitchActionSignin")}</span>
+            <span className="flex flex-col items-start sm:items-end">
+              <span>
+                {mode === "signin"
+                  ? t("auth.passwordNoAccountQuestion")
+                  : t("auth.passwordSwitchQuestion")}
               </span>
-            )}
+              <span>
+                {mode === "signin"
+                  ? t("auth.passwordSwitchToSignup")
+                  : t("auth.passwordSwitchActionSignin")}
+              </span>
+            </span>
           </button>
         </div>
       )}

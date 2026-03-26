@@ -1,3 +1,22 @@
+## [0.1.126](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.125...v0.1.126) (2026-03-26)
+
+### Detected changes
+- apps: 4 changed file(s)
+  - apps/dashboard/public/runtime-version.json
+  - apps/dashboard/public/sw.js
+  - apps/landing/components/AuthButton.tsx
+  - apps/landing/public/runtime-version.json
+- packages: 2 changed file(s)
+  - packages/i18n/catalogs/shared/es.json
+  - packages/i18n/src/locales/shared.ts
+
+
+## [0.1.126](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.125...v0.1.126) (2026-03-26)
+
+
+
+
+
 ## [0.1.125](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.1.124...v0.1.125) (2026-03-26)
 
 ### Detected changes

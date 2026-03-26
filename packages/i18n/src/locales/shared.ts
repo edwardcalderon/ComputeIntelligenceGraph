@@ -218,7 +218,7 @@ const es: TranslationCatalog = {
   "auth.passwordSignUpTitle": "Crea tu cuenta",
   "auth.passwordSignUpHint": "Elige una contraseña segura para tu acceso por correo.",
   "auth.passwordSwitchToSignup": "Crear cuenta",
-  "auth.passwordNoAccountQuestion": "¿Aún no tienes cuenta?",
+  "auth.passwordNoAccountQuestion": "¿No tienes cuenta?",
   "auth.passwordSwitchToSignin": "¿Ya tienes cuenta? Inicia sesión",
   "auth.passwordSwitchQuestion": "¿Ya tienes cuenta?",
   "auth.passwordSwitchActionSignin": "Inicia sesión",
