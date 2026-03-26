@@ -5,7 +5,7 @@ import { CliPathOptions, resolveCliPaths } from '../storage/paths.js';
 export interface InstallationState {
   version: string;
   mode: 'managed' | 'self-hosted';
-  profile: 'core' | 'full';
+  profile: 'core' | 'discovery' | 'full';
   installDir: string;
   installedAt: string;
   status: 'ready' | 'running' | 'stopped' | 'degraded' | 'failed';

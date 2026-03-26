@@ -4,7 +4,7 @@ import { CLI_VERSION } from '../version.js';
 
 export interface SetupCommandOptions {
   mode?: 'managed' | 'self-hosted';
-  profile?: 'core' | 'full';
+  profile?: 'core' | 'discovery' | 'full';
   apiUrl?: string;
 }
 
@@ -83,8 +83,8 @@ export async function setup(options: SetupCommandOptions = {}): Promise<void> {
     }
 
     if (!profile) {
-      profile = (await promptChoice('Select installation profile:', ['core', 'full'])) as
-        | 'core'
+      profile = (await promptChoice('Select installation profile:', ['discovery', 'full'])) as
+        | 'discovery'
         | 'full';
     }
 

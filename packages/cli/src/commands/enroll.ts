@@ -3,7 +3,7 @@ import { intro, outro, spinner } from '@clack/prompts';
 
 export interface EnrollCommandOptions {
   apiUrl: string;
-  profile?: 'core' | 'full';
+  profile?: 'core' | 'discovery' | 'full';
   token?: string;
 }
 

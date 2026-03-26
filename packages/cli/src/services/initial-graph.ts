@@ -8,7 +8,7 @@ import { ApiClient } from './api-client.js';
 export interface InitialGraphArtifact {
   schemaVersion: 1;
   mode: 'managed' | 'self-hosted';
-  profile: 'core' | 'full';
+  profile: 'core' | 'discovery' | 'full';
   targetApiUrl: string;
   createdAt: string;
   scan: ScanResult;
@@ -23,7 +23,7 @@ export interface InitialGraphSeedOptions {
   installDir: string;
   apiUrl: string;
   mode: 'managed' | 'self-hosted';
-  profile: 'core' | 'full';
+  profile: 'core' | 'discovery' | 'full';
   credentialManager?: CredentialManager;
 }
 

@@ -9,6 +9,8 @@ import { enrollmentFlow } from './enrollment.js';
 import { bootstrapFlow } from './bootstrap.js';
 import { StateManager } from '../managers/state-manager.js';
 import { InstallPlanner } from '../services/install-planner.js';
+import { resolvePublishedImageManifest } from '../services/image-manifest.js';
+import { normalizeInstallProfile } from '../services/install-profile.js';
 import { NodeBundleInstaller } from '../services/node-bundle-installer.js';
 import { ConnectionProfileStore } from '../stores/connection-profile-store.js';
 import { seedInitialGraph } from '../services/initial-graph.js';
@@ -80,10 +82,28 @@ function printAdminAccessGuidance(context: string): void {
   console.error('Re-run this installer from an administrator shell or a sudo-capable user, then try again.');
 }
 
-async function displayProfileDetails(profile: 'core' | 'full'): Promise<void> {
-  const servicesByProfile: Record<'core' | 'full', string[]> = {
-    core: ['API', 'Dashboard', 'Neo4j', 'Discovery', 'Cartography', 'cig-node'],
-    full: ['API', 'Dashboard', 'Neo4j', 'Discovery', 'Cartography', 'cig-node', 'Chatbot', 'Agents'],
+function getRequiredBundleImages(profile: 'discovery' | 'full'): string[] {
+  if (profile === 'full') {
+    return ['api', 'dashboard', 'neo4j', 'discovery', 'cartography', 'chatbot'];
+  }
+
+  return ['api', 'dashboard', 'neo4j', 'discovery', 'cartography'];
+}
+
+function ensureRequiredBundleImages(
+  images: Record<string, string>,
+  profile: 'discovery' | 'full'
+): void {
+  const missing = getRequiredBundleImages(profile).filter((service) => !images[service]);
+  if (missing.length > 0) {
+    throw new Error(`Published image manifest is missing pinned images for: ${missing.join(', ')}`);
+  }
+}
+
+async function displayProfileDetails(profile: 'discovery' | 'full'): Promise<void> {
+  const servicesByProfile: Record<'discovery' | 'full', string[]> = {
+    discovery: ['API', 'Dashboard', 'Neo4j', 'Discovery', 'Cartography', 'cig-node'],
+    full: ['API', 'Dashboard', 'Neo4j', 'Discovery', 'Cartography', 'cig-node', 'Chatbot'],
   };
 
   console.log(`\n${profile.toUpperCase()} profile services:`);
@@ -146,7 +166,7 @@ async function rollback(installDir: string): Promise<void> {
 export async function install(
   apiUrl = 'http://localhost:8000',
   mode?: 'managed' | 'self-hosted',
-  profile?: 'core' | 'full'
+  profile?: 'core' | 'discovery' | 'full'
 ): Promise<void> {
   const credentialManager = new CredentialManager();
   const stateManager = new StateManager();
@@ -261,14 +281,23 @@ export async function install(
   }
 
   if (!profile) {
-    profile = (await promptChoice('Select installation profile:', ['core', 'full'])) as
-      | 'core'
+    profile = (await promptChoice('Select installation profile:', ['discovery', 'full'])) as
+      | 'discovery'
       | 'full';
   }
 
-  await displayProfileDetails(profile);
+  const installProfile = normalizeInstallProfile(profile);
+  await displayProfileDetails(installProfile);
 
-  const plan = planner.createPlan({ mode, profile, apiUrl });
+  let publishedImageManifest: Record<string, string> | undefined;
+  if (mode === 'self-hosted') {
+    const resolvedImageManifest = await resolvePublishedImageManifest(CLI_VERSION);
+    ensureRequiredBundleImages(resolvedImageManifest.images, installProfile);
+    publishedImageManifest = resolvedImageManifest.images;
+    console.log(`✓ Resolved published image manifest v${resolvedImageManifest.version}.`);
+  }
+
+  const plan = planner.createPlan({ mode, profile: installProfile, apiUrl });
   const installDir = plan.installDir;
   fs.mkdirSync(installDir, { recursive: true, mode: 0o700 });
 
@@ -276,14 +305,17 @@ export async function install(
   let identity = credentialManager.loadIdentity();
 
   if (mode === 'managed') {
-    const result = await enrollmentFlow({ apiUrl, profile });
+    const result = await enrollmentFlow({ apiUrl, profile: installProfile });
     manifest = result.manifest;
     identity = result.identity;
   } else {
-    manifest = await bootstrapFlow();
+    manifest = await bootstrapFlow({ profile: installProfile });
   }
 
-  manifest.profile = profile;
+  manifest.profile = installProfile;
+  if (publishedImageManifest) {
+    manifest.service_images = publishedImageManifest;
+  }
   await generateCompose(manifest, installDir);
 
   if (identity) {

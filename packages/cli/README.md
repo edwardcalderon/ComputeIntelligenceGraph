@@ -13,7 +13,7 @@ continuous discovery engine. In the current foundation release, it can:
 - launch a first-run `cig setup` wizard for local or managed installs
 - validate Node 22, Docker/Compose, memory, disk, and required ports before install
 - authenticate against a managed API with device authorization
-- install a local self-hosted stack with Docker Compose
+- install a discovery-first local self-hosted stack with Docker Compose
 - stage a managed-mode `cig-node` bundle for later Linux host installation
 - seed the initial graph during install and upload it once credentials are available
 - store connection profiles, encrypted credentials, install state, and node identity
@@ -25,9 +25,10 @@ This package is a real foundation release with the new onboarding flow, but not 
 
 The published npm package is the canonical release artifact. The public
 installer at `https://cig.lat/install.sh` resolves `@cig-technology/cli`
-from npm first, prints the resolved package version, and then launches the
+from npm first, prints the resolved package version, fetches the matching
+`images.json` bundle manifest for that CLI release, and then launches the
 wizard so the `curl | bash` path and `npm install -g` path use the same
-binaries and provenance data.
+binaries and pinned container provenance data.
 
 ### Quick links
 
@@ -54,8 +55,9 @@ curl -fsSL https://cig.lat/install.sh | bash
 ```
 
 That public installer resolves `@cig-technology/cli` from the npm registry
-first, so the web install path and the direct npm path use the same published
-binaries and provenance.
+first, then loads the matching Docker Hub bundle manifest for that CLI
+version, so the web install path and the direct npm path use the same
+published binaries and pinned container image digests.
 
 If Docker Engine or Docker Compose is missing, the installer can offer to
 install the Docker prerequisites automatically on supported Linux and macOS
@@ -125,6 +127,11 @@ you intend to use managed mode only.
 - The web installer is a thin bash wrapper; it does not embed a separate
   runtime. It resolves the published npm package so the installed bits are
   reproducible.
+- The web installer also fetches the matching Docker Hub bundle manifest from
+  the GitHub release asset named for that CLI version, so compose files use
+  pinned image digests instead of `latest`.
+- The self-hosted bundle is discovery-first. `core` is kept only as a legacy
+  alias for callers that still pass the older profile name.
 - When Docker prerequisites are missing, the installer can offer to install
   them automatically on supported Linux and macOS package managers.
 - When Docker is installed but not running, the installer can offer to start
@@ -160,7 +167,7 @@ cig login --api-url https://app.cig.lat
 Install a managed profile:
 
 ```bash
-cig install --mode managed --profile core --api-url https://app.cig.lat
+cig install --mode managed --profile discovery --api-url https://app.cig.lat
 ```
 
 What this does today:
@@ -181,7 +188,7 @@ What it does not do yet:
 Install the local stack:
 
 ```bash
-cig install --mode self-hosted --profile core
+cig install --mode self-hosted --profile discovery
 ```
 
 What this does today:
@@ -208,9 +215,9 @@ browser process.
 ```bash
 cig login --api-url http://localhost:8000
 cig logout --api-url http://localhost:8000
-cig install --mode managed --profile core --api-url http://localhost:8000
-cig install --mode self-hosted --profile core
-cig enroll --api-url http://localhost:8000 --profile core
+cig install --mode managed --profile discovery --api-url http://localhost:8000
+cig install --mode self-hosted --profile discovery
+cig enroll --api-url http://localhost:8000 --profile discovery
 cig bootstrap-reset
 ```
 

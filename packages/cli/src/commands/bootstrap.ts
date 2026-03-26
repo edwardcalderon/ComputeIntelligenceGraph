@@ -18,6 +18,10 @@ import { CredentialManager, BootstrapToken } from '../credentials.js';
 import { InstallManifest } from '../compose-generator.js';
 import { resolveCliPaths } from '../storage/paths.js';
 
+export interface BootstrapFlowOptions {
+  profile?: 'discovery' | 'full';
+}
+
 /**
  * Generate a cryptographically random 32-character bootstrap token.
  */
@@ -29,8 +33,9 @@ function generateBootstrapToken(): string {
  * Bootstrap flow for self-hosted mode.
  * Returns minimal InstallManifest for compose generation.
  */
-export async function bootstrapFlow(): Promise<InstallManifest> {
+export async function bootstrapFlow(options: BootstrapFlowOptions = {}): Promise<InstallManifest> {
   const credentialManager = new CredentialManager();
+  const profile = options.profile ?? 'discovery';
 
   // Step 1: Generate bootstrap token
   console.log('Generating bootstrap token...');
@@ -69,8 +74,11 @@ export async function bootstrapFlow(): Promise<InstallManifest> {
 
   // Step 4: Return minimal InstallManifest for compose generation
   const manifest: InstallManifest = {
-    profile: 'core',
-    services: ['api', 'dashboard', 'neo4j', 'discovery', 'cartography'],
+    profile,
+    services:
+      profile === 'full'
+        ? ['api', 'dashboard', 'neo4j', 'discovery', 'cartography', 'chatbot']
+        : ['api', 'dashboard', 'neo4j', 'discovery', 'cartography'],
     env_overrides: {
       CIG_AUTH_MODE: 'self-hosted',
       CIG_BOOTSTRAP_TOKEN: token,

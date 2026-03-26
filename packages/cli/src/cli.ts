@@ -26,7 +26,7 @@ function formatRootHelp(): string {
     '  login            Authenticate via device authorization flow',
     '  logout           Clear stored credentials and logout',
     '  doctor           Run prerequisite checks and display system readiness',
-    '  setup            Run the guided onboarding wizard and install CIG',
+    '  setup            Run the guided onboarding wizard and install the discovery-first bundle',
     '  install          Install CIG in managed or self-hosted mode',
     '  enroll           Enroll a node against the current control plane',
     '  bootstrap-reset  Generate and display a new bootstrap token',

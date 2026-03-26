@@ -32,11 +32,11 @@ const serviceNameArb = fc
  */
 const installManifestArb = fc
   .tuple(
-    fc.constantFrom('core', 'full'),
+    fc.constantFrom('discovery', 'full'),
     fc.uniqueArray(serviceNameArb, { minLength: 1, maxLength: 5 })
   )
   .map(([profile, services]) => ({
-    profile: profile as 'core' | 'full',
+    profile: profile as 'discovery' | 'full',
     services,
     env_overrides: {},
   }))
@@ -63,7 +63,7 @@ describe('Property 13: Compose generation completeness', () => {
     /**
      * Validates: Requirements 7.7, 6.2, 6.3
      *
-     * For any valid InstallManifest with profile 'core' or 'full',
+     * For any valid InstallManifest with profile 'discovery' or 'full',
      * the generated docker-compose.yml should contain a service entry
      * for every service listed in the manifest's services array.
      */
@@ -159,6 +159,82 @@ describe('Property 13: Compose generation completeness', () => {
       }),
       { numRuns: 100 }
     );
+  });
+});
+
+describe('Pinned service image refs', () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cig-compose-test-'));
+  });
+
+  afterEach(() => {
+    try {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    } catch {
+      // ignore cleanup errors
+    }
+  });
+
+  it('uses pinned image refs when the manifest provides them', async () => {
+    const manifest: InstallManifest = {
+      profile: 'discovery',
+      services: ['api', 'dashboard', 'neo4j', 'discovery', 'cartography'],
+      service_images: {
+        api: 'docker.io/cigtechnology/cig-api@sha256:1111111111111111111111111111111111111111111111111111111111111111',
+        dashboard: 'docker.io/cigtechnology/cig-dashboard@sha256:2222222222222222222222222222222222222222222222222222222222222222',
+        discovery: 'docker.io/cigtechnology/cig-discovery@sha256:3333333333333333333333333333333333333333333333333333333333333333',
+        cartography: 'docker.io/cigtechnology/cig-cartography@sha256:4444444444444444444444444444444444444444444444444444444444444444',
+      },
+    };
+
+    const outputDir = fs.mkdtempSync(path.join(tmpDir, 'test-'));
+    try {
+      await generateCompose(manifest, outputDir);
+
+      const composePath = path.join(outputDir, 'docker-compose.yml');
+      const composeData = JSON.parse(fs.readFileSync(composePath, 'utf-8')) as {
+        services: Record<string, { image: string }>;
+      };
+      const serviceImages = manifest.service_images as Record<string, string>;
+
+      expect(composeData.services.api.image).toBe(serviceImages.api);
+      expect(composeData.services.dashboard.image).toBe(serviceImages.dashboard);
+      expect(composeData.services.discovery.image).toBe(serviceImages.discovery);
+      expect(composeData.services.cartography.image).toBe(serviceImages.cartography);
+    } finally {
+      fs.rmSync(outputDir, { recursive: true, force: true });
+    }
+  });
+
+  it('includes chatbot in the full bundle when requested', async () => {
+    const manifest: InstallManifest = {
+      profile: 'full',
+      services: ['api', 'dashboard', 'neo4j', 'discovery', 'cartography', 'chatbot'],
+      service_images: {
+        api: 'docker.io/cigtechnology/cig-api@sha256:1111111111111111111111111111111111111111111111111111111111111111',
+        dashboard: 'docker.io/cigtechnology/cig-dashboard@sha256:2222222222222222222222222222222222222222222222222222222222222222',
+        discovery: 'docker.io/cigtechnology/cig-discovery@sha256:3333333333333333333333333333333333333333333333333333333333333333',
+        cartography: 'docker.io/cigtechnology/cig-cartography@sha256:4444444444444444444444444444444444444444444444444444444444444444',
+        chatbot: 'docker.io/cigtechnology/cig-chatbot@sha256:5555555555555555555555555555555555555555555555555555555555555555',
+      },
+    };
+
+    const outputDir = fs.mkdtempSync(path.join(tmpDir, 'test-'));
+    try {
+      await generateCompose(manifest, outputDir);
+
+      const composePath = path.join(outputDir, 'docker-compose.yml');
+      const composeData = JSON.parse(fs.readFileSync(composePath, 'utf-8')) as {
+        services: Record<string, { image: string }>;
+      };
+      const serviceImages = manifest.service_images as Record<string, string>;
+
+      expect(composeData.services.chatbot.image).toBe(serviceImages.chatbot);
+    } finally {
+      fs.rmSync(outputDir, { recursive: true, force: true });
+    }
   });
 });
 

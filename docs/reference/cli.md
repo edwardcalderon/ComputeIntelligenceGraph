@@ -79,9 +79,10 @@ curl -fsSL https://cig.lat/install.sh | bash
 ```
 
 The public installer resolves the published npm package version first, prints
-that resolved version, and then launches the wizard so the web install path
-uses the same release artifact and provenance metadata as
-`npm install -g @cig-technology/cli`.
+that resolved version, fetches the matching `images.json` bundle manifest from
+the GitHub release for that CLI version, and then launches the wizard so the
+web install path uses the same release artifact and pinned container digests
+as `npm install -g @cig-technology/cli`.
 
 If Docker Engine or Docker Compose is missing, the installer can offer to
 install the Docker prerequisites automatically on supported Linux and macOS
@@ -185,8 +186,8 @@ This is currently most useful for self-hosted mode.
 ### `cig install`
 
 ```bash
-cig install --mode managed --profile core --api-url http://localhost:8000
-cig install --mode self-hosted --profile core
+cig install --mode managed --profile discovery --api-url http://localhost:8000
+cig install --mode self-hosted --profile discovery
 ```
 
 Managed mode today:
@@ -217,14 +218,14 @@ Current behavior:
 
 - runs the guided onboarding wizard
 - prompts for managed vs self-hosted mode
-- prompts for the install profile
+- prompts for the discovery-first install profile
 - falls through to the same install engine as `cig install`
 - is the recommended first-run entrypoint for operators
 
 ### `cig enroll`
 
 ```bash
-cig enroll --api-url http://localhost:8000 --profile core
+cig enroll --api-url http://localhost:8000 --profile discovery
 ```
 
 Current behavior:
@@ -325,14 +326,14 @@ Current behavior:
 ### Managed control plane
 
 1. `cig login --api-url <api>`
-2. `cig install --mode managed --profile core --api-url <api>`
+2. `cig install --mode managed --profile discovery --api-url <api>`
 3. Copy the staged runtime bundle from `~/.cig/install/node-runtime`
 4. Materialize it on a Linux host manually until the privileged installer lands
 
 ### Self-hosted local
 
 1. `cig doctor`
-2. `cig install --mode self-hosted --profile core`
+2. `cig install --mode self-hosted --profile discovery`
 3. `cig open`
 4. Complete the bootstrap flow in the dashboard
 

@@ -33,7 +33,7 @@ describe('initial graph seeding', () => {
       installDir: path.join(tmpDir, 'install'),
       apiUrl: 'http://localhost:8000',
       mode: 'self-hosted',
-      profile: 'core',
+      profile: 'discovery',
       credentialManager,
     });
 
@@ -55,7 +55,7 @@ describe('initial graph seeding', () => {
       installDir: path.join(tmpDir, 'install'),
       apiUrl: 'http://localhost:8000',
       mode: 'self-hosted',
-      profile: 'core',
+      profile: 'discovery',
       credentialManager,
     }).then((result) => result.artifactPath);
 

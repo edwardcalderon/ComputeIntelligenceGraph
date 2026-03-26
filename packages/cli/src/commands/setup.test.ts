@@ -11,11 +11,11 @@ describe('setup command', () => {
   it('forwards explicit options to the install engine', async () => {
     await setup({
       mode: 'self-hosted',
-      profile: 'core',
+      profile: 'discovery',
       apiUrl: 'http://localhost:8000',
     });
 
-    expect(install).toHaveBeenCalledWith('http://localhost:8000', 'self-hosted', 'core');
+    expect(install).toHaveBeenCalledWith('http://localhost:8000', 'self-hosted', 'discovery');
   });
 
   it('returns cleanly when installation is cancelled', async () => {
@@ -25,7 +25,7 @@ describe('setup command', () => {
     await expect(
       setup({
         mode: 'self-hosted',
-        profile: 'core',
+        profile: 'discovery',
         apiUrl: 'http://localhost:8000',
       })
     ).resolves.toBeUndefined();

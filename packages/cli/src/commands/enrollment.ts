@@ -2,6 +2,7 @@ import * as os from 'node:os';
 import { InstallManifest } from '../compose-generator.js';
 import { CredentialManager, TargetIdentity } from '../credentials.js';
 import { ApiClient } from '../services/api-client.js';
+import { normalizeApiProfile, normalizeInstallProfile } from '../services/install-profile.js';
 import { generateEd25519KeyPair } from '../utils/crypto.js';
 
 interface EnrollmentTokenResponse {
@@ -16,7 +17,7 @@ interface EnrollResponse {
 }
 
 interface InstallManifestResponse {
-  profile: 'core' | 'full';
+  profile: 'core' | 'discovery' | 'full';
   services: string[];
   env_overrides?: Record<string, string>;
   node_identity: {
@@ -28,7 +29,7 @@ interface InstallManifestResponse {
 
 export interface EnrollmentFlowOptions {
   apiUrl: string;
-  profile?: 'core' | 'full';
+  profile?: 'core' | 'discovery' | 'full';
   enrollmentToken?: string;
 }
 
@@ -69,7 +70,8 @@ export async function enrollmentFlow(options: EnrollmentFlowOptions): Promise<{
 }> {
   const credentialManager = new CredentialManager();
   const apiClient = new ApiClient({ baseUrl: options.apiUrl, accessToken: credentialManager.loadTokens()?.accessToken });
-  const profile = options.profile ?? 'core';
+  const profile = normalizeInstallProfile(options.profile);
+  const apiProfile = normalizeApiProfile(profile);
 
   const enrollmentToken = options.enrollmentToken ?? await requestEnrollmentToken(apiClient);
 
@@ -82,7 +84,7 @@ export async function enrollmentFlow(options: EnrollmentFlowOptions): Promise<{
     os: os.platform(),
     architecture: os.arch(),
     ip_address: getPrimaryIpAddress(),
-    profile,
+    profile: apiProfile,
     public_key: provisionalIdentity.publicKey,
   });
 
@@ -95,13 +97,13 @@ export async function enrollmentFlow(options: EnrollmentFlowOptions): Promise<{
   credentialManager.saveIdentity(identity);
 
   const manifest = await apiClient.get<InstallManifestResponse>(
-    `/api/v1/targets/install-manifest?target_id=${encodeURIComponent(identity.targetId)}&profile=${profile}`
+    `/api/v1/targets/install-manifest?target_id=${encodeURIComponent(identity.targetId)}&profile=${apiProfile}`
   );
 
   return {
     identity,
     manifest: {
-      profile: manifest.profile,
+      profile: normalizeInstallProfile(manifest.profile),
       services: manifest.services,
       env_overrides: manifest.env_overrides,
       node_identity: {

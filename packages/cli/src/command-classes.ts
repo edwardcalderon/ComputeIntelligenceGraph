@@ -66,8 +66,8 @@ export class SetupCommand extends CigCommand {
       options: ['managed', 'self-hosted'] as const,
     }),
     profile: Flags.string({
-      description: 'Installation profile: core or full',
-      options: ['core', 'full'] as const,
+      description: 'Installation profile: discovery or full (core is accepted as a legacy alias)',
+      options: ['core', 'discovery', 'full'] as const,
     }),
     'api-url': Flags.string({ description: 'API URL' }),
   };
@@ -77,7 +77,7 @@ export class SetupCommand extends CigCommand {
     await this.runSafely(() =>
       setup({
         mode: flags.mode as 'managed' | 'self-hosted' | undefined,
-        profile: flags.profile as 'core' | 'full' | undefined,
+        profile: flags.profile as 'core' | 'discovery' | 'full' | undefined,
         apiUrl: flags['api-url'],
       })
     );
@@ -92,8 +92,8 @@ export class InstallCommand extends CigCommand {
       options: ['managed', 'self-hosted'] as const,
     }),
     profile: Flags.string({
-      description: 'Installation profile: core or full',
-      options: ['core', 'full'] as const,
+      description: 'Installation profile: discovery or full (core is accepted as a legacy alias)',
+      options: ['core', 'discovery', 'full'] as const,
     }),
     'api-url': Flags.string({ description: 'API URL', default: 'http://localhost:8000' }),
   };
@@ -101,12 +101,12 @@ export class InstallCommand extends CigCommand {
   async run(): Promise<void> {
     const { flags } = await this.parse(InstallCommand);
     await this.runSafely(() =>
-      install(
-        flags['api-url'],
-        flags.mode as 'managed' | 'self-hosted' | undefined,
-        flags.profile as 'core' | 'full' | undefined
-      )
-    );
+        install(
+          flags['api-url'],
+          flags.mode as 'managed' | 'self-hosted' | undefined,
+          flags.profile as 'core' | 'discovery' | 'full' | undefined
+        )
+      );
   }
 }
 
@@ -115,9 +115,9 @@ export class EnrollCommand extends CigCommand {
   static override flags = {
     'api-url': Flags.string({ description: 'API URL', default: 'http://localhost:8000' }),
     profile: Flags.string({
-      description: 'Install profile: core or full',
-      options: ['core', 'full'] as const,
-      default: 'core',
+      description: 'Install profile: discovery or full (core is accepted as a legacy alias)',
+      options: ['core', 'discovery', 'full'] as const,
+      default: 'discovery',
     }),
     token: Flags.string({ description: 'Pre-issued enrollment token' }),
   };
@@ -127,7 +127,7 @@ export class EnrollCommand extends CigCommand {
     await this.runSafely(() =>
       enroll({
         apiUrl: flags['api-url'],
-        profile: flags.profile as 'core' | 'full' | undefined,
+        profile: flags.profile as 'core' | 'discovery' | 'full' | undefined,
         token: flags.token,
       })
     );
