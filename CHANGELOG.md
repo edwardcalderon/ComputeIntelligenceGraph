@@ -1,3 +1,25 @@
+## [0.2.66](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.65...v0.2.66) (2026-03-27)
+
+
+### Bug Fixes
+
+* **landing:** button click blocker, hero entrance animations, pill weaving ([2d9ac7e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/2d9ac7e009999f88fd2f4d8705855cf9b2917540))
+
+
+
+
+
+## [0.2.66](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.65...v0.2.66) (2026-03-27)
+
+
+### Bug Fixes
+
+* **landing:** button click blocker, hero entrance animations, pill weaving ([2d9ac7e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/2d9ac7e009999f88fd2f4d8705855cf9b2917540))
+
+
+
+
+
 ## [0.2.65](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.64...v0.2.65) (2026-03-27)
 
 ### Detected changes
