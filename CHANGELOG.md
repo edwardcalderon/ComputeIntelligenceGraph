@@ -1,3 +1,17 @@
+## [0.2.54](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.53...v0.2.54) (2026-03-27)
+
+### Detected changes
+- apps: 2 changed file(s)
+  - apps/landing/components/AuthProvider.tsx
+  - apps/landing/lib/dashboardHandoff.ts
+
+
+## [0.2.54](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.53...v0.2.54) (2026-03-27)
+
+
+
+
+
 ## [0.2.53](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.52...v0.2.53) (2026-03-27)
 
 ### Detected changes

@@ -113,7 +113,7 @@ function buildDashboardCallbackHash(params: Record<string, string>): string {
 function getAuthentikDashboardCallbackHash(): string | null {
   try {
     const authSource = sessionStorage.getItem("cig_auth_source");
-    if (authSource && authSource !== "authentik") {
+    if (authSource !== "authentik") {
       return null;
     }
 

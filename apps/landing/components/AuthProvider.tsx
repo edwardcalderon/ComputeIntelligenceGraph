@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { getSupabaseClient, revokeSessionViaApi } from "@cig/auth";
+import { clearPendingDashboardRedirect } from "../lib/dashboardHandoff";
 
 /* ─── Shared auth interface ──────────────────────────────────────────── */
 
@@ -98,7 +99,7 @@ function readAuthentikSession(): CIGUser | null {
   }
 }
 
-function clearAuthentikSession() {
+function clearLandingBrowserSession() {
   try {
     sessionStorage.removeItem("cig_access_token");
     sessionStorage.removeItem("cig_id_token");
@@ -109,6 +110,17 @@ function clearAuthentikSession() {
     sessionStorage.removeItem("cig_social_provider");
     document.cookie = "cig_has_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
   } catch { /* ignore */ }
+
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const projectRef = supabaseUrl ? new URL(supabaseUrl).hostname.split(".")[0] : "";
+    if (projectRef) {
+      localStorage.removeItem(`sb-${projectRef}-auth-token`);
+    }
+    localStorage.removeItem("supabase.auth.token");
+  } catch {
+    /* ignore */
+  }
 }
 
 function persistAuthSource(source: "authentik" | "supabase") {
@@ -219,12 +231,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // 1) Handle Authentik logout return
     const params = new URLSearchParams(window.location.search);
-    if (params.get("logged_out") === "1") {
+    const isLoggedOutReturn = params.get("logged_out") === "1";
+    if (isLoggedOutReturn) {
       invalidatePendingRefreshes();
-      clearAuthentikSession();
+      clearLandingBrowserSession();
+      clearPendingDashboardRedirect();
       window.history.replaceState({}, "", window.location.pathname);
       setAuthState({ user: null, isHydrated: true, isSigningOut: false });
-      return;
     }
 
     // 2) Process Authentik hash tokens if present
@@ -238,7 +251,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const expiresAtMs = Date.now() + expiresIn * 1000;
         const socialProv = hp.get("social_provider") ?? undefined;
         try {
-          clearAuthentikSession();
+          clearLandingBrowserSession();
           sessionStorage.setItem("cig_access_token", accessToken);
           if (idToken) sessionStorage.setItem("cig_id_token", idToken);
           sessionStorage.setItem("cig_expires_in", String(expiresIn));
@@ -255,7 +268,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // 3) Resolve the current user. Authentik/OTP sessions are available
     // synchronously in sessionStorage, while Supabase may need an async read.
-    void reconcileAuthState();
+    if (!isLoggedOutReturn) {
+      void reconcileAuthState();
+    }
 
     // 4) Subscribe to Supabase changes even in Authentik mode (hybrid)
     const supabase = getSupabaseClient();
@@ -336,16 +351,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // logout endpoint, which expects an API key on the request.
           await supabase?.auth.signOut({ scope: "local" });
         } catch { /* ignore */ }
-        try {
-          sessionStorage.removeItem("cig_auth_source");
-        } catch { /* ignore */ }
+        clearLandingBrowserSession();
+        clearPendingDashboardRedirect();
         setAuthState({ user: null, isHydrated: true, isSigningOut: false });
         window.location.replace(loggedOutUrl);
       })();
       return;
     }
 
-    clearAuthentikSession();
+    clearLandingBrowserSession();
+    clearPendingDashboardRedirect();
     setAuthState({
       user: null,
       isHydrated: true,
