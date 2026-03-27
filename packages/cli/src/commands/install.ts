@@ -150,6 +150,7 @@ function generateComposeFile(manifest: SetupManifest, profile: 'core' | 'discove
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_PASSWORD=\${NEO4J_PASSWORD}
       - DATABASE_URL=\${DATABASE_URL}
+      - CHROMA_URI=http://chroma:8000
     depends_on:
       - neo4j
 
