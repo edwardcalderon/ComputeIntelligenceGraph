@@ -541,9 +541,6 @@ importers:
 
   packages/cli:
     dependencies:
-      '@cig/sdk':
-        specifier: workspace:*
-        version: link:../sdk
       '@clack/prompts':
         specifier: ^1.1.0
         version: 1.1.0
