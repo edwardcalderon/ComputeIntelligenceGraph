@@ -1,3 +1,24 @@
+## [0.2.62](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.61...v0.2.62) (2026-03-27)
+
+### Detected changes
+- .kiro: .kiro/specs/cig-node-onboarding/tasks.md
+- apps: 8 changed file(s)
+  - apps/docs/docs/en/architecture/components.md
+  - apps/docs/docs/en/architecture/index.md
+  - apps/docs/docs/en/architecture/system-design.md
+  - apps/docs/docs/en/developer-guide/index.md
+  - apps/docs/docs/en/getting-started/installation.md
+  - apps/docs/docs/en/getting-started/quick-start.md
+  - apps/docs/docs/en/next-steps.md
+  - apps/docs/sidebars.ts
+
+
+## [0.2.62](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.61...v0.2.62) (2026-03-27)
+
+
+
+
+
 ## [0.2.61](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.60...v0.2.61) (2026-03-27)
 
 ### Detected changes

@@ -7,16 +7,54 @@ sidebar_position: 2
 
 # Installation
 
-## Prerequisites
+This guide covers the full installation process for a local development environment.
 
-- Node.js 20.0 or higher
-- pnpm 9.0 or higher
+## Comprehensive Prerequisites
 
-## Installation Steps
+CIG is a modern, high-performance monorepo. Ensure your machine meets these requirements:
 
-1. Clone the repository
-2. Install dependencies
-3. Configure environment variables
-4. Start the development server
+- **Operating System**: Linux (Ubuntu 22.04+ recommended), macOS (Apple Silicon preferred), or Windows (WSL2 is REQUIRED).
+- **Node.js**: `v22.0` or higher (Use `nvm` or `fnm` for management).
+- **pnpm**: `v9.0` or higher.
+- **Docker**: Engine version `24.0+` with Compose `v2.20+`.
+- **Git**: Properly configured with SSH or personal access tokens.
 
-For detailed instructions, see the [Quick Start](./quick-start.md) guide.
+## Detailed Installation Steps
+
+### 1. Repository Access
+Clone the repository and enter the director:
+```bash
+git clone https://github.com/edwardcalderon/ComputeIntelligenceGraph.git
+cd ComputeIntelligenceGraph
+```
+
+### 2. Dependency Resolution
+CIG uses `pnpm` workspaces. Avoid using `npm` or `yarn` as they will ignore the state of the workspace.
+```bash
+pnpm install
+```
+
+### 3. Environment Synchronization
+CIG uses a strict environment management system. You cannot run the apps without valid `.env` files in each package/app.
+```bash
+# Sync all .env files from templates
+pnpm env:sync
+
+# Validate your local configuration
+pnpm env:doctor
+```
+
+### 4. Database Setup
+Launch the core persistence and discovery engines:
+```bash
+docker-compose -f docker-compose.dev.yml up -d
+```
+
+### 5. Workspace Build (Optional but Recommended)
+For a better initial experience, build all packages once:
+```bash
+pnpm build:all
+```
+
+## Troubleshooting Setup
+If you encounter `pnpm install` errors relating to architecture mismatches, ensure you have the correct build tools installed (`build-essential` on Linux).

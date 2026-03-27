@@ -249,8 +249,8 @@ and carry a comment `// Feature: cig-node-onboarding, Property N: <title>`.
     - _Requirements: 9.1–9.4, 9.10_
 
   - [~] 4.2 Implement Tier 1 AWS IAM policy constants and documentation
-    - Create `packages/discovery/src/aws/permissions.ts`: export `TIER1_POLICY_JSON` (read-only Describe/List for EC2, RDS, S3, Lambda, VPC, IAM), `TIER2_POLICY_JSON`, trust policy template with external ID condition
-    - These are displayed in the Dashboard onboarding wizard and `cig permissions` output
+    - Create `packages/discovery/src/aws/permissions.ts`: export `TIER1_POLICY_JSON` (read-only Describe/List for EC2, RDS, S3, elry Lambda, VPC, IAM), `TIER2_POLICY_JSON`, trust policy template with external ID condition
+    - These are displayed in the Dashboard onboarding wizard and `cig permissions` outputelry 
     - _Requirements: 1.2, 1.3, 9.5, 9.6, 11.1–11.3_
 
   - [~] 4.3 Implement Cartography-based initial full scan for AWS

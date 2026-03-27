@@ -68,6 +68,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Resources',
       items: [
+        'en/next-steps',
         'en/changelog/index',
         'en/faq/index',
       ],
