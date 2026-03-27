@@ -260,8 +260,9 @@ function FeatureModal({ feature, onClose, onOpen }: FeatureModalProps) {
       >
         <div
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-lg rounded-3xl overflow-hidden pointer-events-auto"
+          className="relative w-full max-w-lg rounded-3xl overflow-hidden"
           style={{
+            pointerEvents: visible ? "auto" : "none",
             background: isDark
               ? `radial-gradient(circle at top right, ${withAlpha(c, 0.22)} 0%, transparent 50%), linear-gradient(180deg, rgba(14,20,35,0.98) 0%, rgba(3,7,18,0.99) 100%)`
               : `radial-gradient(circle at top right, ${withAlpha(c, 0.16)} 0%, transparent 50%), linear-gradient(180deg, rgba(255,255,255,0.99) 0%, rgba(241,245,249,0.99) 100%)`,
@@ -860,6 +861,9 @@ export function AuthenticatedLanding() {
         @keyframes cig-float        { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
         @keyframes cig-glow-pulse   { 0%,100% { opacity: 0.35; } 50% { opacity: 0.75; } }
         @keyframes cig-scan         { 0% { top: 0%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+        @keyframes cig-hero-in      { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes cig-pill-in      { from { opacity: 0; transform: translateY(10px) scale(0.88); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes cig-pill-bob     { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-3px); } }
         .cig-holocard:not([data-selected]) { transition: outline 0.15s ease; outline: 2px solid transparent; outline-offset: 2px; }
         .cig-holocard:hover:not([data-selected]) { outline: 2px solid rgba(255,255,255,0.12); }
       `}</style>
@@ -900,14 +904,16 @@ export function AuthenticatedLanding() {
       <div className="relative z-30 px-4 pt-24 pb-14 text-center sm:px-6 sm:pt-28 sm:pb-16">
         <div className="mx-auto flex max-w-4xl flex-col items-center rounded-[2rem] border border-cyan-500/10 bg-white/70 px-6 py-8 shadow-[0_24px_90px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/55 dark:shadow-[0_24px_90px_rgba(0,0,0,0.42)] sm:px-10 sm:py-11 md:py-12">
           {/* Headline */}
-          <h1 className="mb-3 text-4xl font-bold tracking-tight md:text-5xl">
+          <h1 className="mb-3 text-4xl font-bold tracking-tight md:text-5xl"
+            style={{ animation: "cig-hero-in 0.65s cubic-bezier(.16,1,.3,1) 0.05s both" }}>
             <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-violet-400 bg-clip-text text-transparent">
               {t("authed.title.line1")}
             </span>
             <br />
             <span className="text-zinc-900 dark:text-zinc-100">{t("authed.title.line2")}</span>
           </h1>
-          <p className="mb-8 max-w-2xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400 sm:text-lg">
+          <p className="mb-8 max-w-2xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400 sm:text-lg"
+            style={{ animation: "cig-hero-in 0.65s cubic-bezier(.16,1,.3,1) 0.18s both" }}>
             {t("authed.desc")}
           </p>
 
@@ -915,7 +921,12 @@ export function AuthenticatedLanding() {
           <div className="mb-8 flex flex-wrap items-center justify-center gap-2.5">
             {STATUS_BADGE_DEFS.map(({ key, color }, idx) => (
               <div key={key} className="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium"
-                style={{ borderColor: `${color}35`, backgroundColor: `${color}0e`, color }}>
+                style={{
+                  borderColor: `${color}35`,
+                  backgroundColor: `${color}0e`,
+                  color,
+                  animation: `cig-pill-in 0.55s cubic-bezier(.34,1.56,.64,1) ${0.32 + idx * 0.08}s both, cig-pill-bob ${2.4 + idx * 0.35}s ease-in-out ${0.9 + idx * 0.08}s infinite`,
+                }}>
                 <div className="size-1.5 rounded-full"
                   style={{ backgroundColor: color, animation: "cig-glow-pulse 2s ease-in-out infinite", animationDelay: `${idx * 0.3}s` }} />
                 {t(key)}
@@ -924,7 +935,8 @@ export function AuthenticatedLanding() {
           </div>
 
           {/* CTA */}
-          <div className="w-full max-w-md pb-2 sm:max-w-none sm:pb-3">
+          <div className="w-full max-w-md pb-2 sm:max-w-none sm:pb-3"
+            style={{ animation: "cig-hero-in 0.7s cubic-bezier(.16,1,.3,1) 0.55s both" }}>
             <button
               type="button"
               data-dashboard-cta="true"
