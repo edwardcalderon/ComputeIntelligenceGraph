@@ -228,6 +228,24 @@ program
     await uninstall(cmdOpts.purgeData);
   });
 
+// setup — interactive wizard (used by install.sh)
+program
+  .command('setup')
+  .description('Interactive setup wizard for bootstrapping a CIG Node')
+  .option('--mode <mode>', 'Installation mode: managed or self-hosted')
+  .option('--profile <profile>', 'Installation profile: core, discovery, or full')
+  .option('--api-url <url>', 'Control plane API URL')
+  .option('--demo', 'Include demo data in the installation', false)
+  .action(async (cmdOpts: { mode?: string; profile?: string; apiUrl?: string; demo?: boolean }) => {
+    const { setup } = await import('./commands/setup.js');
+    await setup({
+      mode: cmdOpts.mode as 'managed' | 'self-hosted' | undefined,
+      profile: cmdOpts.profile as 'core' | 'discovery' | 'full' | undefined,
+      apiUrl: cmdOpts.apiUrl,
+      demo: cmdOpts.demo,
+    });
+  });
+
 // bootstrap-reset — self-hosted only
 program
   .command('bootstrap-reset')
