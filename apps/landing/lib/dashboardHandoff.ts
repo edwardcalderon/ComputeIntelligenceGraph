@@ -1,9 +1,13 @@
 "use client";
 
 import { getSupabaseClient } from "@cig/auth";
-import { normalizeDashboardRedirectPath } from "@cig/ui/siteUrl";
+import {
+  isProtectedDashboardHostname,
+  normalizeDashboardRedirectPath,
+} from "@cig/ui/siteUrl";
 
 const PENDING_DASHBOARD_REDIRECT_KEY = "cig_pending_dashboard_redirect";
+const PENDING_DASHBOARD_AUTH_INTENT_KEY = "cig_pending_dashboard_auth_intent";
 const AUTH_PROVIDER = process.env.NEXT_PUBLIC_AUTH_PROVIDER || "authentik";
 const DASHBOARD_URL =
   process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3001";
@@ -30,6 +34,7 @@ export function persistPendingDashboardRedirect(path: string): void {
     PENDING_DASHBOARD_REDIRECT_KEY,
     normalizeDashboardRedirectPath(path, "/"),
   );
+  storage.setItem(PENDING_DASHBOARD_AUTH_INTENT_KEY, "1");
 }
 
 export function readPendingDashboardRedirect(): string | null {
@@ -51,9 +56,24 @@ export function clearPendingDashboardRedirect(): void {
   }
 
   storage.removeItem(PENDING_DASHBOARD_REDIRECT_KEY);
+  storage.removeItem(PENDING_DASHBOARD_AUTH_INTENT_KEY);
+}
+
+function hasPendingDashboardAuthIntent(): boolean {
+  const storage = readStorage();
+  if (!storage) {
+    return false;
+  }
+
+  return storage.getItem(PENDING_DASHBOARD_AUTH_INTENT_KEY) === "1";
 }
 
 export function consumePendingDashboardRedirect(): string | null {
+  if (!hasPendingDashboardAuthIntent()) {
+    clearPendingDashboardRedirect();
+    return null;
+  }
+
   const target = readPendingDashboardRedirect();
   clearPendingDashboardRedirect();
   return target;
@@ -82,6 +102,14 @@ export function cleanLandingAuthSearchParams(): void {
 export async function goToDashboard(path = "/"): Promise<void> {
   const normalizedPath = normalizeDashboardRedirectPath(path, "/");
   clearPendingDashboardRedirect();
+  const dashboardHostname = (() => {
+    try {
+      return new URL(DASHBOARD_URL).hostname;
+    } catch {
+      return "";
+    }
+  })();
+  const requiresProtectedHandoff = isProtectedDashboardHostname(dashboardHostname);
 
   if (AUTH_PROVIDER === "supabase") {
     try {
@@ -103,7 +131,7 @@ export async function goToDashboard(path = "/"): Promise<void> {
         }
       }
     } catch {
-      // fall through to a plain redirect
+      // fall through to a guarded redirect decision
     }
   } else {
     try {
@@ -123,8 +151,12 @@ export async function goToDashboard(path = "/"): Promise<void> {
         return;
       }
     } catch {
-      // fall through to a plain redirect
+      // fall through to a guarded redirect decision
     }
+  }
+
+  if (requiresProtectedHandoff) {
+    throw new Error("Protected dashboard access requires an authenticated handoff.");
   }
 
   window.location.replace(`${DASHBOARD_URL}${normalizedPath}`);

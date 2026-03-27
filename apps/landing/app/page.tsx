@@ -917,7 +917,9 @@ export default function HomePage() {
     }
 
     dashboardRedirectHandledRef.current = true;
-    void goToDashboard(dashboardRedirect);
+    void goToDashboard(dashboardRedirect).catch(() => {
+      dashboardRedirectHandledRef.current = false;
+    });
   }, [isHydrated, user]);
 
   if (isSigningOut) {

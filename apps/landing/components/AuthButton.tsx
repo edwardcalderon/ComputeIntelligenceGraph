@@ -8,6 +8,7 @@ import { useCIGAuth } from "./AuthProvider";
 import { PreferencesMenu } from "./PreferencesMenu";
 import { useTranslation } from "@cig-technology/i18n/react";
 import {
+  clearPendingDashboardRedirect,
   cleanLandingAuthSearchParams,
   consumePendingDashboardRedirect,
   goToDashboard,
@@ -1207,7 +1208,14 @@ export function AuthButton() {
       return;
     }
 
-    void goToDashboard(dashboardRedirect);
+    void goToDashboard(dashboardRedirect).catch(() => {
+      // Stay on landing if the dashboard handoff cannot be completed yet.
+    });
+  }, []);
+
+  const handleModalClose = useCallback(() => {
+    clearPendingDashboardRedirect();
+    setShowModal(false);
   }, []);
 
   const handleSSOSignIn = useCallback(async (provider: AuthentikSocialProvider) => {
@@ -1290,7 +1298,7 @@ export function AuthButton() {
 
       {showModal && (
         <SignInModal
-          onClose={() => setShowModal(false)}
+          onClose={handleModalClose}
           onSSOSignIn={handleSSOSignIn}
           onAuthSuccess={handlePostAuthSuccess}
         />
