@@ -70,11 +70,11 @@ export default function InstallContent() {
   }, [installCommand]);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-zinc-50 via-white to-zinc-100 text-zinc-900 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 dark:text-zinc-50">
+    <main className="relative min-h-screen overflow-x-hidden bg-gradient-to-br from-zinc-50 via-white to-zinc-100 text-zinc-900 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 dark:text-zinc-50">
       <div className="pointer-events-none absolute -top-40 -left-40 h-[520px] w-[520px] rounded-full bg-cyan-500/10 blur-3xl dark:bg-cyan-400/10" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 h-[520px] w-[520px] rounded-full bg-violet-500/10 blur-3xl dark:bg-violet-400/10" />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 py-16 lg:px-8 lg:py-20">
+      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
         <div className="flex flex-wrap items-center gap-3">
           <span className="inline-flex items-center gap-2 rounded-full border border-cyan-200/80 bg-cyan-50/90 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-900 dark:border-cyan-800/70 dark:bg-cyan-950/45 dark:text-cyan-100">
             <BadgeCheck size={14} />
@@ -92,7 +92,7 @@ export default function InstallContent() {
               <p className="text-sm font-semibold uppercase tracking-[0.35em] text-cyan-500/90 dark:text-cyan-300/90">
                 {t("install.title")}
               </p>
-              <h1 className="max-w-3xl text-4xl font-black tracking-tight md:text-6xl">
+              <h1 className="max-w-3xl text-3xl font-black tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
                 {t("install.headline")}
               </h1>
               <p className="max-w-2xl text-base leading-7 text-zinc-600 dark:text-zinc-400 md:text-lg">
@@ -100,7 +100,7 @@ export default function InstallContent() {
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3 sm:flex-row">
               <Link
                 href="/install.sh"
                 download
@@ -119,8 +119,8 @@ export default function InstallContent() {
             </div>
 
             <div className="rounded-3xl border border-zinc-200/80 bg-white/85 p-5 shadow-2xl shadow-cyan-950/10 backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-950/70">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div>
+              <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">
                     {t("install.webInstall.title")}
                   </p>
@@ -128,23 +128,23 @@ export default function InstallContent() {
                     {t("install.webInstall.subtitle")}
                   </p>
                 </div>
-                <span className="rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-cyan-900 dark:border-cyan-800 dark:bg-cyan-950/50 dark:text-cyan-100">
+                <span className="shrink-0 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-cyan-900 dark:border-cyan-800 dark:bg-cyan-950/50 dark:text-cyan-100">
                   curl | bash
                 </span>
               </div>
               <div className="relative group">
-                <pre className="overflow-x-auto rounded-2xl bg-zinc-950 px-5 py-4 pr-28 text-sm leading-7 text-cyan-100 shadow-inner">
-                  <code>{installCommand}</code>
+                <pre className="overflow-x-auto rounded-2xl bg-zinc-950 px-4 py-4 text-sm leading-7 text-cyan-100 shadow-inner sm:px-5">
+                  <code className="block pr-24 sm:pr-28">{installCommand}</code>
                 </pre>
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="absolute right-3 top-3 inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-zinc-900/90 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition hover:border-cyan-400/40 hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                  className="absolute right-2 top-2 inline-flex items-center gap-1.5 rounded-full border border-cyan-500/20 bg-zinc-900/90 px-2.5 py-1.5 text-xs font-semibold text-cyan-100 transition hover:border-cyan-400/40 hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-cyan-400/60 sm:right-3 sm:top-3 sm:gap-2 sm:px-3"
                   title={copied ? t("common.copied") : t("common.copy")}
                   aria-label={copied ? t("common.copied") : t("common.copy")}
                 >
                   {copied ? <Check size={14} /> : <Copy size={14} />}
-                  {copied ? t("common.copied") : t("common.copy")}
+                  <span className="hidden sm:inline">{copied ? t("common.copied") : t("common.copy")}</span>
                 </button>
               </div>
               <p className="mt-4 text-sm leading-6 text-zinc-600 dark:text-zinc-400">

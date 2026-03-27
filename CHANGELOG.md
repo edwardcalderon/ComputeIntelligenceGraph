@@ -1,3 +1,18 @@
+## [0.2.45](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.44...v0.2.45) (2026-03-27)
+
+### Detected changes
+- apps: 3 changed file(s)
+  - apps/dashboard/components/ChatExamplesTab.tsx
+  - apps/dashboard/components/ChatWidget.tsx
+  - apps/dashboard/lib/chatTemplates.ts
+
+
+## [0.2.45](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.44...v0.2.45) (2026-03-27)
+
+
+
+
+
 ## [0.2.44](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.43...v0.2.44) (2026-03-27)
 
 ### Detected changes
