@@ -1,3 +1,14 @@
+## [0.1.25](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.24...cli-v0.1.25) (2026-03-27)
+
+
+### Bug Fixes
+
+* **cli:** use correct Docker Hub images instead of non-existent ghcr.io/cig/ ([44c5e98](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/44c5e987e7b0b2c021261f26d1467e8218459363))
+
+
+
+
+
 ## [0.1.24](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.23...cli-v0.1.24) (2026-03-27)
 
 
