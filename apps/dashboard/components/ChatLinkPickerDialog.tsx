@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Database, ExternalLink, Link2, Search } from "lucide-react";
 import { ModalCard } from "@cig/ui";
+import type { GraphSource } from "@cig/sdk";
 import { getResourcesPaged, searchResources, type Resource } from "../lib/api";
 
 function looksDatabaseLike(resource: Resource): boolean {
@@ -47,6 +48,7 @@ function ResourceRow({
 export function ChatLinkPickerDialog({
   open,
   docsUrl,
+  source,
   currentResource,
   recentResources,
   linkedResourceIds,
@@ -55,6 +57,7 @@ export function ChatLinkPickerDialog({
 }: {
   open: boolean;
   docsUrl: string;
+  source: GraphSource;
   currentResource: Resource | null;
   recentResources: Resource[];
   linkedResourceIds: string[];
@@ -77,7 +80,7 @@ export function ChatLinkPickerDialog({
     const loadSuggestions = async () => {
       setIsLoadingSuggestions(true);
       try {
-        const response = await getResourcesPaged("limit=48");
+        const response = await getResourcesPaged("limit=48", source);
         if (cancelled) {
           return;
         }
@@ -99,7 +102,7 @@ export function ChatLinkPickerDialog({
     return () => {
       cancelled = true;
     };
-  }, [open]);
+  }, [open, source]);
 
   useEffect(() => {
     if (!open) {
@@ -118,7 +121,7 @@ export function ChatLinkPickerDialog({
 
     const timer = window.setTimeout(async () => {
       try {
-        const response = await searchResources(query);
+        const response = await searchResources(query, undefined, source);
         if (!cancelled) {
           setSearchResults(response.items.slice(0, 10));
         }
@@ -137,7 +140,7 @@ export function ChatLinkPickerDialog({
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [open, searchValue]);
+  }, [open, searchValue, source]);
 
   const currentSelection = useMemo(
     () =>
@@ -163,7 +166,7 @@ export function ChatLinkPickerDialog({
       open={open}
       tone="info"
       title="Link infrastructure resources"
-      description="Attach live resources from the current infrastructure instead of pasting generic URLs."
+      description="Attach resources from the selected graph source instead of pasting generic URLs."
       icon={<Link2 className="h-5 w-5" />}
       dismissLabel="Close resource picker"
       onDismiss={onClose}

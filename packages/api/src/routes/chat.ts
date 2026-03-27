@@ -3,15 +3,17 @@
  */
 
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { GraphEngine, GraphQueryEngine, type Resource_Model } from '@cig/graph';
+import { GraphEngine, GraphQueryEngine, type GraphScope, type Resource_Model } from '@cig/graph';
 import { CartographyClient } from '@cig/discovery';
 import { authenticate, authorize, Permission } from '../auth';
+import { DEMO_GRAPH_SCOPE, resolveGraphScope } from '../graph-scope';
 import { answerChatQuestion, type ChatInfrastructureSnapshot } from '../chat';
 import {
   buildAttachmentContextItem,
   readMultipartFile,
   transcribeAudioFile,
 } from '../chat-inputs';
+import { buildDemoWorkspaceGraphSnapshot } from '../demo-workspace';
 import {
   appendChatExchange,
   deleteChatSession,
@@ -33,6 +35,7 @@ interface ChatRequestBody {
   message?: string;
   sessionId?: string;
   contextItems?: unknown[];
+  graphSource?: string;
 }
 
 interface RenameSessionBody {
@@ -67,6 +70,10 @@ function resolveDeploymentMode(): ChatInfrastructureSnapshot['deploymentMode'] {
   return process.env['CIG_AUTH_MODE'] === 'managed' ? 'managed' : 'self-hosted';
 }
 
+function normalizeGraphSource(value: unknown): 'live' | 'demo' {
+  return value === 'demo' ? 'demo' : 'live';
+}
+
 function resolveDiscoveryIntervalMinutes(): number {
   const parsed = Number.parseInt(process.env.DISCOVERY_INTERVAL_MINUTES ?? '', 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_DISCOVERY_INTERVAL_MINUTES;
@@ -86,10 +93,60 @@ function resolveNextRun(lastRun: string | null): string | null {
   return startedAt.toISOString();
 }
 
-async function buildInfrastructureSnapshot(): Promise<ChatInfrastructureSnapshot> {
+function demoResourceToModel(
+  resource: {
+    id: string;
+    name: string;
+    type: string;
+    provider: string;
+    region?: string | null;
+    state?: string | null;
+    tags?: Record<string, string>;
+  },
+): Resource_Model {
+  const now = new Date();
+  return {
+    id: resource.id,
+    name: resource.name,
+    type: resource.type as Resource_Model['type'],
+    provider: resource.provider as Resource_Model['provider'],
+    region: resource.region ?? undefined,
+    zone: undefined,
+    state: (resource.state ?? 'active') as Resource_Model['state'],
+    tags: resource.tags ?? {},
+    metadata: {},
+    cost: undefined,
+    ownerId: undefined,
+    tenant: undefined,
+    workspace: undefined,
+    createdAt: now,
+    updatedAt: now,
+    discoveredAt: now,
+  };
+}
+
+async function buildInfrastructureSnapshot(
+  source: 'live' | 'demo',
+  scope?: GraphScope
+): Promise<ChatInfrastructureSnapshot> {
+  if (source === 'demo') {
+    const demoSnapshot = await buildDemoWorkspaceGraphSnapshot().catch(() => null);
+    if (demoSnapshot) {
+      return {
+        resourceCounts: demoSnapshot.resourceCounts,
+        sampleResources: demoSnapshot.resources.slice(0, 3).map(demoResourceToModel),
+        discoveryHealthy: demoSnapshot.source.available,
+        discoveryRunning: demoSnapshot.discovery.running,
+        discoveryLastRun: demoSnapshot.discovery.lastRun,
+        discoveryNextRun: demoSnapshot.discovery.nextRun,
+        deploymentMode: resolveDeploymentMode(),
+      };
+    }
+  }
+
   const [resourceCountsResult, sampleResourcesResult, healthResult, statusResult] = await Promise.allSettled([
-    queryEngine.getResourceCounts(),
-    queryEngine.listResourcesPaged(undefined, { limit: 3 }),
+    queryEngine.getResourceCounts(scope),
+    queryEngine.listResourcesPaged(undefined, { limit: 3 }, scope),
     cartographyClient.healthCheck(),
     cartographyClient.getStatus(),
   ]);
@@ -131,7 +188,10 @@ function dedupeResources(resources: Resource_Model[]): Resource_Model[] {
   return [...next.values()];
 }
 
-async function resolveLinkedResources(contextItems: ChatContextItem[]): Promise<Resource_Model[]> {
+async function resolveLinkedResources(
+  contextItems: ChatContextItem[],
+  scope?: GraphScope
+): Promise<Resource_Model[]> {
   const linkedResourceIds = contextItems
     .filter((item): item is Extract<ChatContextItem, { type: 'resource_link' }> => item.type === 'resource_link')
     .map((item) => item.resourceId);
@@ -143,7 +203,7 @@ async function resolveLinkedResources(contextItems: ChatContextItem[]): Promise<
   const results = await Promise.all(
     linkedResourceIds.map(async (resourceId) => {
       try {
-        return await graphEngine.getResource(resourceId);
+        return await graphEngine.getResource(resourceId, scope);
       } catch {
         return null;
       }
@@ -307,8 +367,10 @@ export async function chatRoutes(app: FastifyInstance): Promise<void> {
       const body = request.body as ChatRequestBody | undefined;
       const message = body?.message?.trim() ?? '';
       const contextItems = normalizeChatContextItems(body?.contextItems);
+      const graphSource = normalizeGraphSource(body?.graphSource);
       const user = (request as any).user as { sub: string } | undefined;
       const userId = user?.sub ?? 'unknown';
+      const graphScope = graphSource === 'demo' ? DEMO_GRAPH_SCOPE : resolveGraphScope(user);
 
       if (!message && contextItems.length === 0) {
         return reply.status(400).send({
@@ -323,9 +385,9 @@ export async function chatRoutes(app: FastifyInstance): Promise<void> {
       const effectiveQuestion = message || deriveImplicitQuestionFromContextItems(contextItems);
 
       const [linkedResources, searchedResources] = await Promise.all([
-        resolveLinkedResources(contextItems),
+        resolveLinkedResources(contextItems, graphScope),
         message
-          ? queryEngine.searchResources(message).catch((error) => {
+          ? queryEngine.searchResources(message, graphScope).catch((error) => {
               request.log.warn(
                 { err: error, message },
                 'Chat resource search failed; using fallback response'
@@ -339,7 +401,7 @@ export async function chatRoutes(app: FastifyInstance): Promise<void> {
       let infrastructure: ChatInfrastructureSnapshot | undefined;
       if (resources.length === 0) {
         try {
-          infrastructure = await buildInfrastructureSnapshot();
+          infrastructure = await buildInfrastructureSnapshot(graphSource, graphScope);
         } catch (error) {
           request.log.warn(
             { err: error, message: effectiveQuestion },

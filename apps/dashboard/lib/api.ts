@@ -1,6 +1,7 @@
 import type {
   BootstrapCompletePayload,
   GraphRefinementRequest,
+  GraphSource,
   SendChatMessagePayload,
 } from "@cig/sdk";
 import { getDashboardClient } from "./cigClient";
@@ -36,6 +37,7 @@ export type {
   GraphStats,
   GraphRefinementRequest,
   GraphRefinementResponse,
+  GraphSource,
   GraphSnapshot,
   ManagedTarget,
   PagedResources,
@@ -56,11 +58,11 @@ function getClient() {
   return getDashboardClient();
 }
 
-export const getResourcesPaged = (params?: string) =>
-  getClient().getResourcesPaged(params);
+export const getResourcesPaged = (params?: string, source?: GraphSource) =>
+  getClient().getResourcesPaged(params, source);
 
-export const searchResources = (query: string, params?: string) =>
-  getClient().searchResources(query, params);
+export const searchResources = (query: string, params?: string, source?: GraphSource) =>
+  getClient().searchResources(query, params, source);
 
 export const getDiscoveryStatus = () => getClient().getDiscoveryStatus();
 
@@ -68,15 +70,17 @@ export const getHealth = () => getClient().getHealth();
 
 export const triggerDiscovery = () => getClient().triggerDiscovery();
 
-export const getGraphSnapshot = () => getClient().getGraphSnapshot();
+export const getGraphSnapshot = (source?: GraphSource) =>
+  getClient().getGraphSnapshot(source);
 
-export const getResource = (id: string) => getClient().getResource(id);
+export const getResource = (id: string, source?: GraphSource) =>
+  getClient().getResource(id, source);
 
-export const getResourceDependencies = (id: string) =>
-  getClient().getResourceDependencies(id);
+export const getResourceDependencies = (id: string, source?: GraphSource) =>
+  getClient().getResourceDependencies(id, source);
 
-export const getResourceDependents = (id: string) =>
-  getClient().getResourceDependents(id);
+export const getResourceDependents = (id: string, source?: GraphSource) =>
+  getClient().getResourceDependents(id, source);
 
 export const getRelationships = (limit?: number) =>
   getClient().getRelationships(limit);

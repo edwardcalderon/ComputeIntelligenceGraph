@@ -1,3 +1,30 @@
+## [0.2.78](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.77...v0.2.78) (2026-03-27)
+
+### Detected changes
+- apps: 5 changed file(s)
+  - apps/dashboard/app/(dashboard)/graph/page.tsx
+  - apps/dashboard/components/ChatLinkPickerDialog.tsx
+  - apps/dashboard/components/ChatWidget.tsx
+  - apps/dashboard/components/__tests__/ChatWidget.test.tsx
+  - apps/dashboard/lib/api.ts
+- packages: 9 changed file(s)
+  - packages/api/src/demo-workspace.test.ts
+  - packages/api/src/demo-workspace.ts
+  - packages/api/src/integration.test.ts
+  - packages/api/src/performance.test.ts
+  - packages/api/src/routes/chat.ts
+  - packages/api/src/routes/graph.ts
+  - packages/api/src/security-testing.test.ts
+  - packages/sdk/src/client.ts
+  - packages/sdk/src/types.ts
+
+
+## [0.2.78](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.77...v0.2.78) (2026-03-27)
+
+
+
+
+
 ## [0.2.77](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.76...v0.2.77) (2026-03-27)
 
 ### Detected changes

@@ -19,6 +19,7 @@ import "reactflow/dist/style.css";
 import { getGraphSnapshot, type GraphSnapshot, type Resource, type Relationship } from "../../../lib/api";
 import { buildAuthenticatedWebSocketUrl } from "../../../lib/browserApi";
 import { PROVIDER_COLORS, PROVIDER_LABELS, getProviderColor } from "../../../lib/providers";
+import { useDashboardGraphSource } from "../../../lib/useGraphSource";
 import type { Graph3DLink, Graph3DNode } from "../../../components/Graph3DCanvas";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -40,6 +41,11 @@ const H_GAP = 200;
 const V_GAP = 120;
 
 const EMPTY_GRAPH: GraphSnapshot = {
+  source: {
+    kind: "live",
+    available: false,
+    lastSyncedAt: null,
+  },
   resourceCounts: {},
   resources: [],
   relationships: [],
@@ -201,6 +207,7 @@ function GraphContent() {
   const t = useTranslation();
   const queryClient = useQueryClient();
   const wsUrl = buildAuthenticatedWebSocketUrl();
+  const [graphSource, setGraphSource] = useDashboardGraphSource();
 
   const [filterType, setFilterType] = useState("");
   const [filterProvider, setFilterProvider] = useState("");
@@ -208,10 +215,10 @@ function GraphContent() {
   const [graphMode, setGraphMode] = useState<"2d" | "3d">("2d");
 
   const { data: snapshotData } = useQuery({
-    queryKey: ["graph", "snapshot"],
+    queryKey: ["graph", "snapshot", graphSource],
     queryFn: async () => {
       try {
-        return await getGraphSnapshot();
+        return await getGraphSnapshot(graphSource);
       } catch {
         return EMPTY_GRAPH;
       }
@@ -367,11 +374,14 @@ function GraphContent() {
     [filteredResources, selectedId],
   );
 
-  const discoveryLabel = snapshot.discovery.healthy
-    ? snapshot.discovery.running
-      ? "Discovery running"
-      : "Discovery healthy"
-    : "Discovery unavailable";
+  const isDemoSource = graphSource === "demo";
+  const liveUnavailable = !isDemoSource && !snapshot.source.available;
+  const sourceLabel = isDemoSource ? "Demo workspace" : liveUnavailable ? "Live unavailable" : "Live discovery";
+  const sourceBadgeClass = isDemoSource
+    ? "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-400/20 dark:bg-violet-500/10 dark:text-violet-300"
+    : liveUnavailable
+      ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-300"
+      : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300";
 
   const visibleNodeCount = filteredResources.length;
   const visibleEdgeCount = filteredRelationships.length;
@@ -382,13 +392,37 @@ function GraphContent() {
         <div className="mr-auto flex-shrink-0">
           <div className="flex items-center gap-2">
             <h1 className="text-base font-bold text-gray-900 dark:text-gray-100 sm:text-lg">{t("graph.title")}</h1>
-            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-300">
-              {discoveryLabel}
+            <span className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] ${sourceBadgeClass}`}>
+              {sourceLabel}
             </span>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {t("graph.nodeCount", { nodes: visibleNodeCount })} · {t("graph.edgeCount", { edges: visibleEdgeCount })}
           </p>
+        </div>
+
+        <div className="flex min-w-[11rem] flex-shrink-0 flex-col gap-1 rounded-2xl border border-gray-200 bg-gray-50 px-2 py-2 dark:border-gray-700 dark:bg-slate-800">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-gray-500 dark:text-gray-400">
+            Graph source
+          </span>
+          <div className="flex items-center rounded-full border border-gray-200 bg-white p-1 shadow-sm dark:border-gray-700 dark:bg-slate-900">
+            {(["live", "demo"] as const).map((source) => (
+              <button
+                key={source}
+                type="button"
+                aria-pressed={graphSource === source}
+                onClick={() => setGraphSource(source)}
+                className={[
+                  "flex-1 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] transition-colors",
+                  graphSource === source
+                    ? "bg-cyan-600 text-white shadow-sm"
+                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200",
+                ].join(" ")}
+              >
+                {source === "live" ? "LIVE" : "DEMO"}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex items-center rounded-full border border-gray-200 bg-gray-50 p-1 dark:border-gray-700 dark:bg-slate-800">
@@ -500,6 +534,26 @@ function GraphContent() {
           />
         )}
 
+        {liveUnavailable && (
+          <div className="absolute left-1/2 top-4 z-10 w-[calc(100%-1rem)] max-w-xl -translate-x-1/2 rounded-2xl border border-amber-200 bg-amber-50/95 px-4 py-3 text-sm text-amber-900 shadow-lg backdrop-blur dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-100">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-semibold">Live discovery is unavailable.</p>
+                <p className="text-xs opacity-90">
+                  Switch to Demo to inspect the seeded workspace while the live Neo4j connection is offline.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setGraphSource("demo")}
+                className="self-start rounded-full bg-amber-600 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-white shadow-sm transition-colors hover:bg-amber-500"
+              >
+                Switch to Demo
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="pointer-events-none absolute right-2 top-2 z-10 max-w-xs rounded-lg border border-gray-200 bg-white/90 px-2 py-1.5 shadow-sm backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/90 sm:right-4 sm:top-4 sm:px-3 sm:py-2">
           <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
             {t("graph.providers")}
@@ -522,8 +576,19 @@ function GraphContent() {
             <div className="max-w-sm rounded-3xl border border-dashed border-gray-300 bg-white/85 px-6 py-6 text-center shadow-sm backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/85">
               <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">{t("graph.noResources")}</p>
               <p className="mt-2 text-xs leading-5 text-gray-500 dark:text-gray-400">
-                Discovery-backed resources will appear here once the graph is indexed.
+                {isDemoSource
+                  ? "The demo workspace is empty or has not been seeded yet."
+                  : "Discovery-backed resources will appear here once the graph is indexed."}
               </p>
+              {isDemoSource ? null : (
+                <button
+                  type="button"
+                  onClick={() => setGraphSource("demo")}
+                  className="mt-4 rounded-full border border-violet-300 bg-violet-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-violet-700 transition-colors hover:bg-violet-100 dark:border-violet-400/20 dark:bg-violet-500/10 dark:text-violet-300"
+                >
+                  Switch to Demo
+                </button>
+              )}
             </div>
           </div>
         )}

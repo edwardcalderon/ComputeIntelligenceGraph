@@ -250,6 +250,7 @@ export interface SendChatMessagePayload {
   message?: string;
   sessionId?: string;
   contextItems?: ChatContextItem[];
+  graphSource?: GraphSource;
 }
 
 export interface ChatAttachmentUploadResponse {

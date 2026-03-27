@@ -15,6 +15,7 @@ import type {
   DiscoveryStatus,
   GraphRefinementRequest,
   GraphRefinementResponse,
+  GraphSource,
   GraphSnapshot,
   EnrollmentTokenResponse,
   PagedResources,
@@ -128,13 +129,15 @@ export class CigClient {
     return response.json() as Promise<T>;
   }
 
-  getResourcesPaged(params?: string): Promise<PagedResources> {
-    return this.request<PagedResources>(`/api/v1/resources${params ? `?${params}` : ""}`);
+  getResourcesPaged(params?: string, source?: GraphSource): Promise<PagedResources> {
+    const queryParts = [params, source === "demo" ? "source=demo" : ""].filter(Boolean);
+    return this.request<PagedResources>(`/api/v1/resources${queryParts.length ? `?${queryParts.join("&")}` : ""}`);
   }
 
-  searchResources(query: string, params?: string): Promise<PagedResources> {
+  searchResources(query: string, params?: string, source?: GraphSource): Promise<PagedResources> {
+    const queryParts = [params, source === "demo" ? "source=demo" : ""].filter(Boolean);
     return this.request<PagedResources>(
-      `/api/v1/resources/search?q=${encodeURIComponent(query)}${params ? `&${params}` : ""}`
+      `/api/v1/resources/search?q=${encodeURIComponent(query)}${queryParts.length ? `&${queryParts.join("&")}` : ""}`
     );
   }
 
@@ -152,19 +155,22 @@ export class CigClient {
     });
   }
 
-  getResource(id: string): Promise<Resource> {
-    return this.request<Resource>(`/api/v1/resources/${encodeURIComponent(id)}`);
+  getResource(id: string, source?: GraphSource): Promise<Resource> {
+    const query = source === "demo" ? "?source=demo" : "";
+    return this.request<Resource>(`/api/v1/resources/${encodeURIComponent(id)}${query}`);
   }
 
-  getResourceDependencies(id: string): Promise<ResourceDependencies> {
+  getResourceDependencies(id: string, source?: GraphSource): Promise<ResourceDependencies> {
+    const query = source === "demo" ? "?source=demo" : "";
     return this.request<ResourceDependencies>(
-      `/api/v1/resources/${encodeURIComponent(id)}/dependencies`
+      `/api/v1/resources/${encodeURIComponent(id)}/dependencies${query}`
     );
   }
 
-  getResourceDependents(id: string): Promise<ResourceDependencies> {
+  getResourceDependents(id: string, source?: GraphSource): Promise<ResourceDependencies> {
+    const query = source === "demo" ? "?source=demo" : "";
     return this.request<ResourceDependencies>(
-      `/api/v1/resources/${encodeURIComponent(id)}/dependents`
+      `/api/v1/resources/${encodeURIComponent(id)}/dependents${query}`
     );
   }
 
@@ -172,8 +178,9 @@ export class CigClient {
     return this.request<{ items: Relationship[] }>(`/api/v1/relationships?limit=${limit}`);
   }
 
-  getGraphSnapshot(): Promise<GraphSnapshot> {
-    return this.request<GraphSnapshot>("/api/v1/graph/snapshot");
+  getGraphSnapshot(source?: GraphSource): Promise<GraphSnapshot> {
+    const query = source === "demo" ? "?source=demo" : "";
+    return this.request<GraphSnapshot>(`/api/v1/graph/snapshot${query}`);
   }
 
   getResourceCost(resourceId: string): Promise<CostsResponse> {

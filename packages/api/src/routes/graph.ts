@@ -7,11 +7,13 @@ import type {
   GraphRefinementProposal,
   GraphRefinementRequest,
   GraphRefinementResponse,
+  GraphSource,
   GraphSnapshot,
   Relationship,
   Resource,
 } from '@cig/sdk';
 import { authenticate, authorize, Permission } from '../auth';
+import { buildDemoWorkspaceGraphSnapshot } from '../demo-workspace';
 
 const queryEngine = new GraphQueryEngine();
 const graphEngine = new GraphEngine();
@@ -43,10 +45,14 @@ function resolveNextRun(lastRun: string | null): string | null {
   return startedAt.toISOString();
 }
 
-function emptyGraphSnapshot(): GraphSnapshot {
+function normalizeGraphSource(value: unknown): GraphSource {
+  return value === 'demo' ? 'demo' : 'live';
+}
+
+function emptyGraphSnapshot(source: GraphSource): GraphSnapshot {
   return {
     source: {
-      kind: 'live',
+      kind: source,
       available: false,
       lastSyncedAt: null,
     },
@@ -163,7 +169,7 @@ function validatePreviewDiff(
   return null;
 }
 
-async function buildGraphSnapshot(): Promise<GraphSnapshot> {
+async function buildLiveGraphSnapshot(): Promise<GraphSnapshot> {
   const [resourceCountsResult, resourcesResult, relationshipsResult, healthResult, statusResult, recentRunsResult] = await Promise.allSettled([
     queryEngine.getResourceCounts(),
     queryEngine.listResourcesPaged(undefined, { limit: DEFAULT_RESOURCE_LIMIT }),
@@ -199,6 +205,22 @@ async function buildGraphSnapshot(): Promise<GraphSnapshot> {
   };
 }
 
+async function buildGraphSnapshot(source: GraphSource): Promise<GraphSnapshot> {
+  if (source === 'demo') {
+    try {
+      return await buildDemoWorkspaceGraphSnapshot();
+    } catch {
+      return emptyGraphSnapshot('demo');
+    }
+  }
+
+  try {
+    return await buildLiveGraphSnapshot();
+  } catch {
+    return emptyGraphSnapshot('live');
+  }
+}
+
 export async function graphRoutes(app: FastifyInstance): Promise<void> {
   app.get(
     '/api/v1/relationships',
@@ -214,8 +236,9 @@ export async function graphRoutes(app: FastifyInstance): Promise<void> {
   app.get(
     '/api/v1/graph/snapshot',
     { preHandler: readResources },
-    async (_request: FastifyRequest, reply: FastifyReply) => {
-      const snapshot = await buildGraphSnapshot();
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const query = request.query as { source?: string };
+      const snapshot = await buildGraphSnapshot(normalizeGraphSource(query.source));
       return reply.send(snapshot);
     }
   );
@@ -264,7 +287,7 @@ export async function graphRoutes(app: FastifyInstance): Promise<void> {
         return reply.status(400).send({ error: 'Missing required field: proposal', statusCode: 400 });
       }
 
-      const actualSnapshot = await buildGraphSnapshot();
+      const actualSnapshot = await buildGraphSnapshot('live');
       const normalizedProposal: GraphRefinementProposal = {
         summary: normalizeResponseText(proposal.summary ?? ''),
         proposedCypher: stripMarkdownFence(proposal.proposedCypher),

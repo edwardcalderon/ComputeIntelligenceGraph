@@ -42,7 +42,9 @@ import {
   type HealthResponse,
   type Resource,
 } from "../lib/api";
+import { buildResourceHref } from "../lib/graphSource";
 import { resolveDocsUrl } from "../lib/siteUrl";
+import { useDashboardGraphSource } from "../lib/useGraphSource";
 import { ChatTemplatesTab } from "./ChatExamplesTab";
 import { ChatCodeComposerDialog } from "./ChatCodeComposerDialog";
 import { ChatContextItems } from "./ChatContextItems";
@@ -154,6 +156,7 @@ function buildAssistantMessageContent(response: {
 export function ChatWidget() {
   const t = useTranslation();
   const pathname = usePathname();
+  const [graphSource] = useDashboardGraphSource();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -392,7 +395,7 @@ export function ChatWidget() {
 
     const loadCurrentResource = async () => {
       try {
-        const resource = await getResource(resourceId);
+        const resource = await getResource(resourceId, graphSource);
         if (!cancelled) {
           setCurrentPageResource(resource);
         }
@@ -408,7 +411,7 @@ export function ChatWidget() {
     return () => {
       cancelled = true;
     };
-  }, [isOpen, pathname]);
+  }, [graphSource, isOpen, pathname]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -419,7 +422,7 @@ export function ChatWidget() {
 
     const loadSuggestedResources = async () => {
       try {
-        const response = await getResourcesPaged("limit=24");
+        const response = await getResourcesPaged("limit=24", graphSource);
         if (!cancelled) {
           setSuggestedResources(response.items);
         }
@@ -435,7 +438,7 @@ export function ChatWidget() {
     return () => {
       cancelled = true;
     };
-  }, [isOpen]);
+  }, [graphSource, isOpen]);
 
   function handleClose() {
     if (voiceStatus === "recording" || voiceStatus === "preparing") {
@@ -602,6 +605,7 @@ export function ChatWidget() {
         message: trimmedText,
         sessionId: activeSessionId ?? undefined,
         contextItems,
+        graphSource,
       });
       const content = buildAssistantMessageContent(res);
       const assistantMsg: ChatMessage = {
@@ -823,7 +827,7 @@ export function ChatWidget() {
       type: "resource_link",
       resourceId: resource.id,
       title: resource.name || resource.id,
-      href: `/resources/${encodeURIComponent(resource.id)}`,
+      href: buildResourceHref(resource.id, graphSource),
       provider: resource.provider,
       resourceType: resource.type,
     };
@@ -948,6 +952,7 @@ export function ChatWidget() {
       <ChatLinkPickerDialog
         open={isLinkDialogOpen}
         docsUrl={docsUrl}
+        source={graphSource}
         currentResource={currentPageResource}
         recentResources={recentLinkedResources}
         linkedResourceIds={linkedResourceIds}

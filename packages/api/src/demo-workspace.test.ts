@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Resource_Model } from '@cig/graph';
+import { Provider, ResourceState, ResourceType, type Resource_Model } from '@cig/graph';
 
 const graphMocks = vi.hoisted(() => ({
   createResource: vi.fn().mockResolvedValue(undefined),
   createRelationship: vi.fn().mockResolvedValue(undefined),
   deleteResource: vi.fn().mockResolvedValue(undefined),
+  getResourceCounts: vi.fn(),
   listResources: vi.fn(),
   listResourcesPaged: vi.fn(),
   listRelationships: vi.fn(),
@@ -35,6 +36,7 @@ vi.mock('@cig/graph', async () => {
       deleteResource: graphMocks.deleteResource,
     })),
     GraphQueryEngine: vi.fn().mockImplementation(() => ({
+      getResourceCounts: graphMocks.getResourceCounts,
       listResources: graphMocks.listResources,
       listResourcesPaged: graphMocks.listResourcesPaged,
       listRelationships: graphMocks.listRelationships,
@@ -86,9 +88,11 @@ describe('demo-workspace', () => {
     graphMocks.createResource.mockClear();
     graphMocks.createRelationship.mockClear();
     graphMocks.deleteResource.mockClear();
+    graphMocks.getResourceCounts.mockReset();
     graphMocks.listResources.mockReset();
     graphMocks.listResourcesPaged.mockReset();
     graphMocks.listRelationships.mockReset();
+    graphMocks.getResourceCounts.mockResolvedValue({ service: 1 });
     graphMocks.listResources.mockResolvedValue([]);
     graphMocks.listResourcesPaged.mockResolvedValue({ items: [], total: 0, hasMore: false });
     graphMocks.listRelationships.mockResolvedValue([]);
@@ -137,5 +141,50 @@ describe('demo-workspace', () => {
     expect(status.resourceCount).toBe(9);
     expect(graphMocks.createResource).not.toHaveBeenCalled();
     expect(semanticMocks.syncSemanticIndex).not.toHaveBeenCalled();
+  });
+
+  it('builds a demo graph snapshot from the seeded demo workspace', async () => {
+    graphMocks.listResourcesPaged.mockResolvedValueOnce({
+      items: [
+        {
+          id: 'demo-1',
+          name: 'Demo One',
+          type: ResourceType.SERVICE,
+          provider: Provider.AWS,
+          region: 'us-east-1',
+          zone: undefined,
+          state: ResourceState.ACTIVE,
+          tags: {},
+          metadata: {},
+          cost: undefined,
+          ownerId: undefined,
+          tenant: undefined,
+          workspace: undefined,
+          createdAt: new Date('2026-03-27T00:00:00.000Z'),
+          updatedAt: new Date('2026-03-27T00:00:00.000Z'),
+          discoveredAt: new Date('2026-03-27T00:00:00.000Z'),
+        } satisfies Resource_Model,
+      ],
+      total: 1,
+      hasMore: false,
+    });
+    graphMocks.listRelationships.mockResolvedValueOnce([
+      {
+        id: 'demo-1:DEPENDS_ON:demo-1',
+        type: 'DEPENDS_ON',
+        fromId: 'demo-1',
+        toId: 'demo-1',
+        properties: {},
+      },
+    ]);
+
+    const { buildDemoWorkspaceGraphSnapshot } = await import('./demo-workspace');
+    const snapshot = await buildDemoWorkspaceGraphSnapshot();
+
+    expect(snapshot.source.kind).toBe('demo');
+    expect(snapshot.resources).toHaveLength(1);
+    expect(snapshot.resources[0]?.id).toBe('demo-1');
+    expect(snapshot.relationships).toHaveLength(1);
+    expect(snapshot.relationships[0]?.sourceId).toBe('demo-1');
   });
 });

@@ -7,6 +7,7 @@ import {
   RelationshipType,
   ResourceState,
   ResourceType,
+  type Relationship as GraphRelationship,
   type Resource_Model,
 } from '@cig/graph';
 import { query } from './db/client';
@@ -16,6 +17,7 @@ import {
   resolveSemanticCollectionName,
   syncSemanticIndex,
 } from './semantic-rag';
+import type { GraphDiscoverySnapshot, GraphSnapshot, Relationship } from '@cig/sdk';
 
 export interface DemoWorkspaceStateRow {
   source: 'demo';
@@ -77,6 +79,43 @@ function resourceTag(domain: string, role: string): Record<string, string> {
     domain,
     role,
   };
+}
+
+function mapResource(resource: Resource_Model) {
+  return {
+    id: resource.id,
+    type: resource.type,
+    provider: resource.provider,
+    name: resource.name,
+    region: resource.region,
+    state: resource.state,
+    tags: resource.tags,
+  };
+}
+
+function mapGraphRelationship(relationship: GraphRelationship): Relationship {
+  return {
+    sourceId: relationship.fromId,
+    targetId: relationship.toId,
+    type: String(relationship.type),
+  };
+}
+
+function mapSeedRelationship(relationship: { from: string; to: string; type: RelationshipType | string }): Relationship {
+  return {
+    sourceId: relationship.from,
+    targetId: relationship.to,
+    type: String(relationship.type),
+  };
+}
+
+function summarizeResourceCounts(resources: Resource_Model[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const resource of resources) {
+    const key = String(resource.type);
+    counts[key] = (counts[key] ?? 0) + 1;
+  }
+  return counts;
 }
 
 const DEMO_RESOURCES: Resource_Model[] = [
@@ -247,6 +286,17 @@ const DEMO_RELATIONSHIPS = [
   { from: 'demo-shared-vpc', to: 'demo-ventas-api', type: RelationshipType.CONNECTS_TO, properties: { network: 'private-link' } },
 ] as const;
 
+function buildDemoDiscoverySnapshot(status: DemoWorkspaceStatus | null): GraphDiscoverySnapshot {
+  const lastRun = status?.updatedAt ?? status?.seededAt ?? null;
+
+  return {
+    healthy: true,
+    running: false,
+    lastRun,
+    nextRun: null,
+  };
+}
+
 function buildStatusRow(row: DemoWorkspaceStateRow): DemoWorkspaceStatus {
   return {
     source: row.source,
@@ -278,6 +328,39 @@ async function readStateRow(): Promise<DemoWorkspaceStateRow | null> {
   } catch {
     return null;
   }
+}
+
+async function loadDemoWorkspaceGraphData(): Promise<{
+  resourceCounts: Record<string, number>;
+  resources: Resource_Model[];
+  relationships: Relationship[];
+}> {
+  const [resourceCountsResult, resourcesResult, relationshipsResult] = await Promise.allSettled([
+    queryEngine.getResourceCounts(DEMO_GRAPH_SCOPE),
+    queryEngine.listResourcesPaged(undefined, { limit: 1_000 }, DEMO_GRAPH_SCOPE),
+    queryEngine.listRelationships(1_000, DEMO_GRAPH_SCOPE),
+  ]);
+
+  const resources =
+    resourcesResult.status === 'fulfilled' && resourcesResult.value.items.length > 0
+      ? resourcesResult.value.items
+      : DEMO_RESOURCES;
+
+  const relationships =
+    relationshipsResult.status === 'fulfilled' && relationshipsResult.value.length > 0
+      ? relationshipsResult.value.map(mapGraphRelationship)
+      : DEMO_RELATIONSHIPS.map(mapSeedRelationship);
+
+  const resourceCounts =
+    resourceCountsResult.status === 'fulfilled' && Object.keys(resourceCountsResult.value).length > 0
+      ? resourceCountsResult.value
+      : summarizeResourceCounts(resources);
+
+  return {
+    resourceCounts,
+    resources,
+    relationships,
+  };
 }
 
 async function writeStateRow(row: Omit<DemoWorkspaceStateRow, 'source'> & { source?: 'demo' }): Promise<DemoWorkspaceStatus> {
@@ -405,4 +488,38 @@ export async function ensureDemoWorkspaceProvisioned(
   }
 
   return provisionDemoWorkspace({ logger });
+}
+
+export async function buildDemoWorkspaceGraphSnapshot(): Promise<GraphSnapshot> {
+  const status = await getDemoWorkspaceStatus().catch(() => null);
+  try {
+    const graphData = await loadDemoWorkspaceGraphData();
+    const syncedAt = status?.updatedAt ?? status?.seededAt ?? new Date().toISOString();
+
+    return {
+      source: {
+        kind: 'demo',
+        available: true,
+        lastSyncedAt: syncedAt,
+      },
+      resourceCounts: graphData.resourceCounts,
+      resources: graphData.resources.map(mapResource),
+      relationships: graphData.relationships,
+      discovery: buildDemoDiscoverySnapshot(status),
+    };
+  } catch {
+    const syncedAt = status?.updatedAt ?? status?.seededAt ?? new Date().toISOString();
+
+    return {
+      source: {
+        kind: 'demo',
+        available: true,
+        lastSyncedAt: syncedAt,
+      },
+      resourceCounts: summarizeResourceCounts(DEMO_RESOURCES),
+      resources: DEMO_RESOURCES.map(mapResource),
+      relationships: DEMO_RELATIONSHIPS.map(mapSeedRelationship),
+      discovery: buildDemoDiscoverySnapshot(status),
+    };
+  }
 }

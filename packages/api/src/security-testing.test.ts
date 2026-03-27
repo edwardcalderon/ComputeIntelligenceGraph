@@ -8,20 +8,23 @@ import type { FastifyInstance } from 'fastify';
 
 // ─── Mock external dependencies ───────────────────────────────────────────────
 
-vi.mock('@cig/graph', () => ({
-  GraphEngine: vi.fn().mockImplementation(() => ({
-    getResource: vi.fn().mockResolvedValue(null),
-    executeCypher: vi.fn().mockResolvedValue({ rowCount: 0 }),
-  })),
-  GraphQueryEngine: vi.fn().mockImplementation(() => ({
-    listResourcesPaged: vi.fn().mockResolvedValue({ items: [], total: 0, hasMore: false }),
-    searchResources: vi.fn().mockResolvedValue([]),
-    getDependencies: vi.fn().mockResolvedValue([]),
-    getDependents: vi.fn().mockResolvedValue([]),
-    listRelationships: vi.fn().mockResolvedValue([]),
-  })),
-  Resource_Model: {},
-}));
+vi.mock('@cig/graph', async () => {
+  const actual = await vi.importActual<typeof import('@cig/graph')>('@cig/graph');
+  return {
+    ...actual,
+    GraphEngine: vi.fn().mockImplementation(() => ({
+      getResource: vi.fn().mockResolvedValue(null),
+      executeCypher: vi.fn().mockResolvedValue({ rowCount: 0 }),
+    })),
+    GraphQueryEngine: vi.fn().mockImplementation(() => ({
+      listResourcesPaged: vi.fn().mockResolvedValue({ items: [], total: 0, hasMore: false }),
+      searchResources: vi.fn().mockResolvedValue([]),
+      getDependencies: vi.fn().mockResolvedValue([]),
+      getDependents: vi.fn().mockResolvedValue([]),
+      listRelationships: vi.fn().mockResolvedValue([]),
+    })),
+  };
+});
 
 vi.mock('@cig/discovery', () => ({
   CartographyClient: vi.fn().mockImplementation(() => ({

@@ -65,21 +65,24 @@ const discoveryMocks = vi.hoisted(() => ({
   triggerRun: vi.fn().mockResolvedValue({ status: 'started', timestamp: '2024-01-01T00:00:00Z' }),
 }));
 
-vi.mock('@cig/graph', () => ({
-  GraphEngine: vi.fn().mockImplementation(() => ({
-    getResource: graphMocks.getResource,
-    executeCypher: vi.fn().mockResolvedValue({ rowCount: 0 }),
-  })),
-  GraphQueryEngine: vi.fn().mockImplementation(() => ({
-    listResourcesPaged: graphMocks.listResourcesPaged,
-    searchResources: graphMocks.searchResources,
-    getDependencies: graphMocks.getDependencies,
-    getDependents: graphMocks.getDependents,
-    getResourceCounts: graphMocks.getResourceCounts,
-    listRelationships: graphMocks.listRelationships,
-  })),
-  Resource_Model: {},
-}));
+vi.mock('@cig/graph', async () => {
+  const actual = await vi.importActual<typeof import('@cig/graph')>('@cig/graph');
+  return {
+    ...actual,
+    GraphEngine: vi.fn().mockImplementation(() => ({
+      getResource: graphMocks.getResource,
+      executeCypher: vi.fn().mockResolvedValue({ rowCount: 0 }),
+    })),
+    GraphQueryEngine: vi.fn().mockImplementation(() => ({
+      listResourcesPaged: graphMocks.listResourcesPaged,
+      searchResources: graphMocks.searchResources,
+      getDependencies: graphMocks.getDependencies,
+      getDependents: graphMocks.getDependents,
+      getResourceCounts: graphMocks.getResourceCounts,
+      listRelationships: graphMocks.listRelationships,
+    })),
+  };
+});
 
 vi.mock('@cig/discovery', () => ({
   CartographyClient: vi.fn().mockImplementation(() => ({

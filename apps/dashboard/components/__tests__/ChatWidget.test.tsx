@@ -473,6 +473,7 @@ describe("ChatWidget", () => {
       message: "Summarize alerts today",
       sessionId: undefined,
       contextItems: [],
+      graphSource: "live",
     });
     expect(sessionStorage.getItem("cig-chat-active-session")).toBe("chat-9");
   });
@@ -542,8 +543,13 @@ describe("ChatWidget", () => {
           expect.objectContaining({
             type: "attachment",
             name: "schema.sql",
+            kind: "document",
+            mimeType: "text/x-sql",
+            extractedText: "select * from schema_migrations;",
+            summary: 'Document attachment "schema.sql" (text/x-sql).',
           }),
         ],
+        graphSource: "live",
       });
     });
   });

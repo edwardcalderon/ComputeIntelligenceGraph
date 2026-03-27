@@ -9,7 +9,8 @@ import type { FastifyInstance } from 'fastify';
 
 // ─── Mock external dependencies ───────────────────────────────────────────────
 
-vi.mock('@cig/graph', () => {
+vi.mock('@cig/graph', async () => {
+  const actual = await vi.importActual<typeof import('@cig/graph')>('@cig/graph');
   // Build 10,000 mock resources once
   const makeResources = (count: number) =>
     Array.from({ length: count }, (_, i) => ({
@@ -29,6 +30,7 @@ vi.mock('@cig/graph', () => {
   const largeDataset = makeResources(10_000);
 
   return {
+    ...actual,
     GraphEngine: vi.fn().mockImplementation(() => ({
       getResource: vi.fn().mockResolvedValue(largeDataset[0]),
     })),
@@ -42,7 +44,6 @@ vi.mock('@cig/graph', () => {
       getDependencies: vi.fn().mockResolvedValue([]),
       getDependents: vi.fn().mockResolvedValue([]),
     })),
-    Resource_Model: {},
   };
 });
 
