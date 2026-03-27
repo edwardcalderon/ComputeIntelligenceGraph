@@ -158,32 +158,48 @@ function Tooltip({ content, children }: { content: string; children: React.React
 function TemplateDropdown({
   onUseTemplate,
   triggerLabel,
+  activeLane,
+  onLaneChange,
 }: {
   onUseTemplate: (prompt: string) => void;
   triggerLabel: string;
+  activeLane: TemplateLane | null;
+  onLaneChange: (lane: TemplateLane | null) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [hoveredLane, setHoveredLane] = useState<TemplateLane | null>(null);
-  const ref = useRef<HTMLDivElement>(null);
+  const [dropPos, setDropPos] = useState<{ top: number; right: number } | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const activeLanes = getActiveLanes();
-  const filtered = hoveredLane ? getTemplatesByLane(hoveredLane) : CHAT_TEMPLATES;
+  const filtered = activeLane ? getTemplatesByLane(activeLane) : CHAT_TEMPLATES;
+
+  function openDropdown() {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    setDropPos({
+      top: rect.bottom + 6,
+      right: Math.max(8, window.innerWidth - rect.right),
+    });
+    setOpen(true);
+  }
 
   useEffect(() => {
     if (!open) return;
     function handle(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) setOpen(false);
     }
     document.addEventListener("mousedown", handle);
     return () => document.removeEventListener("mousedown", handle);
   }, [open]);
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={wrapperRef}>
       <Tooltip content="Browse all templates">
         <button
+          ref={triggerRef}
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => (open ? setOpen(false) : openDropdown())}
           className={[
             "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] transition-all duration-200",
             open
@@ -198,15 +214,18 @@ function TemplateDropdown({
         </button>
       </Tooltip>
 
-      {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/98 shadow-[0_16px_40px_rgba(15,23,42,0.14)] backdrop-blur-xl dark:border-zinc-700/70 dark:bg-zinc-950/98 dark:shadow-[0_16px_40px_rgba(0,0,0,0.5)]">
+      {open && dropPos && (
+        <div
+          className="fixed z-[9999] w-[min(18rem,calc(100vw-16px))] overflow-hidden rounded-2xl border border-slate-200/80 bg-white/98 shadow-[0_16px_40px_rgba(15,23,42,0.14)] backdrop-blur-xl dark:border-zinc-700/70 dark:bg-zinc-950/98 dark:shadow-[0_16px_40px_rgba(0,0,0,0.5)]"
+          style={{ top: dropPos.top, right: dropPos.right }}
+        >
           {/* Lane filter row */}
           <div className="flex flex-wrap gap-1.5 border-b border-slate-200/70 px-3 py-2 dark:border-zinc-800/70">
             <button
               type="button"
-              onClick={() => setHoveredLane(null)}
+              onClick={() => onLaneChange(null)}
               className={`rounded-full px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] transition-colors ${
-                hoveredLane === null
+                activeLane === null
                   ? "bg-violet-500/10 text-violet-700 dark:bg-violet-400/12 dark:text-violet-300"
                   : "text-slate-400 hover:text-slate-600 dark:text-zinc-600 dark:hover:text-zinc-400"
               }`}
@@ -217,9 +236,9 @@ function TemplateDropdown({
               <button
                 key={lane}
                 type="button"
-                onClick={() => setHoveredLane(lane === hoveredLane ? null : lane)}
+                onClick={() => onLaneChange(lane === activeLane ? null : lane)}
                 className={`rounded-full px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] transition-colors ${
-                  hoveredLane === lane
+                  activeLane === lane
                     ? "bg-violet-500/10 text-violet-700 dark:bg-violet-400/12 dark:text-violet-300"
                     : "text-slate-400 hover:text-slate-600 dark:text-zinc-600 dark:hover:text-zinc-400"
                 }`}
@@ -259,7 +278,7 @@ function TemplateDropdown({
 
           <div className="border-t border-slate-200/70 px-3 py-2 dark:border-zinc-800/70">
             <p className="text-[9px] text-slate-400 dark:text-zinc-600">
-              {triggerLabel} • {filtered.length} of {CHAT_TEMPLATES.length} templates shown
+              {triggerLabel} • {filtered.length} of {CHAT_TEMPLATES.length} shown
             </p>
           </div>
         </div>
@@ -383,7 +402,6 @@ export function ChatTemplatesTab({
   const triggerLabel = t("chat.exampleTrigger");
   const actionLabel = t("chat.useTemplate");
 
-  const activeLanes = getActiveLanes();
   const visibleTemplates = getTemplatesByLane(activeLane);
   const activeSection = activeLane ? LANE_META[activeLane] : { label: "All templates", description: "Reusable prompts for the main chat workflows." };
 
@@ -446,7 +464,9 @@ export function ChatTemplatesTab({
   }, []);
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-y-auto overscroll-contain" style={{ scrollbarWidth: "thin" }}>
+    <div className="flex h-full min-h-0 flex-col">
+      {/* ── Scrollable content ───────────────────────────────────────────────── */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain" style={{ scrollbarWidth: "thin" }}>
       <div className="flex-shrink-0">
         <AlertStrip critical={2} attention={2} />
       </div>
@@ -462,55 +482,13 @@ export function ChatTemplatesTab({
               {t("chat.examplesSubtitle")}
             </p>
           </div>
-          {/* Template dropdown — scalable quick-select */}
-          <TemplateDropdown onUseTemplate={onUseTemplate} triggerLabel={triggerLabel} />
-        </div>
-
-        {/* Lane filter pills */}
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          {/* "All" pill */}
-          <Tooltip content="All templates — Reusable prompts for the main chat workflows.">
-            <button
-              type="button"
-              onClick={() => setActiveLane(null)}
-              className={[
-                "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] transition-all duration-200",
-                activeLane === null
-                  ? "border-violet-300/70 bg-violet-500/10 text-violet-700 shadow-[0_0_0_3px_rgba(109,40,217,0.08)] dark:border-violet-400/35 dark:bg-violet-400/12 dark:text-violet-300"
-                  : "border-slate-200/80 bg-white/75 text-slate-500 hover:scale-105 hover:border-slate-300 hover:text-slate-700 dark:border-zinc-700/60 dark:bg-zinc-900/70 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:text-zinc-200",
-              ].join(" ")}
-            >
-              <span>All</span>
-              <span className="rounded-full bg-black/5 px-1.5 py-0.5 text-[9px] dark:bg-white/5">
-                {CHAT_TEMPLATES.length}
-              </span>
-            </button>
-          </Tooltip>
-
-          {activeLanes.map((lane) => {
-            const meta = LANE_META[lane];
-            const count = getTemplatesByLane(lane).length;
-            const active = lane === activeLane;
-            return (
-              <Tooltip key={lane} content={meta.description}>
-                <button
-                  type="button"
-                  onClick={() => setActiveLane(active ? null : lane)}
-                  className={[
-                    "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] transition-all duration-200",
-                    active
-                      ? "border-violet-300/70 bg-violet-500/10 text-violet-700 shadow-[0_0_0_3px_rgba(109,40,217,0.08)] dark:border-violet-400/35 dark:bg-violet-400/12 dark:text-violet-300"
-                      : "border-slate-200/80 bg-white/75 text-slate-500 hover:scale-105 hover:border-slate-300 hover:text-slate-700 dark:border-zinc-700/60 dark:bg-zinc-900/70 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:text-zinc-200",
-                  ].join(" ")}
-                >
-                  <span>{meta.label}</span>
-                  <span className="rounded-full bg-black/5 px-1.5 py-0.5 text-[9px] dark:bg-white/5">
-                    {count}
-                  </span>
-                </button>
-              </Tooltip>
-            );
-          })}
+          {/* Template dropdown — handles lane filtering + quick-select */}
+          <TemplateDropdown
+            onUseTemplate={onUseTemplate}
+            triggerLabel={triggerLabel}
+            activeLane={activeLane}
+            onLaneChange={setActiveLane}
+          />
         </div>
       </div>
 
@@ -569,30 +547,32 @@ export function ChatTemplatesTab({
             ))}
           </div>
 
-          {/* Mobile dots */}
-          <div className="flex flex-shrink-0 items-center justify-center gap-2 px-4 pb-4 pt-1 sm:hidden">
-            {visibleTemplates.map((template, index) => {
-              const active = index === activeTemplateIndex;
-              return (
-                <button
-                  key={template.id}
-                  type="button"
-                  aria-label={`Go to template ${index + 1} of ${visibleTemplates.length}`}
-                  aria-current={active ? "true" : undefined}
-                  onClick={() => goToTemplate(index)}
-                  className={[
-                    "h-2.5 rounded-full transition-all duration-200",
-                    active
-                      ? "w-6 bg-violet-500/80 shadow-[0_0_0_4px_rgba(108,61,232,0.10)]"
-                      : "w-2.5 bg-slate-300/90 hover:bg-slate-400/80 dark:bg-zinc-600/80",
-                  ].join(" ")}
-                >
-                  <span className="sr-only">{template.title}</span>
-                </button>
-              );
-            })}
-          </div>
         </div>
+      </div>
+      </div>{/* end scrollable area */}
+
+      {/* ── Pagination footer — always visible ───────────────────────────────── */}
+      <div className="flex flex-shrink-0 items-center justify-center gap-2 border-t border-slate-200/80 bg-white/90 px-4 py-3 backdrop-blur-sm dark:border-zinc-800/70 dark:bg-zinc-950/85">
+        {visibleTemplates.map((template, index) => {
+          const active = index === activeTemplateIndex;
+          return (
+            <button
+              key={template.id}
+              type="button"
+              aria-label={`Go to template ${index + 1} of ${visibleTemplates.length}`}
+              aria-current={active ? "true" : undefined}
+              onClick={() => goToTemplate(index)}
+              className={[
+                "h-2.5 rounded-full transition-all duration-300",
+                active
+                  ? "w-6 bg-violet-500/80 shadow-[0_0_0_4px_rgba(108,61,232,0.10)]"
+                  : "w-2.5 bg-slate-300/90 hover:bg-slate-400/80 dark:bg-zinc-600/80 dark:hover:bg-zinc-500/80",
+              ].join(" ")}
+            >
+              <span className="sr-only">{template.title}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
