@@ -60,7 +60,7 @@ async function writeBootstrapToken(token: string): Promise<void> {
  *
  * Requirements: 5.9, 6.1
  */
-function generateComposeFile(manifest: SetupManifest, profile: 'core' | 'full'): string {
+function generateComposeFile(manifest: SetupManifest, profile: 'core' | 'discovery' | 'full'): string {
   const selfHosted = manifest.targetMode === 'host';
 
   const coreServices = `\
@@ -238,7 +238,7 @@ export interface InstallOptions {
   manifest?: string;
   mode: 'managed' | 'self-hosted';
   cloud?: 'aws' | 'gcp';
-  profile: 'core' | 'full';
+  profile: 'core' | 'discovery' | 'full';
   target: 'local' | 'ssh' | 'host';
   apiUrl?: string;
   /** SSH options (required when --target ssh) */
@@ -371,7 +371,7 @@ function buildStubNodeIdentity(): NodeIdentity {
 export async function install(
   apiUrlOrOptions?: string | InstallOptions,
   mode?: 'managed' | 'self-hosted',
-  profile?: 'core' | 'full'
+  profile?: 'core' | 'discovery' | 'full'
 ): Promise<void> {
   // Normalise arguments — support both legacy positional call and new options object
   let opts: InstallOptions;
@@ -566,7 +566,7 @@ async function runInstall(opts: InstallOptions): Promise<void> {
 
 function buildSelfHostedManifest(
   apiUrl: string,
-  profile: 'core' | 'full'
+  profile: 'core' | 'discovery' | 'full'
 ): SetupManifest {
   const now = new Date();
   const expiresAt = new Date(now.getTime() + 15 * 60 * 1000);

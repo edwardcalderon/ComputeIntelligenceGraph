@@ -244,7 +244,7 @@ export interface ManagedTarget {
   os: string;
   architecture: string;
   ip_address: string;
-  profile: "core" | "full";
+  profile: "core" | "discovery" | "full";
   status: "online" | "degraded" | "offline" | "revoked";
   last_seen: string | null;
   service_status: Record<string, unknown> | null;
@@ -335,7 +335,7 @@ export interface SetupManifest {
   enrollmentToken: string;
   /** public key fingerprint */
   nodeIdentitySeed: string;
-  installProfile: 'core' | 'full';
+  installProfile: 'core' | 'discovery' | 'full';
   targetMode: 'local' | 'ssh' | 'host';
   /** https://api.cig.lat or http://localhost:3003 */
   controlPlaneEndpoint: string;

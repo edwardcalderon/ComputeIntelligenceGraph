@@ -1,5 +1,5 @@
 export type InstallMode = 'managed' | 'self-hosted';
-export type InstallProfile = 'core' | 'full';
+export type InstallProfile = 'core' | 'discovery' | 'full';
 
 export type ConnectionProfileType = 'managed-cloud' | 'direct-api' | 'self-hosted';
 export type ConnectionAuthMode = 'managed' | 'self-hosted' | 'none';

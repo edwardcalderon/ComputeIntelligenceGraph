@@ -1,3 +1,19 @@
+## [0.2.64](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.63...v0.2.64) (2026-03-27)
+
+### Detected changes
+- packages: 4 changed file(s)
+  - packages/cli/src/commands/install.ts
+  - packages/infra/src/compose.ts
+  - packages/runtime-contracts/src/index.ts
+  - packages/sdk/src/types.ts
+
+
+## [0.2.64](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.63...v0.2.64) (2026-03-27)
+
+
+
+
+
 ## [0.2.63](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.62...v0.2.63) (2026-03-27)
 
 

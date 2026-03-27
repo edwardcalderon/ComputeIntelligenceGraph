@@ -27,7 +27,7 @@ export interface SetupManifest {
   credentialsRef: string;
   enrollmentToken: string;
   nodeIdentitySeed: string;
-  installProfile: 'core' | 'full';
+  installProfile: 'core' | 'discovery' | 'full';
   targetMode: 'local' | 'ssh' | 'host';
   controlPlaneEndpoint: string;
   awsConfig?: AWSManifestConfig;
@@ -151,7 +151,7 @@ const SELF_HOSTED_EXTRA_SERVICES = `
 // Volume declarations
 // ---------------------------------------------------------------------------
 
-function buildVolumes(profile: 'core' | 'full', selfHosted: boolean): string {
+function buildVolumes(profile: 'core' | 'discovery' | 'full', selfHosted: boolean): string {
   const volumes: string[] = ['  neo4j-data:'];
   if (profile === 'full') {
     volumes.push('  chroma-data:');
@@ -179,7 +179,7 @@ function buildVolumes(profile: 'core' | 'full', selfHosted: boolean): string {
  */
 export function generateComposeFile(
   manifest: SetupManifest,
-  profile: 'core' | 'full'
+  profile: 'core' | 'discovery' | 'full'
 ): string {
   const selfHosted = manifest.targetMode === 'host';
 
