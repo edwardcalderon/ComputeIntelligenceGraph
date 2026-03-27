@@ -1,15 +1,21 @@
 # Dependencies
 node_modules/
+**/node_modules/
 .pnpm-store/
 .pnpm-debug.log
 
 # Build outputs
 dist/
+**/dist/
 build/
 .next/
+**/.next/
 .turbo/
 out/
 *.tsbuildinfo
+**/tsconfig.tsbuildinfo
+.vite/
+**/.vite/
 
 # Environment variables
 .env

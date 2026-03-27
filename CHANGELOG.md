@@ -1,3 +1,23 @@
+## [0.2.58](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.57...v0.2.58) (2026-03-27)
+
+### Detected changes
+- root: .gitignore
+- apps: 3 changed file(s)
+  - apps/dashboard/app/providers.tsx
+  - apps/dashboard/lib/__tests__/cigClient.test.ts
+  - apps/dashboard/lib/cigClient.ts
+- packages: 3 changed file(s)
+  - packages/api/src/__tests__/managed-auth.test.ts
+  - packages/api/src/auth.ts
+  - packages/api/src/middleware/supabase-verify.ts
+
+
+## [0.2.58](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.57...v0.2.58) (2026-03-27)
+
+
+
+
+
 ## [0.2.57](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.56...v0.2.57) (2026-03-27)
 
 

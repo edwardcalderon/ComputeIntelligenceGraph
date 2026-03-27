@@ -1,7 +1,19 @@
-import { getBrowserAccessToken } from "../cigClient";
+import { getSupabaseClient } from "@cig/auth";
+import {
+  getBrowserAccessToken,
+  resolveDashboardAccessToken,
+  syncSupabaseSessionToBrowserStorage,
+} from "../cigClient";
+
+jest.mock("@cig/auth", () => ({
+  getSupabaseClient: jest.fn(),
+}));
+
+const mockGetSupabaseClient = getSupabaseClient as jest.MockedFunction<typeof getSupabaseClient>;
 
 describe("dashboard cigClient token resolution", () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     sessionStorage.clear();
     document.cookie = "cig_has_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
   });
@@ -22,6 +34,51 @@ describe("dashboard cigClient token resolution", () => {
     sessionStorage.setItem("cig_expires_at", String(Date.now() + 60_000));
 
     expect(getBrowserAccessToken()).toBe("access-token");
+  });
+
+  it("syncs the live Supabase session into browser storage", () => {
+    syncSupabaseSessionToBrowserStorage({
+      access_token: "supabase-access-token",
+      refresh_token: "supabase-refresh-token",
+      expires_in: 1800,
+      expires_at: Math.floor(Date.now() / 1000) + 1800,
+      user: {
+        app_metadata: { provider: "email" },
+      },
+    } as never);
+
+    expect(sessionStorage.getItem("cig_access_token")).toBe("supabase-access-token");
+    expect(sessionStorage.getItem("cig_refresh_token")).toBe("supabase-refresh-token");
+    expect(sessionStorage.getItem("cig_auth_source")).toBe("supabase");
+    expect(sessionStorage.getItem("cig_social_provider")).toBe("email");
+    expect(document.cookie).toContain("cig_has_session=1");
+  });
+
+  it("resolves the latest Supabase session token from the client", async () => {
+    mockGetSupabaseClient.mockReturnValue({
+      auth: {
+        getSession: jest.fn().mockResolvedValue({
+          data: {
+            session: {
+              access_token: "fresh-supabase-token",
+              refresh_token: "fresh-refresh-token",
+              expires_in: 1800,
+              expires_at: Math.floor(Date.now() / 1000) + 1800,
+              user: {
+                app_metadata: { provider: "email" },
+              },
+            },
+          },
+        }),
+      },
+    } as never);
+
+    sessionStorage.setItem("cig_access_token", "stale-supabase-token");
+    sessionStorage.setItem("cig_auth_source", "supabase");
+    sessionStorage.setItem("cig_expires_at", String(Date.now() + 60_000));
+
+    await expect(resolveDashboardAccessToken()).resolves.toBe("fresh-supabase-token");
+    expect(sessionStorage.getItem("cig_access_token")).toBe("fresh-supabase-token");
   });
 
   it("clears expired sessions before returning a token", () => {

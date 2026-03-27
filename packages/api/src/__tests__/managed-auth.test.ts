@@ -5,11 +5,17 @@ vi.mock('../middleware/oidc-verify', () => ({
   verifyIdToken: vi.fn(),
 }));
 
+vi.mock('../middleware/supabase-verify', () => ({
+  verifySupabaseAccessToken: vi.fn(),
+}));
+
 import { createServer } from '../index';
 import { query } from '../db/client';
 import { verifyIdToken } from '../middleware/oidc-verify';
+import { verifySupabaseAccessToken } from '../middleware/supabase-verify';
 
 const mockVerifyIdToken = vi.mocked(verifyIdToken);
+const mockVerifySupabaseAccessToken = vi.mocked(verifySupabaseAccessToken);
 
 describe('managed-mode auth', () => {
   let app: FastifyInstance;
@@ -20,6 +26,7 @@ describe('managed-mode auth', () => {
     process.env['AUTHENTIK_ISSUER_URL'] = 'https://auth.example.com/application/o/cig/';
     process.env['AUTHENTIK_JWKS_URI'] = 'https://auth.example.com/application/o/cig/jwks/';
     process.env['OIDC_CLIENT_ID'] = 'test-client-id';
+    process.env['SUPABASE_URL'] = 'https://project.supabase.co';
 
     app = await createServer();
 
@@ -48,6 +55,7 @@ describe('managed-mode auth', () => {
 
   beforeEach(async () => {
     mockVerifyIdToken.mockReset();
+    mockVerifySupabaseAccessToken.mockReset();
     await query('DELETE FROM device_auth_records');
   });
 
@@ -91,5 +99,28 @@ describe('managed-mode auth', () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ items: [], total: 0 });
     expect(mockVerifyIdToken).toHaveBeenCalledTimes(1);
+  });
+
+  it('accepts Supabase access tokens on authenticated dashboard routes', async () => {
+    mockVerifyIdToken.mockRejectedValue(new Error('not an Authentik token'));
+    mockVerifySupabaseAccessToken.mockResolvedValue({
+      sub: 'supabase-user-1',
+      email: 'person@example.com',
+      role: 'authenticated',
+      appMetadata: {},
+    });
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/auth/device/pending',
+      headers: {
+        authorization: 'Bearer supabase-access-token',
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ items: [], total: 0 });
+    expect(mockVerifyIdToken).toHaveBeenCalledTimes(1);
+    expect(mockVerifySupabaseAccessToken).toHaveBeenCalledTimes(1);
   });
 });

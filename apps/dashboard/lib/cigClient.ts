@@ -1,7 +1,20 @@
+import { getSupabaseClient } from "@cig/auth";
+import type { Session } from "@supabase/supabase-js";
 import { CigClient } from "@cig/sdk";
+import { resolveDashboardAuthSource } from "./sessionAuth";
 
 export const DASHBOARD_API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3003";
+
+type BrowserSessionSnapshot = {
+  accessToken: string | null;
+  idToken: string | null;
+  refreshToken: string | null;
+  expiresAt: number | null;
+  expiresIn: number | null;
+  authSource: "authentik" | "supabase";
+  socialProvider: string | null;
+};
 
 export function clearBrowserSession(): void {
   try {
@@ -18,28 +31,150 @@ export function clearBrowserSession(): void {
   }
 }
 
-export function getBrowserAccessToken(): string | null {
+function setSessionCookie(expiresAt: number | null): void {
+  const secure =
+    typeof window !== "undefined" && window.location.protocol === "https:"
+      ? "; Secure"
+      : "";
+
+  if (!expiresAt || Number.isNaN(expiresAt)) {
+    document.cookie = `cig_has_session=1; path=/; SameSite=Lax${secure}`;
+    return;
+  }
+
+  document.cookie =
+    `cig_has_session=1; path=/; expires=${new Date(expiresAt).toUTCString()}; SameSite=Lax${secure}`;
+}
+
+function readBrowserSession(): BrowserSessionSnapshot | null {
   if (typeof window === "undefined") return null;
 
   try {
-    const expiresAt = sessionStorage.getItem("cig_expires_at");
-    if (expiresAt && Date.now() > Number.parseInt(expiresAt, 10)) {
-      clearBrowserSession();
+    const accessToken = sessionStorage.getItem("cig_access_token");
+    const idToken = sessionStorage.getItem("cig_id_token");
+    const refreshToken = sessionStorage.getItem("cig_refresh_token");
+    const socialProvider = sessionStorage.getItem("cig_social_provider");
+    const expiresAtRaw = sessionStorage.getItem("cig_expires_at");
+    const expiresInRaw = sessionStorage.getItem("cig_expires_in");
+
+    if (!accessToken && !idToken) {
       return null;
     }
 
-    const authSource = sessionStorage.getItem("cig_auth_source");
-    const accessToken = sessionStorage.getItem("cig_access_token");
-    const idToken = sessionStorage.getItem("cig_id_token");
-
-    if (authSource === "authentik" && idToken) {
-      return idToken;
-    }
-
-    return accessToken ?? idToken;
+    return {
+      accessToken,
+      idToken,
+      refreshToken,
+      expiresAt: expiresAtRaw ? Number.parseInt(expiresAtRaw, 10) : null,
+      expiresIn: expiresInRaw ? Number.parseInt(expiresInRaw, 10) : null,
+      authSource: resolveDashboardAuthSource({
+        explicitAuthSource: sessionStorage.getItem("cig_auth_source"),
+        accessToken,
+        idToken,
+      }),
+      socialProvider,
+    };
   } catch {
     return null;
   }
+}
+
+export function syncSupabaseSessionToBrowserStorage(session: Session | null): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (!session?.access_token) {
+    const current = readBrowserSession();
+    if (current?.authSource === "supabase") {
+      clearBrowserSession();
+    }
+    return;
+  }
+
+  try {
+    const expiresAtMs =
+      typeof session.expires_at === "number"
+        ? session.expires_at * 1000
+        : Date.now() + (session.expires_in ?? 3600) * 1000;
+
+    sessionStorage.setItem("cig_access_token", session.access_token);
+    sessionStorage.removeItem("cig_id_token");
+
+    if (session.refresh_token) {
+      sessionStorage.setItem("cig_refresh_token", session.refresh_token);
+    } else {
+      sessionStorage.removeItem("cig_refresh_token");
+    }
+
+    sessionStorage.setItem("cig_auth_source", "supabase");
+    sessionStorage.setItem("cig_expires_in", String(session.expires_in ?? 3600));
+    sessionStorage.setItem("cig_expires_at", String(expiresAtMs));
+
+    const provider =
+      typeof session.user?.app_metadata?.provider === "string"
+        ? session.user.app_metadata.provider
+        : typeof session.user?.app_metadata?.['providers']?.[0] === "string"
+          ? String(session.user?.app_metadata?.['providers']?.[0])
+          : null;
+
+    if (provider) {
+      sessionStorage.setItem("cig_social_provider", provider);
+    } else {
+      sessionStorage.removeItem("cig_social_provider");
+    }
+
+    setSessionCookie(expiresAtMs);
+  } catch {
+    // ignore
+  }
+}
+
+export function getBrowserAccessToken(): string | null {
+  const session = readBrowserSession();
+  if (!session) {
+    return null;
+  }
+
+  if (session.expiresAt && Date.now() > session.expiresAt) {
+    clearBrowserSession();
+    return null;
+  }
+
+  if (session.authSource === "authentik" && session.idToken) {
+    return session.idToken;
+  }
+
+  return session.accessToken ?? session.idToken;
+}
+
+export async function resolveDashboardAccessToken(): Promise<string | null> {
+  const storedToken = getBrowserAccessToken();
+  const currentSession = readBrowserSession();
+
+  if (currentSession?.authSource === "authentik") {
+    return storedToken;
+  }
+
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    return storedToken;
+  }
+
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (session?.access_token) {
+      syncSupabaseSessionToBrowserStorage(session);
+      return session.access_token;
+    }
+  } catch {
+    // Fall back to whatever is already in browser storage.
+  }
+
+  return storedToken;
 }
 
 let dashboardClient: CigClient | null = null;
@@ -48,7 +183,7 @@ export function getDashboardClient(): CigClient {
   if (!dashboardClient) {
     dashboardClient = new CigClient({
       baseUrl: DASHBOARD_API_URL,
-      getAccessToken: getBrowserAccessToken,
+      getAccessToken: resolveDashboardAccessToken,
     });
   }
 

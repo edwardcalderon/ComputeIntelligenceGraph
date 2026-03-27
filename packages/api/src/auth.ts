@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import crypto from 'crypto';
 import { verifyIdToken } from './middleware/oidc-verify';
+import { verifySupabaseAccessToken } from './middleware/supabase-verify';
 
 // Permission model (Requirements 16.8, 17.8)
 export enum Permission {
@@ -83,24 +84,75 @@ function canVerifyManagedToken(): boolean {
   return Boolean(process.env.AUTHENTIK_JWKS_URI && process.env.OIDC_CLIENT_ID);
 }
 
+function canVerifySupabaseToken(): boolean {
+  return Boolean(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL);
+}
+
+function permissionsFromSupabaseClaims(claims: {
+  role?: string;
+  appMetadata?: Record<string, unknown>;
+}): Permission[] {
+  const permissions = [Permission.READ_RESOURCES];
+  const role = claims.role?.toLowerCase() ?? '';
+  const groups = Array.isArray(claims.appMetadata?.['groups'])
+    ? claims.appMetadata?.['groups']
+        .map((group) => (typeof group === 'string' ? group.toLowerCase() : ''))
+        .filter(Boolean)
+    : [];
+
+  if (
+    role === 'service_role'
+    || role === 'admin'
+    || groups.some((group) => MANAGED_ADMIN_GROUPS.has(group))
+  ) {
+    permissions.push(
+      Permission.WRITE_RESOURCES,
+      Permission.EXECUTE_ACTIONS,
+      Permission.MANAGE_DISCOVERY,
+      Permission.ADMIN
+    );
+  }
+
+  return [...new Set(permissions)];
+}
+
 export async function verifyBearerToken(token: string): Promise<JwtPayload> {
   try {
     return verifyJwt(token);
   } catch (localError) {
     const managedMode = process.env.CIG_AUTH_MODE === 'managed';
-    if (!managedMode && !canVerifyManagedToken()) {
+    const canVerifyManaged = managedMode || canVerifyManagedToken();
+    const canVerifySupabase = canVerifySupabaseToken();
+
+    if (!canVerifyManaged && !canVerifySupabase) {
       throw localError;
     }
 
-    try {
-      const managedClaims = await verifyIdToken(token);
-      return {
-        sub: managedClaims.sub,
-        permissions: permissionsFromManagedGroups(managedClaims.groups),
-      };
-    } catch {
-      throw localError;
+    if (canVerifyManaged) {
+      try {
+        const managedClaims = await verifyIdToken(token);
+        return {
+          sub: managedClaims.sub,
+          permissions: permissionsFromManagedGroups(managedClaims.groups),
+        };
+      } catch {
+        // Try Supabase verification below before giving up.
+      }
     }
+
+    if (canVerifySupabase) {
+      try {
+        const supabaseClaims = await verifySupabaseAccessToken(token);
+        return {
+          sub: supabaseClaims.sub,
+          permissions: permissionsFromSupabaseClaims(supabaseClaims),
+        };
+      } catch {
+        // Fall through and return the original local JWT error below.
+      }
+    }
+
+    throw localError;
   }
 }
 

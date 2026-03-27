@@ -1,5 +1,6 @@
 "use client";
 
+import { getSupabaseClient } from "@cig/auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Refine } from "@refinedev/core";
 import routerProvider from "@refinedev/nextjs-router/app";
@@ -9,6 +10,7 @@ import { LOCALE_META, type SupportedLocale } from "@cig-technology/i18n";
 import { initI18n } from "./i18n";
 import { dataProvider } from "../lib/dataProvider";
 import { authProvider } from "../lib/authProvider";
+import { syncSupabaseSessionToBrowserStorage } from "../lib/cigClient";
 import { NotificationProvider } from "../components/NotificationBell";
 
 const resources = [
@@ -32,6 +34,36 @@ function LocaleSync() {
   return null;
 }
 
+function DashboardSessionSync() {
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!cancelled) {
+        syncSupabaseSessionToBrowserStorage(session);
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      syncSupabaseSessionToBrowserStorage(session);
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  return null;
+}
+
 export function Providers({
   children,
   initialLocale,
@@ -51,6 +83,7 @@ export function Providers({
   return (
     <I18nProvider>
       <LocaleSync />
+      <DashboardSessionSync />
       <QueryClientProvider client={queryClient}>
         <Refine
           dataProvider={dataProvider}
