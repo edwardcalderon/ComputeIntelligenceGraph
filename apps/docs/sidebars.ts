@@ -31,6 +31,14 @@ const sidebars: SidebarsConfig = {
         'en/architecture/system-design',
         'en/architecture/components',
         'en/architecture/vector-store',
+        'en/architecture/cli-current-state',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Reference',
+      items: [
+        'en/reference/cli',
       ],
     },
     {
@@ -39,6 +47,20 @@ const sidebars: SidebarsConfig = {
       items: [
         'en/api-reference/index',
         'en/api-reference/endpoints',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Deployment',
+      items: [
+        'en/deployment/README',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Authentication',
+      items: [
+        'en/authentication/README',
       ],
     },
     {
@@ -69,6 +91,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Resources',
       items: [
+        'en/project-status',
         'en/next-steps',
         'en/changelog/index',
         'en/faq/index',

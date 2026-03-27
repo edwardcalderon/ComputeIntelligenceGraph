@@ -11,28 +11,29 @@ As the Compute Intelligence Graph system continues to evolve, these are the prio
 
 ## 1. High-Priority Infrastructure
 
-- [ ] **First API Production Deployment**: Successfully validate the **ECS/Fargate** container delivery on AWS via `@cig/infra`.
-- [ ] **Cross-Cloud Auth Bridge**: Expand `@cig/auth` to support federation between Authentik and Supabase.
-- [ ] **Zero-Trust Connectivity**: Implement WireGuard/VPN-less connectivity for the CLI to access local Neo4j instances in secure environments.
+- [ ] **First Live AWS Validation**: Validate the ECS/Fargate API deployment on AWS in a real customer-like environment.
+- [ ] **Managed Demo Lifecycle**: Add admin-facing controls for reseeding and auditing the shared demo workspace.
+- [ ] **Zero-Trust Connectivity**: Improve secure operator connectivity for self-hosted and managed node workflows.
 
 ## 2. Intelligence & Agents
 
-- [ ] **Agent Tool Expansion**: Add tools to `@cig/agents` for writing Cypher queries that can also modify the graph (Self-refining graph).
-- [ ] **Multi-Cloud Cartography**: Fully implement and test the Google Cloud Platform (GCP) and Azure modules in `services/cartography`.
-- [ ] **LLM Context Optimization**: Optimize the RAG pipeline in `@cig/chatbot` to handle extremely large infrastructure datasets (>100k nodes) efficiently.
+- [ ] **Agent Refinement Hardening**: Expand `@cig/agents` with safer Cypher refinement previews and approvals.
+- [ ] **Multi-Cloud Cartography**: Fully validate the Google Cloud Platform (GCP) and Azure modules in `services/cartography`.
+- [ ] **LLM Context Optimization**: Improve the RAG pipeline for very large infrastructure datasets.
 
 ## 3. Developer Experience
 
-- [ ] **Feature-Complete SDK**: Finalize `@cig/sdk` to cover all CIG domain workflows, allowing for 100% type-safe interactions in both Dashboard and CLI.
-- [ ] **Wizard-UI Implementation**: Move `apps/wizard-ui` from a placeholder "Coming Soon" to a functional installation wizard.
-- [ ] **Comprehensive Test Coverage**: Increase E2E test coverage across the `@cig/api` surface, focusing on Graph-to-LLM handoffs.
+- [ ] **Feature-Complete SDK**: Finalize `@cig/sdk` to cover all CIG domain workflows.
+- [ ] **Wizard-UI Implementation**: Move `apps/wizard-ui` from placeholder to a functional installation wizard.
+- [ ] **Comprehensive Test Coverage**: Increase E2E coverage across the `@cig/api` surface, focusing on graph-to-LLM handoffs.
+- [ ] **Docs Coverage**: Keep Docusaurus aligned with the root README and release-aware project status.
 
 ## 4. UI/UX & Visualization
 
-- [ ] **Advanced Graph Exploration**: Implement 3D graph visualization in the Dashboard for very complex network topologies.
-- [ ] **Real-time Discovery Feedback**: Add detailed progress meters and log-streaming to the Dashboard during Cartography discovery jobs.
+- [ ] **Graph UX Polish**: Improve source switching, search, and selection flows in the Dashboard.
+- [ ] **Real-time Discovery Feedback**: Add more detailed progress meters and log-streaming during discovery jobs.
 
 ---
 
 > [!TIP]
-> This roadmap is maintained based on the current implementation state. For the most up-to-date work log, always refer to [PROJECT_STATUS.md](../../../PROJECT_STATUS.md) in the repository root.
+> This roadmap is maintained based on the current implementation state. For the most up-to-date work log, always refer to [Project Status](./project-status.md).

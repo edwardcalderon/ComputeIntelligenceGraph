@@ -25,7 +25,7 @@ CIG utilizes **Turbo** and **pnpm** to manage its workspace. For the best develo
 *   **`@cig-technology/cli`**: Our public CLI tool.
 
 ### Type-Safe Development
-CIG is 100% TypeScript. We enforce strict type checking and utilize **Zod** for runtime schema validation.
+CIG is primarily TypeScript. We enforce strict type checking and use runtime validation where it matters at the API boundaries.
 
 ### Versioning & Environment
 We use a custom `@edcalderon/versioning` toolset to manage the complex environment and versioning requirements of the monorepo:

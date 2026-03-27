@@ -10,8 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="package.json"><img src="https://img.shields.io/badge/version-0.2.89-blue.svg" alt="Version" /></a>
-  <a href="package.json"><img src="https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen.svg" alt="Node" /></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/version-0.2.90-blue.svg" alt="Version" /></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen.svg" alt="Node" /></a>
   <a href="package.json"><img src="https://img.shields.io/badge/pnpm-%3E%3D9.0.0-orange.svg" alt="pnpm" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /></a>
 </p>
@@ -100,7 +100,7 @@ docs/            Project documentation
 
 #### Prerequisites
 
-- Node.js 20+
+- Node.js 22+
 - pnpm 9+
 - Docker Engine or Docker Desktop
 - Docker Compose
@@ -214,7 +214,7 @@ docs/            Documentación del proyecto
 
 #### Requisitos
 
-- Node.js 20+
+- Node.js 22+
 - pnpm 9+
 - Docker Engine o Docker Desktop
 - Docker Compose
@@ -319,7 +319,7 @@ docs/            项目文档
 
 #### 环境要求
 
-- Node.js 20+
+- Node.js 22+
 - pnpm 9+
 - Docker Engine 或 Docker Desktop
 - Docker Compose

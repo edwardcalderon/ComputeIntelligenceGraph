@@ -7,11 +7,17 @@ sidebar_position: 1
 
 # Troubleshooting
 
-Common issues and solutions.
+Common issues and solutions for the current CIG stack.
 
 ## Common Issues
 
 - [Common Issues](./common-issues.md)
+
+## Frequent Causes
+
+- Local graph is empty because live discovery is unavailable and demo mode was not selected
+- Chat returns shallow answers because the semantic index has not been backfilled yet
+- Login loops usually mean a stale browser session or mismatched auth source
 
 ## Getting Help
 

@@ -30,7 +30,7 @@ pnpm env:validate  # Validate the full environment configuration
 ```
 
 ## 4. Local Infrastructure
-CIG requires Neo4j, Postgres, and Redis to function locally. These are provided via Docker Compose.
+CIG requires Neo4j and Chroma for graph and semantic retrieval. These are provided via Docker Compose.
 
 ```bash
 docker-compose -f docker-compose.dev.yml up -d
@@ -55,5 +55,6 @@ Once the servers are up, access them here:
 *   **Landing Page**: `http://localhost:3000`
 *   **Dashboard**: `http://localhost:3001`
 *   **API (Public)**: `http://localhost:3003`
-*   **Graph Browser (Neo4j)**: `http://localhost:7474` (Default user: `neo4j`, Password: `password`)
-*   **Documentation**: `http://localhost:3004`
+*   **Docs**: `http://localhost:3004`
+*   **Graph Browser (Neo4j)**: `http://localhost:7474` (if exposed by your local compose file)
+*   **Graph Mode**: open the Dashboard and switch between `live` and `demo`

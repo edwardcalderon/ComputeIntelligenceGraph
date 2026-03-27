@@ -11,7 +11,7 @@ sidebar_position: 2
 
 ### Issue: pnpm install fails
 
-**Solution**: Ensure you have Node.js 20.0+ and pnpm 9.0+ installed.
+**Solution**: Ensure you have Node.js 22.0+ and pnpm 9.0+ installed.
 
 ```bash
 node --version
@@ -32,16 +32,30 @@ lsof -ti:3000 | xargs kill -9
 
 ## Runtime Issues
 
-### Issue: Graph query returns empty results
+### Issue: Graph view is empty
 
 **Solution**: Verify that:
-1. Data has been loaded into the graph
-2. Query syntax is correct
-3. Indexes are properly configured
+1. Discovery has indexed resources
+2. The Dashboard is on the expected graph source (`live` or `demo`)
+3. The demo workspace was provisioned if you are using demo mode
+
+### Issue: `Invalid or expired JWT token`
+
+**Solution**:
+1. Sign out and sign back in
+2. Clear stale browser session storage if needed
+3. Verify the production dashboard and API are using the same auth source
+
+### Issue: Chat has no semantic context
+
+**Solution**:
+1. Confirm the API has `OPENAI_API_KEY` configured
+2. Confirm Chroma is reachable
+3. Redeploy the API so the semantic index sync runs
 
 ### Issue: Performance degradation
 
 **Solution**: 
 1. Check system resources (CPU, memory)
 2. Optimize queries
-3. Consider data partitioning
+3. Consider graph-source filtering and smaller result sets

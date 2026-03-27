@@ -11,25 +11,29 @@ sidebar_position: 1
 
 ### What is CIG?
 
-CIG (Compute Intelligence Graph) is a platform for managing and analyzing compute intelligence graphs.
+CIG (Compute Intelligence Graph) is a platform for discovering infrastructure, storing it as a graph, and operating it through the dashboard, API, and CLI.
 
 ### Who should use CIG?
 
 CIG is designed for:
-- Data scientists
-- Software engineers
-- System architects
-- Anyone working with graph data
+- Platform engineers
+- Infrastructure and security teams
+- Developers who need live or demo infrastructure graphs
 
 ### Is CIG open source?
 
 Yes, CIG is open source and available on GitHub.
 
+### What are the current modes?
+
+- `live` uses real discovery-backed infrastructure.
+- `demo` uses the shared seeded demo workspace and is available in the Dashboard and API.
+
 ## Technical Questions
 
 ### What are the system requirements?
 
-- Node.js 20.0 or higher
+- Node.js 22.0 or higher
 - pnpm 9.0 or higher
 - 4GB RAM minimum
 - 10GB disk space
@@ -37,6 +41,10 @@ Yes, CIG is open source and available on GitHub.
 ### How do I get started?
 
 See the [Quick Start](../getting-started/quick-start.md) guide.
+
+### How does chat get its answers?
+
+Chat combines the selected graph source, linked resources, discovery status, and semantic retrieval from Chroma.
 
 ### How do I report a bug?
 

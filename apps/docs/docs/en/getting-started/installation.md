@@ -11,10 +11,10 @@ This guide covers the full installation process for a local development environm
 
 ## Comprehensive Prerequisites
 
-CIG is a modern, high-performance monorepo. Ensure your machine meets these requirements:
+CIG is a modern TypeScript monorepo. Ensure your machine meets these requirements:
 
-- **Operating System**: Linux (Ubuntu 22.04+ recommended), macOS (Apple Silicon preferred), or Windows (WSL2 is REQUIRED).
-- **Node.js**: `v22.0` or higher (Use `nvm` or `fnm` for management).
+- **Operating System**: Linux (Ubuntu 22.04+ recommended), macOS, or Windows (WSL2 recommended).
+- **Node.js**: `v22.0` or higher (use `nvm` or `fnm` for management).
 - **pnpm**: `v9.0` or higher.
 - **Docker**: Engine version `24.0+` with Compose `v2.20+`.
 - **Git**: Properly configured with SSH or personal access tokens.
@@ -45,16 +45,32 @@ pnpm env:doctor
 ```
 
 ### 4. Database Setup
-Launch the core persistence and discovery engines (Neo4j, Chroma):
+Launch the core persistence and discovery engines (Neo4j, Chroma, API, discovery helpers):
 ```bash
 docker-compose -f docker-compose.dev.yml up -d
 ```
 
-### 5. Workspace Build (Optional but Recommended)
+### 5. Demo or Self-Hosted Install
+
+Use the public installer for a guided setup:
+
+```bash
+curl -fsSL https://cig.lat/install.sh | bash
+```
+
+Or run the CLI directly:
+
+```bash
+cig install
+cig install --demo
+cig install --mode self-hosted --profile discovery
+```
+
+### 6. Workspace Build (Optional but Recommended)
 For a better initial experience, build all packages once:
 ```bash
 pnpm build:all
 ```
 
 ## Troubleshooting Setup
-If you encounter `pnpm install` errors relating to architecture mismatches, ensure you have the correct build tools installed (`build-essential` on Linux).
+If you encounter `pnpm install` errors relating to architecture mismatches, ensure you have the correct build tools installed (`build-essential` on Linux). If the graph loads empty in local development, start the demo stack or switch the dashboard graph source to `demo`.

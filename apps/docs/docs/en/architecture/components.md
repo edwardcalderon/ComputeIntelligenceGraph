@@ -13,13 +13,13 @@ CIG is a monorepo containing specialized packages that work together to provide 
 
 ### `apps/landing`
 *   **Role**: Public facing landing page.
-*   **Tech**: Next.js (Static Export).
-*   **Purpose**: Product showcase and authentication entry point.
+*   **Tech**: Next.js.
+*   **Purpose**: Product showcase, authentication entry point, and canonical logout return surface.
 
 ### `apps/dashboard`
 *   **Role**: Primary user interface.
-*   **Tech**: Next.js (App Router), Tailwind CSS, Framer Motion.
-*   **Purpose**: Infrastructure visualization, graph exploration, agent chat, and settings management.
+*   **Tech**: Next.js (App Router), Tailwind CSS.
+*   **Purpose**: Infrastructure visualization, live/demo graph switching, graph exploration, agent chat, and settings management.
 
 ### `apps/wizard-ui`
 *   **Role**: Guided installation.
@@ -29,22 +29,22 @@ CIG is a monorepo containing specialized packages that work together to provide 
 
 ### `@cig/api`
 *   **Role**: Central Domain Server.
-*   **Core Tech**: Fastify, GraphQL Yoga, WebSocket, Prometheus, Zod.
-*   **Responsibility**: Orchestrates all logic between the UI, Graph, and Discovery layers.
+*   **Core Tech**: Fastify, GraphQL, WebSocket, Prometheus, Zod.
+*   **Responsibility**: Orchestrates all logic between the UI, graph, discovery, semantic retrieval, and chat layers.
 
 ### `@cig/graph`
 *   **Role**: Graph Engine.
 *   **Core Tech**: Neo4j (Cypher), Neo4j-Driver.
-*   **Responsibility**: Manages the graph schema, handles complex traversals, and ensures data integrity.
+*   **Responsibility**: Manages the graph schema, handles complex traversals, applies scope filters, and ensures data integrity.
 
 ### `@cig/discovery`
 *   **Role**: Discovery Orchestrator.
-*   **Responsibility**: Schedulers and manages discovery cycles. It triggers the `cartography` service and updates the graph state.
+*   **Responsibility**: Schedules discovery cycles, triggers the `cartography` service, and updates the graph state.
 
 ### `@cig/auth`
 *   **Role**: Authentication & Session Hub.
 *   **Core Tech**: `jose`, `jsonwebtoken`, Authentik.
-*   **Responsibility**: Ensures secure access to the API and manages cross-platform user sessions.
+*   **Responsibility**: Ensures secure access to the API and manages cross-platform user sessions for Authentik and Supabase-backed flows.
 
 ### `@cig/sdk`
 *   **Role**: Typed Client Foundation.
@@ -55,27 +55,27 @@ CIG is a monorepo containing specialized packages that work together to provide 
 ### `@cig/agents`
 *   **Role**: AI Reasoning Engine.
 *   **Core Tech**: LangChain, OpenAI/Anthropic.
-*   **Responsibility**: Implements the tool-calling logic that allows LLMs to query the infrastructure graph.
+*   **Responsibility**: Implements the tool-calling logic that allows LLMs to query and refine the infrastructure graph.
 
 ### `@cig/chatbot`
 *   **Role**: RAG Pipeline.
-*   **Responsibility**: Manages vector ingest and retrieval to provide context to the agentic layer.
+*   **Responsibility**: Manages vector ingest and retrieval to provide context to the agentic layer, including managed semantic collection scopes.
 
 ## Infrastructure & Operator Tools
 
 ### `@cig/iac`
 *   **Role**: Infrastructure as Code.
 *   **Tech**: Terraform.
-*   **Responsibility**: Defines the AWS/GCP base infrastructure required to run CIG.
+*   **Responsibility**: Defines the AWS base infrastructure required to run CIG.
 
 ### `@cig/infra`
 *   **Role**: Deployment Wrapper.
 *   **Tech**: SST (Serverless Stack).
 *   **Responsibility**: Manages the runtime delivery of containers to ECS/Fargate.
 
-### `@cig/cli`
+### `@cig-technology/cli`
 *   **Role**: Operator Command Line.
-*   **Responsibility**: Deployment, bootstrapping, environment management, and terminal-based querying.
+*   **Responsibility**: Deployment, bootstrapping, environment management, demo provisioning, and terminal-based querying.
 
 ## Services
 
@@ -86,4 +86,4 @@ CIG is a monorepo containing specialized packages that work together to provide 
 
 ### Vector Store (Chroma)
 *   **Role**: Specialized Vector Semantic Engine.
-*   **Responsibility**: Powers the RAG pipeline by storing infrastructure metadata as high-dimensional embeddings for semantic retrieval.
+*   **Responsibility**: Powers the RAG pipeline by storing infrastructure metadata as high-dimensional embeddings for semantic retrieval. Managed deployments scope collections by tenant/workspace; demo mode uses the shared seeded demo workspace scope.

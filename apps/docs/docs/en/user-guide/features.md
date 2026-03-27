@@ -7,32 +7,30 @@ sidebar_position: 2
 
 # Features
 
-Overview of CIG features.
+Overview of the current CIG feature set.
 
-## Graph Management
+## Graph Exploration
 
-- Create and manage graphs
-- Add nodes and edges
-- Define node and edge properties
-- Support for directed and undirected graphs
+- Live or demo graph source switching
+- 2D and 3D graph visualization
+- Resource drill-down, search, dependencies, and dependents
+- Graph snapshots for managed and self-hosted scopes
 
-## Querying
+## Querying and Chat
 
-- Powerful query language
-- Pattern matching
-- Aggregation functions
-- Full-text search
+- Read-only graph query endpoint
+- Chat-assisted questions over actual infrastructure context
+- Resource linking, file attachments, voice transcription, and template-driven responses
+- Demo-specific template responses for seeded example data
 
-## Visualization
+## Discovery and Semantic Retrieval
 
-- Interactive graph visualization
-- Multiple layout algorithms
-- Customizable styling
-- Export to various formats
+- Discovery status and trigger endpoints
+- Chroma-backed semantic retrieval for live and demo scopes
+- Graph delta indexing and startup backfill
 
-## Performance
+## Operations
 
-- Optimized for large graphs
-- Efficient query execution
-- Caching mechanisms
-- Parallel processing
+- Costs and security summary endpoints
+- Actions, newsletter, and node-management workflows
+- CLI install, enrollment, and demo provisioning

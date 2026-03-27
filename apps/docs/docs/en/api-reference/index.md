@@ -11,17 +11,17 @@ Complete reference for the CIG API.
 
 ## Overview
 
-The CIG API provides RESTful endpoints for accessing and manipulating graph data.
+The CIG API provides REST, GraphQL, WebSocket, and chat endpoints for accessing graph data, demo workspace snapshots, discovery status, and semantic retrieval.
 
 ## Base URL
 
 ```
-https://api.cig.lat/v1
+https://api.cig.technology/api/v1
 ```
 
 ## Authentication
 
-All API requests require authentication using API keys.
+Most endpoints require a CIG session or bearer JWT. Public newsletter endpoints remain unauthenticated.
 
 ## Endpoints
 
@@ -29,4 +29,4 @@ All API requests require authentication using API keys.
 
 ## Rate Limiting
 
-API requests are rate limited to 1000 requests per hour per API key.
+API requests are rate limited per authenticated session or token.
