@@ -1,6 +1,6 @@
 {
   "name": "@cig/graph",
-  "version": "0.2.87",
+  "version": "0.2.88",
   "description": "CIG Neo4j graph engine",
   "files": [
     "dist"
@@ -8,11 +8,11 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "npm run clean && tsc",
     "dev": "tsc --watch",
     "lint": "tsc --noEmit",
     "test": "vitest run",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist tsconfig.tsbuildinfo"
   },
   "dependencies": {
     "neo4j-driver": "^5.0.0"

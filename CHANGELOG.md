@@ -1,3 +1,31 @@
+## [0.2.88](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.87...v0.2.88) (2026-03-27)
+
+
+### Bug Fixes
+
+* **cli:** fix default api-url port and skip network check on self-hosted install ([ebd1782](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/ebd17824ec856b4020a347727cac20bae1b50718))
+* **cli:** register setup command and add e2e smoke test in CI ([74f17f7](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/74f17f75f55de37f05b60224586560b633d3681f))
+* **cli:** remove stale @cig/sdk from lockfile ([828d433](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/828d43345085574df66b1cc142fbecb6043be8df))
+* **cli:** use user-writable install dir instead of /opt/cig-node ([186bdda](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/186bddaed2b0229c8577fa687d9fe8360c3e184d))
+
+
+
+
+
+## [0.2.88](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.87...v0.2.88) (2026-03-27)
+
+
+### Bug Fixes
+
+* **cli:** fix default api-url port and skip network check on self-hosted install ([ebd1782](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/ebd17824ec856b4020a347727cac20bae1b50718))
+* **cli:** register setup command and add e2e smoke test in CI ([74f17f7](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/74f17f75f55de37f05b60224586560b633d3681f))
+* **cli:** remove stale @cig/sdk from lockfile ([828d433](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/828d43345085574df66b1cc142fbecb6043be8df))
+* **cli:** use user-writable install dir instead of /opt/cig-node ([186bdda](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/186bddaed2b0229c8577fa687d9fe8360c3e184d))
+
+
+
+
+
 ## [0.2.87](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.86...v0.2.87) (2026-03-27)
 
 ### Detected changes

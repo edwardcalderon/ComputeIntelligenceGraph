@@ -1,15 +1,15 @@
 {
   "name": "@cig/chatbot",
-  "version": "0.2.87",
+  "version": "0.2.88",
   "description": "CIG conversational interface with RAG pipeline",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "npm run clean && tsc",
     "dev": "tsc --watch",
     "lint": "tsc --noEmit",
     "test": "vitest run",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist tsconfig.tsbuildinfo"
   },
   "dependencies": {
     "@langchain/openai": "^0.1.0",
