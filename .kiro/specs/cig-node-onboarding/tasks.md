@@ -229,7 +229,7 @@ and carry a comment `// Feature: cig-node-onboarding, Property N: <title>`.
     - Connect Dashboard status pages to SSE stream; update UI on event receipt
     - _Requirements: 12.8, 16.10_
 
-  - [ ] 3.12 Implement exponential backoff retry in CIG Node runtime
+  - [x] 3.12 Implement exponential backoff retry in CIG Node runtime
     - Create `packages/discovery/src/retry.ts`: `withExponentialBackoff(fn, delays=[5,10,20,40,60])` — doubles delay up to 60s cap
     - Use in all control plane HTTP calls from the node runtime
     - _Requirements: 12.9, 12.10_
