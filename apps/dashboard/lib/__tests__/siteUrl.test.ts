@@ -1,7 +1,11 @@
 import {
+  buildDashboardRequestPath,
+  isProtectedDashboardHostname,
+  normalizeDashboardRedirectPath,
   resolveDashboardUrl,
   resolveDocsUrl,
   resolveLandingLoggedOutUrl,
+  resolveLandingSignInUrl,
   resolveLandingUrl,
 } from "../siteUrl";
 
@@ -79,5 +83,34 @@ describe("siteUrl", () => {
     expect(
       resolveDashboardUrl({ hostname: "app.cig.lat", protocol: "https:" }),
     ).toBe("https://app.cig.lat");
+  });
+
+  it("builds a production landing sign-in redirect with the requested dashboard path", () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://cig.lat";
+
+    expect(
+      resolveLandingSignInUrl({
+        hostname: "app.cig.lat",
+        protocol: "https:",
+        dashboardPath: "/graph?x=1",
+      }),
+    ).toBe("https://cig.lat/?auth=signin&dashboard_redirect=%2Fgraph%3Fx%3D1");
+  });
+
+  it("normalizes dashboard redirect paths to relative dashboard routes only", () => {
+    expect(normalizeDashboardRedirectPath("/graph?x=1")).toBe("/graph?x=1");
+    expect(normalizeDashboardRedirectPath("https://evil.test/path", "/")).toBe("/");
+    expect(normalizeDashboardRedirectPath("//evil.test/path", "/")).toBe("/");
+    expect(normalizeDashboardRedirectPath("graph", "/")).toBe("/");
+  });
+
+  it("builds request paths from pathname and search safely", () => {
+    expect(buildDashboardRequestPath("/resources", "?page=2")).toBe("/resources?page=2");
+  });
+
+  it("protects only the production dashboard hostname", () => {
+    expect(isProtectedDashboardHostname("app.cig.lat")).toBe(true);
+    expect(isProtectedDashboardHostname("localhost")).toBe(false);
+    expect(isProtectedDashboardHostname("preview.cig.lat")).toBe(false);
   });
 });

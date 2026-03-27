@@ -1,6 +1,7 @@
 const DEFAULT_LANDING_URL = "https://cig.lat";
 const DEFAULT_DASHBOARD_URL = "https://app.cig.lat";
 const DEFAULT_DOCS_URL = "https://cig.lat/documentation";
+const PRODUCTION_DASHBOARD_HOSTNAME = "app.cig.lat";
 
 export type UrlContext = {
   hostname?: string | null;
@@ -27,6 +28,18 @@ function isLocalHostname(hostname: string): boolean {
   );
 }
 
+export function isLoopbackHostname(hostname: string | null | undefined): boolean {
+  if (!hostname) {
+    return false;
+  }
+
+  return isLocalHostname(hostname);
+}
+
+export function isProtectedDashboardHostname(hostname: string | null | undefined): boolean {
+  return (hostname ?? "").trim().toLowerCase() === PRODUCTION_DASHBOARD_HOSTNAME;
+}
+
 function formatLocalOriginUrl(hostname: string, protocol: string, port: number): string {
   const normalizedProtocol = protocol.endsWith(":") ? protocol : `${protocol}:`;
   const renderedHost = hostname === "::1" ? "[::1]" : hostname;
@@ -47,6 +60,45 @@ export function resolveLandingUrl(context: UrlContext = {}): string {
 
 export function resolveLandingLoggedOutUrl(context: UrlContext = {}): string {
   return `${resolveLandingUrl(context)}?logged_out=1`;
+}
+
+export function normalizeDashboardRedirectPath(
+  value: string | null | undefined,
+  fallback = "/",
+): string {
+  const candidate = typeof value === "string" ? value.trim() : "";
+  if (!candidate || !candidate.startsWith("/") || candidate.startsWith("//")) {
+    return fallback;
+  }
+
+  try {
+    const parsed = new URL(candidate, DEFAULT_DASHBOARD_URL);
+    if (parsed.origin !== DEFAULT_DASHBOARD_URL) {
+      return fallback;
+    }
+
+    return `${parsed.pathname}${parsed.search}`;
+  } catch {
+    return fallback;
+  }
+}
+
+export function buildDashboardRequestPath(pathname: string, search = ""): string {
+  const normalizedPathname = normalizeDashboardRedirectPath(pathname, "/");
+  const normalizedSearch = search.startsWith("?") ? search : search ? `?${search}` : "";
+  return normalizeDashboardRedirectPath(`${normalizedPathname}${normalizedSearch}`, "/");
+}
+
+export function resolveLandingSignInUrl(
+  context: UrlContext & { dashboardPath?: string | null } = {},
+): string {
+  const landingUrl = new URL(resolveLandingUrl(context));
+  landingUrl.searchParams.set("auth", "signin");
+  landingUrl.searchParams.set(
+    "dashboard_redirect",
+    normalizeDashboardRedirectPath(context.dashboardPath, "/"),
+  );
+  return landingUrl.toString();
 }
 
 export function resolveDocsUrl(context: UrlContext = {}): string {

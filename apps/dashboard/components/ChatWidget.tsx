@@ -4,17 +4,19 @@ import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
+  AudioLines,
   Bot,
   ChevronDown,
   Code,
   Info,
+  LoaderCircle,
   Link,
   Maximize2,
-  Mic,
   Minimize2,
   MessageSquarePlus,
   Paperclip,
   Send,
+  Square,
   Trash2,
   X,
 } from "lucide-react";
@@ -46,10 +48,63 @@ import { ChatCodeComposerDialog } from "./ChatCodeComposerDialog";
 import { ChatContextItems } from "./ChatContextItems";
 import { ChatLinkPickerDialog } from "./ChatLinkPickerDialog";
 import { ChatSessionPanel } from "./ChatSessionPanel";
-import { ChatVoiceDialog } from "./ChatVoiceDialog";
+import { ChatVoiceCaptureBar } from "./ChatVoiceCaptureBar";
 
 const ACTIVE_SESSION_STORAGE_KEY = "cig-chat-active-session";
 const MAX_CHARS = 2000;
+const VOICE_DURATION_TICK_MS = 200;
+
+type VoiceCaptureStatus = "idle" | "preparing" | "recording" | "transcribing";
+
+function resolvePreferredVoiceMimeType(): string | undefined {
+  if (typeof MediaRecorder === "undefined" || typeof MediaRecorder.isTypeSupported !== "function") {
+    return undefined;
+  }
+
+  return [
+    "audio/webm;codecs=opus",
+    "audio/ogg;codecs=opus",
+    "audio/webm",
+    "audio/ogg",
+    "audio/mp4",
+  ].find((mimeType) => MediaRecorder.isTypeSupported(mimeType));
+}
+
+function resolveVoiceFileExtension(mimeType: string): string {
+  const normalized = mimeType.toLowerCase();
+  if (normalized.includes("ogg")) {
+    return "ogg";
+  }
+  if (normalized.includes("mp4") || normalized.includes("m4a")) {
+    return "m4a";
+  }
+  if (normalized.includes("wav")) {
+    return "wav";
+  }
+  return "webm";
+}
+
+function describeVoiceCaptureError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+
+  if (/chat\/transcriptions|voice transcription.*not available|not found|404/i.test(message)) {
+    return "Voice transcription is not available on this API instance yet. Deploy the latest API runtime to enable it.";
+  }
+
+  if (/unsupported audio type/i.test(message)) {
+    return "This browser recorded audio in a format the API rejected. Retry after refresh or switch to another browser if it keeps failing.";
+  }
+
+  if (/NotAllowedError|permission|denied/i.test(message)) {
+    return "Microphone access is blocked. Allow microphone permissions and try again.";
+  }
+
+  if (/NotFoundError|device.*not found|audio input/i.test(message)) {
+    return "No microphone is available on this device right now.";
+  }
+
+  return message || "Voice transcription failed.";
+}
 
 function isMissingChatSessionsRouteError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
@@ -125,7 +180,10 @@ export function ChatWidget() {
   const [statusTooltipPosition, setStatusTooltipPosition] = useState<{ left: number; top: number } | null>(null);
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [isCodeDialogOpen, setIsCodeDialogOpen] = useState(false);
-  const [isVoiceDialogOpen, setIsVoiceDialogOpen] = useState(false);
+  const [voiceMode, setVoiceMode] = useState<ChatTranscriptContextItem["mode"]>("review");
+  const [voiceStatus, setVoiceStatus] = useState<VoiceCaptureStatus>("idle");
+  const [voiceDurationMs, setVoiceDurationMs] = useState(0);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   const [currentPageResource, setCurrentPageResource] = useState<Resource | null>(null);
   const [suggestedResources, setSuggestedResources] = useState<Resource[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -134,12 +192,27 @@ export function ChatWidget() {
   const statusPillRef = useRef<HTMLButtonElement>(null);
   const statusTooltipCloseTimerRef = useRef<number | null>(null);
   const sessionMessagesRequestRef = useRef(0);
+  const voiceRecorderRef = useRef<MediaRecorder | null>(null);
+  const voiceStreamRef = useRef<MediaStream | null>(null);
+  const voiceChunksRef = useRef<Blob[]>([]);
+  const voiceStartedAtRef = useRef<number>(0);
+  const voiceDurationTimerRef = useRef<number | null>(null);
+  const voiceCaptureGenerationRef = useRef(0);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      clearVoiceDurationTimer();
+      if (voiceStreamRef.current) {
+        voiceStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -365,6 +438,9 @@ export function ChatWidget() {
   }, [isOpen]);
 
   function handleClose() {
+    if (voiceStatus === "recording" || voiceStatus === "preparing") {
+      void cancelVoiceCapture();
+    }
     setIsOpen(false);
     setIsExpanded(false);
   }
@@ -560,6 +636,161 @@ export function ChatWidget() {
     });
   }
 
+  function clearVoiceDurationTimer() {
+    if (voiceDurationTimerRef.current !== null) {
+      window.clearInterval(voiceDurationTimerRef.current);
+      voiceDurationTimerRef.current = null;
+    }
+  }
+
+  async function stopVoiceTracks() {
+    if (voiceStreamRef.current) {
+      voiceStreamRef.current.getTracks().forEach((track) => track.stop());
+      voiceStreamRef.current = null;
+    }
+  }
+
+  async function cancelVoiceCapture() {
+    voiceCaptureGenerationRef.current += 1;
+    clearVoiceDurationTimer();
+
+    const recorder = voiceRecorderRef.current;
+    voiceChunksRef.current = [];
+
+    if (recorder && recorder.state !== "inactive") {
+      await new Promise<void>((resolve) => {
+        recorder.addEventListener("stop", () => resolve(), { once: true });
+        recorder.stop();
+      });
+    }
+
+    voiceRecorderRef.current = null;
+    setVoiceStatus("idle");
+    setVoiceDurationMs(0);
+    await stopVoiceTracks();
+  }
+
+  async function startVoiceCapture() {
+    if (isLoading || voiceStatus === "preparing" || voiceStatus === "recording" || voiceStatus === "transcribing") {
+      return;
+    }
+
+    const generation = voiceCaptureGenerationRef.current + 1;
+    voiceCaptureGenerationRef.current = generation;
+    setVoiceError(null);
+    setVoiceStatus("preparing");
+    setVoiceDurationMs(0);
+
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("Media devices are not available in this browser.");
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (voiceCaptureGenerationRef.current !== generation) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+
+      const preferredMimeType = resolvePreferredVoiceMimeType();
+      const recorder = preferredMimeType
+        ? new MediaRecorder(stream, { mimeType: preferredMimeType })
+        : new MediaRecorder(stream);
+
+      voiceChunksRef.current = [];
+      voiceRecorderRef.current = recorder;
+      voiceStreamRef.current = stream;
+      voiceStartedAtRef.current = Date.now();
+      setVoiceStatus("recording");
+
+      recorder.addEventListener("dataavailable", (event) => {
+        if (event.data.size > 0) {
+          voiceChunksRef.current.push(event.data);
+        }
+      });
+
+      recorder.start();
+      voiceDurationTimerRef.current = window.setInterval(() => {
+        setVoiceDurationMs(Date.now() - voiceStartedAtRef.current);
+      }, VOICE_DURATION_TICK_MS);
+    } catch (nextError) {
+      setVoiceStatus("idle");
+      setVoiceError(describeVoiceCaptureError(nextError));
+      await stopVoiceTracks();
+    }
+  }
+
+  async function finishVoiceCapture() {
+    const recorder = voiceRecorderRef.current;
+    if (!recorder || recorder.state === "inactive" || voiceStatus !== "recording") {
+      return;
+    }
+
+    clearVoiceDurationTimer();
+    const finishedDurationMs = Math.max(0, Date.now() - voiceStartedAtRef.current);
+    setVoiceDurationMs(finishedDurationMs);
+    setVoiceStatus("transcribing");
+
+    await new Promise<void>((resolve) => {
+      recorder.addEventListener("stop", () => resolve(), { once: true });
+      recorder.stop();
+    });
+
+    await stopVoiceTracks();
+
+    try {
+      const mimeType = recorder.mimeType || "audio/webm";
+      const blob = new Blob(voiceChunksRef.current, { type: mimeType });
+      voiceChunksRef.current = [];
+      voiceRecorderRef.current = null;
+
+      if (blob.size === 0) {
+        throw new Error("The recording was empty. Please try again.");
+      }
+
+      const response = await transcribeChatAudio(blob, {
+        filename: `voice-${Date.now()}.${resolveVoiceFileExtension(mimeType)}`,
+        durationMs: finishedDurationMs,
+        mode: voiceMode,
+      });
+
+      if (voiceMode === "auto-send") {
+        await performSend({
+          text: response.text,
+          contextItems: [response.item],
+          shouldClearDraft: false,
+        });
+      } else {
+        setInput((current) => {
+          const currentValue = current.trim();
+          return currentValue ? `${currentValue}\n${response.text}` : response.text;
+        });
+        setDraftContextItems((current) => [...current, response.item].slice(0, 5));
+        requestAnimationFrame(() => textareaRef.current?.focus());
+      }
+
+      setVoiceError(null);
+      setVoiceStatus("idle");
+      setVoiceDurationMs(0);
+    } catch (nextError) {
+      setVoiceStatus("idle");
+      setVoiceError(describeVoiceCaptureError(nextError));
+    }
+  }
+
+  function handleVoiceTrigger() {
+    if (voiceStatus === "recording") {
+      void finishVoiceCapture();
+      return;
+    }
+
+    if (voiceStatus === "preparing" || voiceStatus === "transcribing") {
+      return;
+    }
+
+    void startVoiceCapture();
+  }
+
   function removeDraftContextItem(index: number) {
     setDraftContextItems((current) => current.filter((_, itemIndex) => itemIndex !== index));
   }
@@ -609,39 +840,6 @@ export function ChatWidget() {
 
   function handleSaveCodeSnippet(item: ChatCodeSnippetContextItem) {
     setDraftContextItems((current) => [...current, item].slice(0, 5));
-  }
-
-  async function handleVoiceTranscription(payload: {
-    blob: Blob;
-    filename: string;
-    durationMs: number;
-    mode: ChatTranscriptContextItem["mode"];
-  }) {
-    setError(null);
-    const response = await transcribeChatAudio(payload.blob, {
-      filename: payload.filename,
-      durationMs: payload.durationMs,
-      mode: payload.mode,
-    });
-
-    if (payload.mode === "auto-send") {
-      await performSend({
-        text: response.text,
-        contextItems: [response.item],
-        shouldClearDraft: false,
-      });
-      return;
-    }
-
-    setInput((current) => {
-      if (!current.trim()) {
-        return response.text;
-      }
-
-      return `${current.trim()}\n${response.text}`;
-    });
-    setDraftContextItems((current) => [...current, response.item].slice(0, 5));
-    requestAnimationFrame(() => textareaRef.current?.focus());
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -761,12 +959,6 @@ export function ChatWidget() {
         open={isCodeDialogOpen}
         onClose={() => setIsCodeDialogOpen(false)}
         onSave={handleSaveCodeSnippet}
-      />
-
-      <ChatVoiceDialog
-        open={isVoiceDialogOpen}
-        onClose={() => setIsVoiceDialogOpen(false)}
-        onTranscribe={handleVoiceTranscription}
       />
 
       {/* Mobile backdrop — only when sheet is not full-screen */}
@@ -1137,6 +1329,27 @@ export function ChatWidget() {
                   </div>
 
                   <div className="relative z-10 border-t border-slate-100 dark:border-zinc-700/40">
+                    {voiceStatus !== "idle" || voiceError ? (
+                      <div className="px-4 pt-3 sm:px-6">
+                        <ChatVoiceCaptureBar
+                          status={voiceStatus === "idle" ? null : voiceStatus}
+                          mode={voiceMode}
+                          durationMs={voiceDurationMs}
+                          error={voiceError}
+                          onModeChange={setVoiceMode}
+                          onStop={() => {
+                            void finishVoiceCapture();
+                          }}
+                          onCancel={() => {
+                            void cancelVoiceCapture();
+                          }}
+                          onRetry={() => {
+                            void startVoiceCapture();
+                          }}
+                          onDismissError={() => setVoiceError(null)}
+                        />
+                      </div>
+                    ) : null}
                     {draftContextItems.length > 0 || pendingUploads.length > 0 ? (
                       <div className="space-y-2 px-4 pt-3 sm:px-6">
                         {draftContextItems.length > 0 ? (
@@ -1208,12 +1421,32 @@ export function ChatWidget() {
                         </div>
                         <button
                           type="button"
-                          title={t("chat.voiceInput")}
-                          onClick={() => setIsVoiceDialogOpen(true)}
-                          disabled={isLoading}
-                          className="rounded-lg border border-slate-200/70 p-2 text-slate-400 transition-all duration-200 hover:border-red-200 hover:bg-red-50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700/30 dark:text-zinc-500 dark:hover:border-red-500/30 dark:hover:bg-zinc-800/80 dark:hover:text-red-400 sm:p-2.5"
+                          aria-label={t("chat.voiceInput")}
+                          title={
+                            voiceStatus === "recording"
+                              ? "Stop voice capture"
+                              : voiceStatus === "transcribing"
+                                ? "Transcribing voice"
+                                : "Voice assistant"
+                          }
+                          onClick={handleVoiceTrigger}
+                          disabled={isLoading || voiceStatus === "transcribing"}
+                          className={[
+                            "rounded-lg border p-2 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 sm:p-2.5",
+                            voiceStatus === "recording"
+                              ? "border-red-200 bg-red-50 text-red-500 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-300"
+                              : voiceStatus === "preparing" || voiceStatus === "transcribing" || voiceError
+                                ? "border-cyan-200 bg-cyan-50 text-cyan-600 dark:border-cyan-400/30 dark:bg-cyan-500/10 dark:text-cyan-300"
+                                : "border-slate-200/70 text-slate-400 hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-600 dark:border-zinc-700/30 dark:text-zinc-500 dark:hover:border-cyan-500/30 dark:hover:bg-zinc-800/80 dark:hover:text-cyan-300",
+                          ].join(" ")}
                         >
-                          <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          {voiceStatus === "recording" ? (
+                            <Square className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          ) : voiceStatus === "preparing" || voiceStatus === "transcribing" ? (
+                            <LoaderCircle className="h-3.5 w-3.5 animate-spin sm:h-4 sm:w-4" />
+                          ) : (
+                            <AudioLines className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          )}
                         </button>
                       </div>
 

@@ -92,3 +92,79 @@ describe("dashboard authProvider.logout", () => {
     });
   });
 });
+
+describe("dashboard authProvider auth gating", () => {
+  const originalLocation = window.location;
+  const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    sessionStorage.clear();
+    process.env.NEXT_PUBLIC_SITE_URL = "https://cig.lat";
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    sessionStorage.clear();
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: originalLocation,
+    });
+    if (originalSiteUrl === undefined) {
+      delete process.env.NEXT_PUBLIC_SITE_URL;
+    } else {
+      process.env.NEXT_PUBLIC_SITE_URL = originalSiteUrl;
+    }
+  });
+
+  it("allows unauthenticated access on local hosts", async () => {
+    const result = await authProvider.check({} as never);
+
+    expect(result).toEqual({ authenticated: true });
+  });
+
+  it("redirects unauthenticated production visits to landing sign-in", async () => {
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: {
+        ...originalLocation,
+        hostname: "app.cig.lat",
+        protocol: "https:",
+        pathname: "/graph",
+        search: "?x=1",
+      },
+    });
+
+    const result = await authProvider.check({} as never);
+
+    expect(result).toEqual({
+      authenticated: false,
+      redirectTo: "https://cig.lat/?auth=signin&dashboard_redirect=%2Fgraph%3Fx%3D1",
+      error: { name: "Unauthenticated", message: "No active session." },
+    });
+  });
+
+  it("redirects protected-host auth failures back to landing sign-in", async () => {
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: {
+        ...originalLocation,
+        hostname: "app.cig.lat",
+        protocol: "https:",
+        pathname: "/graph",
+        search: "",
+      },
+    });
+
+    sessionStorage.setItem("cig_access_token", "stale-token");
+    sessionStorage.setItem("cig_expires_at", String(Date.now() + 60_000));
+
+    const result = await authProvider.onError({ status: 401 });
+
+    expect(result).toEqual({
+      logout: true,
+      redirectTo: "https://cig.lat/?auth=signin&dashboard_redirect=%2Fgraph",
+    });
+    expect(sessionStorage.getItem("cig_access_token")).toBeNull();
+  });
+});

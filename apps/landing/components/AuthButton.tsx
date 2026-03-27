@@ -7,6 +7,13 @@ import { startAuthentikSocialLogin, getSupabaseClient, sendEmailOtp, sendMagicLi
 import { useCIGAuth } from "./AuthProvider";
 import { PreferencesMenu } from "./PreferencesMenu";
 import { useTranslation } from "@cig-technology/i18n/react";
+import {
+  cleanLandingAuthSearchParams,
+  consumePendingDashboardRedirect,
+  goToDashboard,
+  persistPendingDashboardRedirect,
+  resolveDashboardRedirectFromSearch,
+} from "../lib/dashboardHandoff";
 
 /* ─── Icons ───────────────────────────────────────────────────────────── */
 
@@ -425,9 +432,11 @@ function getAuthentikConfig() {
 function SignInModal({
   onClose,
   onSSOSignIn,
+  onAuthSuccess,
 }: {
   onClose: () => void;
   onSSOSignIn: (provider: AuthentikSocialProvider) => void;
+  onAuthSuccess: () => void;
 }) {
   const t = useTranslation();
   const [view, setView] = useState<ModalView>("methods");
@@ -532,11 +541,11 @@ function SignInModal({
           {view === "email-otp-verify" && (
             <EmailOtpVerifyView
               email={otpEmail}
-              onSuccess={onClose}
+              onSuccess={onAuthSuccess}
             />
           )}
           {view === "email-password" && (
-            <EmailPasswordView onSuccess={onClose} />
+            <EmailPasswordView onSuccess={onAuthSuccess} />
           )}
         </div>
       </div>
@@ -1161,6 +1170,46 @@ export function AuthButton() {
     return () => document.removeEventListener("mousedown", handler);
   }, [showMenu]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const search = window.location.search;
+    if (!search) {
+      return;
+    }
+
+    const params = new URLSearchParams(search);
+    const dashboardRedirect = resolveDashboardRedirectFromSearch(search);
+    const shouldOpenSignIn = params.get("auth") === "signin";
+    const hasDashboardRedirect = params.has("dashboard_redirect");
+
+    if (!shouldOpenSignIn && !hasDashboardRedirect) {
+      return;
+    }
+
+    if (dashboardRedirect) {
+      persistPendingDashboardRedirect(dashboardRedirect);
+    }
+
+    if (!user && shouldOpenSignIn) {
+      setShowModal(true);
+    }
+
+    cleanLandingAuthSearchParams();
+  }, [user]);
+
+  const handlePostAuthSuccess = useCallback(() => {
+    setShowModal(false);
+    const dashboardRedirect = consumePendingDashboardRedirect();
+    if (!dashboardRedirect) {
+      return;
+    }
+
+    void goToDashboard(dashboardRedirect);
+  }, []);
+
   const handleSSOSignIn = useCallback(async (provider: AuthentikSocialProvider) => {
     setShowModal(false);
     if (authProvider === "supabase") {
@@ -1243,6 +1292,7 @@ export function AuthButton() {
         <SignInModal
           onClose={() => setShowModal(false)}
           onSSOSignIn={handleSSOSignIn}
+          onAuthSuccess={handlePostAuthSuccess}
         />
       )}
     </>

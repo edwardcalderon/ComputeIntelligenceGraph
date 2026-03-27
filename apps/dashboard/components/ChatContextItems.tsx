@@ -83,7 +83,7 @@ function renderBadge(item: ChatContextItem): string {
     case "code_snippet":
       return item.language.toUpperCase();
     case "transcript":
-      return item.mode === "auto-send" ? "VOICE AUTO" : "VOICE";
+      return item.mode === "auto-send" ? "VOICE SEND" : "VOICE NOTE";
     default:
       return "CONTEXT";
   }

@@ -12,6 +12,7 @@ import { useCIGAuth } from "../components/AuthProvider";
 import { useTranslation } from "@cig-technology/i18n/react";
 import { FooterBar } from "@cig/ui/components";
 import { useResolvedDocsUrl } from "@cig/ui/siteUrl.client";
+import { consumePendingDashboardRedirect, goToDashboard } from "../lib/dashboardHandoff";
 import {
   Cloud,
   GitGraph,
@@ -892,6 +893,7 @@ function LandingTransitionShell({
 export default function HomePage() {
   const t = useTranslation();
   const { user, signOut, isHydrated, isSigningOut } = useCIGAuth();
+  const dashboardRedirectHandledRef = useRef(false);
 
   // Normalize logout entrypoints so both dashboard-initiated sign-out and the
   // final landing redirect end on the clean unauthenticated home page.
@@ -903,6 +905,20 @@ export default function HomePage() {
       return;
     }
   }, [signOut]);
+
+  useEffect(() => {
+    if (!isHydrated || !user || dashboardRedirectHandledRef.current) {
+      return;
+    }
+
+    const dashboardRedirect = consumePendingDashboardRedirect();
+    if (!dashboardRedirect) {
+      return;
+    }
+
+    dashboardRedirectHandledRef.current = true;
+    void goToDashboard(dashboardRedirect);
+  }, [isHydrated, user]);
 
   if (isSigningOut) {
     return (

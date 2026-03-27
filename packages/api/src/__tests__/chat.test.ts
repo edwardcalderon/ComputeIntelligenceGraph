@@ -425,8 +425,8 @@ describe('POST /api/v1/chat', () => {
       {
         type: 'file',
         name: 'file',
-        filename: 'voice.webm',
-        mimeType: 'audio/webm',
+        filename: 'voice.ogg',
+        mimeType: 'audio/ogg; codecs=opus',
         content: 'fake-audio-content',
       },
     ]);

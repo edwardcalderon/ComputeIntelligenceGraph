@@ -3,16 +3,13 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Refine } from "@refinedev/core";
 import routerProvider from "@refinedev/nextjs-router/app";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { I18nProvider, useLocale } from "@cig-technology/i18n/react";
-import { LOCALE_META } from "@cig-technology/i18n";
+import { LOCALE_META, type SupportedLocale } from "@cig-technology/i18n";
 import { initI18n } from "./i18n";
 import { dataProvider } from "../lib/dataProvider";
 import { authProvider } from "../lib/authProvider";
 import { NotificationProvider } from "../components/NotificationBell";
-
-// Initialize i18n catalogs once at module level
-initI18n();
 
 const resources = [
   { name: "overview",  list: "/" },
@@ -35,7 +32,15 @@ function LocaleSync() {
   return null;
 }
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({
+  children,
+  initialLocale,
+}: {
+  children: ReactNode;
+  initialLocale: SupportedLocale;
+}) {
+  initI18n(initialLocale);
+
   const [queryClient] = useState(
     () =>
       new QueryClient({

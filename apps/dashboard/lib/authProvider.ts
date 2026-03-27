@@ -2,8 +2,10 @@ import type { AuthProvider } from "@refinedev/core";
 import { getSupabaseClient, revokeSessionViaApi } from "@cig/auth";
 import { resolveDashboardAuthSource } from "./sessionAuth";
 import {
+  buildDashboardRequestPath,
+  isProtectedDashboardHostname,
   resolveLandingLoggedOutUrl,
-  resolveLandingUrl,
+  resolveLandingSignInUrl,
 } from "./siteUrl";
 
 function getSession() {
@@ -37,6 +39,40 @@ function clearSession() {
     // Expire the middleware cookie immediately
     document.cookie = "cig_has_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
   } catch { /* ignore */ }
+}
+
+function getBrowserUrlContext() {
+  if (typeof window === "undefined") {
+    return {};
+  }
+
+  return {
+    hostname: window.location.hostname,
+    protocol: window.location.protocol,
+  };
+}
+
+function getCurrentDashboardRequestPath(): string {
+  if (typeof window === "undefined") {
+    return "/";
+  }
+
+  return buildDashboardRequestPath(window.location.pathname, window.location.search);
+}
+
+function resolveDashboardSignInRedirect(): string {
+  return resolveLandingSignInUrl({
+    ...getBrowserUrlContext(),
+    dashboardPath: getCurrentDashboardRequestPath(),
+  });
+}
+
+function shouldProtectCurrentDashboardHost(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return isProtectedDashboardHostname(window.location.hostname);
 }
 
 /** Decode the JWT payload without a library. */
@@ -102,10 +138,14 @@ export const authProvider: AuthProvider = {
   check: async () => {
     const session = getSession();
     if (session) return { authenticated: true };
-    // No session → send straight to landing sign-in
+
+    if (!shouldProtectCurrentDashboardHost()) {
+      return { authenticated: true };
+    }
+
     return {
       authenticated: false,
-      redirectTo: resolveLandingUrl(),
+      redirectTo: resolveDashboardSignInRedirect(),
       error: { name: "Unauthenticated", message: "No active session." },
     };
   },
@@ -114,7 +154,10 @@ export const authProvider: AuthProvider = {
     const status = (error as { status?: number }).status;
     if (status === 401 || status === 403) {
       clearSession();
-      return { logout: true, redirectTo: resolveLandingUrl() };
+
+      if (shouldProtectCurrentDashboardHost()) {
+        return { logout: true, redirectTo: resolveDashboardSignInRedirect() };
+      }
     }
     return { error };
   },

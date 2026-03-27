@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { resolveLandingUrl } from "./lib/siteUrl";
+import {
+  buildDashboardRequestPath,
+  isProtectedDashboardHostname,
+  resolveLandingSignInUrl,
+} from "./lib/siteUrl";
 
 /** Routes that are always public — no session required. */
 const PUBLIC_PATHS = [
@@ -16,10 +20,6 @@ const PUBLIC_PATHS = [
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const landingUrl = resolveLandingUrl({
-    hostname: request.nextUrl.hostname,
-    protocol: request.nextUrl.protocol,
-  });
 
   if (pathname === "/auth/callback" && request.nextUrl.searchParams.has("code")) {
     const loginCallbackUrl = new URL("/auth/login-callback", request.url);
@@ -34,11 +34,23 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  if (!isProtectedDashboardHostname(request.nextUrl.hostname)) {
+    return NextResponse.next();
+  }
+
   const hasSession = request.cookies.has("cig_has_session");
 
   if (!hasSession) {
-    // Redirect unauthenticated users to the landing sign-in page.
-    return NextResponse.redirect(landingUrl);
+    return NextResponse.redirect(
+      resolveLandingSignInUrl({
+        hostname: request.nextUrl.hostname,
+        protocol: request.nextUrl.protocol,
+        dashboardPath: buildDashboardRequestPath(
+          pathname,
+          request.nextUrl.search,
+        ),
+      }),
+    );
   }
 
   return NextResponse.next();

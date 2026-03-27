@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
+import { LOCALE_META } from "@cig-technology/i18n";
 import "./globals.css";
 import { Providers } from "./providers";
+import { resolveRequestLocale } from "./requestLocale";
 import { AppUpdateWatcher } from "../components/AppUpdateWatcher";
 
 export const viewport: Viewport = {
@@ -26,9 +28,11 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
+  const locale = resolveRequestLocale();
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} dir={LOCALE_META[locale].dir} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -38,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
         <Suspense>
-          <Providers>
+          <Providers initialLocale={locale}>
             <AppUpdateWatcher />
             {children}
           </Providers>

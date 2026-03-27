@@ -11,56 +11,8 @@ import { ThemeToggle } from "./ThemeToggle";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { useTheme } from "../app/providers";
 import { FooterBar } from "@cig/ui/components";
-import { useResolvedDocsUrl } from "@cig/ui/siteUrl.client";
-
-const DASHBOARD_URL =
-  process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3002";
-
-/* ─── Session-aware navigation ───────────────────────────────────────── */
-
-const AUTH_PROVIDER = process.env.NEXT_PUBLIC_AUTH_PROVIDER || "authentik";
-
-async function goToDashboard(path = "/") {
-  if (AUTH_PROVIDER === "supabase") {
-    // ── Supabase fallback: pass Supabase session tokens ──
-    try {
-      const { getSupabaseClient } = await import("@cig/auth");
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          const hash = new URLSearchParams({
-            access_token: session.access_token,
-            refresh_token: session.refresh_token ?? "",
-            token_type: "bearer",
-            expires_in: String(session.expires_in ?? 3600),
-            auth_source: "supabase",
-          }).toString();
-          window.location.replace(`${DASHBOARD_URL}/auth/callback?redirect=${encodeURIComponent(path)}#${hash}`);
-          return;
-        }
-      }
-    } catch { /* ignore */ }
-  } else {
-    // ── Authentik: pass Authentik session tokens ──
-    try {
-      const accessToken = sessionStorage.getItem("cig_access_token");
-      if (accessToken) {
-        const idToken = sessionStorage.getItem("cig_id_token") ?? "";
-        const expiresIn = sessionStorage.getItem("cig_expires_in") ?? "3600";
-        const hash = new URLSearchParams({
-          access_token: accessToken,
-          ...(idToken && { id_token: idToken }),
-          expires_in: expiresIn,
-          auth_source: "authentik",
-        }).toString();
-        window.location.replace(`${DASHBOARD_URL}/auth/callback?redirect=${encodeURIComponent(path)}#${hash}`);
-        return;
-      }
-    } catch { /* ignore */ }
-  }
-  window.location.replace(`${DASHBOARD_URL}${path}`);
-}
+import { useResolvedDashboardUrl, useResolvedDocsUrl } from "@cig/ui/siteUrl.client";
+import { goToDashboard } from "../lib/dashboardHandoff";
 
 /* ─── Icons ───────────────────────────────────────────────────────────── */
 
@@ -862,6 +814,7 @@ const STATUS_BADGE_DEFS = [
 export function AuthenticatedLanding() {
   const t = useTranslation();
   const docsUrl = useResolvedDocsUrl();
+  const dashboardUrl = useResolvedDashboardUrl();
   const { theme } = useTheme();
   useCIGAuth(); // keeps session alive; user data used in AuthButton
   const isDark = theme === "dark";
@@ -1004,10 +957,10 @@ export function AuthenticatedLanding() {
       <footer className="relative z-10 mt-auto w-full border-t border-zinc-200/80 px-4 pt-6 pb-4 dark:border-zinc-800/40">
         <FooterBar
           brandLabel={t("footer.brandTitle")}
-          brandHref={DASHBOARD_URL}
+          brandHref={dashboardUrl}
           subtitle={t("footer.rightsReserved")}
           links={[
-            { label: t("nav.dashboard"), href: DASHBOARD_URL },
+            { label: t("nav.dashboard"), href: dashboardUrl },
             { label: t("footer.docs"), href: docsUrl, external: true },
             { label: t("footer.privacy"), href: "/privacy" },
             { label: t("footer.terms"), href: "/terms" },

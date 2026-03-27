@@ -4,12 +4,10 @@
  * Dashboard app i18n setup.
  *
  * Loads the shared + dashboard catalogs from @cig-technology/i18n
- * and configures the singleton with browser-detected locale.
+ * and configures the singleton with the locale supplied by the app shell.
  */
 
-import { i18n } from "@cig-technology/i18n";
-import { detectBrowserLocale, persistLocale } from "@cig-technology/i18n/detection";
-import type { SupportedLocale } from "@cig-technology/i18n";
+import { DEFAULT_LOCALE, i18n, persistLocale, type SupportedLocale } from "@cig-technology/i18n";
 
 /* ─── Statically bundled catalogs ────────────────────────────────────── */
 
@@ -30,20 +28,20 @@ const catalogs: Record<string, Record<SupportedLocale, Record<string, string>>> 
 
 let initialized = false;
 
-export function initI18n(): void {
-  if (initialized) return;
-  initialized = true;
+export function initI18n(initialLocale: SupportedLocale = DEFAULT_LOCALE): void {
+  if (!initialized) {
+    initialized = true;
 
-  // Load all catalogs for all locales
-  for (const [namespace, locales] of Object.entries(catalogs)) {
-    for (const [locale, catalog] of Object.entries(locales)) {
-      i18n.loadCatalog(namespace, locale as SupportedLocale, catalog);
+    for (const [namespace, locales] of Object.entries(catalogs)) {
+      for (const [locale, catalog] of Object.entries(locales)) {
+        i18n.loadCatalog(namespace, locale as SupportedLocale, catalog);
+      }
     }
   }
 
-  // Detect and activate browser locale
-  const detected = detectBrowserLocale();
-  i18n.setLocale(detected);
+  if (i18n.locale !== initialLocale) {
+    i18n.setLocale(initialLocale);
+  }
 }
 
 export function changeLocale(locale: SupportedLocale): void {

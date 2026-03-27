@@ -83,8 +83,14 @@ function sanitizeFilename(filename: string | undefined): string {
   return normalized || 'attachment';
 }
 
+function normalizeMimeType(mimeType: string | undefined): string {
+  return normalizeWhitespace(mimeType ?? '')
+    .toLowerCase()
+    .split(';', 1)[0] ?? '';
+}
+
 function resolveMimeType(filename: string, mimeType: string | undefined): string {
-  const normalized = normalizeWhitespace(mimeType ?? '').toLowerCase();
+  const normalized = normalizeMimeType(mimeType);
   if (normalized && normalized !== 'application/octet-stream') {
     return normalized;
   }
@@ -305,7 +311,27 @@ export async function transcribeAudioFile(params: {
   });
 
   if (!response.ok) {
-    throw new Error('Transcription failed.');
+    const fallback = `Transcription failed (${response.status})`;
+    let detail = '';
+
+    try {
+      const text = await response.text();
+      if (text) {
+        try {
+          const payload = JSON.parse(text) as {
+            error?: { message?: string };
+            message?: string;
+          };
+          detail = payload.error?.message ?? payload.message ?? text;
+        } catch {
+          detail = text;
+        }
+      }
+    } catch {
+      detail = '';
+    }
+
+    throw new Error(detail ? `${fallback}: ${detail}` : fallback);
   }
 
   const payload = (await response.json()) as { text?: string };

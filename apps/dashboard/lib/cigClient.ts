@@ -3,7 +3,7 @@ import { CigClient } from "@cig/sdk";
 export const DASHBOARD_API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3003";
 
-function clearExpiredBrowserSession(): void {
+export function clearBrowserSession(): void {
   try {
     sessionStorage.removeItem("cig_access_token");
     sessionStorage.removeItem("cig_id_token");
@@ -24,7 +24,7 @@ export function getBrowserAccessToken(): string | null {
   try {
     const expiresAt = sessionStorage.getItem("cig_expires_at");
     if (expiresAt && Date.now() > Number.parseInt(expiresAt, 10)) {
-      clearExpiredBrowserSession();
+      clearBrowserSession();
       return null;
     }
 

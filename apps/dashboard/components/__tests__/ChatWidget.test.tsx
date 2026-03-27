@@ -28,6 +28,43 @@ const mockedRenameChatSession = jest.mocked(renameChatSession);
 const mockedSendChatMessage = jest.mocked(sendChatMessage);
 const mockedTranscribeChatAudio = jest.mocked(transcribeChatAudio);
 const mockedUploadChatAttachment = jest.mocked(uploadChatAttachment);
+const originalMediaRecorder = globalThis.MediaRecorder;
+const originalMediaDevices = navigator.mediaDevices;
+
+class MockMediaRecorder {
+  static isTypeSupported(mimeType: string) {
+    return mimeType.includes("ogg") || mimeType.includes("webm");
+  }
+
+  public mimeType = "audio/ogg; codecs=opus";
+  public state: "inactive" | "recording" = "inactive";
+  private readonly listeners = new Map<string, Array<(event?: any) => void>>();
+
+  addEventListener(type: string, listener: (event?: any) => void) {
+    const next = this.listeners.get(type) ?? [];
+    next.push(listener);
+    this.listeners.set(type, next);
+  }
+
+  start() {
+    this.state = "recording";
+  }
+
+  stop() {
+    this.state = "inactive";
+    const dataListeners = this.listeners.get("dataavailable") ?? [];
+    const stopListeners = this.listeners.get("stop") ?? [];
+    const blob = new Blob(["voice"], { type: this.mimeType });
+
+    for (const listener of dataListeners) {
+      listener({ data: blob });
+    }
+
+    for (const listener of stopListeners) {
+      listener();
+    }
+  }
+}
 
 jest.mock("../../lib/api", () => ({
   deleteChatSession: jest.fn(),
@@ -68,6 +105,15 @@ describe("ChatWidget", () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+    Object.defineProperty(globalThis, "MediaRecorder", {
+      configurable: true,
+      writable: true,
+      value: originalMediaRecorder,
+    });
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: originalMediaDevices,
+    });
   });
 
   it("shows the live model and connection status in the header pill", async () => {
@@ -499,6 +545,75 @@ describe("ChatWidget", () => {
           }),
         ],
       });
+    });
+  });
+
+  it("starts voice capture inline and writes the transcript into the composer", async () => {
+    mockedGetHealth.mockResolvedValue({
+      status: "ok",
+      version: "0.2.47",
+      timestamp: "2026-03-26T09:00:00.000Z",
+      chat: {
+        provider: "openai",
+        model: "gpt-4o-mini",
+        configured: true,
+        reachable: true,
+        providerReachable: true,
+        checkedAt: "2026-03-26T09:00:00.000Z",
+        latencyMs: 42,
+      },
+    });
+    mockedGetChatSessions.mockResolvedValue({ items: [], total: 0 });
+    mockedTranscribeChatAudio.mockResolvedValue({
+      text: "summarize the current database costs",
+      item: {
+        type: "transcript",
+        text: "summarize the current database costs",
+        durationMs: 1200,
+        mode: "review",
+      },
+    });
+
+    Object.defineProperty(globalThis, "MediaRecorder", {
+      configurable: true,
+      writable: true,
+      value: MockMediaRecorder,
+    });
+
+    const getUserMedia = jest.fn().mockResolvedValue({
+      getTracks: () => [{ stop: jest.fn() }],
+    });
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia },
+    });
+
+    render(<ChatWidget />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "chat.openChat" }));
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "chat.voiceInput" }));
+    });
+
+    await waitFor(() => {
+      expect(getUserMedia).toHaveBeenCalledWith({ audio: true });
+      expect(screen.getByText("Listening now")).toBeInTheDocument();
+    });
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Stop and write" }));
+    });
+
+    await waitFor(() => {
+      expect(mockedTranscribeChatAudio).toHaveBeenCalledTimes(1);
+      expect(screen.getByPlaceholderText("chat.placeholder")).toHaveValue(
+        "summarize the current database costs",
+      );
     });
   });
 

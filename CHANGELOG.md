@@ -1,3 +1,43 @@
+## [0.2.50](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.49...v0.2.50) (2026-03-27)
+
+### Detected changes
+- apps: 24 changed file(s)
+  - apps/dashboard/__tests__/middleware.test.ts
+  - apps/dashboard/app/(dashboard)/layout.tsx
+  - apps/dashboard/app/i18n.ts
+  - apps/dashboard/app/layout.tsx
+  - apps/dashboard/app/providers.tsx
+  - apps/dashboard/app/requestLocale.ts
+  - apps/dashboard/components/ChatContextItems.tsx
+  - apps/dashboard/components/ChatVoiceCaptureBar.tsx
+  - apps/dashboard/components/ChatVoiceDialog.tsx
+  - apps/dashboard/components/ChatWidget.tsx
+  - apps/dashboard/components/ProductionAuthGuard.tsx
+  - apps/dashboard/components/__tests__/ChatVoiceDialog.test.tsx
+  - apps/dashboard/components/__tests__/ChatWidget.test.tsx
+  - apps/dashboard/components/__tests__/ProductionAuthGuard.test.tsx
+  - apps/dashboard/lib/__tests__/authProvider.test.ts
+  - apps/dashboard/lib/__tests__/siteUrl.test.ts
+  - apps/dashboard/lib/authProvider.ts
+  - apps/dashboard/lib/cigClient.ts
+  - apps/dashboard/lib/siteUrl.ts
+  - apps/dashboard/middleware.ts
+  - apps/landing/app/page.tsx
+  - apps/landing/components/AuthButton.tsx
+  - apps/landing/components/AuthenticatedLanding.tsx
+  - apps/landing/lib/dashboardHandoff.ts
+- packages: 3 changed file(s)
+  - packages/api/src/__tests__/chat.test.ts
+  - packages/api/src/chat-inputs.ts
+  - packages/ui/src/siteUrl.ts
+
+
+## [0.2.50](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.49...v0.2.50) (2026-03-27)
+
+
+
+
+
 ## [0.2.49](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.48...v0.2.49) (2026-03-27)
 
 ### Detected changes
