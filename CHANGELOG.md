@@ -1,3 +1,15 @@
+## [0.2.49](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.48...v0.2.49) (2026-03-27)
+
+### Detected changes
+- apps: apps/landing/app/install/InstallContent.tsx
+
+
+## [0.2.49](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.48...v0.2.49) (2026-03-27)
+
+
+
+
+
 ## [0.2.48](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.47...v0.2.48) (2026-03-27)
 
 ### Detected changes

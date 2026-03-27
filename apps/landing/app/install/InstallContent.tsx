@@ -118,7 +118,7 @@ export default function InstallContent() {
               </Link>
             </div>
 
-            <div className="rounded-3xl border border-zinc-200/80 bg-white/85 p-5 shadow-2xl shadow-cyan-950/10 backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-950/70">
+            <div className="overflow-hidden rounded-3xl border border-zinc-200/80 bg-white/85 p-5 shadow-2xl shadow-cyan-950/10 backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-950/70">
               <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">
@@ -132,7 +132,7 @@ export default function InstallContent() {
                   curl | bash
                 </span>
               </div>
-              <div className="relative group">
+              <div className="relative group overflow-hidden rounded-2xl">
                 <pre className="overflow-x-auto rounded-2xl bg-zinc-950 px-4 py-4 text-sm leading-7 text-cyan-100 shadow-inner sm:px-5">
                   <code className="block pr-24 sm:pr-28">{installCommand}</code>
                 </pre>
@@ -159,7 +159,7 @@ export default function InstallContent() {
             </div>
           </div>
 
-          <aside className="space-y-4">
+          <aside className="min-w-0 space-y-4">
             <div className="rounded-3xl border border-zinc-200/80 bg-white/85 p-5 shadow-xl shadow-zinc-950/10 dark:border-zinc-800/80 dark:bg-zinc-950/70">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">
                 {t("install.prereqs.title")}
