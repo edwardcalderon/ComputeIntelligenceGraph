@@ -43,7 +43,7 @@ container provenance data.
 - Package: https://www.npmjs.com/package/@cig-technology/cli
 - GitHub releases: https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases
 
-## 📋 Latest Changes (v0.1.20)
+## 📋 Latest Changes (v0.1.19)
 
 ### Features
 
