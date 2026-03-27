@@ -11,11 +11,10 @@
 
 import { spawnSync } from 'node:child_process';
 import { StateManager } from '../managers/state-manager.js';
-
-const DEFAULT_INSTALL_DIR = '/opt/cig-node';
+import { resolveCliPaths } from '../storage/paths.js';
 
 function resolveInstallDir(stateInstallDir?: string): string {
-  return stateInstallDir ?? process.env['CIG_INSTALL_DIR'] ?? DEFAULT_INSTALL_DIR;
+  return stateInstallDir ?? process.env['CIG_INSTALL_DIR'] ?? resolveCliPaths().installDir;
 }
 
 function runDockerCompose(args: string[], cwd: string): boolean {

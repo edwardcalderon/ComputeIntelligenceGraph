@@ -15,14 +15,13 @@
 import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import { StateManager } from '../managers/state-manager.js';
-
-const DEFAULT_INSTALL_DIR = '/opt/cig-node';
+import { resolveCliPaths } from '../storage/paths.js';
 
 // Named volumes created by the CIG Node compose stack
 const CIG_NAMED_VOLUMES = ['neo4j-data', 'cig-node-data'];
 
 function resolveInstallDir(stateInstallDir?: string): string {
-  return stateInstallDir ?? process.env['CIG_INSTALL_DIR'] ?? DEFAULT_INSTALL_DIR;
+  return stateInstallDir ?? process.env['CIG_INSTALL_DIR'] ?? resolveCliPaths().installDir;
 }
 
 function runDockerCompose(args: string[], cwd: string): boolean {

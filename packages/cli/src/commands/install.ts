@@ -30,13 +30,17 @@ import { installViaSSH } from '../ssh.js';
 import type { SetupManifest } from '../sdk.js';
 import type { NodeIdentity } from '../types/runtime.js';
 import { resolveDemoDataPreference } from '../demo-data.js';
+import { resolveCliPaths } from '../storage/paths.js';
+import { StateManager } from '../managers/state-manager.js';
 
 // ---------------------------------------------------------------------------
 // Inline infra helpers (mirrors packages/infra/src/compose.ts and install.ts)
 // These are inlined to avoid a cross-package dependency that isn't yet wired.
 // ---------------------------------------------------------------------------
 
-const INSTALL_DIR = '/opt/cig-node';
+function resolveInstallDir(): string {
+  return process.env['CIG_INSTALL_DIR'] ?? resolveCliPaths().installDir;
+}
 
 /**
  * Generate a cryptographically random 32-character bootstrap token.
@@ -50,8 +54,8 @@ function generateBootstrapToken(): string {
  * Write the bootstrap token to the install directory with 0600 permissions.
  * Mirrors packages/infra/src/install.ts writeBootstrapToken().
  */
-async function writeBootstrapToken(token: string): Promise<void> {
-  const tokenFile = path.join(INSTALL_DIR, '.bootstrap-token');
+async function writeBootstrapToken(token: string, installDir: string): Promise<void> {
+  const tokenFile = path.join(installDir, '.bootstrap-token');
   fs.mkdirSync(path.dirname(tokenFile), { recursive: true, mode: 0o700 });
   fs.writeFileSync(tokenFile, token, { mode: 0o600, encoding: 'utf8' });
 }
@@ -494,7 +498,7 @@ async function runInstall(opts: InstallOptions): Promise<void> {
   // Step 4 — Write files to install dir (Requirements 5.9, 6.1)
   // -------------------------------------------------------------------------
 
-  const installDir = INSTALL_DIR;
+  const installDir = resolveInstallDir();
 
   // Demo mode: Copy mock DBs
   if (demo) {
@@ -519,7 +523,7 @@ async function runInstall(opts: InstallOptions): Promise<void> {
   let bootstrapToken: string | undefined;
   if (mode === 'self-hosted') {
     bootstrapToken = generateBootstrapToken();
-    await writeBootstrapToken(bootstrapToken);
+    await writeBootstrapToken(bootstrapToken, installDir);
   }
 
   // -------------------------------------------------------------------------
@@ -599,6 +603,16 @@ async function runInstall(opts: InstallOptions): Promise<void> {
   // -------------------------------------------------------------------------
   // Done — CLI exits (Requirement 5.10)
   // -------------------------------------------------------------------------
+
+  await new StateManager().save({
+    version: '1.0',
+    mode,
+    profile: effectiveProfile as 'core' | 'discovery' | 'full',
+    installDir,
+    installedAt: new Date().toISOString(),
+    status: 'running',
+    services: [],
+  });
 
   console.log('✓ CIG Node installation complete.');
   if (manifest) {
