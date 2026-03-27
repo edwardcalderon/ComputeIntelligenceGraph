@@ -1,3 +1,23 @@
+## [0.2.79](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.78...v0.2.79) (2026-03-27)
+
+### Detected changes
+- apps: 3 changed file(s)
+  - apps/dashboard/components/Graph3DCanvas.tsx
+  - apps/dashboard/package.json
+  - apps/dashboard/types/react-force-graph-3d.d.ts
+- packages: 3 changed file(s)
+  - packages/agents/src/openclaw.ts
+  - packages/api/src/__tests__/chat.test.ts
+  - packages/api/src/chat.ts
+- root: pnpm-lock.yaml
+
+
+## [0.2.79](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.78...v0.2.79) (2026-03-27)
+
+
+
+
+
 ## [0.2.78](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.77...v0.2.78) (2026-03-27)
 
 ### Detected changes

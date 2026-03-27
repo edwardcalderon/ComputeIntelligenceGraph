@@ -193,6 +193,31 @@ function buildSetupGuidance(infrastructure: ChatInfrastructureSnapshot): string 
   ].join(' ');
 }
 
+function buildConnectionRequiredResponse(
+  infrastructure?: ChatInfrastructureSnapshot
+): ChatResponse {
+  if (!infrastructure) {
+    return {
+      answer:
+        'I cannot inspect the live architecture yet because the connector is not connected or discovery has not indexed any resources. Connect the resources first, then I can discover and check the architecture and resources.',
+      needsClarification: false,
+    };
+  }
+
+  const docsUrl = buildDocsUrl(infrastructure.deploymentMode);
+  const setupGuidance = buildSetupGuidance(infrastructure);
+  const connectionSummary = infrastructure.discoveryHealthy
+    ? 'Discovery is reachable, but the graph still has no indexed resources yet.'
+    : 'The discovery connector is not reachable from the API right now.';
+
+  return {
+    answer:
+      `${connectionSummary} Connect or discover the resources first so I can inspect the architecture and resource relationships. ` +
+      `${setupGuidance} Docs: ${docsUrl}.`,
+    needsClarification: false,
+  };
+}
+
 function buildActualStateResponse(
   question: string,
   topic: QuestionTopic,
@@ -206,21 +231,8 @@ function buildActualStateResponse(
     .map((resource) => serializeResource(resource));
   const sampleSummary = sampleResources.length > 0 ? ` Examples: ${sampleResources.join('; ')}.` : '';
 
-  if (totalResources <= 0) {
-    const connectionSummary = infrastructure.discoveryHealthy
-      ? 'Discovery is reachable, but the graph still has no indexed resources yet.'
-      : 'The discovery connector is not reachable from the API right now.';
-
-    return {
-      answer:
-        `${connectionSummary} I cannot answer "${question}" from actual infrastructure yet. ` +
-        `${buildSetupGuidance(infrastructure)} Docs: ${docsUrl}.`,
-      needsClarification: true,
-      clarifyingQuestion:
-        infrastructure.deploymentMode === 'managed'
-          ? 'Are you connected to the managed cloud API and discovery service?'
-          : 'Are you running the local self-hosted discovery stack?',
-    };
+  if (totalResources <= 0 || !infrastructure.discoveryHealthy) {
+    return buildConnectionRequiredResponse(infrastructure);
   }
 
   const summarySuffix = resourceSummary ? ` across ${resourceSummary}` : '';
@@ -270,37 +282,15 @@ function buildFallbackResponse(
       return buildGeneralFallbackResponse(topic);
     }
 
-    if (topic === 'alerts' && !infrastructure) {
-      return {
-        answer:
-          'I can help summarize alerts, but the current chat context does not include a live alerts feed yet. I can still help with security findings, discovery status, dependencies, or named resources.',
-        needsClarification: true,
-        clarifyingQuestion: buildClarifyingQuestion(topic),
-      };
-    }
-
-    if (contextItems.length > 0) {
-      return {
-        answer:
-          'I reviewed the context you attached, but I still need a more specific question or infrastructure anchor to answer precisely from your environment.',
-        needsClarification: true,
-        clarifyingQuestion:
-          contextItems.some((item) => item.type === 'resource_link')
-            ? buildClarifyingQuestion(topic)
-            : 'What should I focus on in the attached files, code, or voice context?',
-      };
-    }
-
     if (infrastructure) {
       return buildActualStateResponse(question, topic, infrastructure);
     }
 
     return {
       answer:
-        `I could not match "${question}" to current infrastructure context yet. ` +
-        'Give me a more specific anchor so I can answer from your environment.',
-      needsClarification: true,
-      clarifyingQuestion: buildClarifyingQuestion(topic),
+        `I could not match "${question}" to any connected infrastructure yet. ` +
+        'Connect or discover the resources first, and then I can inspect the architecture and resource relationships.',
+      needsClarification: false,
     };
   }
 
@@ -313,6 +303,21 @@ function buildFallbackResponse(
       ? 'Which resource should I expand on, or do you want a provider-specific summary?'
       : undefined,
   };
+}
+
+function shouldUseConnectionGuidance(
+  resources: Resource_Model[],
+  infrastructure?: ChatInfrastructureSnapshot
+): boolean {
+  if (resources.length > 0) {
+    return false;
+  }
+
+  if (!infrastructure) {
+    return true;
+  }
+
+  return sumResourceCounts(infrastructure.resourceCounts) <= 0 || !infrastructure.discoveryHealthy;
 }
 
 async function tryOpenAiResponse(
@@ -356,8 +361,8 @@ async function tryOpenAiResponse(
       ? isGeneralTopic(topic)
         ? 'You are the CIG assistant. You may answer brief conversational questions, explain CIG capabilities, and help the user phrase better infrastructure questions. Return strict JSON with keys: answer (string), needsClarification (boolean), clarifyingQuestion (string or null), cypher (string or null). If live data is unavailable, say that plainly and guide the user toward a more specific next prompt.'
         : infrastructure
-        ? 'You are the CIG assistant. The API already checked the real infrastructure state, including whether discovery is reachable, whether any resources are indexed, and a small sample of actual resources. Return strict JSON with keys: answer (string), needsClarification (boolean), clarifyingQuestion (string or null), cypher (string or null). If the graph is empty or discovery is unreachable, explain that plainly and give short local or managed setup guidance. If resources exist but the question is too broad, mention the actual resource counts or sample resources before asking a targeted clarifying question.'
-        : 'You are the CIG assistant. No matching infrastructure context was found for the user question. Return strict JSON with keys: answer (string), needsClarification (boolean), clarifyingQuestion (string or null), cypher (string or null). Give a short helpful answer, then ask one targeted clarifying question tailored to the question domain. Avoid repeating the same generic provider/resource wording unless it truly fits.'
+        ? 'You are the CIG assistant. The API already checked the real infrastructure state, including whether discovery is reachable, whether any resources are indexed, and a small sample of actual resources. Return strict JSON with keys: answer (string), needsClarification (boolean), clarifyingQuestion (string or null), cypher (string or null). If the graph is empty or discovery is unreachable, explain that plainly and tell the user to connect or discover the resources first. Do not ask a clarifying question in that case. If resources exist but the question is too broad, mention the actual resource counts or sample resources before asking a targeted clarifying question.'
+        : 'You are the CIG assistant. No matching infrastructure context was found for the user question. Return strict JSON with keys: answer (string), needsClarification (boolean), clarifyingQuestion (string or null), cypher (string or null). If the connector has no connected resources or discovery has not indexed the architecture yet, tell the user to connect or discover the resources first instead of asking for clarification.'
       : 'You are the CIG assistant. Answer from the provided infrastructure and chat context. Return strict JSON with keys: answer (string), needsClarification (boolean), clarifyingQuestion (string or null), cypher (string or null). If the context is insufficient, set needsClarification to true and ask one concise question. Use linked resources, attachments, code snippets, and voice transcripts when present.';
 
   const payload = {
@@ -496,6 +501,11 @@ export async function answerChatQuestion(
     normalized.contextItems,
     normalized.infrastructure
   );
+
+  if (shouldUseConnectionGuidance(resources, normalized.infrastructure)) {
+    return fallback;
+  }
+
   const aiResponse = await tryOpenAiResponse(
     question,
     resources,

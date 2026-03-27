@@ -312,7 +312,7 @@ describe('POST /api/v1/chat', () => {
     ]);
   });
 
-  it('asks for clarification and allows a stored session to be deleted', async () => {
+  it('tells the user to connect resources first and allows a stored session to be deleted', async () => {
     searchResourcesSpy.mockResolvedValueOnce([]);
 
     const response = await app.inject({
@@ -331,11 +331,10 @@ describe('POST /api/v1/chat', () => {
       sessionId?: string;
       answer: string;
       needsClarification: boolean;
-      clarifyingQuestion?: string;
     }>();
-    expect(body.needsClarification).toBe(true);
-    expect(body.clarifyingQuestion).toContain('local self-hosted');
+    expect(body.needsClarification).toBe(false);
     expect(body.answer).toContain('Discovery is reachable');
+    expect(body.answer).toContain('Connect or discover the resources first');
     expect(body.answer).toContain('docker-compose -f docker-compose.dev.yml up -d');
     expect(body.answer).toContain('http://localhost:3004/documentation');
 
@@ -518,10 +517,11 @@ describe('answerChatQuestion', () => {
       sampleResources: [],
     });
 
-    expect(response.needsClarification).toBe(true);
+    expect(response.needsClarification).toBe(false);
     expect(response.answer).toContain('graph still has no indexed resources yet');
+    expect(response.answer).toContain('Connect or discover the resources first');
     expect(response.answer).toContain('docker-compose -f docker-compose.dev.yml up -d');
     expect(response.answer).toContain('http://localhost:3004/documentation');
-    expect(response.clarifyingQuestion).toContain('local self-hosted');
+    expect(response.clarifyingQuestion).toBeUndefined();
   });
 });
