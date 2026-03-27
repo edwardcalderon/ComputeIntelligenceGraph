@@ -1,3 +1,15 @@
+## [0.2.74](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.73...v0.2.74) (2026-03-27)
+
+### Detected changes
+- packages: packages/api/src/semantic-rag.ts
+
+
+## [0.2.74](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.73...v0.2.74) (2026-03-27)
+
+
+
+
+
 ## [0.2.73](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.72...v0.2.73) (2026-03-27)
 
 ### Detected changes

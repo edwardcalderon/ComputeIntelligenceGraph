@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import { GraphEngine, GraphQueryEngine, type Resource_Model, type GraphScope } from '@cig/graph';
 import type { GraphDelta } from '@cig/sdk';
-import { EmbeddingService, RAGPipeline, VectorStore, type ResourceDoc } from '@cig/chatbot';
+import { EmbeddingService, RAGPipeline, VectorStore, type ResourceDoc, type VectorDocument } from '@cig/chatbot';
 
 type SemanticLogger = Pick<FastifyBaseLogger, 'info' | 'warn' | 'error'>;
 
@@ -228,7 +228,7 @@ export async function indexGraphDeltaResources(
   if (resourceIds.length > 0) {
     const documents = (
       await Promise.all(resourceIds.map(async (resourceId) => hydrateResourceDoc(resourceId, scope)))
-    ).filter((doc): doc is ResourceDoc => doc !== null);
+    ).filter((doc: ResourceDoc | null): doc is ResourceDoc => doc !== null);
 
     if (documents.length > 0) {
       await pipeline.indexResources(documents);
@@ -289,7 +289,7 @@ export async function retrieveSemanticResources(
     }
 
     const docs = await pipeline.retrieve(query, topK);
-    const resourceIds = uniqueStrings(docs.map((doc) => doc.id));
+    const resourceIds = uniqueStrings(docs.map((doc: VectorDocument) => doc.id));
     if (resourceIds.length === 0) {
       return [];
     }
