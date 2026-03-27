@@ -21,6 +21,7 @@ import { useTheme } from "../app/providers";
 import { FooterBar } from "@cig/ui/components";
 import { useResolvedDashboardUrl, useResolvedDocsUrl } from "@cig/ui/siteUrl.client";
 import { goToDashboard } from "../lib/dashboardHandoff";
+import { BackToTop } from "./BackToTop";
 
 /* ─── Icons ───────────────────────────────────────────────────────────── */
 
@@ -970,7 +971,8 @@ export function AuthenticatedLanding() {
       </div>
 
       {/* ── Footer ──────────────────────────────────────────────── */}
-      <footer className="relative z-10 mt-auto w-full border-t border-zinc-200/80 px-4 pt-6 pb-4 dark:border-zinc-800/40">
+      <footer id="site-footer" className="relative z-10 mt-auto w-full border-t border-zinc-200 dark:border-zinc-800/50 px-4 py-4 sm:px-6">
+        <div className="relative z-10">
         <FooterBar
           brandLabel={t("footer.brandTitle")}
           brandHref={dashboardUrl}
@@ -983,7 +985,10 @@ export function AuthenticatedLanding() {
           ]}
           meta={meta}
         />
+        </div>
       </footer>
+
+      <BackToTop />
 
       {/* ── Feature detail modal ─────────────────────────────── */}
       <FeatureModal

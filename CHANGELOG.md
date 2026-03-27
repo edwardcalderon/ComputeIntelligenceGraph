@@ -1,3 +1,18 @@
+## [0.2.70](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.69...v0.2.70) (2026-03-27)
+
+### Detected changes
+- apps: 3 changed file(s)
+  - apps/landing/components/AuthenticatedLanding.tsx
+  - apps/landing/components/BackToTop.tsx
+  - apps/landing/components/LandingLayout.tsx
+
+
+## [0.2.70](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.69...v0.2.70) (2026-03-27)
+
+
+
+
+
 ## [0.2.69](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.68...v0.2.69) (2026-03-27)
 
 
