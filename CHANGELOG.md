@@ -1,3 +1,15 @@
+## [0.2.59](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.58...v0.2.59) (2026-03-27)
+
+### Detected changes
+- No source changes were detected; this release only advances version metadata.
+
+
+## [0.2.59](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.58...v0.2.59) (2026-03-27)
+
+
+
+
+
 ## [0.2.58](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.57...v0.2.58) (2026-03-27)
 
 ### Detected changes
