@@ -320,6 +320,15 @@ class GraphEngine {
             }));
         });
     }
+    async executeCypher(query, parameters = {}, mode = 'read') {
+        const runner = mode === 'write' ? this.runWrite.bind(this) : this.runRead.bind(this);
+        return runner(async (session) => {
+            const result = await session.run(query, parameters);
+            return {
+                rowCount: result.records.length,
+            };
+        });
+    }
 }
 exports.GraphEngine = GraphEngine;
 //# sourceMappingURL=engine.js.map

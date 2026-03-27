@@ -1,4 +1,4 @@
-import { Resource_Model } from './types';
+import { Resource_Model, Relationship } from './types';
 import { ResourceFilters } from './engine';
 export interface PaginationOptions {
     limit?: number;
@@ -50,5 +50,10 @@ export declare class GraphQueryEngine {
      * Requirements: 8.9
      */
     getResourceCounts(): Promise<Record<string, number>>;
+    /**
+     * Returns all relationships in the graph, capped by `limit`.
+     * Requirements: 8.9, 24.8
+     */
+    listRelationships(limit?: number): Promise<Relationship[]>;
 }
 //# sourceMappingURL=queries.d.ts.map

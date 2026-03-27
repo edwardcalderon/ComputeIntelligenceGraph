@@ -6,6 +6,9 @@ export interface ResourceFilters {
     state?: ResourceState;
     tags?: Record<string, string>;
 }
+export interface CypherExecutionResult {
+    rowCount: number;
+}
 export declare class GraphEngine {
     private readonly circuitBreaker;
     private runWrite;
@@ -18,5 +21,6 @@ export declare class GraphEngine {
     createRelationship(from: string, to: string, type: RelationshipType, props?: Record<string, unknown>): Promise<void>;
     deleteRelationship(from: string, to: string, type: RelationshipType): Promise<void>;
     getRelationships(resourceId: string): Promise<Relationship[]>;
+    executeCypher(query: string, parameters?: Record<string, unknown>, mode?: 'read' | 'write'): Promise<CypherExecutionResult>;
 }
 //# sourceMappingURL=engine.d.ts.map

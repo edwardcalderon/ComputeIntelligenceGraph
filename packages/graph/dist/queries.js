@@ -31,6 +31,16 @@ function recordToResource(record) {
         discoveredAt: toDate(record['discoveredAt']),
     };
 }
+function recordToRelationship(record) {
+    const r = record;
+    return {
+        id: r['id'],
+        type: r['type'],
+        fromId: r['fromId'],
+        toId: r['toId'],
+        properties: r['properties'] ? JSON.parse(r['properties']) : {},
+    };
+}
 // ─── Session Runner ───────────────────────────────────────────────────────────
 async function runRead(fn) {
     const session = (0, neo4j_1.getReadSession)();
@@ -194,6 +204,30 @@ class GraphQueryEngine {
                     : Number(count);
             }
             return counts;
+        });
+    }
+    /**
+     * Returns all relationships in the graph, capped by `limit`.
+     * Requirements: 8.9, 24.8
+     */
+    async listRelationships(limit = DEFAULT_LIMIT) {
+        const cappedLimit = Math.min(Math.max(1, limit), 1_000);
+        return runRead(async (session) => {
+            const result = await session.run(`MATCH (a:Resource)-[rel]->(b:Resource)
+         RETURN rel.id AS id,
+                type(rel) AS type,
+                a.id AS fromId,
+                b.id AS toId,
+                rel.properties AS properties
+         ORDER BY type(rel), a.id, b.id
+         LIMIT $limit`, { limit: cappedLimit }, { timeout: QUERY_TIMEOUT_MS });
+            return result.records.map((rec) => recordToRelationship({
+                id: rec.get('id'),
+                type: rec.get('type'),
+                fromId: rec.get('fromId'),
+                toId: rec.get('toId'),
+                properties: rec.get('properties'),
+            }));
         });
     }
 }

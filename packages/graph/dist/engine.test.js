@@ -171,6 +171,27 @@ function makeSession(runResult = {}) {
             (0, vitest_1.expect)(mockWriteSession.close).toHaveBeenCalledOnce();
         });
     });
+    // ─── executeCypher ─────────────────────────────────────────────────────────
+    (0, vitest_1.describe)('executeCypher', () => {
+        (0, vitest_1.it)('runs write queries against the write session and returns row count', async () => {
+            mockWriteSession.run.mockResolvedValueOnce({ records: [{}, {}] });
+            const result = await engine.executeCypher('MATCH (a:Resource {id: $id}), (b:Resource {id: $target}) MERGE (a)-[:DEPENDS_ON]->(b) RETURN a, b', { id: 'res-1', target: 'res-2' }, 'write');
+            (0, vitest_1.expect)(result.rowCount).toBe(2);
+            (0, vitest_1.expect)(mockWriteSession.run).toHaveBeenCalledOnce();
+            (0, vitest_1.expect)(mockReadSession.run).not.toHaveBeenCalled();
+            const [query, params] = mockWriteSession.run.mock.calls[0];
+            (0, vitest_1.expect)(query).toContain('MERGE (a)-[:DEPENDS_ON]->(b)');
+            (0, vitest_1.expect)(params.id).toBe('res-1');
+            (0, vitest_1.expect)(params.target).toBe('res-2');
+        });
+        (0, vitest_1.it)('runs read queries against the read session by default', async () => {
+            mockReadSession.run.mockResolvedValueOnce({ records: [{}, {}, {}] });
+            const result = await engine.executeCypher('MATCH (r:Resource) RETURN r LIMIT $limit', { limit: 3 });
+            (0, vitest_1.expect)(result.rowCount).toBe(3);
+            (0, vitest_1.expect)(mockReadSession.run).toHaveBeenCalledOnce();
+            (0, vitest_1.expect)(mockWriteSession.run).not.toHaveBeenCalled();
+        });
+    });
     // ─── getResource ────────────────────────────────────────────────────────────
     (0, vitest_1.describe)('getResource', () => {
         (0, vitest_1.it)('returns null when no record found', async () => {
@@ -718,6 +739,46 @@ function makeSession(runResult = {}) {
             (0, vitest_1.expect)(result.items).toEqual([]);
             (0, vitest_1.expect)(result.total).toBe(0);
             (0, vitest_1.expect)(result.hasMore).toBe(false);
+        });
+    });
+    // ─── listRelationships ─────────────────────────────────────────────────────
+    (0, vitest_1.describe)('listRelationships', () => {
+        (0, vitest_1.it)('runs the relationship query and maps records into typed relationships', async () => {
+            mockReadSession.run.mockResolvedValueOnce({
+                records: [
+                    {
+                        get: (key) => {
+                            const data = {
+                                id: 'res-1:DEPENDS_ON:res-2',
+                                type: 'DEPENDS_ON',
+                                fromId: 'res-1',
+                                toId: 'res-2',
+                                properties: JSON.stringify({ since: '2024-01-01T00:00:00.000Z' }),
+                            };
+                            return data[key];
+                        },
+                    },
+                ],
+            });
+            const result = await queryEngine.listRelationships(25);
+            (0, vitest_1.expect)(result).toHaveLength(1);
+            (0, vitest_1.expect)(result[0]).toEqual({
+                id: 'res-1:DEPENDS_ON:res-2',
+                type: types_1.RelationshipType.DEPENDS_ON,
+                fromId: 'res-1',
+                toId: 'res-2',
+                properties: { since: '2024-01-01T00:00:00.000Z' },
+            });
+            const [query, params] = mockReadSession.run.mock.calls[0];
+            (0, vitest_1.expect)(query).toContain('MATCH (a:Resource)-[rel]->(b:Resource)');
+            (0, vitest_1.expect)(query).toContain('LIMIT $limit');
+            (0, vitest_1.expect)(params.limit).toBe(25);
+        });
+        (0, vitest_1.it)('clamps the limit to the safe upper bound', async () => {
+            mockReadSession.run.mockResolvedValueOnce({ records: [] });
+            await queryEngine.listRelationships(10_000);
+            const [, params] = mockReadSession.run.mock.calls[0];
+            (0, vitest_1.expect)(params.limit).toBe(1000);
         });
     });
 });
