@@ -1,3 +1,21 @@
+## [0.2.44](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.43...v0.2.44) (2026-03-27)
+
+### Detected changes
+- apps: 5 changed file(s)
+  - apps/dashboard/components/Footer.tsx
+  - apps/dashboard/components/Sidebar.tsx
+  - apps/dashboard/lib/__tests__/authProvider.test.ts
+  - apps/dashboard/lib/siteUrl.ts
+  - apps/docs/src/css/custom.css
+- packages: packages/ui/src/siteUrl.ts
+
+
+## [0.2.44](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.43...v0.2.44) (2026-03-27)
+
+
+
+
+
 ## [0.2.43](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.42...v0.2.43) (2026-03-26)
 
 ### Detected changes

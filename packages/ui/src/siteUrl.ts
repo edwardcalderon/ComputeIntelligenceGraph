@@ -1,6 +1,6 @@
-const DEFAULT_LANDING_URL = "http://localhost:3000";
-const DEFAULT_DASHBOARD_URL = "http://localhost:3001";
-const DEFAULT_DOCS_URL = "http://localhost:3004/documentation";
+const DEFAULT_LANDING_URL = "https://cig.lat";
+const DEFAULT_DASHBOARD_URL = "https://app.cig.lat";
+const DEFAULT_DOCS_URL = "https://cig.lat/documentation";
 
 export type UrlContext = {
   hostname?: string | null;

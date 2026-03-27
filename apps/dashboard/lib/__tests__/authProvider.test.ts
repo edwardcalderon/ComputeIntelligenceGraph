@@ -50,7 +50,7 @@ describe("dashboard authProvider.logout", () => {
     expect(supabaseSignOut).toHaveBeenCalledWith({ scope: "local" });
     expect(result).toEqual({
       success: true,
-      redirectTo: "http://localhost:3000?logged_out=1",
+      redirectTo: "https://cig.lat?logged_out=1",
     });
     expect(sessionStorage.getItem("cig_access_token")).toBeNull();
     expect(sessionStorage.getItem("cig_auth_source")).toBeNull();
@@ -73,7 +73,7 @@ describe("dashboard authProvider.logout", () => {
     expect(supabaseSignOut).toHaveBeenCalledWith({ scope: "local" });
     expect(result).toEqual({
       success: true,
-      redirectTo: "http://localhost:3000?logged_out=1",
+      redirectTo: "https://cig.lat?logged_out=1",
     });
   });
 
@@ -88,7 +88,7 @@ describe("dashboard authProvider.logout", () => {
     expect(mockRevokeSessionViaApi).toHaveBeenCalledWith("authentik-access-token");
     expect(result).toEqual({
       success: true,
-      redirectTo: "http://localhost:3000?logged_out=1",
+      redirectTo: "https://cig.lat?logged_out=1",
     });
   });
 });

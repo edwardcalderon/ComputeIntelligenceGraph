@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useTranslation } from "@cig-technology/i18n/react";
-import { resolveDocsUrl, resolveLandingUrl } from "../lib/siteUrl";
+import { useResolvedDocsUrl, useResolvedLandingUrl } from "@cig/ui/siteUrl.client";
 
 export function Footer() {
   const t = useTranslation();
   const version = process.env.NEXT_PUBLIC_APP_VERSION || "";
   const build = process.env.NEXT_PUBLIC_APP_BUILD || "";
+  const landingUrl = useResolvedLandingUrl();
+  const docsUrl = useResolvedDocsUrl();
 
   const year = new Date().getFullYear();
 
@@ -18,7 +20,7 @@ export function Footer() {
         <span>
           © {year}{" "}
           <a
-            href={resolveLandingUrl()}
+            href={landingUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="transition-colors hover:text-zinc-600 dark:hover:text-zinc-400"
@@ -38,7 +40,7 @@ export function Footer() {
             </span>
           )}
           <a
-            href={resolveDocsUrl()}
+            href={docsUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="transition-colors hover:text-zinc-600 dark:hover:text-zinc-400"

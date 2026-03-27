@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "@cig-technology/i18n/react";
 import { useAppStore } from "../lib/store";
-import { resolveLandingUrl, resolveDocsUrl } from "../lib/siteUrl";
+import { useResolvedLandingUrl, useResolvedDocsUrl } from "@cig/ui/siteUrl.client";
 import { UserMenu } from "./UserMenu";
 
 interface NavItem {
@@ -143,7 +143,8 @@ export function Sidebar() {
   const pathname = usePathname();
   const { sidebarOpen, setSidebarOpen } = useAppStore();
   const t = useTranslation();
-  const docsUrl = resolveDocsUrl();
+  const docsUrl = useResolvedDocsUrl();
+  const landingUrl = useResolvedLandingUrl();
 
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
@@ -172,7 +173,7 @@ export function Sidebar() {
       >
         {/* Logo */}
         <a
-          href={resolveLandingUrl()}
+          href={landingUrl}
           className="group flex h-14 items-center gap-3 px-5 border-b border-cig transition-colors hover:bg-cig-hover flex-shrink-0"
         >
           <div className="relative flex items-center justify-center size-8 rounded-lg bg-cyan-500/10 dark:bg-cyan-500/10 border border-cyan-500/20">
