@@ -53,6 +53,14 @@ function EyeOffIcon() {
 
 const emailSchema = z.string().trim().email();
 
+function notifyLandingSessionChanged() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.dispatchEvent(new Event("cig-session-changed"));
+}
+
 function EmailPasswordView({ onSuccess }: { onSuccess: () => void }) {
   const t = useTranslation();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -103,6 +111,7 @@ function EmailPasswordView({ onSuccess }: { onSuccess: () => void }) {
         });
         if (error) throw error;
         if (data && (data as any).session) {
+          notifyLandingSessionChanged();
           onSuccess();
         } else {
           setSubmittedEmail(trimmedEmail);
@@ -120,6 +129,7 @@ function EmailPasswordView({ onSuccess }: { onSuccess: () => void }) {
           password,
         });
         if (error) throw error;
+        notifyLandingSessionChanged();
         onSuccess();
       }
     } catch (err: unknown) {

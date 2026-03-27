@@ -246,8 +246,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const onSessionChanged = () => {
       void reconcileAuthState();
     };
+    const onWindowResume = () => {
+      void reconcileAuthState();
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void reconcileAuthState();
+      }
+    };
 
     window.addEventListener("cig-session-changed", onSessionChanged);
+    window.addEventListener("focus", onWindowResume);
+    window.addEventListener("pageshow", onWindowResume);
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     if (supabase) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -276,7 +287,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       unsub = () => subscription.unsubscribe();
     }
 
-    return () => { unsub?.(); window.removeEventListener("cig-session-changed", onSessionChanged); };
+    return () => {
+      unsub?.();
+      window.removeEventListener("cig-session-changed", onSessionChanged);
+      window.removeEventListener("focus", onWindowResume);
+      window.removeEventListener("pageshow", onWindowResume);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [invalidatePendingRefreshes, reconcileAuthState]);
 
   const signOut = useCallback(() => {

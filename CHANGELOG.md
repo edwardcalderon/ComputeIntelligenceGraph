@@ -1,3 +1,18 @@
+## [0.2.52](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.51...v0.2.52) (2026-03-27)
+
+### Detected changes
+- apps: 3 changed file(s)
+  - apps/landing/components/AuthButton.tsx
+  - apps/landing/components/AuthProvider.tsx
+  - apps/landing/components/AuthenticatedLanding.tsx
+
+
+## [0.2.52](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.51...v0.2.52) (2026-03-27)
+
+
+
+
+
 ## [0.2.51](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.50...v0.2.51) (2026-03-27)
 
 ### Detected changes

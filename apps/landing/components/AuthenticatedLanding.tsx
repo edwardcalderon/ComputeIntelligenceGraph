@@ -779,7 +779,7 @@ function ScrollingRow({
 
   return (
     <div
-      className="overflow-x-clip w-full py-3 cursor-grab active:cursor-grabbing"
+      className="relative z-0 w-full overflow-x-clip py-3 cursor-grab active:cursor-grabbing touch-pan-y"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -889,7 +889,7 @@ export function AuthenticatedLanding() {
       <SpaceBackground particleCount={80} particleColor="rgba(6,182,212,0.7)" />
 
       {/* ── Hero ────────────────────────────────────────────── */}
-      <div className="relative flex flex-col items-center pt-24 pb-10 px-6 text-center">
+      <div className="relative z-20 flex flex-col items-center px-6 pt-24 pb-10 text-center">
         {/* Headline */}
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3">
           <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-violet-400 bg-clip-text text-transparent">
@@ -915,8 +915,11 @@ export function AuthenticatedLanding() {
         </div>
 
         {/* CTA */}
-        <button onClick={handleEnterDashboard}
-          className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full font-semibold text-sm text-white transition-all duration-300 hover:scale-105"
+        <button
+          type="button"
+          data-dashboard-cta="true"
+          onClick={handleEnterDashboard}
+          className="relative z-30 inline-flex cursor-pointer touch-manipulation items-center gap-2.5 rounded-full px-8 py-3.5 text-sm font-semibold text-white transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
           style={{ background: "linear-gradient(135deg, #06b6d4, #3b82f6, #8b5cf6)", boxShadow: "0 0 24px rgba(6,182,212,0.3), 0 4px 20px rgba(0,0,0,0.4)" }}
           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 40px rgba(6,182,212,0.5), 0 8px 32px rgba(0,0,0,0.5)"; }}
           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 24px rgba(6,182,212,0.3), 0 4px 20px rgba(0,0,0,0.4)"; }}
@@ -926,7 +929,7 @@ export function AuthenticatedLanding() {
       </div>
 
       {/* ── Feature carousels ────────────────────────────────── */}
-      <div className="relative pb-12 flex flex-col gap-5 mt-4">
+      <div className="relative z-10 mt-4 flex flex-col gap-5 pb-12">
         <div
           className="pointer-events-none absolute top-0 left-0 right-0 h-6 z-10"
           style={{
