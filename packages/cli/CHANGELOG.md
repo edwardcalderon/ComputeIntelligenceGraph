@@ -1,3 +1,15 @@
+## [0.1.26](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.24...cli-v0.1.26) (2026-03-27)
+
+
+### Bug Fixes
+
+* **cli:** poll correct health endpoint after install ([8733bda](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/8733bda91c275e109ce36a5d430fea501e43abc0))
+* **cli:** use correct Docker Hub images instead of non-existent ghcr.io/cig/ ([5be74a2](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/5be74a2d582f8d821d1823c86fd4a776f6b9a5c5))
+
+
+
+
+
 ## [0.1.25](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.24...cli-v0.1.25) (2026-03-27)
 
 
