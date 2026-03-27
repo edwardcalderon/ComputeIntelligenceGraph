@@ -1,3 +1,18 @@
+## [0.2.75](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.74...v0.2.75) (2026-03-27)
+
+### Detected changes
+- packages: 3 changed file(s)
+  - packages/api/src/semantic-rag.ts
+  - packages/api/tsconfig.json
+  - packages/chatbot/package.json
+
+
+## [0.2.75](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.74...v0.2.75) (2026-03-27)
+
+
+
+
+
 ## [0.2.74](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.73...v0.2.74) (2026-03-27)
 
 ### Detected changes

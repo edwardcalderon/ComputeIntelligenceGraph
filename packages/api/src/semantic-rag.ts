@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import { GraphEngine, GraphQueryEngine, type Resource_Model, type GraphScope } from '@cig/graph';
-import type { GraphDelta } from '@cig/sdk';
+import type { GraphDelta, GraphNode, GraphNodeUpdate } from '@cig/sdk';
 import { EmbeddingService, RAGPipeline, VectorStore, type ResourceDoc, type VectorDocument } from '@cig/chatbot';
 
 type SemanticLogger = Pick<FastifyBaseLogger, 'info' | 'warn' | 'error'>;
@@ -221,8 +221,8 @@ export async function indexGraphDeltaResources(
   }
 
   const resourceIds = uniqueStrings([
-    ...(delta.additions ?? []).map((node) => node.id),
-    ...(delta.modifications ?? []).map((node) => node.id),
+    ...(delta.additions ?? []).map((node: GraphNode) => node.id),
+    ...(delta.modifications ?? []).map((node: GraphNodeUpdate) => node.id),
   ]);
 
   if (resourceIds.length > 0) {
