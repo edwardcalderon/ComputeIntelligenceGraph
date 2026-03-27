@@ -3,9 +3,9 @@
  * Validates: Requirements 26.2
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { VectorDocument } from './vectordb';
-import type { ResourceDoc } from './rag';
-import type { ChatMessage } from './types';
+import { VectorStore, type VectorDocument } from './vectordb.js';
+import { RAGPipeline, EmbeddingService, type ResourceDoc } from './rag.js';
+import type { ChatMessage } from './types.js';
 
 // ─── VectorStore ──────────────────────────────────────────────────────────────
 // We test VectorStore by injecting a mock Collection directly, bypassing connect().
@@ -19,10 +19,8 @@ describe('VectorStore', () => {
       delete: vi.fn().mockResolvedValue(undefined),
     };
 
-    // Dynamically import and construct without calling connect()
-    // We bypass the singleton by directly setting the private collection field
-    const { VectorStore } = require('./vectordb') as typeof import('./vectordb');
-    const store = Object.create(VectorStore.prototype) as InstanceType<typeof import('./vectordb').VectorStore>;
+    // Bypass the singleton by directly setting the private collection field
+    const store = Object.create(VectorStore.prototype) as InstanceType<typeof VectorStore>;
     // Inject mock collection into private field
     (store as unknown as Record<string, unknown>)['collection'] = mockCol;
     return { store, mockCol };
@@ -68,8 +66,6 @@ describe('RAGPipeline', () => {
   const fakeEmbedding = [0.1, 0.2, 0.3];
 
   function makePipeline() {
-    const { RAGPipeline } = require('./rag') as typeof import('./rag');
-
     const mockStore = {
       addDocumentsWithEmbeddings: vi.fn().mockResolvedValue(undefined),
       query: vi.fn().mockResolvedValue([]),
@@ -83,8 +79,8 @@ describe('RAGPipeline', () => {
     };
 
     const pipeline = new RAGPipeline(
-      mockStore as unknown as InstanceType<typeof import('./vectordb').VectorStore>,
-      mockEmbeddingService as unknown as InstanceType<typeof import('./rag').EmbeddingService>,
+      mockStore as unknown as VectorStore,
+      mockEmbeddingService as unknown as EmbeddingService,
     );
 
     return { pipeline, mockStore, mockEmbeddingService };
