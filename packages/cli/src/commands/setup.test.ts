@@ -12,21 +12,21 @@ describe('setup command', () => {
     await setup({
       mode: 'self-hosted',
       profile: 'discovery',
-      apiUrl: 'http://localhost:8000',
+      apiUrl: 'http://localhost:3003',
     });
 
-    expect(install).toHaveBeenCalledWith('http://localhost:8000', 'self-hosted', 'discovery', false);
+    expect(install).toHaveBeenCalledWith('http://localhost:3003', 'self-hosted', 'discovery', false);
   });
 
   it('forwards demo mode when explicitly requested', async () => {
     await setup({
       mode: 'self-hosted',
       profile: 'discovery',
-      apiUrl: 'http://localhost:8000',
+      apiUrl: 'http://localhost:3003',
       demo: true,
     });
 
-    expect(install).toHaveBeenCalledWith('http://localhost:8000', 'self-hosted', 'discovery', true);
+    expect(install).toHaveBeenCalledWith('http://localhost:3003', 'self-hosted', 'discovery', true);
   });
 
   it('returns cleanly when installation is cancelled', async () => {
@@ -37,7 +37,7 @@ describe('setup command', () => {
       setup({
         mode: 'self-hosted',
         profile: 'discovery',
-        apiUrl: 'http://localhost:8000',
+        apiUrl: 'http://localhost:3003',
       })
     ).resolves.toBeUndefined();
 

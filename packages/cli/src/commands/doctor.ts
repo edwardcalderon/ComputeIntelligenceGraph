@@ -21,6 +21,7 @@ export interface DoctorOptions {
   sshHost?: string;
   sshKeyPath?: string;
   controlPlaneUrl?: string;
+  skipNetworkCheck?: boolean;
 }
 
 interface CheckResult {
@@ -192,7 +193,9 @@ export async function doctor(opts: DoctorOptions = {}): Promise<void> {
   // Core checks
   results.push(checkDocker());
   results.push(checkDockerCompose());
-  results.push(await checkNetworkReachability(controlPlaneUrl));
+  if (!opts.skipNetworkCheck) {
+    results.push(await checkNetworkReachability(controlPlaneUrl));
+  }
 
   // SSH-specific checks
   if (target === 'ssh') {

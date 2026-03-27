@@ -29,7 +29,7 @@ abstract class CigCommand extends Command {
 export class LoginCommand extends CigCommand {
   static override description = 'Authenticate via device authorization flow';
   static override flags = {
-    'api-url': Flags.string({ description: 'API URL', default: 'http://localhost:8000' }),
+    'api-url': Flags.string({ description: 'API URL', default: 'http://localhost:3003' }),
   };
 
   async run(): Promise<void> {
@@ -41,7 +41,7 @@ export class LoginCommand extends CigCommand {
 export class LogoutCommand extends CigCommand {
   static override description = 'Clear stored credentials and logout';
   static override flags = {
-    'api-url': Flags.string({ description: 'API URL', default: 'http://localhost:8000' }),
+    'api-url': Flags.string({ description: 'API URL', default: 'http://localhost:3003' }),
   };
 
   async run(): Promise<void> {
@@ -98,7 +98,7 @@ export class InstallCommand extends CigCommand {
       description: 'Installation profile: discovery or full (core is accepted as a legacy alias)',
       options: ['core', 'discovery', 'full'] as const,
     }),
-    'api-url': Flags.string({ description: 'API URL', default: 'http://localhost:8000' }),
+    'api-url': Flags.string({ description: 'API URL', default: 'http://localhost:3003' }),
     demo: Flags.boolean({ description: 'Include demo/mock data in the installation' }),
   };
 
@@ -119,7 +119,7 @@ export class InstallCommand extends CigCommand {
 export class EnrollCommand extends CigCommand {
   static override description = 'Enroll a node against the current control plane';
   static override flags = {
-    'api-url': Flags.string({ description: 'API URL', default: 'http://localhost:8000' }),
+    'api-url': Flags.string({ description: 'API URL', default: 'http://localhost:3003' }),
     profile: Flags.string({
       description: 'Install profile: discovery or full (core is accepted as a legacy alias)',
       options: ['core', 'discovery', 'full'] as const,
@@ -265,7 +265,7 @@ export class ScanCommand extends CigCommand {
     }),
     upload: Flags.boolean({ description: 'Upload results to the API', default: false }),
     json: Flags.boolean({ description: 'Output results as JSON', default: false }),
-    'api-url': Flags.string({ description: 'API URL', default: 'http://localhost:8000' }),
+    'api-url': Flags.string({ description: 'API URL', default: 'http://localhost:3003' }),
   };
 
   async run(): Promise<void> {

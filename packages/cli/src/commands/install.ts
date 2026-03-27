@@ -400,7 +400,7 @@ export async function install(
     opts = apiUrlOrOptions;
   } else {
     opts = {
-      apiUrl: typeof apiUrlOrOptions === 'string' ? apiUrlOrOptions : 'http://localhost:8000',
+      apiUrl: typeof apiUrlOrOptions === 'string' ? apiUrlOrOptions : 'http://localhost:3003',
       mode: mode ?? 'managed',
       profile: profile ?? 'core',
       target: 'local',
@@ -420,7 +420,7 @@ async function runInstall(opts: InstallOptions): Promise<void> {
     mode,
     profile,
     target,
-    apiUrl = 'http://localhost:8000',
+    apiUrl = 'http://localhost:3003',
     sshHost,
     sshUser = 'root',
     sshKeyPath,
@@ -468,7 +468,11 @@ async function runInstall(opts: InstallOptions): Promise<void> {
     target,
     sshHost,
     sshKeyPath,
-    controlPlaneUrl: manifest?.controlPlaneEndpoint ?? apiUrl,
+    // For managed mode, verify reachability to the remote control plane before
+    // installing.  For self-hosted, the API hasn't started yet so skip the
+    // network check — docker/compose availability is enough to proceed.
+    controlPlaneUrl: manifest?.controlPlaneEndpoint,
+    skipNetworkCheck: !manifest,
   });
 
   // -------------------------------------------------------------------------

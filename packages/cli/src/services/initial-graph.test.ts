@@ -31,7 +31,7 @@ describe('initial graph seeding', () => {
   it('persists a pending initial graph artifact when auth is unavailable', async () => {
     const result = await seedInitialGraph({
       installDir: path.join(tmpDir, 'install'),
-      apiUrl: 'http://localhost:8000',
+      apiUrl: 'http://localhost:3003',
       mode: 'self-hosted',
       profile: 'discovery',
       credentialManager,
@@ -46,14 +46,14 @@ describe('initial graph seeding', () => {
       scan: { scan_type: string };
     };
 
-    expect(artifact.targetApiUrl).toBe('http://127.0.0.1:8000');
+    expect(artifact.targetApiUrl).toBe('http://127.0.0.1:3003');
     expect(artifact.scan.scan_type).toBe('local');
   });
 
   it('uploads a pending initial graph snapshot after auth becomes available', async () => {
     const artifactPath = await seedInitialGraph({
       installDir: path.join(tmpDir, 'install'),
-      apiUrl: 'http://localhost:8000',
+      apiUrl: 'http://localhost:3003',
       mode: 'self-hosted',
       profile: 'discovery',
       credentialManager,
@@ -77,7 +77,7 @@ describe('initial graph seeding', () => {
     );
 
     const syncResult = await syncPendingInitialGraphArtifacts({
-      apiUrl: 'http://localhost:8000',
+      apiUrl: 'http://localhost:3003',
       installDir: path.join(tmpDir, 'install'),
       credentialManager,
     });

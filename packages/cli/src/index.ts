@@ -91,7 +91,7 @@ export function getGlobalOptions(): GlobalOptions {
 program
   .command('login')
   .description('Authenticate the operator via Authentik OIDC device authorization flow (managed mode)')
-  .option('--api-url <url>', 'Control plane API URL', 'http://localhost:8000')
+  .option('--api-url <url>', 'Control plane API URL', 'http://localhost:3003')
   .action(async (opts: { apiUrl: string }) => {
     const { login } = await import('./commands/login.js');
     await login(opts.apiUrl);
@@ -101,7 +101,7 @@ program
 program
   .command('logout')
   .description('Clear stored operator credentials')
-  .option('--api-url <url>', 'Control plane API URL', 'http://localhost:8000')
+  .option('--api-url <url>', 'Control plane API URL', 'http://localhost:3003')
   .action(async (opts: { apiUrl: string }) => {
     const { logout } = await import('./commands/logout.js');
     await logout(opts.apiUrl);
@@ -116,7 +116,7 @@ program
   .option('--profile <profile>', 'Override global --profile for this command')
   .option('--target <target>', 'Override global --target for this command')
   .option('--manifest <manifest>', 'Override global --manifest for this command')
-  .option('--api-url <url>', 'Control plane API URL', 'http://localhost:8000')
+  .option('--api-url <url>', 'Control plane API URL', 'http://localhost:3003')
   .option('--ssh-host <host>', 'SSH host (required when --target ssh)')
   .option('--ssh-user <user>', 'SSH user (default: root)', 'root')
   .option('--ssh-key-path <path>', 'Path to SSH private key file')
@@ -128,7 +128,7 @@ program
     const profile = (cmdOpts['profile'] ?? globals.profile) as 'core' | 'full';
     const target = (cmdOpts['target'] ?? globals.target) as 'local' | 'ssh' | 'host';
     const manifestArg = cmdOpts['manifest'] ?? globals.manifest;
-    const apiUrl = cmdOpts['apiUrl'] ?? 'http://localhost:8000';
+    const apiUrl = cmdOpts['apiUrl'] ?? 'http://localhost:3003';
     const { install } = await import('./commands/install.js');
     await install({
       manifest: manifestArg,
@@ -151,13 +151,13 @@ program
   .option('--token <token>', 'Enrollment token (Enrollment_Token) for re-enrollment')
   .option('--node-id <nodeId>', 'Node ID to re-enroll (optional)')
   .option('--profile <profile>', 'Override global --profile for this command')
-  .option('--api-url <url>', 'Control plane API URL', 'http://localhost:8000')
+  .option('--api-url <url>', 'Control plane API URL', 'http://localhost:3003')
   .action(async (cmdOpts: Record<string, string>) => {
     const globals = getGlobalOptions();
     const token = cmdOpts['token'] ?? globals.token;
     const nodeId = cmdOpts['nodeId'];
     const profile = (cmdOpts['profile'] ?? globals.profile) as 'core' | 'full';
-    const apiUrl = cmdOpts['apiUrl'] ?? 'http://localhost:8000';
+    const apiUrl = cmdOpts['apiUrl'] ?? 'http://localhost:3003';
     const { enroll } = await import('./commands/enroll.js');
     await enroll({ apiUrl, profile, token, nodeId });
   });
