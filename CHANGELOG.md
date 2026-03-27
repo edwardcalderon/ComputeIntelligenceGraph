@@ -1,3 +1,23 @@
+## [0.2.76](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.75...v0.2.76) (2026-03-27)
+
+### Detected changes
+- apps: 2 changed file(s)
+  - apps/dashboard/components/NotificationBell.tsx
+  - apps/dashboard/lib/systemNotifications.ts
+- packages: 5 changed file(s)
+  - packages/i18n/catalogs/dashboard/en.json
+  - packages/i18n/catalogs/dashboard/es.json
+  - packages/i18n/catalogs/dashboard/zh.json
+  - packages/i18n/src/locales/dashboard.ts
+  - packages/i18n/src/locales/keys.ts
+
+
+## [0.2.76](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.75...v0.2.76) (2026-03-27)
+
+
+
+
+
 ## [0.2.75](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.74...v0.2.75) (2026-03-27)
 
 ### Detected changes

@@ -281,7 +281,23 @@ const en: TranslationCatalog = {
   "notifications.typeError": "error",
   "notifications.typeProgress": "progress",
   "notifications.pageTitle": "Notifications",
-  "notifications.pageSubtitle": "All system notifications"
+  "notifications.pageSubtitle": "All system notifications",
+  "notifications.filterSystem": "System",
+  "notifications.typeSystem": "system",
+  "welcome.notifTitle": "Welcome to CIG",
+  "welcome.notifMessage": "Your Cloud Intelligence Graph is ready. Discover, visualize, and secure your entire infrastructure in one place.",
+  "welcome.featureGraphLabel": "Infrastructure Graph",
+  "welcome.featureGraphDesc": "Live topology of all your cloud resources and relationships",
+  "welcome.featureChatLabel": "AI Assistant",
+  "welcome.featureChatDesc": "Ask anything about your infrastructure in natural language",
+  "welcome.featureSecurityLabel": "Security Posture",
+  "welcome.featureSecurityDesc": "Continuous scanning and risk scoring across providers",
+  "welcome.featureCostLabel": "Cost Intelligence",
+  "welcome.featureCostDesc": "Resource cost breakdown and optimization insights",
+  "welcome.featureDiscoveryLabel": "Auto Discovery",
+  "welcome.featureDiscoveryDesc": "Automated multi-cloud resource cartography",
+  "welcome.actionExplore": "Explore Graph",
+  "welcome.actionDismiss": "Don't show again"
 };
 
 const es: TranslationCatalog = {
@@ -564,7 +580,23 @@ const es: TranslationCatalog = {
   "notifications.typeError": "error",
   "notifications.typeProgress": "progreso",
   "notifications.pageTitle": "Notificaciones",
-  "notifications.pageSubtitle": "Todas las notificaciones del sistema"
+  "notifications.pageSubtitle": "Todas las notificaciones del sistema",
+  "notifications.filterSystem": "Sistema",
+  "notifications.typeSystem": "sistema",
+  "welcome.notifTitle": "Bienvenido a CIG",
+  "welcome.notifMessage": "Tu Cloud Intelligence Graph está listo. Descubre, visualiza y protege toda tu infraestructura en un solo lugar.",
+  "welcome.featureGraphLabel": "Grafo de Infraestructura",
+  "welcome.featureGraphDesc": "Topología en vivo de todos tus recursos cloud y sus relaciones",
+  "welcome.featureChatLabel": "Asistente IA",
+  "welcome.featureChatDesc": "Pregunta cualquier cosa sobre tu infraestructura en lenguaje natural",
+  "welcome.featureSecurityLabel": "Postura de Seguridad",
+  "welcome.featureSecurityDesc": "Análisis continuo y puntuación de riesgo entre proveedores",
+  "welcome.featureCostLabel": "Inteligencia de Costos",
+  "welcome.featureCostDesc": "Desglose de costos de recursos e insights de optimización",
+  "welcome.featureDiscoveryLabel": "Auto Descubrimiento",
+  "welcome.featureDiscoveryDesc": "Cartografía automatizada multi-cloud",
+  "welcome.actionExplore": "Explorar Grafo",
+  "welcome.actionDismiss": "No mostrar de nuevo"
 };
 
 const zh: TranslationCatalog = {
@@ -847,7 +879,23 @@ const zh: TranslationCatalog = {
   "notifications.typeError": "错误",
   "notifications.typeProgress": "进行中",
   "notifications.pageTitle": "通知",
-  "notifications.pageSubtitle": "所有系统通知"
+  "notifications.pageSubtitle": "所有系统通知",
+  "notifications.filterSystem": "系统",
+  "notifications.typeSystem": "系统",
+  "welcome.notifTitle": "欢迎使用 CIG",
+  "welcome.notifMessage": "您的云智能图谱已准备就绪。在一个地方发现、可视化并保护您的所有基础设施。",
+  "welcome.featureGraphLabel": "基础设施图谱",
+  "welcome.featureGraphDesc": "所有云资源及其关系的实时拓扑",
+  "welcome.featureChatLabel": "AI 助手",
+  "welcome.featureChatDesc": "用自然语言询问任何有关基础设施的问题",
+  "welcome.featureSecurityLabel": "安全态势",
+  "welcome.featureSecurityDesc": "跨云提供商的持续扫描和风险评分",
+  "welcome.featureCostLabel": "成本智能",
+  "welcome.featureCostDesc": "资源成本分解和优化建议",
+  "welcome.featureDiscoveryLabel": "自动发现",
+  "welcome.featureDiscoveryDesc": "自动化多云资源制图",
+  "welcome.actionExplore": "探索图谱",
+  "welcome.actionDismiss": "不再显示"
 };
 
 const catalogs: Record<SupportedLocale, TranslationCatalog> = { en, es, zh };

@@ -7,15 +7,23 @@ import { useTranslation } from "@cig-technology/i18n/react";
 
 // ─── Shared in-memory store ───────────────────────────────────────────────────
 
+export interface NotificationMeta {
+  version?: string;
+  features?: Array<{ color: string; label: string; desc: string }>;
+  actions?: Array<{ id: string; label: string; variant: "primary" | "ghost" }>;
+}
+
 export interface Notification {
   id: string;
   message: string;
-  type: "success" | "error" | "progress";
+  type: "success" | "error" | "progress" | "system";
+  title?: string;
+  meta?: NotificationMeta;
   timestamp: Date;
   read: boolean;
 }
 
-type FilterType = "all" | "success" | "error" | "progress";
+type FilterType = "all" | "success" | "error" | "progress" | "system";
 
 type NotificationEventDetail = {
   message: string;
@@ -27,6 +35,10 @@ type NotificationEventDetail = {
 let _notifications: Notification[] = [];
 let _listeners: (() => void)[] = [];
 
+// Action handler registry — keyed by notification id
+type ActionHandler = (notifId: string, actionId: string) => void;
+const _actionHandlers = new Map<string, ActionHandler>();
+
 function broadcast() {
   _listeners.forEach((l) => l());
 }
@@ -37,6 +49,32 @@ export function pushNotification(n: Omit<Notification, "id" | "timestamp" | "rea
     ..._notifications.slice(0, 49),
   ];
   broadcast();
+}
+
+/** Push a system notification with a stable id (prevents duplicates). */
+export function pushSystemNotification(
+  n: Omit<Notification, "timestamp" | "read">
+): void {
+  if (_notifications.some((x) => x.id === n.id)) return;
+  _notifications = [
+    { ...n, timestamp: new Date(), read: false },
+    ..._notifications.slice(0, 49),
+  ];
+  broadcast();
+}
+
+/** Register a handler for actions dispatched on a specific notification id. */
+export function registerActionHandler(
+  notifId: string,
+  handler: ActionHandler
+): () => void {
+  _actionHandlers.set(notifId, handler);
+  return () => _actionHandlers.delete(notifId);
+}
+
+/** Dispatch an action for a notification (e.g. button click inside a card). */
+export function dispatchNotificationAction(notifId: string, actionId: string): void {
+  _actionHandlers.get(notifId)?.(notifId, actionId);
 }
 
 export function markAllRead() {
@@ -77,12 +115,14 @@ const TYPE_DOT: Record<string, string> = {
   success: "bg-green-500",
   error: "bg-red-500",
   progress: "bg-blue-500",
+  system: "bg-indigo-500",
 };
 
 const TYPE_BADGE: Record<string, string> = {
   success: "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400",
   error: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   progress: "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  system: "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
 };
 
 export function fmtTime(d: Date): string {
@@ -91,6 +131,92 @@ export function fmtTime(d: Date): string {
   if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
   if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
   return d.toLocaleDateString([], { month: "short", day: "numeric" });
+}
+
+// ─── System notification rich card ───────────────────────────────────────────
+
+function SystemNotifCard({ n }: { n: Notification }) {
+  return (
+    <div className={`overflow-hidden ${!n.read ? "bg-indigo-50/30 dark:bg-indigo-950/10" : ""}`}>
+      {/* Gradient accent bar */}
+      <div className="h-0.5 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+
+      <div className="px-4 py-3">
+        {/* Title row */}
+        <div className="flex items-start gap-2">
+          <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+            {!n.read && (
+              <span className="size-1.5 rounded-full bg-indigo-500 flex-shrink-0 mt-0.5" />
+            )}
+            <span className="text-xs font-semibold text-cig-primary">
+              {n.title ?? n.message}
+            </span>
+            {n.meta?.version && (
+              <span className="flex-shrink-0 rounded-full bg-indigo-100 dark:bg-indigo-900/40 px-2 py-0.5 text-[9px] font-mono font-bold text-indigo-700 dark:text-indigo-300 tracking-wide">
+                {n.meta.version}
+              </span>
+            )}
+          </div>
+          <button
+            onClick={() => clearNotification(n.id)}
+            className="flex-shrink-0 mt-0.5 text-cig-muted hover:text-red-500 transition-colors"
+            aria-label="Dismiss"
+          >
+            <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Message (only if there's also a title) */}
+        {n.title && (
+          <p className="mt-1 text-[11px] text-cig-secondary leading-relaxed">{n.message}</p>
+        )}
+
+        {/* Features list */}
+        {n.meta?.features && n.meta.features.length > 0 && (
+          <div className="mt-2.5 space-y-1.5">
+            {n.meta.features.map((f) => (
+              <div key={f.label} className="flex items-start gap-2">
+                <span className={`mt-1 size-1.5 rounded-full flex-shrink-0 ${f.color}`} />
+                <p className="text-[11px] leading-snug">
+                  <span className="font-medium text-cig-primary">{f.label}</span>
+                  <span className="text-cig-muted"> — {f.desc}</span>
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Action buttons + timestamp */}
+        {n.meta?.actions && n.meta.actions.length > 0 && (
+          <div className="mt-3 flex items-center gap-2 flex-wrap">
+            {n.meta.actions.map((a) =>
+              a.variant === "primary" ? (
+                <Link
+                  key={a.id}
+                  href="/graph"
+                  onClick={() => dispatchNotificationAction(n.id, a.id)}
+                  className="rounded-lg bg-indigo-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-indigo-700 active:scale-95 transition-all"
+                >
+                  {a.label}
+                </Link>
+              ) : (
+                <button
+                  key={a.id}
+                  onClick={() => dispatchNotificationAction(n.id, a.id)}
+                  className="rounded-lg border border-cig px-3 py-1.5 text-[11px] font-medium text-cig-secondary hover:text-cig-primary hover:bg-cig-hover active:scale-95 transition-all"
+                >
+                  {a.label}
+                </button>
+              )
+            )}
+            <span className="ml-auto text-[10px] text-cig-muted">{fmtTime(n.timestamp)}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 // ─── Bell dropdown ────────────────────────────────────────────────────────────
@@ -118,8 +244,8 @@ export function NotificationBell() {
   // Mark all read 1.5 s after opening
   useEffect(() => {
     if (open && unread > 0) {
-      const t = setTimeout(markAllRead, 1500);
-      return () => clearTimeout(t);
+      const timer = setTimeout(markAllRead, 1500);
+      return () => clearTimeout(timer);
     }
   }, [open, unread]);
 
@@ -128,13 +254,18 @@ export function NotificationBell() {
     if (filter !== "all") list = list.filter((n) => n.type === filter);
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter((n) => n.message.toLowerCase().includes(q));
+      list = list.filter(
+        (n) =>
+          n.message.toLowerCase().includes(q) ||
+          n.title?.toLowerCase().includes(q)
+      );
     }
     return list;
   }, [notifications, filter, search]);
 
   const FILTERS: { key: FilterType; label: string }[] = [
     { key: "all", label: t("notifications.filterAll") },
+    { key: "system", label: t("notifications.filterSystem") },
     { key: "success", label: t("notifications.filterSuccess") },
     { key: "error", label: t("notifications.filterError") },
     { key: "progress", label: t("notifications.filterProgress") },
@@ -246,13 +377,13 @@ export function NotificationBell() {
           </div>
 
           {/* Filter tabs */}
-          <div className="flex gap-1 px-3 pb-2">
+          <div className="flex gap-1 px-3 pb-2 overflow-x-auto">
             {FILTERS.map(({ key, label }) => (
               <button
                 key={key}
                 onClick={() => setFilter(key)}
                 className={[
-                  "rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors",
+                  "rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors whitespace-nowrap",
                   filter === key
                     ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"
                     : "text-cig-secondary hover:bg-cig-hover hover:text-cig-primary",
@@ -264,7 +395,7 @@ export function NotificationBell() {
           </div>
 
           {/* List */}
-          <div className="max-h-[55vh] sm:max-h-72 overflow-y-auto divide-y divide-cig">
+          <div className="max-h-[60vh] sm:max-h-80 overflow-y-auto divide-y divide-cig">
             {filtered.length === 0 ? (
               <div className="py-8 text-center text-xs text-cig-muted">
                 {search || filter !== "all"
@@ -272,47 +403,51 @@ export function NotificationBell() {
                   : t("notifications.noNotifications")}
               </div>
             ) : (
-              filtered.map((n) => (
-                <div
-                  key={n.id}
-                  className={`group flex items-start gap-3 px-4 py-3 transition-colors ${
-                    !n.read ? "bg-blue-50/40 dark:bg-blue-950/10" : "hover:bg-cig-hover"
-                  }`}
-                >
-                  <span className={`mt-1.5 size-2 rounded-full flex-shrink-0 ${TYPE_DOT[n.type]}`} />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs text-cig-primary leading-snug">{n.message}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span
-                        className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${TYPE_BADGE[n.type]}`}
+              filtered.map((n) =>
+                n.type === "system" ? (
+                  <SystemNotifCard key={n.id} n={n} />
+                ) : (
+                  <div
+                    key={n.id}
+                    className={`group flex items-start gap-3 px-4 py-3 transition-colors ${
+                      !n.read ? "bg-blue-50/40 dark:bg-blue-950/10" : "hover:bg-cig-hover"
+                    }`}
+                  >
+                    <span className={`mt-1.5 size-2 rounded-full flex-shrink-0 ${TYPE_DOT[n.type]}`} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-cig-primary leading-snug">{n.message}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span
+                          className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${TYPE_BADGE[n.type]}`}
+                        >
+                          {t(`notifications.type${n.type.charAt(0).toUpperCase()}${n.type.slice(1)}` as never)}
+                        </span>
+                        <span className="text-[10px] text-cig-muted">{fmtTime(n.timestamp)}</span>
+                      </div>
+                    </div>
+                    <div className="mt-0.5 flex-shrink-0 flex flex-col items-end gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                      {n.read && (
+                        <button
+                          onClick={() => markAsUnread(n.id)}
+                          className="text-[9px] text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 whitespace-nowrap transition-colors"
+                          aria-label="Mark as unread"
+                        >
+                          Mark unread
+                        </button>
+                      )}
+                      <button
+                        onClick={() => clearNotification(n.id)}
+                        className="text-cig-muted hover:text-red-500 transition-colors"
+                        aria-label="Dismiss"
                       >
-                        {t(`notifications.type${n.type.charAt(0).toUpperCase()}${n.type.slice(1)}` as never)}
-                      </span>
-                      <span className="text-[10px] text-cig-muted">{fmtTime(n.timestamp)}</span>
+                        <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
-                  <div className="mt-0.5 flex-shrink-0 flex flex-col items-end gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                    {n.read && (
-                      <button
-                        onClick={() => markAsUnread(n.id)}
-                        className="text-[9px] text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 whitespace-nowrap transition-colors"
-                        aria-label="Mark as unread"
-                      >
-                        Mark unread
-                      </button>
-                    )}
-                    <button
-                      onClick={() => clearNotification(n.id)}
-                      className="text-cig-muted hover:text-red-500 transition-colors"
-                      aria-label="Dismiss"
-                    >
-                      <svg className="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              ))
+                )
+              )
             )}
           </div>
 

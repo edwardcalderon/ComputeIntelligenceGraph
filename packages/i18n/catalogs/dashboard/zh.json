@@ -296,5 +296,22 @@
   "notifications.typeError": "错误",
   "notifications.typeProgress": "进行中",
   "notifications.pageTitle": "通知",
-  "notifications.pageSubtitle": "所有系统通知"
+  "notifications.pageSubtitle": "所有系统通知",
+  "notifications.filterSystem": "系统",
+  "notifications.typeSystem": "系统",
+
+  "welcome.notifTitle": "欢迎使用 CIG",
+  "welcome.notifMessage": "您的云智能图谱已准备就绪。在一个地方发现、可视化并保护您的所有基础设施。",
+  "welcome.featureGraphLabel": "基础设施图谱",
+  "welcome.featureGraphDesc": "所有云资源及其关系的实时拓扑",
+  "welcome.featureChatLabel": "AI 助手",
+  "welcome.featureChatDesc": "用自然语言询问任何有关基础设施的问题",
+  "welcome.featureSecurityLabel": "安全态势",
+  "welcome.featureSecurityDesc": "跨云提供商的持续扫描和风险评分",
+  "welcome.featureCostLabel": "成本智能",
+  "welcome.featureCostDesc": "资源成本分解和优化建议",
+  "welcome.featureDiscoveryLabel": "自动发现",
+  "welcome.featureDiscoveryDesc": "自动化多云资源制图",
+  "welcome.actionExplore": "探索图谱",
+  "welcome.actionDismiss": "不再显示"
 }

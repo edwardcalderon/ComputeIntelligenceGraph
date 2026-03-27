@@ -296,5 +296,22 @@
   "notifications.typeError": "error",
   "notifications.typeProgress": "progreso",
   "notifications.pageTitle": "Notificaciones",
-  "notifications.pageSubtitle": "Todas las notificaciones del sistema"
+  "notifications.pageSubtitle": "Todas las notificaciones del sistema",
+  "notifications.filterSystem": "Sistema",
+  "notifications.typeSystem": "sistema",
+
+  "welcome.notifTitle": "Bienvenido a CIG",
+  "welcome.notifMessage": "Tu Cloud Intelligence Graph está listo. Descubre, visualiza y protege toda tu infraestructura en un solo lugar.",
+  "welcome.featureGraphLabel": "Grafo de Infraestructura",
+  "welcome.featureGraphDesc": "Topología en vivo de todos tus recursos cloud y sus relaciones",
+  "welcome.featureChatLabel": "Asistente IA",
+  "welcome.featureChatDesc": "Pregunta cualquier cosa sobre tu infraestructura en lenguaje natural",
+  "welcome.featureSecurityLabel": "Postura de Seguridad",
+  "welcome.featureSecurityDesc": "Análisis continuo y puntuación de riesgo entre proveedores",
+  "welcome.featureCostLabel": "Inteligencia de Costos",
+  "welcome.featureCostDesc": "Desglose de costos de recursos e insights de optimización",
+  "welcome.featureDiscoveryLabel": "Auto Descubrimiento",
+  "welcome.featureDiscoveryDesc": "Cartografía automatizada multi-cloud",
+  "welcome.actionExplore": "Explorar Grafo",
+  "welcome.actionDismiss": "No mostrar de nuevo"
 }
