@@ -1,3 +1,25 @@
+## [0.2.85](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.84...v0.2.85) (2026-03-27)
+
+
+### Bug Fixes
+
+* **ci:** harden pages deploy and sdk entry ([11a0df1](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/11a0df1d1d9f89c0f52ce31d34940d79cecac3cd))
+
+
+
+
+
+## [0.2.85](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.84...v0.2.85) (2026-03-27)
+
+
+### Bug Fixes
+
+* **ci:** harden pages deploy and sdk entry ([11a0df1](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/11a0df1d1d9f89c0f52ce31d34940d79cecac3cd))
+
+
+
+
+
 ## [0.2.84](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.83...v0.2.84) (2026-03-27)
 
 ### Detected changes

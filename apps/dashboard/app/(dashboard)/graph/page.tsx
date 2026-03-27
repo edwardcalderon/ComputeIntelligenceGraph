@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "@cig-technology/i18n/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ReactFlow, {
@@ -20,6 +20,8 @@ import { getGraphSnapshot, type GraphSnapshot, type Resource, type Relationship 
 import { buildAuthenticatedWebSocketUrl } from "../../../lib/browserApi";
 import { PROVIDER_COLORS, PROVIDER_LABELS, getProviderColor } from "../../../lib/providers";
 import { useDashboardGraphSource } from "../../../lib/useGraphSource";
+import { isLoopbackHostname } from "../../../lib/siteUrl";
+import { shouldAutoUseDemoGraphSource } from "../../../lib/graphSource";
 import type { Graph3DLink, Graph3DNode } from "../../../components/Graph3DCanvas";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -208,6 +210,8 @@ function GraphContent() {
   const queryClient = useQueryClient();
   const wsUrl = buildAuthenticatedWebSocketUrl();
   const [graphSource, setGraphSource] = useDashboardGraphSource();
+  const [hostname, setHostname] = useState<string | null>(null);
+  const autoDemoFallbackApplied = useRef(false);
 
   const [filterType, setFilterType] = useState("");
   const [filterProvider, setFilterProvider] = useState("");
@@ -226,6 +230,26 @@ function GraphContent() {
   });
 
   const snapshot = snapshotData ?? EMPTY_GRAPH;
+  const isLoopback = Boolean(hostname && isLoopbackHostname(hostname));
+  const shouldAutoSwitchToDemo = shouldAutoUseDemoGraphSource(hostname, graphSource, snapshot);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    setHostname(window.location.hostname);
+  }, []);
+
+  useEffect(() => {
+    if (!shouldAutoSwitchToDemo || autoDemoFallbackApplied.current) {
+      return;
+    }
+
+    autoDemoFallbackApplied.current = true;
+    setGraphSource("demo");
+  }, [setGraphSource, shouldAutoSwitchToDemo]);
+
   const { filteredResources, filteredRelationships } = useMemo(
     () => buildGraphState(snapshot, filterType, filterProvider),
     [filterProvider, filterType, snapshot],
@@ -376,6 +400,7 @@ function GraphContent() {
 
   const isDemoSource = graphSource === "demo";
   const liveUnavailable = !isDemoSource && !snapshot.source.available;
+  const showLocalDemoFallback = isLoopback && liveUnavailable && !isDemoSource;
   const sourceLabel = isDemoSource ? "Demo workspace" : liveUnavailable ? "Live unavailable" : "Live discovery";
   const sourceBadgeClass = isDemoSource
     ? "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-400/20 dark:bg-violet-500/10 dark:text-violet-300"
@@ -534,7 +559,7 @@ function GraphContent() {
           />
         )}
 
-        {liveUnavailable && (
+        {liveUnavailable && !showLocalDemoFallback && (
           <div className="absolute left-1/2 top-4 z-10 w-[calc(100%-1rem)] max-w-xl -translate-x-1/2 rounded-2xl border border-amber-200 bg-amber-50/95 px-4 py-3 text-sm text-amber-900 shadow-lg backdrop-blur dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-100">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -549,6 +574,26 @@ function GraphContent() {
                 className="self-start rounded-full bg-amber-600 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-white shadow-sm transition-colors hover:bg-amber-500"
               >
                 Switch to Demo
+              </button>
+            </div>
+          </div>
+        )}
+
+        {showLocalDemoFallback && (
+          <div className="absolute left-1/2 top-4 z-10 w-[calc(100%-1rem)] max-w-xl -translate-x-1/2 rounded-2xl border border-violet-200 bg-violet-50/95 px-4 py-3 text-sm text-violet-900 shadow-lg backdrop-blur dark:border-violet-400/20 dark:bg-violet-500/10 dark:text-violet-100">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-semibold">Showing demo workspace for local development.</p>
+                <p className="text-xs opacity-90">
+                  Live discovery is offline here, so the graph auto-switched to the seeded demo data.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setGraphSource("demo")}
+                className="self-start rounded-full bg-violet-600 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-white shadow-sm transition-colors hover:bg-violet-500"
+              >
+                Keep Demo
               </button>
             </div>
           </div>

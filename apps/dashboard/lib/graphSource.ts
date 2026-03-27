@@ -1,4 +1,5 @@
-import type { GraphSource } from "@cig/sdk";
+import type { GraphSnapshot, GraphSource } from "@cig/sdk";
+import { isLoopbackHostname } from "./siteUrl";
 
 export const GRAPH_SOURCE_STORAGE_KEY = "cig-graph-source";
 export const GRAPH_SOURCE_CHANGE_EVENT = "cig-graph-source-change";
@@ -44,4 +45,16 @@ export function buildResourceHref(resourceId: string, source: GraphSource): stri
 
   const query = params.toString();
   return `/resources/${encodeURIComponent(resourceId)}${query ? `?${query}` : ""}`;
+}
+
+export function shouldAutoUseDemoGraphSource(
+  hostname: string | null | undefined,
+  source: GraphSource,
+  snapshot: Pick<GraphSnapshot, "source" | "resources">,
+): boolean {
+  if (!hostname || !isLoopbackHostname(hostname) || source !== "live") {
+    return false;
+  }
+
+  return !snapshot.source.available || snapshot.resources.length === 0;
 }
