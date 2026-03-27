@@ -43,11 +43,11 @@ container provenance data.
 - Package: https://www.npmjs.com/package/@cig-technology/cli
 - GitHub releases: https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases
 
-## 📋 Latest Changes (v0.1.24)
+## 📋 Latest Changes (v0.1.25)
 
 ### Bug Fixes
 
-* **cli:** use user-writable install dir instead of /opt/cig-node ([186bdda](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/186bddaed2b0229c8577fa687d9fe8360c3e184d))
+* **cli:** use correct Docker Hub images instead of non-existent ghcr.io/cig/ ([44c5e98](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/44c5e987e7b0b2c021261f26d1467e8218459363))
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 
