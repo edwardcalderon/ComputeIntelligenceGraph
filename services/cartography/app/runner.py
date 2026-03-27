@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Optional
 
 from .config import config
+from .simulation import run_simulation
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +55,14 @@ async def run_discovery() -> dict:
     status.running = True
     status.last_run_start = datetime.utcnow()
     status.run_count += 1
+
+    if config.cig_demo_mode:
+        logger.info(f"Running simulation mode per CIG_DEMO_MODE=true (run #{status.run_count})")
+        res = await asyncio.to_thread(run_simulation)
+        status.running = False
+        status.last_run_end = datetime.utcnow()
+        status.last_run_success = res.get("status") == "completed"
+        return res
 
     try:
         cmd = build_cartography_command()

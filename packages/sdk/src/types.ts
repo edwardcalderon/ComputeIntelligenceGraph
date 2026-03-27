@@ -361,6 +361,8 @@ export interface SetupManifest {
   issuedAt: string;
   /** ISO 8601, 15 min from issuedAt */
   expiresAt: string;
+  /** Whether to provision with demo/mock data */
+  isDemo?: boolean;
 }
 
 export interface NodeIdentity {

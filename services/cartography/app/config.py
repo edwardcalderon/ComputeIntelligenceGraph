@@ -19,6 +19,7 @@ class CartographyConfig(BaseSettings):
     neo4j_uri: str = "bolt://localhost:7687"
     neo4j_user: str = "neo4j"
     neo4j_password: str = "neo4j"
+    cig_demo_mode: bool = False
 
     aws_role_arn: Optional[str] = None
     aws_regions: Optional[str] = Field(

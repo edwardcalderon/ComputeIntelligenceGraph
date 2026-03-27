@@ -35,6 +35,8 @@ export interface SetupManifest {
   signature: string;
   issuedAt: string;
   expiresAt: string;
+  /** Whether to provision with demo/mock data */
+  isDemo?: boolean;
 }
 
 import type { NodeIdentity } from './install.js';
@@ -193,6 +195,14 @@ export function generateComposeFile(
     services += SELF_HOSTED_EXTRA_SERVICES;
   }
 
+  if (manifest.isDemo) {
+    // Inject mock-dbs mount into discovery-worker and graph-writer
+    services = services.replace(
+      '    depends_on:',
+      '    volumes:\n      - ./mock-dbs:/opt/cig-node/mock-dbs:ro\n    depends_on:'
+    );
+  }
+
   const volumes = buildVolumes(profile, selfHosted);
 
   return [
@@ -238,6 +248,13 @@ export function generateEnvFile(
     `NEO4J_PASSWORD=${_randomHex(16)}`,
     '',
   ];
+
+  if (manifest.isDemo) {
+    lines.push('# Demo mode configuration');
+    lines.push('CIG_DEMO_MODE=true');
+    lines.push('CIG_CLOUD_PROVIDER=mock');
+    lines.push('');
+  }
 
   if (manifest.cloudProvider === 'aws' && manifest.awsConfig) {
     lines.push('# AWS configuration');

@@ -163,6 +163,13 @@ function generateComposeFile(manifest: SetupManifest, profile: 'core' | 'discove
     depends_on:
       - api`;
   }
+  if (manifest.isDemo) {
+    // Inject mock-dbs mount into discovery-worker and graph-writer
+    services = services.replace(
+      '    depends_on:',
+      '    volumes:\n      - ./mock-dbs:/opt/cig-node/mock-dbs:ro\n    depends_on:'
+    );
+  }
 
   const volumes: string[] = ['  neo4j-data:'];
   if (profile === 'full') volumes.push('  chroma-data:');
@@ -207,6 +214,13 @@ function generateEnvFile(manifest: SetupManifest, nodeIdentity: NodeIdentity): s
     '',
   ];
 
+  if (manifest.isDemo) {
+    lines.push('# Demo mode configuration');
+    lines.push('CIG_DEMO_MODE=true');
+    lines.push('CIG_CLOUD_PROVIDER=mock');
+    lines.push('');
+  }
+
   if (manifest.cloudProvider === 'aws' && manifest.awsConfig) {
     lines.push('# AWS configuration');
     lines.push(`AWS_ROLE_ARN=${manifest.awsConfig.roleArn}`);
@@ -246,6 +260,8 @@ export interface InstallOptions {
   sshUser?: string;
   sshKeyPath?: string;
   sshPort?: number;
+  /** Whether to provision with demo/mock data */
+  demo?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -449,7 +465,11 @@ async function runInstall(opts: InstallOptions): Promise<void> {
   // -------------------------------------------------------------------------
 
   // For self-hosted mode without a manifest, build a synthetic manifest
-  const effectiveManifest: SetupManifest = manifest ?? buildSelfHostedManifest(apiUrl, profile);
+  const effectiveManifest: SetupManifest = manifest ?? buildSelfHostedManifest(apiUrl, profile, opts.demo);
+
+  if (opts.demo) {
+    effectiveManifest.isDemo = true;
+  }
 
   const effectiveProfile = manifest?.installProfile ?? profile;
   const composeContent = generateComposeFile(effectiveManifest, effectiveProfile);
@@ -463,6 +483,20 @@ async function runInstall(opts: InstallOptions): Promise<void> {
   // -------------------------------------------------------------------------
 
   const installDir = INSTALL_DIR;
+
+  // Demo mode: Copy mock DBs
+  if (effectiveManifest.isDemo) {
+    const assetsSrc = path.join(process.cwd(), 'assets', 'mock-dbs');
+    const assetsDest = path.join(installDir, 'mock-dbs');
+    if (fs.existsSync(assetsSrc)) {
+      fs.mkdirSync(assetsDest, { recursive: true });
+      fs.readdirSync(assetsSrc).forEach((file) => {
+        fs.copyFileSync(path.join(assetsSrc, file), path.join(assetsDest, file));
+      });
+      console.log(`✓ Demo assets copied to ${assetsDest}`);
+    }
+  }
+
   const { composePath, envPath } = writeInstallFiles(installDir, composeContent, envContent);
   console.log(`\n✓ Install files written to ${installDir}`);
 
@@ -566,14 +600,15 @@ async function runInstall(opts: InstallOptions): Promise<void> {
 
 function buildSelfHostedManifest(
   apiUrl: string,
-  profile: 'core' | 'discovery' | 'full'
+  profile: 'core' | 'discovery' | 'full',
+  isDemo?: boolean
 ): SetupManifest {
   const now = new Date();
   const expiresAt = new Date(now.getTime() + 15 * 60 * 1000);
 
   return {
     version: '1.0',
-    cloudProvider: 'aws', // placeholder — self-hosted doesn't require cloud creds at install time
+    cloudProvider: isDemo ? 'mock' : ('aws' as any), // placeholder — self-hosted doesn't require cloud creds at install time
     credentialsRef: '',
     enrollmentToken: '',
     nodeIdentitySeed: '',
@@ -583,5 +618,6 @@ function buildSelfHostedManifest(
     signature: '',
     issuedAt: now.toISOString(),
     expiresAt: expiresAt.toISOString(),
+    isDemo,
   };
 }
