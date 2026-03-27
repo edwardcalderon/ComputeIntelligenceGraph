@@ -269,45 +269,117 @@ function SessionItem({
   );
 }
 
-function SessionPill({
-  title,
-  timestamp,
+// ─── Mobile pill — shows rename/delete inline when the session is active ──────
+
+function MobileSessionPill({
+  session,
   active,
   draft = false,
   draftLabel,
+  deleteLabel,
+  renameLabel,
+  editing = false,
   onClick,
+  onDelete,
+  onStartEdit,
+  onRename,
+  onCancelEdit,
 }: {
-  title: string;
-  timestamp: string | null;
+  session: { id: string; title: string; lastMessageAt: string | null; updatedAt: string };
   active: boolean;
   draft?: boolean;
   draftLabel: string;
+  deleteLabel: string;
+  renameLabel: string;
+  editing?: boolean;
   onClick: () => void;
+  onDelete?: () => void;
+  onStartEdit?: () => void;
+  onRename?: (title: string) => void;
+  onCancelEdit?: () => void;
 }) {
+  const [value, setValue] = useState(session.title);
+  const timestamp = formatSessionTime(session.lastMessageAt ?? session.updatedAt);
+
+  if (editing) {
+    return (
+      <div className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-violet-300/70 bg-violet-500/10 px-2 py-1.5 dark:border-violet-400/30 dark:bg-violet-400/12">
+        <span className="h-2 w-2 shrink-0 rounded-full bg-violet-500 dark:bg-violet-300" />
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") { e.preventDefault(); onRename?.(value.trim()); }
+            if (e.key === "Escape") { e.preventDefault(); setValue(session.title); onCancelEdit?.(); }
+          }}
+          autoFocus
+          className="w-24 bg-transparent text-xs font-medium text-violet-700 outline-none dark:text-violet-300"
+          aria-label={renameLabel}
+        />
+        <button
+          type="button"
+          onClick={() => onRename?.(value.trim())}
+          className="flex h-5 w-5 items-center justify-center rounded-full text-emerald-600 hover:bg-emerald-100/60 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
+        >
+          <Check className="h-3 w-3" />
+        </button>
+        <button
+          type="button"
+          onClick={() => { setValue(session.title); onCancelEdit?.(); }}
+          className="flex h-5 w-5 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100/70 dark:text-zinc-500 dark:hover:bg-zinc-800"
+        >
+          <X className="h-3 w-3" />
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <div
       className={[
-        "inline-flex min-w-0 items-center gap-2 rounded-full border px-3 py-2 text-left transition-colors",
+        "inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1.5 transition-colors",
         active
           ? "border-violet-300/70 bg-violet-500/10 text-violet-700 dark:border-violet-400/30 dark:bg-violet-400/12 dark:text-violet-300"
           : "border-slate-200/80 bg-white/80 text-slate-600 dark:border-zinc-700/80 dark:bg-zinc-900/80 dark:text-zinc-300",
       ].join(" ")}
     >
-      <span
-        className={[
-          "h-2 w-2 shrink-0 rounded-full",
-          active ? "bg-violet-500 dark:bg-violet-300" : "bg-slate-300 dark:bg-zinc-600",
-        ].join(" ")}
-      />
-      <span className="min-w-0">
-        <span className="block truncate text-xs font-medium">{title}</span>
-        <span className="block truncate text-[9px] uppercase tracking-[0.14em] text-slate-400 dark:text-zinc-500">
-          {draft ? draftLabel : timestamp ?? ""}
+      <button type="button" onClick={onClick} className="inline-flex min-w-0 items-center gap-1.5">
+        <span
+          className={[
+            "h-2 w-2 shrink-0 rounded-full",
+            active ? "bg-violet-500 dark:bg-violet-300" : "bg-slate-300 dark:bg-zinc-600",
+          ].join(" ")}
+        />
+        <span className="min-w-0">
+          <span className="block max-w-[80px] truncate text-xs font-medium">{session.title}</span>
+          <span className="block truncate text-[9px] uppercase tracking-[0.14em] text-slate-400 dark:text-zinc-500">
+            {draft ? draftLabel : timestamp}
+          </span>
         </span>
-      </span>
-    </button>
+      </button>
+
+      {/* Edit / delete actions — only for saved sessions when active */}
+      {!draft && active && (
+        <>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onStartEdit?.(); }}
+            aria-label={renameLabel}
+            className="ml-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-violet-400 hover:bg-violet-200/60 hover:text-violet-700 dark:text-violet-400/70 dark:hover:bg-violet-400/20 dark:hover:text-violet-200"
+          >
+            <Pencil className="h-2.5 w-2.5" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
+            aria-label={deleteLabel}
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-violet-300/80 hover:bg-red-100/60 hover:text-red-500 dark:text-violet-400/50 dark:hover:bg-red-500/10 dark:hover:text-red-300"
+          >
+            <Trash2 className="h-2.5 w-2.5" />
+          </button>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -356,7 +428,7 @@ export function ChatSessionPanel({
 
   return (
     <>
-      <div className="border-b border-slate-100 px-3 py-2.5 dark:border-zinc-700/40 sm:hidden">
+      <div aria-hidden="true" className="border-b border-slate-100 px-3 py-2.5 dark:border-zinc-700/40 sm:hidden">
         <div className="mb-2 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-zinc-500">
@@ -388,23 +460,27 @@ export function ChatSessionPanel({
               {t("chat.noSavedSessions")}
             </div>
           ) : (
-            displaySessions.map((session) => (
-              <SessionPill
-                key={session.id}
-                title={session.title}
-                timestamp={formatSessionTime(session.lastMessageAt ?? session.updatedAt)}
-                active={
-                  session.id === DRAFT_SESSION_ID
-                    ? activeSessionId === null
-                    : activeSessionId === session.id
-                }
-                draft={session.id === DRAFT_SESSION_ID}
-                draftLabel={draftLabel}
-                onClick={() =>
-                  onSelectSession(session.id === DRAFT_SESSION_ID ? null : session.id)
-                }
-              />
-            ))
+            displaySessions.map((session) => {
+              const isActive = session.id === DRAFT_SESSION_ID ? activeSessionId === null : activeSessionId === session.id;
+              const isDraft = session.id === DRAFT_SESSION_ID;
+              return (
+                <MobileSessionPill
+                  key={`${session.id}:${session.title}`}
+                  session={session as { id: string; title: string; lastMessageAt: string | null; updatedAt: string }}
+                  active={isActive}
+                  draft={isDraft}
+                  draftLabel={draftLabel}
+                  deleteLabel={deleteLabel}
+                  renameLabel={renameLabel}
+                  editing={editingSessionId === session.id}
+                  onClick={() => onSelectSession(isDraft ? null : session.id)}
+                  onStartEdit={isDraft ? undefined : () => setEditingSessionId(session.id)}
+                  onRename={isDraft ? undefined : async (title) => { await onRenameSession(session.id, title); setEditingSessionId(null); }}
+                  onCancelEdit={() => setEditingSessionId(null)}
+                  onDelete={isDraft ? undefined : () => onRequestDeleteSession(session)}
+                />
+              );
+            })
           )}
         </div>
       </div>

@@ -26,6 +26,7 @@ export function ChatVoiceDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [durationMs, setDurationMs] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [waveformBars, setWaveformBars] = useState<number[]>(Array(8).fill(0));
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -34,6 +35,9 @@ export function ChatVoiceDialog({
   const hasAutoStartedRef = useRef(false);
   const isDialogOpenRef = useRef(false);
   const startRecordingRef = useRef<() => Promise<void>>(async () => {});
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const animFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     isDialogOpenRef.current = open;
@@ -81,7 +85,47 @@ export function ChatVoiceDialog({
     }
   }
 
+  function stopAnalyser() {
+    if (animFrameRef.current !== null) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+    if (audioCtxRef.current) {
+      void audioCtxRef.current.close();
+      audioCtxRef.current = null;
+    }
+    analyserRef.current = null;
+    setWaveformBars(Array(8).fill(0));
+  }
+
+  function startAnalyser(stream: MediaStream) {
+    try {
+      const ctx = new AudioContext();
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 64;
+      ctx.createMediaStreamSource(stream).connect(analyser);
+      audioCtxRef.current = ctx;
+      analyserRef.current = analyser;
+
+      const buf = new Uint8Array(analyser.frequencyBinCount);
+      function tick() {
+        analyser.getByteFrequencyData(buf);
+        // Sample 8 evenly-spaced bins (focus on speech range)
+        const bars = Array.from({ length: 8 }, (_, i) => {
+          const idx = Math.floor((i / 8) * (buf.length / 2));
+          return buf[idx] / 255;
+        });
+        setWaveformBars(bars);
+        animFrameRef.current = requestAnimationFrame(tick);
+      }
+      animFrameRef.current = requestAnimationFrame(tick);
+    } catch {
+      // Web Audio not available — waveform degrades gracefully
+    }
+  }
+
   async function discardRecording() {
+    stopAnalyser();
     if (durationTimerRef.current !== null) {
       window.clearInterval(durationTimerRef.current);
       durationTimerRef.current = null;
@@ -129,6 +173,7 @@ export function ChatVoiceDialog({
       startedAtRef.current = Date.now();
       setDurationMs(0);
       setIsRecording(true);
+      startAnalyser(stream);
 
       recorder.addEventListener("dataavailable", (event) => {
         if (event.data.size > 0) {
@@ -155,6 +200,7 @@ export function ChatVoiceDialog({
       return;
     }
 
+    stopAnalyser();
     setIsRecording(false);
     if (durationTimerRef.current !== null) {
       window.clearInterval(durationTimerRef.current);
@@ -320,6 +366,16 @@ export function ChatVoiceDialog({
             >
               {isPreparing ? (
                 <LoaderCircle className="h-5 w-5 animate-spin" />
+              ) : isRecording ? (
+                <span className="flex items-end gap-px h-5">
+                  {waveformBars.map((v, i) => (
+                    <span
+                      key={i}
+                      className="w-[3px] rounded-sm bg-current transition-all duration-75"
+                      style={{ height: `${Math.max(15, Math.round(v * 100))}%` }}
+                    />
+                  ))}
+                </span>
               ) : (
                 <Mic className="h-5 w-5" />
               )}
@@ -384,6 +440,16 @@ export function ChatVoiceDialog({
             >
               {isPreparing ? (
                 <LoaderCircle className="h-5 w-5 animate-spin" />
+              ) : isRecording ? (
+                <span className="flex items-end gap-px h-5">
+                  {waveformBars.map((v, i) => (
+                    <span
+                      key={i}
+                      className="w-[3px] rounded-sm bg-current transition-all duration-75"
+                      style={{ height: `${Math.max(15, Math.round(v * 100))}%` }}
+                    />
+                  ))}
+                </span>
               ) : (
                 <Mic className="h-5 w-5" />
               )}

@@ -73,25 +73,28 @@ export function FallingPattern({
     "300px 210px", "300px 210px", "300px 210px",
   ].join(", ");
 
+  const dotFill = backgroundColor === "transparent" ? "rgba(255,255,255,0.92)" : backgroundColor;
+
   return (
     <div className={`relative size-full ${className}`}>
-      {/* Falling lines layer */}
+      {/* Falling lines layer — blur applied here, not via backdropFilter */}
       <div
         className="absolute inset-0"
         style={{
           backgroundColor,
           backgroundImage: patterns,
           backgroundSize,
+          filter: `blur(${blurIntensity})`,
           animation: `falling-pattern ${duration}s linear infinite`,
         }}
       />
-      {/* Blur + dot overlay */}
+      {/* Dot-mask overlay: punches subtle holes to reveal blurred lines only */}
       <div
         className="absolute inset-0"
         style={{
-          backdropFilter: `blur(${blurIntensity})`,
-          backgroundImage: `radial-gradient(circle at 50% 50%, transparent 0, transparent 2px, ${backgroundColor === "transparent" ? "white" : backgroundColor} 2px)`,
-          backgroundSize: `${8 * density}px ${8 * density}px`,
+          backgroundImage: `radial-gradient(circle at 50% 50%, transparent 0, transparent 1.5px, ${dotFill} 1.5px)`,
+          backgroundSize: `${12 * density}px ${12 * density}px`,
+          opacity: 0.95,
         }}
       />
     </div>
