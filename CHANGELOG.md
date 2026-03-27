@@ -1,3 +1,15 @@
+## [0.2.60](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.59...v0.2.60) (2026-03-27)
+
+### Detected changes
+- packages: packages/infra/src/compose.ts
+
+
+## [0.2.60](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.59...v0.2.60) (2026-03-27)
+
+
+
+
+
 ## [0.2.59](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.58...v0.2.59) (2026-03-27)
 
 ### Detected changes

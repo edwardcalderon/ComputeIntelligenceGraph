@@ -37,12 +37,8 @@ export interface SetupManifest {
   expiresAt: string;
 }
 
-export interface NodeIdentity {
-  nodeId: string;
-  privateKey: string;
-  publicKey: string;
-  issuedAt: string;
-}
+import type { NodeIdentity } from './install.js';
+export type { NodeIdentity };
 
 // ---------------------------------------------------------------------------
 // Core compose template
