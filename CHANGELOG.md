@@ -1,3 +1,15 @@
+## [0.2.72](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.71...v0.2.72) (2026-03-27)
+
+### Detected changes
+- packages: packages/chatbot/package.json
+
+
+## [0.2.72](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.71...v0.2.72) (2026-03-27)
+
+
+
+
+
 ## [0.2.71](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.70...v0.2.71) (2026-03-27)
 
 ### Detected changes

@@ -1,9 +1,9 @@
 {
   "name": "@cig/chatbot",
-  "version": "0.2.71",
+  "version": "0.2.72",
   "description": "CIG conversational interface with RAG pipeline",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "types": "./src/index.ts",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
