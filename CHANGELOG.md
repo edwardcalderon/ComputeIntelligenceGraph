@@ -1,3 +1,25 @@
+## [0.2.56](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.55...v0.2.56) (2026-03-27)
+
+
+### Bug Fixes
+
+* build errors in sdk and dashboard ([145fd70](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/145fd703f0871dc9aabeecd56ace12784f178672))
+
+
+
+
+
+## [0.2.56](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.55...v0.2.56) (2026-03-27)
+
+
+### Bug Fixes
+
+* build errors in sdk and dashboard ([145fd70](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/145fd703f0871dc9aabeecd56ace12784f178672))
+
+
+
+
+
 ## [0.2.55](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.54...v0.2.55) (2026-03-27)
 
 

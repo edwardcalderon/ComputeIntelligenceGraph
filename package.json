@@ -1,6 +1,6 @@
 {
   "name": "cig-monorepo",
-  "version": "0.2.55",
+  "version": "0.2.56",
   "private": true,
   "license": "MIT",
   "description": "Compute Intelligence Graph - monorepo root",
