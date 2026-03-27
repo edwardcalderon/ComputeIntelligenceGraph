@@ -175,7 +175,7 @@ function TemplateDropdown({
   activeLane,
   onLaneChange,
 }: {
-  onUseTemplate: (prompt: string) => void;
+  onUseTemplate: (template: ChatTemplate) => void;
   triggerLabel: string;
   activeLane: TemplateLane | null;
   onLaneChange: (lane: TemplateLane | null) => void;
@@ -268,7 +268,10 @@ function TemplateDropdown({
               <li key={template.id}>
                 <button
                   type="button"
-                  onClick={() => { onUseTemplate(template.prompt); setOpen(false); }}
+                  onClick={() => {
+                    onUseTemplate(template);
+                    setOpen(false);
+                  }}
                   className="group flex w-full items-start gap-3 px-3 py-2.5 text-left transition-colors hover:bg-slate-50/80 dark:hover:bg-zinc-900/60"
                 >
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-violet-200/70 bg-violet-500/8 text-violet-600 transition-colors group-hover:border-violet-300/70 group-hover:bg-violet-500/12 dark:border-violet-400/25 dark:bg-violet-400/10 dark:text-violet-300">
@@ -314,7 +317,7 @@ function TemplateCard({
   laneLabel: string;
   triggerLabel: string;
   actionLabel: string;
-  onUseTemplate: (prompt: string) => void;
+  onUseTemplate: (template: ChatTemplate) => void;
 }) {
   const [previewExpanded, setPreviewExpanded] = useState(false);
   const preview = TEMPLATE_PREVIEWS[template.id];
@@ -359,7 +362,7 @@ function TemplateCard({
 
           <button
             type="button"
-            onClick={() => onUseTemplate(template.prompt)}
+            onClick={() => onUseTemplate(template)}
             className="group/btn inline-flex shrink-0 items-center gap-1.5 rounded-full border border-violet-300/60 bg-violet-500/8 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-700 transition-all duration-200 hover:scale-105 hover:border-violet-400/80 hover:bg-violet-500/14 hover:shadow-[0_0_14px_rgba(109,40,217,0.22)] active:scale-95 dark:border-violet-400/30 dark:bg-violet-400/10 dark:text-violet-300 dark:hover:bg-violet-400/16"
           >
             <SendHorizonal className="h-3.5 w-3.5 transition-transform duration-200 group-hover/btn:translate-x-0.5" />
@@ -406,7 +409,7 @@ function TemplateCard({
 export function ChatTemplatesTab({
   onUseTemplate,
 }: {
-  onUseTemplate: (prompt: string) => void;
+  onUseTemplate: (template: ChatTemplate) => void;
 }) {
   const t = useTranslation();
   const carouselRef = useRef<HTMLDivElement>(null);

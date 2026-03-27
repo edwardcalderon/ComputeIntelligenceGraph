@@ -286,6 +286,17 @@ const DEMO_RELATIONSHIPS = [
   { from: 'demo-shared-vpc', to: 'demo-ventas-api', type: RelationshipType.CONNECTS_TO, properties: { network: 'private-link' } },
 ] as const;
 
+export function getDemoWorkspaceSeedResources(): Resource_Model[] {
+  return DEMO_RESOURCES.map((resource) => ({
+    ...resource,
+    tags: { ...(resource.tags ?? {}) },
+    metadata: { ...(resource.metadata ?? {}) },
+    createdAt: new Date(resource.createdAt),
+    updatedAt: new Date(resource.updatedAt),
+    discoveredAt: new Date(resource.discoveredAt),
+  }));
+}
+
 function buildDemoDiscoverySnapshot(status: DemoWorkspaceStatus | null): GraphDiscoverySnapshot {
   const lastRun = status?.updatedAt ?? status?.seededAt ?? null;
 

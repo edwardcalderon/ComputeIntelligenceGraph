@@ -1,4 +1,5 @@
 import type { Resource_Model } from '@cig/graph';
+import type { ChatMessagePresentation } from '@cig/sdk';
 import {
   type ChatContextItem,
   type ChatTurn,
@@ -11,6 +12,7 @@ export interface ChatResponse {
   needsClarification: boolean;
   clarifyingQuestion?: string;
   sessionId?: string;
+  presentation?: ChatMessagePresentation;
 }
 
 export interface ChatInfrastructureSnapshot {

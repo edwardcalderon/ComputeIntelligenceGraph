@@ -1,3 +1,5 @@
+import type { ChatTemplateSelection, GraphSource } from '@cig/sdk';
+
 export type ChatContextItem =
   | ChatResourceLinkContextItem
   | ChatAttachmentContextItem
@@ -43,6 +45,11 @@ export interface ChatTurn {
   contextItems?: ChatContextItem[];
 }
 
+export interface ChatTemplateContextSelection extends ChatTemplateSelection {
+  lane?: string;
+  source?: GraphSource;
+}
+
 const MAX_CONTEXT_ITEMS = 5;
 const MAX_LINK_FIELD_LENGTH = 200;
 const MAX_ATTACHMENT_FIELD_LENGTH = 240;
@@ -50,6 +57,7 @@ const MAX_SUMMARY_LENGTH = 400;
 const MAX_TEXT_LENGTH = 4_000;
 const MAX_EXTRACTED_TEXT_LENGTH = 8_000;
 const MAX_CODE_LENGTH = 4_000;
+const MAX_TEMPLATE_FIELD_LENGTH = 160;
 
 function normalizeWhitespace(value: string): string {
   return value.replace(/\s+/g, ' ').trim();
@@ -87,6 +95,27 @@ function sanitizeLongText(value: unknown, maxLength: number): string | undefined
   }
 
   return truncate(normalized, maxLength);
+}
+
+function normalizeTemplateSelectionField(value: unknown, maxLength: number): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const normalized = normalizeWhitespace(value);
+  if (!normalized) {
+    return undefined;
+  }
+
+  return truncate(normalized, maxLength);
+}
+
+function normalizeTemplateSelectionSource(value: unknown): GraphSource | undefined {
+  if (value === 'live' || value === 'demo') {
+    return value;
+  }
+
+  return undefined;
 }
 
 function normalizeResourceLinkContextItem(value: unknown): ChatResourceLinkContextItem | null {
@@ -211,6 +240,31 @@ export function normalizeChatContextItems(input: unknown): ChatContextItem[] {
       }
     })
     .filter((item): item is ChatContextItem => item !== null);
+}
+
+export function normalizeChatTemplateSelection(
+  input: unknown
+): ChatTemplateContextSelection | null {
+  if (!input || typeof input !== 'object') {
+    return null;
+  }
+
+  const item = input as Record<string, unknown>;
+  const id = normalizeTemplateSelectionField(item['id'], MAX_TEMPLATE_FIELD_LENGTH);
+  const title = normalizeTemplateSelectionField(item['title'], MAX_TEMPLATE_FIELD_LENGTH);
+  const prompt = normalizeTemplateSelectionField(item['prompt'], MAX_TEXT_LENGTH);
+
+  if (!id || !title || !prompt) {
+    return null;
+  }
+
+  return {
+    id,
+    title,
+    prompt,
+    lane: normalizeTemplateSelectionField(item['lane'], MAX_TEMPLATE_FIELD_LENGTH),
+    source: normalizeTemplateSelectionSource(item['source']),
+  };
 }
 
 export function summarizeChatContextItems(items: ChatContextItem[]): string {

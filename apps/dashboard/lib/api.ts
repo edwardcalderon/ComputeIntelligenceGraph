@@ -2,6 +2,7 @@ import type {
   BootstrapCompletePayload,
   GraphRefinementRequest,
   GraphSource,
+  GraphSnapshot,
   SendChatMessagePayload,
 } from "@cig/sdk";
 import { getDashboardClient } from "./cigClient";
@@ -58,6 +59,56 @@ function getClient() {
   return getDashboardClient();
 }
 
+async function readErrorMessage(response: Response): Promise<string> {
+  const fallback = `API error ${response.status}: ${response.statusText}`;
+
+  try {
+    const text = await response.text();
+    if (!text) {
+      return fallback;
+    }
+
+    try {
+      const payload = JSON.parse(text) as { error?: string; message?: string };
+      return payload.error ?? payload.message ?? fallback;
+    } catch {
+      return text;
+    }
+  } catch {
+    return fallback;
+  }
+}
+
+async function requestGraphSnapshot(path: string): Promise<GraphSnapshot> {
+  const response = await getClient().requestRaw(path);
+  if (!response.ok) {
+    const error = new Error(await readErrorMessage(response)) as Error & { status?: number };
+    error.status = response.status;
+    throw error;
+  }
+
+  return response.json() as Promise<GraphSnapshot>;
+}
+
+async function requestGraphSnapshotWithFallback(paths: string[]): Promise<GraphSnapshot> {
+  let lastError: Error | null = null;
+
+  for (let index = 0; index < paths.length; index += 1) {
+    try {
+      return await requestGraphSnapshot(paths[index]);
+    } catch (error) {
+      const status = error instanceof Error ? (error as Error & { status?: number }).status : undefined;
+      if (status === 404 && index < paths.length - 1) {
+        lastError = error instanceof Error ? error : new Error("API error: request failed");
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  throw lastError ?? new Error("API error: request failed");
+}
+
 export const getResourcesPaged = (params?: string, source?: GraphSource) =>
   getClient().getResourcesPaged(params, source);
 
@@ -71,7 +122,12 @@ export const getHealth = () => getClient().getHealth();
 export const triggerDiscovery = () => getClient().triggerDiscovery();
 
 export const getGraphSnapshot = (source?: GraphSource) =>
-  getClient().getGraphSnapshot(source);
+  source === "demo"
+    ? requestGraphSnapshotWithFallback([
+        "/api/v1/demo/snapshot",
+        "/api/v1/graph/snapshot?source=demo",
+      ])
+    : getClient().getGraphSnapshot(source);
 
 export const getResource = (id: string, source?: GraphSource) =>
   getClient().getResource(id, source);

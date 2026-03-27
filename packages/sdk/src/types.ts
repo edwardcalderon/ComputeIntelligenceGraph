@@ -212,6 +212,22 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
   contextItems?: ChatContextItem[];
+  template?: ChatTemplateSelection;
+  presentation?: ChatMessagePresentation;
+}
+
+export interface ChatTemplateSelection {
+  id: string;
+  title: string;
+  prompt: string;
+  lane?: string;
+  source?: GraphSource;
+}
+
+export interface ChatMessagePresentation {
+  format: "text" | "html";
+  html?: string;
+  templateId?: string;
 }
 
 export interface ChatSessionSummary {
@@ -244,6 +260,7 @@ export interface ChatResponse {
   needsClarification: boolean;
   clarifyingQuestion?: string;
   sessionId?: string;
+  presentation?: ChatMessagePresentation;
 }
 
 export interface SendChatMessagePayload {
@@ -251,6 +268,7 @@ export interface SendChatMessagePayload {
   sessionId?: string;
   contextItems?: ChatContextItem[];
   graphSource?: GraphSource;
+  template?: ChatTemplateSelection;
 }
 
 export interface ChatAttachmentUploadResponse {

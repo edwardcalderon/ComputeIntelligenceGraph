@@ -13,6 +13,7 @@ import {
   Link,
   Maximize2,
   Minimize2,
+  LayoutTemplate,
   MessageSquarePlus,
   Paperclip,
   Send,
@@ -51,6 +52,7 @@ import { ChatContextItems } from "./ChatContextItems";
 import { ChatLinkPickerDialog } from "./ChatLinkPickerDialog";
 import { ChatSessionPanel } from "./ChatSessionPanel";
 import { ChatVoiceCaptureBar } from "./ChatVoiceCaptureBar";
+import type { ChatTemplate } from "../lib/chatTemplates";
 
 const ACTIVE_SESSION_STORAGE_KEY = "cig-chat-active-session";
 const MAX_CHARS = 2000;
@@ -153,6 +155,10 @@ function buildAssistantMessageContent(response: {
   return answer || clarifyingQuestion || "";
 }
 
+function normalizeTemplatePrompt(value: string): string {
+  return value.replace(/\s+/g, " ").trim().toLowerCase();
+}
+
 export function ChatWidget() {
   const t = useTranslation();
   const pathname = usePathname();
@@ -168,6 +174,7 @@ export function ChatWidget() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
+  const [draftTemplate, setDraftTemplate] = useState<ChatTemplate | null>(null);
   const [draftContextItems, setDraftContextItems] = useState<ChatContextItem[]>([]);
   const [pendingUploads, setPendingUploads] = useState<string[]>([]);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
@@ -482,13 +489,14 @@ export function ChatWidget() {
     }, 80);
   }
 
-  function handleUseTemplate(prompt: string) {
+  function handleUseTemplate(template: ChatTemplate) {
     setActiveTab("chat");
-    setInput(prompt);
+    setDraftTemplate(template);
+    setInput(template.prompt);
     setError(null);
     requestAnimationFrame(() => {
       textareaRef.current?.focus();
-      textareaRef.current?.setSelectionRange(prompt.length, prompt.length);
+      textareaRef.current?.setSelectionRange(template.prompt.length, template.prompt.length);
     });
   }
 
@@ -496,6 +504,7 @@ export function ChatWidget() {
     setActiveTab("chat");
     setError(null);
     setInput("");
+    setDraftTemplate(null);
     setDraftContextItems([]);
     setActiveSessionId(null);
     setMessages([]);
@@ -507,6 +516,7 @@ export function ChatWidget() {
     setActiveTab("chat");
     setError(null);
     setInput("");
+    setDraftTemplate(null);
     setDraftContextItems([]);
     setActiveSessionId(sessionId);
     writeStoredActiveSessionId(sessionId);
@@ -585,10 +595,16 @@ export function ChatWidget() {
       return;
     }
 
+    const selectedTemplate =
+      draftTemplate && normalizeTemplatePrompt(trimmedText) === normalizeTemplatePrompt(draftTemplate.prompt)
+        ? { ...draftTemplate, source: graphSource }
+        : undefined;
+
     const userMsg: ChatMessage = {
       role: "user",
       content: trimmedText,
       contextItems,
+      template: selectedTemplate,
       timestamp: new Date().toISOString(),
     };
     const next = [...messages, userMsg];
@@ -597,6 +613,7 @@ export function ChatWidget() {
     setIsLoading(true);
     if (shouldClearDraft) {
       setInput("");
+      setDraftTemplate(null);
       setDraftContextItems([]);
     }
 
@@ -606,11 +623,13 @@ export function ChatWidget() {
         sessionId: activeSessionId ?? undefined,
         contextItems,
         graphSource,
+        template: selectedTemplate,
       });
       const content = buildAssistantMessageContent(res);
       const assistantMsg: ChatMessage = {
         role: "assistant",
         content,
+        presentation: res.presentation,
         timestamp: new Date().toISOString(),
       };
       const updated = [...next, assistantMsg];
@@ -1286,6 +1305,20 @@ export function ChatWidget() {
                         className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                       >
                         <div className="max-w-[84%] space-y-2">
+                          {msg.template ? (
+                            <div className={msg.role === "user" ? "flex justify-end" : ""}>
+                              <span
+                                className={[
+                                  "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]",
+                                  msg.role === "user"
+                                    ? "border-violet-200/70 bg-violet-500/8 text-violet-700 dark:border-violet-400/25 dark:bg-violet-400/10 dark:text-violet-300"
+                                    : "border-slate-200/70 bg-slate-50 text-slate-500 dark:border-zinc-700/60 dark:bg-zinc-900/70 dark:text-zinc-400",
+                                ].join(" ")}
+                              >
+                                {msg.template.title}
+                              </span>
+                            </div>
+                          ) : null}
                           {msg.contextItems?.length ? (
                             <div className={msg.role === "user" ? "flex justify-end" : ""}>
                               <ChatContextItems items={msg.contextItems} variant="message" />
@@ -1295,6 +1328,7 @@ export function ChatWidget() {
                             <div
                               className={[
                                 "rounded-2xl px-3.5 py-2 text-sm",
+                                msg.presentation?.format === "html" ? "overflow-hidden" : "",
                                 msg.role === "user"
                                   ? [
                                       "rounded-br-sm border",
@@ -1305,10 +1339,17 @@ export function ChatWidget() {
                                       "rounded-bl-sm border",
                                       "border-slate-200/70 bg-slate-50 text-slate-700",
                                       "dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-white/70",
-                                    ].join(" "),
+                                ].join(" "),
                               ].join(" ")}
                             >
-                              {msg.content}
+                              {msg.presentation?.format === "html" && msg.presentation.html ? (
+                                <div
+                                  className="space-y-3 text-sm leading-relaxed"
+                                  dangerouslySetInnerHTML={{ __html: msg.presentation.html }}
+                                />
+                              ) : (
+                                msg.content
+                              )}
                             </div>
                           ) : null}
                         </div>
@@ -1379,10 +1420,36 @@ export function ChatWidget() {
                         ) : null}
                       </div>
                     ) : null}
+                    {draftTemplate ? (
+                      <div className="px-4 pt-3 sm:px-6">
+                        <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-violet-200/70 bg-violet-500/8 px-3 py-1.5 text-[11px] font-medium text-violet-700 dark:border-violet-400/25 dark:bg-violet-400/10 dark:text-violet-300">
+                          <LayoutTemplate className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">Template</span>
+                          <span className="max-w-[12rem] truncate font-semibold">{draftTemplate.title}</span>
+                          <button
+                            type="button"
+                            aria-label="Clear template"
+                            onClick={() => setDraftTemplate(null)}
+                            className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full text-current/70 transition-colors hover:bg-white/50 hover:text-current dark:hover:bg-white/10"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
                     <textarea
                       ref={textareaRef}
                       value={input}
-                      onChange={(e) => setInput(e.target.value.slice(0, MAX_CHARS))}
+                      onChange={(e) => {
+                        const nextValue = e.target.value.slice(0, MAX_CHARS);
+                        setInput(nextValue);
+                        if (
+                          draftTemplate &&
+                          normalizeTemplatePrompt(nextValue) !== normalizeTemplatePrompt(draftTemplate.prompt)
+                        ) {
+                          setDraftTemplate(null);
+                        }
+                      }}
                       onKeyDown={handleKeyDown}
                       rows={isExpanded ? 5 : 3}
                       disabled={isLoading || isLoadingMessages}

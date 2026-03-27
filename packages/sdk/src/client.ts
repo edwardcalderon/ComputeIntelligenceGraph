@@ -129,6 +129,35 @@ export class CigClient {
     return response.json() as Promise<T>;
   }
 
+  private async requestWithFallback<T>(paths: string[], init: RequestInit = {}): Promise<T> {
+    let lastError: Error | null = null;
+
+    for (let index = 0; index < paths.length; index += 1) {
+      const response = await this.requestRaw(paths[index], init);
+
+      if (response.ok) {
+        if (response.status === 204) {
+          return undefined as T;
+        }
+
+        return response.json() as Promise<T>;
+      }
+
+      const message = await buildErrorMessage(response);
+      const error = new Error(message);
+      (error as Error & { status?: number }).status = response.status;
+
+      if (response.status === 404 && index < paths.length - 1) {
+        lastError = error;
+        continue;
+      }
+
+      throw error;
+    }
+
+    throw lastError ?? new Error("API error: request failed");
+  }
+
   getResourcesPaged(params?: string, source?: GraphSource): Promise<PagedResources> {
     const queryParts = [params, source === "demo" ? "source=demo" : ""].filter(Boolean);
     return this.request<PagedResources>(`/api/v1/resources${queryParts.length ? `?${queryParts.join("&")}` : ""}`);
@@ -179,8 +208,14 @@ export class CigClient {
   }
 
   getGraphSnapshot(source?: GraphSource): Promise<GraphSnapshot> {
-    const query = source === "demo" ? "?source=demo" : "";
-    return this.request<GraphSnapshot>(`/api/v1/graph/snapshot${query}`);
+    if (source === "demo") {
+      return this.requestWithFallback<GraphSnapshot>([
+        "/api/v1/demo/snapshot",
+        "/api/v1/graph/snapshot?source=demo",
+      ]);
+    }
+
+    return this.request<GraphSnapshot>("/api/v1/graph/snapshot");
   }
 
   getResourceCost(resourceId: string): Promise<CostsResponse> {

@@ -639,6 +639,16 @@ describe("ChatWidget", () => {
       },
     });
     mockedGetChatSessions.mockResolvedValue({ items: [], total: 0 });
+    mockedSendChatMessage.mockResolvedValue({
+      answer: "Demo alert strip rendered from 9 resources and 9 relationships.",
+      needsClarification: false,
+      sessionId: "chat-9",
+      presentation: {
+        format: "html",
+        templateId: "alerts-today",
+        html: "<div>Demo alert strip</div>",
+      },
+    });
 
     render(<ChatWidget />);
 
@@ -653,7 +663,29 @@ describe("ChatWidget", () => {
       expect(screen.getByPlaceholderText("chat.placeholder")).toHaveValue("resumen alertas hoy");
     });
 
-    expect(screen.queryByRole("button", { name: "chat.useTemplate" })).not.toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "chat.sendMessage" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Demo alert strip")).toBeInTheDocument();
+    });
+
+    expect(mockedSendChatMessage).toHaveBeenCalledWith({
+      message: "resumen alertas hoy",
+      sessionId: undefined,
+      contextItems: [],
+      graphSource: "live",
+      template: {
+        id: "alerts-today",
+        lane: "ops",
+        badge: "Alertas",
+        title: "Resumen de alertas de hoy",
+        summary: "Trae un strip ejecutivo con el balance crítico, atención y estado normal.",
+        prompt: "resumen alertas hoy",
+        source: "live",
+      },
+    });
   });
 
   it("falls back to draft-only chat when session history is unavailable", async () => {

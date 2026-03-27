@@ -1,6 +1,10 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { authenticate, authorize, Permission } from '../auth';
-import { getDemoWorkspaceStatus, provisionDemoWorkspace } from '../demo-workspace';
+import {
+  buildDemoWorkspaceGraphSnapshot,
+  getDemoWorkspaceStatus,
+  provisionDemoWorkspace,
+} from '../demo-workspace';
 
 const readResources = [authenticate, authorize([Permission.READ_RESOURCES])];
 const manageDemo = [authenticate, authorize([Permission.ADMIN])];
@@ -20,6 +24,15 @@ export async function demoRoutes(app: FastifyInstance): Promise<void> {
         available: Boolean(state && state.resourceCount > 0),
         state,
       });
+    }
+  );
+
+  app.get(
+    '/api/v1/demo/snapshot',
+    { preHandler: readResources },
+    async (_request: FastifyRequest, reply: FastifyReply) => {
+      const snapshot = await buildDemoWorkspaceGraphSnapshot();
+      return reply.send(snapshot);
     }
   );
 
@@ -52,4 +65,3 @@ export async function demoRoutes(app: FastifyInstance): Promise<void> {
     }
   );
 }
-

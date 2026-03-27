@@ -67,4 +67,63 @@ describe('CigClient', () => {
     expect(health.chat.model).toBe('gpt-4o-mini');
     expect(health.chat.reachable).toBe(true);
   });
+
+  it('falls back to the legacy demo graph snapshot route when the demo compatibility route is unavailable', async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: 'Not found', statusCode: 404 }), {
+          status: 404,
+          headers: { 'content-type': 'application/json' },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            source: {
+              kind: 'demo',
+              available: true,
+              lastSyncedAt: '2026-03-27T00:00:00.000Z',
+            },
+            resourceCounts: {},
+            resources: [],
+            relationships: [],
+            discovery: {
+              healthy: true,
+              running: false,
+              lastRun: '2026-03-27T00:00:00.000Z',
+              nextRun: null,
+            },
+          }),
+          {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }
+        )
+      );
+
+    const client = new CigClient({
+      baseUrl: 'https://api.example.com',
+      fetch: fetchImpl as unknown as typeof fetch,
+    });
+
+    const snapshot = await client.getGraphSnapshot('demo');
+
+    expect(fetchImpl).toHaveBeenNthCalledWith(
+      1,
+      'https://api.example.com/api/v1/demo/snapshot',
+      expect.objectContaining({
+        headers: expect.any(Headers),
+      })
+    );
+    expect(fetchImpl).toHaveBeenNthCalledWith(
+      2,
+      'https://api.example.com/api/v1/graph/snapshot?source=demo',
+      expect.objectContaining({
+        headers: expect.any(Headers),
+      })
+    );
+    expect(snapshot.source.kind).toBe('demo');
+    expect(snapshot.source.available).toBe(true);
+  });
 });

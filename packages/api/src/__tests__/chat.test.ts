@@ -5,6 +5,7 @@ import { CartographyClient } from '@cig/discovery';
 import { createServer } from '../index';
 import { clearPersistedChatSessionsForTests } from '../chat-store';
 import { generateJwt, Permission } from '../auth';
+import * as demoWorkspace from '../demo-workspace';
 import { answerChatQuestion, type ChatInfrastructureSnapshot } from '../chat';
 
 function makeAuthHeader(): string {
@@ -71,6 +72,7 @@ describe('POST /api/v1/chat', () => {
   const listResourcesPagedSpy = vi.spyOn(GraphQueryEngine.prototype, 'listResourcesPaged');
   const cartographyHealthSpy = vi.spyOn(CartographyClient.prototype, 'healthCheck');
   const cartographyStatusSpy = vi.spyOn(CartographyClient.prototype, 'getStatus');
+  const buildDemoWorkspaceGraphSnapshotSpy = vi.spyOn(demoWorkspace, 'buildDemoWorkspaceGraphSnapshot');
 
   beforeAll(async () => {
     process.env['DATABASE_URL'] = 'sqlite://:memory:';
@@ -88,6 +90,7 @@ describe('POST /api/v1/chat', () => {
     listResourcesPagedSpy.mockRestore();
     cartographyHealthSpy.mockRestore();
     cartographyStatusSpy.mockRestore();
+    buildDemoWorkspaceGraphSnapshotSpy.mockRestore();
     await app.close();
   });
 
@@ -97,6 +100,7 @@ describe('POST /api/v1/chat', () => {
     listResourcesPagedSpy.mockReset();
     cartographyHealthSpy.mockReset();
     cartographyStatusSpy.mockReset();
+    buildDemoWorkspaceGraphSnapshotSpy.mockReset();
     getResourceCountsSpy.mockResolvedValue({});
     listResourcesPagedSpy.mockResolvedValue({ items: [], total: 0, hasMore: false });
     cartographyHealthSpy.mockResolvedValue(true);
@@ -164,6 +168,128 @@ describe('POST /api/v1/chat', () => {
     }>();
     expect(messages.total).toBe(2);
     expect(messages.items.map((item) => item.role)).toEqual(['user', 'assistant']);
+  });
+
+  it('renders exact demo templates as html and persists template metadata', async () => {
+    buildDemoWorkspaceGraphSnapshotSpy.mockResolvedValue({
+      source: {
+        kind: 'demo',
+        available: true,
+        lastSyncedAt: '2026-03-26T09:00:00.000Z',
+      },
+      resourceCounts: {
+        service: 2,
+        database: 1,
+        network: 1,
+      },
+      resources: [
+        {
+          id: 'demo-platform-gateway',
+          type: 'service',
+          provider: 'AWS',
+          name: 'Demo Platform Gateway',
+          region: 'us-east-1',
+          state: 'running',
+          tags: { demo: 'true' },
+        },
+        {
+          id: 'demo-ventas-api',
+          type: 'service',
+          provider: 'AWS',
+          name: 'Demo Ventas API',
+          region: 'us-east-1',
+          state: 'running',
+          tags: { demo: 'true' },
+        },
+        {
+          id: 'demo-clientes-db',
+          type: 'database',
+          provider: 'AWS',
+          name: 'Demo Clientes DB',
+          region: 'us-east-1',
+          state: 'active',
+          tags: { demo: 'true' },
+        },
+        {
+          id: 'demo-shared-vpc',
+          type: 'network',
+          provider: 'AWS',
+          name: 'Demo Shared VPC',
+          region: 'us-east-1',
+          state: 'active',
+          tags: { demo: 'true' },
+        },
+      ],
+      relationships: [
+        { sourceId: 'demo-platform-gateway', targetId: 'demo-ventas-api', type: 'ROUTES_TO' },
+        { sourceId: 'demo-ventas-api', targetId: 'demo-clientes-db', type: 'DEPENDS_ON' },
+        { sourceId: 'demo-shared-vpc', targetId: 'demo-ventas-api', type: 'CONNECTS_TO' },
+      ],
+      discovery: {
+        healthy: true,
+        running: false,
+        lastRun: '2026-03-26T09:00:00.000Z',
+        nextRun: null,
+      },
+    } as Awaited<ReturnType<typeof demoWorkspace.buildDemoWorkspaceGraphSnapshot>>);
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/chat',
+      headers: {
+        authorization: makeAuthHeader(),
+      },
+      payload: {
+        message: 'resumen alertas hoy',
+        graphSource: 'demo',
+        template: {
+          id: 'alerts-today',
+          lane: 'ops',
+          badge: 'Alertas',
+          title: 'Resumen de alertas de hoy',
+          summary: 'Trae un strip ejecutivo con el balance crítico, atención y estado normal.',
+          prompt: 'resumen alertas hoy',
+          source: 'demo',
+        },
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json<{
+      answer: string;
+      needsClarification: boolean;
+      presentation?: { format: string; html?: string; templateId?: string };
+      sessionId?: string;
+    }>();
+    expect(body.needsClarification).toBe(false);
+    expect(body.presentation?.format).toBe('html');
+    expect(body.presentation?.templateId).toBe('alerts-today');
+    expect(body.presentation?.html).toContain('Demo template matched');
+    expect(body.presentation?.html).toContain('Demo Platform Gateway');
+    expect(body.answer).toContain('Demo alert strip rendered');
+    expect(body.sessionId).toBeTypeOf('string');
+
+    const messagesResponse = await app.inject({
+      method: 'GET',
+      url: `/api/v1/chat/sessions/${body.sessionId}/messages`,
+      headers: {
+        authorization: makeAuthHeader(),
+      },
+    });
+
+    expect(messagesResponse.statusCode).toBe(200);
+    const messages = messagesResponse.json<{
+      items: Array<{
+        role: 'user' | 'assistant';
+        template?: { id: string; source?: string };
+        presentation?: { format: string; templateId?: string };
+      }>;
+      total: number;
+    }>();
+    expect(messages.total).toBe(2);
+    expect(messages.items[0]?.template?.id).toBe('alerts-today');
+    expect(messages.items[0]?.template?.source).toBe('demo');
+    expect(messages.items[1]?.presentation?.format).toBe('html');
+    expect(messages.items[1]?.presentation?.templateId).toBe('alerts-today');
   });
 
   it('reuses an existing session id and appends later exchanges', async () => {

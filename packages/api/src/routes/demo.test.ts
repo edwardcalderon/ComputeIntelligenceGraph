@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { demoRoutes } from './demo.js';
 
 const demoMocks = vi.hoisted(() => ({
+  buildDemoWorkspaceGraphSnapshot: vi.fn(),
   getDemoWorkspaceStatus: vi.fn(),
   provisionDemoWorkspace: vi.fn(),
 }));
@@ -19,6 +20,7 @@ vi.mock('../auth', () => ({
 }));
 
 vi.mock('../demo-workspace', () => ({
+  buildDemoWorkspaceGraphSnapshot: demoMocks.buildDemoWorkspaceGraphSnapshot,
   getDemoWorkspaceStatus: demoMocks.getDemoWorkspaceStatus,
   provisionDemoWorkspace: demoMocks.provisionDemoWorkspace,
 }));
@@ -30,6 +32,7 @@ describe('demoRoutes', () => {
     app = Fastify();
     await app.register(demoRoutes);
     await app.ready();
+    demoMocks.buildDemoWorkspaceGraphSnapshot.mockReset();
     demoMocks.getDemoWorkspaceStatus.mockReset();
     demoMocks.provisionDemoWorkspace.mockReset();
   });
@@ -61,6 +64,42 @@ describe('demoRoutes', () => {
       available: true,
       state: expect.objectContaining({
         resourceCount: 9,
+      }),
+    });
+  });
+
+  it('returns the demo graph snapshot for the compatibility route', async () => {
+    demoMocks.buildDemoWorkspaceGraphSnapshot.mockResolvedValue({
+      source: {
+        kind: 'demo',
+        available: true,
+        lastSyncedAt: '2026-03-27T00:00:00.000Z',
+      },
+      resourceCounts: {},
+      resources: [],
+      relationships: [],
+      discovery: {
+        healthy: true,
+        running: false,
+        lastRun: '2026-03-27T00:00:00.000Z',
+        nextRun: null,
+      },
+    });
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/demo/snapshot',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      source: {
+        kind: 'demo',
+        available: true,
+      },
+      discovery: expect.objectContaining({
+        healthy: true,
+        running: false,
       }),
     });
   });

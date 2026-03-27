@@ -1,3 +1,36 @@
+## [0.2.80](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.79...v0.2.80) (2026-03-27)
+
+### Detected changes
+- apps: 6 changed file(s)
+  - apps/dashboard/components/ChatExamplesTab.tsx
+  - apps/dashboard/components/ChatWidget.tsx
+  - apps/dashboard/components/__tests__/ChatWidget.test.tsx
+  - apps/dashboard/lib/__tests__/api.test.ts
+  - apps/dashboard/lib/api.ts
+  - apps/landing/components/AuthProvider.tsx
+- packages: 14 changed file(s)
+  - packages/api/src/__tests__/chat.test.ts
+  - packages/api/src/chat-context.ts
+  - packages/api/src/chat-store.ts
+  - packages/api/src/chat-template-response.ts
+  - packages/api/src/chat.ts
+  - packages/api/src/demo-workspace.ts
+  - packages/api/src/routes.ts
+  - packages/api/src/routes/chat.ts
+  - packages/api/src/routes/demo.test.ts
+  - packages/api/src/routes/demo.ts
+  - packages/sdk/package.json
+  - packages/sdk/src/client.test.ts
+  - packages/sdk/src/client.ts
+  - packages/sdk/src/types.ts
+
+
+## [0.2.80](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.79...v0.2.80) (2026-03-27)
+
+
+
+
+
 ## [0.2.79](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.78...v0.2.79) (2026-03-27)
 
 ### Detected changes

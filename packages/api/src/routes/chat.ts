@@ -27,15 +27,18 @@ import {
   deriveChatSeedFromContextItems,
   deriveImplicitQuestionFromContextItems,
   normalizeChatContextItems,
+  normalizeChatTemplateSelection,
   type ChatContextItem,
   type ChatTranscriptContextItem,
 } from '../chat-context';
+import { buildDemoTemplateChatResponse } from '../chat-template-response';
 
 interface ChatRequestBody {
   message?: string;
   sessionId?: string;
   contextItems?: unknown[];
   graphSource?: string;
+  template?: unknown;
 }
 
 interface RenameSessionBody {
@@ -72,6 +75,10 @@ function resolveDeploymentMode(): ChatInfrastructureSnapshot['deploymentMode'] {
 
 function normalizeGraphSource(value: unknown): 'live' | 'demo' {
   return value === 'demo' ? 'demo' : 'live';
+}
+
+function normalizeTemplatePrompt(value: string): string {
+  return value.replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
 function resolveDiscoveryIntervalMinutes(): number {
@@ -368,6 +375,7 @@ export async function chatRoutes(app: FastifyInstance): Promise<void> {
       const message = body?.message?.trim() ?? '';
       const contextItems = normalizeChatContextItems(body?.contextItems);
       const graphSource = normalizeGraphSource(body?.graphSource);
+      const templateSelection = normalizeChatTemplateSelection(body?.template);
       const user = (request as any).user as { sub: string } | undefined;
       const userId = user?.sub ?? 'unknown';
       const graphScope = graphSource === 'demo' ? DEMO_GRAPH_SCOPE : resolveGraphScope(user);
@@ -381,8 +389,28 @@ export async function chatRoutes(app: FastifyInstance): Promise<void> {
 
       const sessionSeed = message || deriveChatSeedFromContextItems(contextItems) || '';
       const session = await ensureChatSession(userId, body?.sessionId?.trim() || undefined, sessionSeed);
-      const history = await getChatHistory(userId, session.id);
       const effectiveQuestion = message || deriveImplicitQuestionFromContextItems(contextItems);
+
+      if (
+        templateSelection &&
+        graphSource === 'demo' &&
+        normalizeTemplatePrompt(message) === normalizeTemplatePrompt(templateSelection.prompt)
+      ) {
+        const demoSnapshot = await buildDemoWorkspaceGraphSnapshot();
+        const templateResponse = buildDemoTemplateChatResponse(templateSelection, demoSnapshot);
+
+        if (templateResponse) {
+          const updatedSession = await appendChatExchange(userId, session.id, message, templateResponse.answer, {
+            userContextItems: contextItems,
+            userTemplate: templateSelection,
+            assistantPresentation: templateResponse.presentation,
+          });
+
+          return reply.send({ ...templateResponse, sessionId: updatedSession.id });
+        }
+      }
+
+      const history = await getChatHistory(userId, session.id);
 
       const [linkedResources, searchedResources] = await Promise.all([
         resolveLinkedResources(contextItems, graphScope),
@@ -421,6 +449,8 @@ export async function chatRoutes(app: FastifyInstance): Promise<void> {
 
       const updatedSession = await appendChatExchange(userId, session.id, message, assistantContent, {
         userContextItems: contextItems,
+        userTemplate: templateSelection ?? undefined,
+        assistantPresentation: response.presentation,
       });
       return reply.send({ ...response, sessionId: updatedSession.id });
     }

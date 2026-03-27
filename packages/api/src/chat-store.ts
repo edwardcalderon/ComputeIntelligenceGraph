@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { QueryResultRow } from 'pg';
+import type { ChatMessagePresentation, ChatTemplateSelection } from '@cig/sdk';
 import { query, withTransaction } from './db/client';
 import type { ChatContextItem, ChatTurn } from './chat-context';
 
@@ -14,6 +15,8 @@ export interface ChatSessionSummary {
 
 export interface PersistedChatMessage extends ChatTurn {
   id: string;
+  template?: ChatTemplateSelection;
+  presentation?: ChatMessagePresentation;
 }
 
 interface ChatSessionRow extends QueryResultRow {
@@ -31,6 +34,12 @@ interface ChatMessageRow extends QueryResultRow {
   content: string;
   timestamp: string;
   metadata_json?: string | null;
+}
+
+interface ChatMessageMetadata {
+  contextItems?: ChatContextItem[];
+  template?: ChatTemplateSelection;
+  presentation?: ChatMessagePresentation;
 }
 
 const DEFAULT_CHAT_TITLE = 'New chat';
@@ -87,15 +96,25 @@ function mapSession(row: ChatSessionRow): ChatSessionSummary {
 
 function mapMessage(row: ChatMessageRow): PersistedChatMessage {
   let contextItems: ChatContextItem[] | undefined;
+  let template: ChatTemplateSelection | undefined;
+  let presentation: ChatMessagePresentation | undefined;
 
   if (row.metadata_json) {
     try {
-      const parsed = JSON.parse(row.metadata_json) as { contextItems?: ChatContextItem[] };
+      const parsed = JSON.parse(row.metadata_json) as ChatMessageMetadata;
       if (Array.isArray(parsed.contextItems) && parsed.contextItems.length > 0) {
         contextItems = parsed.contextItems;
       }
+      if (parsed.template && typeof parsed.template === 'object') {
+        template = parsed.template;
+      }
+      if (parsed.presentation && typeof parsed.presentation === 'object') {
+        presentation = parsed.presentation;
+      }
     } catch {
       contextItems = undefined;
+      template = undefined;
+      presentation = undefined;
     }
   }
 
@@ -105,6 +124,8 @@ function mapMessage(row: ChatMessageRow): PersistedChatMessage {
     content: row.content,
     timestamp: row.timestamp,
     contextItems,
+    template,
+    presentation,
   };
 }
 
@@ -194,7 +215,7 @@ export async function getChatSessionMessages(
   const normalizedLimit = hasLimit ? Math.floor(limit!) : null;
 
   const sql = hasLimit
-    ? `SELECT id, role, content, timestamp
+    ? `SELECT id, role, content, timestamp, metadata_json
          FROM (
            SELECT m.id,
                   m.role,
@@ -277,7 +298,9 @@ export async function appendChatExchange(
   assistantMessage: string,
   options: {
     userContextItems?: ChatContextItem[];
+    userTemplate?: ChatTemplateSelection;
     assistantContextItems?: ChatContextItem[];
+    assistantPresentation?: ChatMessagePresentation;
   } = {}
 ): Promise<ChatSessionSummary> {
   await ensureChatTables();
@@ -287,12 +310,22 @@ export async function appendChatExchange(
   const nextPreview = derivePreview(assistantMessage);
   const userMetadataJson =
     options.userContextItems && options.userContextItems.length > 0
-      ? JSON.stringify({ contextItems: options.userContextItems })
-      : null;
+      ? JSON.stringify({
+          contextItems: options.userContextItems,
+          template: options.userTemplate,
+        })
+      : options.userTemplate
+        ? JSON.stringify({ template: options.userTemplate })
+        : null;
   const assistantMetadataJson =
     options.assistantContextItems && options.assistantContextItems.length > 0
-      ? JSON.stringify({ contextItems: options.assistantContextItems })
-      : null;
+      ? JSON.stringify({
+          contextItems: options.assistantContextItems,
+          presentation: options.assistantPresentation,
+        })
+      : options.assistantPresentation
+        ? JSON.stringify({ presentation: options.assistantPresentation })
+        : null;
 
   await withTransaction(async (txQuery) => {
     const sessionResult = await txQuery<ChatSessionRow>(

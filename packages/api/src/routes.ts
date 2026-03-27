@@ -16,6 +16,7 @@ import { sessionRoutes } from './routes/sessions';
 import { scanRoutes } from './routes/scans';
 import { authEmailRoutes } from './routes/auth-email';
 import { chatRoutes } from './routes/chat';
+import { demoRoutes } from './routes/demo';
 import { onboardingRoutes } from './routes/onboarding';
 import { nodeEnrollmentRoutes } from './routes/nodes/enroll';
 import { nodeHeartbeatRoutes } from './routes/nodes/heartbeat';
@@ -116,6 +117,9 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── Chat (RAG + OpenAI) ─────────────────────────────────────────────────────
   await app.register(chatRoutes);
+
+  // ─── Demo workspace (shared seeded graph snapshot) ──────────────────────────
+  await app.register(demoRoutes);
 
   // ─── Graph snapshot, relationships, and refinement ────────────────────────
   await app.register(graphRoutes);

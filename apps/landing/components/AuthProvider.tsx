@@ -61,10 +61,20 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
+function looksLikeSupabaseIssuer(issuer: string): boolean {
+  const normalized = issuer.toLowerCase();
+  return normalized.includes("supabase") || normalized.includes("/auth/v1");
+}
+
 /* ─── Authentik session helpers ──────────────────────────────────────── */
 
 function readAuthentikSession(): CIGUser | null {
   try {
+    const authSource = sessionStorage.getItem("cig_auth_source");
+    if (authSource === "supabase") {
+      return null;
+    }
+
     const token = sessionStorage.getItem("cig_access_token");
     const expiresAt = sessionStorage.getItem("cig_expires_at");
     if (!token) return null;
@@ -73,6 +83,11 @@ function readAuthentikSession(): CIGUser | null {
     const idToken = sessionStorage.getItem("cig_id_token");
     const payload = decodeJwtPayload(idToken ?? token);
     if (!payload) return null;
+
+    const issuer = typeof payload.iss === "string" ? payload.iss.trim() : "";
+    if (issuer && looksLikeSupabaseIssuer(issuer)) {
+      return null;
+    }
 
     const email = (payload.email as string) ?? "";
     const avatarUrl = (payload.picture as string) ?? undefined;
@@ -183,21 +198,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const reconcileAuthState = useCallback(async () => {
     const generation = ++refreshGenerationRef.current;
-    const localUser = readAuthentikSession();
-
-    // Immediately set hydrated state if we have a local user
-    // This prevents the "Restoring session" screen from showing too long
-    if (localUser) {
-      persistAuthSource("authentik");
-      setAuthState({
-        user: localUser,
-        isHydrated: true,
-        isSigningOut: false,
-      });
-    }
-
-    // Check Supabase session in background (for hybrid auth or email sessions)
-    // Only update if Supabase returns a valid user that's different from local
     const supabaseUser = await readSupabaseSession();
     
     // Bail if a newer reconciliation started (login/logout happened during async)
@@ -205,10 +205,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Only update state if:
-    // 1. We have a Supabase user (different from local), OR
-    // 2. We had no local user but Supabase also has none (set hydrated with null)
-    // 3. We had no local user but Supabase has one
     if (supabaseUser) {
       // Supabase user takes precedence
       persistAuthSource("supabase");
@@ -217,7 +213,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isHydrated: true,
         isSigningOut: false,
       });
-    } else if (!localUser) {
+      return;
+    }
+
+    const localUser = readAuthentikSession();
+    if (localUser) {
+      persistAuthSource("authentik");
+      setAuthState({
+        user: localUser,
+        isHydrated: true,
+        isSigningOut: false,
+      });
+    } else {
       // No user anywhere - mark as hydrated (logged out state)
       setAuthState({
         user: null,
