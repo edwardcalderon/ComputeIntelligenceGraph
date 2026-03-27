@@ -32,7 +32,7 @@ export function startBackgroundJobs(app: FastifyInstance): void {
   startHeartbeatMonitor();
   startSemanticIndexSync(app.log);
 
-  if (process.env.CIG_AUTH_MODE === 'managed') {
+  if (process.env.CIG_AUTH_MODE === 'managed' || process.env.CIG_DEMO_MODE === 'true') {
     void ensureDemoWorkspaceProvisioned(app.log).catch((error) => {
       app.log.warn(
         { err: error },
