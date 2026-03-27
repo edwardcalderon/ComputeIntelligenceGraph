@@ -1,3 +1,18 @@
+## [0.2.48](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.47...v0.2.48) (2026-03-27)
+
+### Detected changes
+- apps: apps/dashboard/components/ChatExamplesTab.tsx
+- packages: 2 changed file(s)
+  - packages/ui/src/components/chat/Sparkline.tsx
+  - packages/ui/src/components/chat/SparklineCard.tsx
+
+
+## [0.2.48](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.47...v0.2.48) (2026-03-27)
+
+
+
+
+
 ## [0.2.47](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.46...v0.2.47) (2026-03-27)
 
 ### Detected changes

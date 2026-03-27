@@ -1,4 +1,5 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
 import { ChatCard } from "./ChatCard";
 import { CardHeader } from "./CardHeader";
 import { KpiBox } from "./KpiBox";
@@ -22,6 +23,12 @@ interface SparklineCardProps {
   channels?: ChannelTrend[];
   showFeedback?: boolean;
   onRate?: (rating: number) => void;
+  /**
+   * Per-point KPI overrides for interactive mode.
+   * When provided the card becomes interactive: hovering over the sparkline
+   * updates the KPI row with dailyKpis[hoverIndex].
+   */
+  dailyKpis?: KpiData[][];
 }
 
 /**
@@ -37,15 +44,27 @@ export function SparklineCard({
   channels,
   showFeedback = true,
   onRate,
+  dailyKpis,
 }: SparklineCardProps) {
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+
+  const interactive = !!dailyKpis;
+  const displayKpis =
+    interactive && hoverIndex !== null && dailyKpis![hoverIndex]
+      ? dailyKpis![hoverIndex]
+      : kpis;
+
   return (
     <ChatCard>
       <CardHeader title={title} rightLabel={period} />
       <div className="px-3 py-2.5">
         {/* KPI row */}
-        {kpis && kpis.length > 0 && (
-          <div className="flex gap-1.5 mb-2">
-            {kpis.map((kpi, i) => (
+        {displayKpis && displayKpis.length > 0 && (
+          <div
+            className="flex gap-1.5 mb-2"
+            style={{ transition: "opacity 0.12s" }}
+          >
+            {displayKpis.map((kpi, i) => (
               <KpiBox
                 key={i}
                 value={kpi.value}
@@ -63,6 +82,9 @@ export function SparklineCard({
           showPeakDot
           showDayLabels={showDayLabels}
           height={52}
+          interactive={interactive}
+          hoverIndex={hoverIndex}
+          onHoverIndex={setHoverIndex}
         />
 
         {/* Channel mini-sparklines */}
@@ -81,12 +103,11 @@ export function SparklineCard({
                   color={ch.color ?? "#6C3DE8"}
                   width={90}
                   height={16}
+                  hoverIndex={hoverIndex}
                 />
                 <span
                   className="ml-auto text-[9px] font-semibold flex-shrink-0"
-                  style={{
-                    color: CHANNEL_COLORS[ch.direction],
-                  }}
+                  style={{ color: CHANNEL_COLORS[ch.direction] }}
                 >
                   {ch.direction === "up" ? "↑" : ch.direction === "down" ? "↓" : "→"}{" "}
                   {ch.delta}

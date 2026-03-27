@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 
 const DAYS = ["L", "M", "X", "J", "V", "S", "D"];
@@ -44,6 +45,11 @@ interface SparklineProps {
   showDayLabels?: boolean;
   width?: number;
   height?: number;
+  /** Enable hover crosshair and emit index changes */
+  interactive?: boolean;
+  /** Currently highlighted index (controlled) */
+  hoverIndex?: number | null;
+  onHoverIndex?: (index: number | null) => void;
 }
 
 export function Sparkline({
@@ -54,6 +60,9 @@ export function Sparkline({
   showDayLabels = false,
   width = 230,
   height = 52,
+  interactive = false,
+  hoverIndex,
+  onHoverIndex,
 }: SparklineProps) {
   if (points.length < 2) return null;
 
@@ -62,8 +71,22 @@ export function Sparkline({
   const peakIdx = norm.indexOf(Math.max(...norm));
   const gradId = `spark-grad-${color.replace(/[^a-z0-9]/gi, "")}`;
 
+  const activeIdx = hoverIndex ?? null;
+
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+    const frac = (e.clientX - rect.left) / rect.width;
+    const idx = Math.max(0, Math.min(points.length - 1, Math.round(frac * (points.length - 1))));
+    onHoverIndex?.(idx);
+  }
+
   return (
-    <div className="w-full">
+    <div
+      className="w-full"
+      onMouseMove={interactive ? handleMouseMove : undefined}
+      onMouseLeave={interactive ? () => onHoverIndex?.(null) : undefined}
+      style={{ cursor: interactive ? "crosshair" : undefined }}
+    >
       <svg
         width="100%"
         height={height}
@@ -80,14 +103,50 @@ export function Sparkline({
         )}
         {showArea && <path d={areaD} fill={`url(#${gradId})`} />}
         <path d={d} fill="none" stroke={color} strokeWidth="1.5" />
-        {showPeakDot && (
+
+        {/* Static peak dot — hidden while hovering */}
+        {showPeakDot && activeIdx === null && (
           <circle cx={coords[peakIdx].x} cy={coords[peakIdx].y} r="3" fill={color} />
         )}
+
+        {/* Interactive crosshair */}
+        {interactive && activeIdx !== null && (
+          <>
+            <line
+              x1={coords[activeIdx].x}
+              y1={0}
+              x2={coords[activeIdx].x}
+              y2={height}
+              stroke={color}
+              strokeWidth="1"
+              strokeDasharray="3,2"
+              opacity="0.4"
+            />
+            <circle
+              cx={coords[activeIdx].x}
+              cy={coords[activeIdx].y}
+              r="4"
+              fill={color}
+              stroke="white"
+              strokeWidth="1.5"
+            />
+          </>
+        )}
       </svg>
+
       {showDayLabels && (
-        <div className="flex justify-between mt-0.5" style={{ fontSize: 8, color: "#aaa" }}>
-          {DAYS.slice(0, points.length).map((d, i) => (
-            <span key={i}>{d}</span>
+        <div className="flex justify-between mt-0.5" style={{ fontSize: 8 }}>
+          {DAYS.slice(0, points.length).map((label, i) => (
+            <span
+              key={i}
+              style={{
+                color: activeIdx === i ? color : "#aaa",
+                fontWeight: activeIdx === i ? 700 : 400,
+                transition: "color 0.12s, font-weight 0.12s",
+              }}
+            >
+              {label}
+            </span>
           ))}
         </div>
       )}
@@ -102,6 +161,8 @@ interface MiniSparklineProps {
   color?: string;
   width?: number;
   height?: number;
+  /** Highlight a specific index with a dot (from parent hover) */
+  hoverIndex?: number | null;
 }
 
 export function MiniSparkline({
@@ -109,11 +170,13 @@ export function MiniSparkline({
   color = "#6C3DE8",
   width = 90,
   height = 16,
+  hoverIndex,
 }: MiniSparklineProps) {
   if (points.length < 2) return null;
 
   const norm = normalize(points);
-  const { d } = buildPath(norm, width, height, 0.05);
+  const { d, coords } = buildPath(norm, width, height, 0.05);
+  const activeIdx = hoverIndex ?? null;
 
   return (
     <svg
@@ -124,6 +187,16 @@ export function MiniSparkline({
       style={{ overflow: "visible" }}
     >
       <path d={d} fill="none" stroke={color} strokeWidth="1.2" />
+      {activeIdx !== null && activeIdx < coords.length && (
+        <circle
+          cx={coords[activeIdx].x}
+          cy={coords[activeIdx].y}
+          r="2.5"
+          fill={color}
+          stroke="white"
+          strokeWidth="1"
+        />
+      )}
     </svg>
   );
 }

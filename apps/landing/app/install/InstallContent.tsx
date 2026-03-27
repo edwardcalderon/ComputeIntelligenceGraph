@@ -87,12 +87,12 @@ export default function InstallContent() {
         </div>
 
         <section className="grid gap-8 lg:grid-cols-[1.4fr_0.9fr]">
-          <div className="space-y-6">
+          <div className="min-w-0 space-y-6">
             <div className="space-y-4">
               <p className="text-sm font-semibold uppercase tracking-[0.35em] text-cyan-500/90 dark:text-cyan-300/90">
                 {t("install.title")}
               </p>
-              <h1 className="max-w-3xl text-3xl font-black tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
+              <h1 className="max-w-3xl break-words text-3xl font-black tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
                 {t("install.headline")}
               </h1>
               <p className="max-w-2xl text-base leading-7 text-zinc-600 dark:text-zinc-400 md:text-lg">

@@ -17,6 +17,7 @@ import {
   GaugeCard,
   SparklineCard,
   TimelineCard,
+  type KpiData,
 } from "@cig/ui";
 import { useTranslation } from "@cig-technology/i18n/react";
 import {
@@ -49,6 +50,18 @@ const SALES_CHANNELS = [
   { name: "Online", points: [88, 91, 94, 93, 97, 98, 97], direction: "up" as const, delta: "18%", color: "#6C3DE8" },
   { name: "Presencial", points: [95, 93, 91, 92, 89, 91, 87], direction: "down" as const, delta: "5%", color: "#EF9F27" },
   { name: "B2B", points: [90, 92, 94, 95, 95, 97, 98], direction: "up" as const, delta: "22%", color: "#1D9E75" },
+];
+
+// Per-day KPI data for the interactive sparkline (mainPoints has 8 values: L M X J V S D L)
+const DAILY_SALES_KPIS: KpiData[][] = [
+  [{ value: "$12.0M", label: "Lunes", variant: "neutral" }, { value: "+14.2%", label: "vs sem. ant.", variant: "positive" }, { value: "$12.0M", label: "Mejor día", variant: "warning" }],
+  [{ value: "$10.5M", label: "Martes", variant: "neutral" }, { value: "+10.8%", label: "vs sem. ant.", variant: "positive" }, { value: "$12.0M", label: "Mejor día", variant: "warning" }],
+  [{ value: "$8.4M",  label: "Miércoles", variant: "neutral" }, { value: "+9.1%",  label: "vs sem. ant.", variant: "positive" }, { value: "$12.0M", label: "Mejor día", variant: "warning" }],
+  [{ value: "$9.6M",  label: "Jueves", variant: "neutral" }, { value: "+11.3%", label: "vs sem. ant.", variant: "positive" }, { value: "$12.0M", label: "Mejor día", variant: "warning" }],
+  [{ value: "$5.4M",  label: "Viernes", variant: "neutral" }, { value: "+6.2%",  label: "vs sem. ant.", variant: "positive" }, { value: "$12.0M", label: "Mejor día", variant: "warning" }],
+  [{ value: "$3.0M",  label: "Sábado", variant: "neutral" }, { value: "+2.4%",  label: "vs sem. ant.", variant: "positive" }, { value: "$12.0M", label: "Mejor día", variant: "warning" }],
+  [{ value: "$4.2M",  label: "Domingo", variant: "neutral" }, { value: "+4.8%",  label: "vs sem. ant.", variant: "positive" }, { value: "$12.0M", label: "Mejor día", variant: "warning" }],
+  [{ value: "$2.1M",  label: "Lunes", variant: "neutral" }, { value: "+2.0%",  label: "vs sem. ant.", variant: "positive" }, { value: "$12.0M", label: "Mejor día", variant: "warning" }],
 ];
 
 const GAUGE_DETAIL = [
@@ -85,6 +98,7 @@ const TEMPLATE_PREVIEWS: Record<string, React.ReactNode> = {
       showDayLabels
       channels={SALES_CHANNELS}
       showFeedback={false}
+      dailyKpis={DAILY_SALES_KPIS}
     />
   ),
   "monthly-goal": (
