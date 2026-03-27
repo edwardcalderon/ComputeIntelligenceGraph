@@ -31,6 +31,10 @@ import type {
   SendChatMessagePayload,
 } from "./types";
 
+// Fetch API types for environments where lib "DOM" is not present (e.g. Node-only consumers).
+type _HeadersInit = NonNullable<ConstructorParameters<typeof Headers>[0]>;
+type _BodyInit = Exclude<NonNullable<RequestInit["body"]>, null>;
+
 type AccessTokenResolver = () => string | null | undefined | Promise<string | null | undefined>;
 
 export interface CigClientOptions {
@@ -38,7 +42,7 @@ export interface CigClientOptions {
   apiKey?: string;
   accessToken?: string;
   getAccessToken?: AccessTokenResolver;
-  defaultHeaders?: HeadersInit;
+  defaultHeaders?: _HeadersInit;
   fetch?: typeof fetch;
 }
 
@@ -81,7 +85,7 @@ export class CigClient {
     this.fetchImpl = (options.fetch ?? fetch).bind(globalThis);
   }
 
-  private async resolveHeaders(headers?: HeadersInit, body?: BodyInit | null): Promise<Headers> {
+  private async resolveHeaders(headers?: _HeadersInit, body?: _BodyInit | null): Promise<Headers> {
     const resolvedHeaders = new Headers(this.options.defaultHeaders);
 
     if (headers) {

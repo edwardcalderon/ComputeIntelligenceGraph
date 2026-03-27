@@ -1,3 +1,15 @@
+## [0.2.83](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.82...v0.2.83) (2026-03-27)
+
+### Detected changes
+- packages: packages/sdk/src/client.ts
+
+
+## [0.2.83](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.82...v0.2.83) (2026-03-27)
+
+
+
+
+
 ## [0.2.82](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.81...v0.2.82) (2026-03-27)
 
 ### Detected changes
