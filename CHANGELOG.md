@@ -1,3 +1,25 @@
+## [0.2.55](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.54...v0.2.55) (2026-03-27)
+
+
+### Features
+
+* current workspace changes ([82dba0f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/82dba0f6e8ed2dea6ee319ad690993ff3ecfb526))
+
+
+
+
+
+## [0.2.55](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.54...v0.2.55) (2026-03-27)
+
+
+### Features
+
+* current workspace changes ([82dba0f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/82dba0f6e8ed2dea6ee319ad690993ff3ecfb526))
+
+
+
+
+
 ## [0.2.54](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.53...v0.2.54) (2026-03-27)
 
 ### Detected changes

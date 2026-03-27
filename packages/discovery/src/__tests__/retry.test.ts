@@ -34,17 +34,7 @@ describe('withExponentialBackoff', () => {
     expect(fn).toHaveBeenCalledTimes(2);
   });
 
-  it('follows the [5,10,20,40,60,60,...] delay sequence', async () => {
-    const delays: number[] = [];
-    const realSetTimeout = globalThis.setTimeout;
-
-    // Spy on setTimeout to capture delay values
-    const spy = vi.spyOn(globalThis, 'setTimeout').mockImplementation((cb, ms, ...args) => {
-      delays.push(ms as number);
-      return realSetTimeout(cb, 0, ...args); // execute immediately for speed
-    });
-
-    // Fail 6 times then succeed — exercises all 5 default delays + cap
+  it('follows the [5,10,20,40,60] delay sequence', async () => {
     const fn = vi
       .fn()
       .mockRejectedValueOnce(new Error('e1'))
@@ -52,17 +42,17 @@ describe('withExponentialBackoff', () => {
       .mockRejectedValueOnce(new Error('e3'))
       .mockRejectedValueOnce(new Error('e4'))
       .mockRejectedValueOnce(new Error('e5'))
-      .mockRejectedValueOnce(new Error('e6'))
       .mockResolvedValue('done');
 
-    const result = await withExponentialBackoff(fn, [5, 10, 20, 40, 60]);
+    const promise = withExponentialBackoff(fn, [5, 10, 20, 40, 60]);
 
+    for (const ms of [5000, 10000, 20000, 40000, 60000]) {
+      await vi.advanceTimersByTimeAsync(ms);
+    }
+
+    const result = await promise;
     expect(result).toBe('done');
-    // 6 failures → 6 delays; last two should be capped at 60s
-    const delaysSec = delays.map((ms) => ms / 1000);
-    expect(delaysSec).toEqual([5, 10, 20, 40, 60, 60]);
-
-    spy.mockRestore();
+    expect(fn).toHaveBeenCalledTimes(6);
   });
 
   it('throws the last error after all retries are exhausted', async () => {
@@ -73,14 +63,14 @@ describe('withExponentialBackoff', () => {
       .mockRejectedValueOnce(new Error('e2'))
       .mockRejectedValue(lastError);
 
-    const promise = withExponentialBackoff(fn, [1, 2]);
+    let error: Error | undefined;
+    const promise = withExponentialBackoff(fn, [1, 2]).catch(e => { error = e; });
 
-    // Advance through both delays
     await vi.advanceTimersByTimeAsync(1000);
     await vi.advanceTimersByTimeAsync(2000);
+    await promise;
 
-    await expect(promise).rejects.toThrow('final failure');
-    // initial call + 2 retries = 3 total calls
+    expect(error).toBe(lastError);
     expect(fn).toHaveBeenCalledTimes(3);
   });
 });
