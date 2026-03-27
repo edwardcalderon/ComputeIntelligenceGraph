@@ -1,23 +1,23 @@
 # CIG Project Status
 
-Last updated: 2026-03-23  
-Version: 0.1.58  
-Latest released tag: `v0.1.58`  
+Last updated: 2026-03-27  
+Version: 0.2.89  
+Latest released tag: `v0.2.89`  
 Status: Active development
 
 ## Current Snapshot
 
-Compute Intelligence Graph is a monorepo for a self-hosted infrastructure intelligence platform covering discovery, graph modeling, querying, cost analysis, security review, dashboard workflows, and CLI-driven deployment/setup.
+Compute Intelligence Graph is a monorepo for a self-hosted and managed infrastructure intelligence platform covering discovery, graph modeling, querying, cost analysis, security review, dashboard workflows, CLI-driven deployment/setup, and live/demo graph exploration.
 
 The current repository state is aligned around these primary surfaces:
 
 - `apps/landing` is the public landing site and authentication entrypoint at `https://cig.lat`
-- `apps/dashboard` is the main protected application at `https://app.cig.lat`
-- `packages/api` is the Fastify API layer for REST, GraphQL, WebSocket, auth, and metrics
+- `apps/dashboard` is the main protected application at `https://app.cig.lat` with graph source switching, 2D/3D graph visualization, and chat workflows
+- `packages/api` is the Fastify API layer for REST, GraphQL, WebSocket, auth, metrics, chat, and graph snapshots
 - `packages/graph` is the Neo4j graph engine
 - `packages/discovery` plus `services/cartography` provide discovery orchestration and inventory collection
 - `packages/chatbot` plus `packages/agents` provide retrieval, reasoning, and action workflows
-- `packages/cli` is the operator and install surface
+- `packages/cli` is the operator and install surface, including demo-data provisioning
 
 The architecture foundation now explicitly treats:
 
@@ -29,7 +29,7 @@ The architecture foundation now explicitly treats:
 
 ## Release State
 
-The `v0.1.58` patch release completed successfully on 2026-03-23.
+The `v0.2.89` patch release completed successfully on 2026-03-27.
 
 Release verification completed during the release workflow:
 
@@ -40,12 +40,12 @@ Release verification completed during the release workflow:
 
 ## Implemented Areas
 
-- Dashboard application with resources, graph, costs, security, auth flows, and E2E coverage
-- Fastify API with REST, GraphQL, WebSocket, metrics, rate limiting, and device/auth flows
+- Dashboard application with resources, live/demo graph switching, 2D/3D graph visualization, costs, security, auth flows, chat, and E2E coverage
+- Fastify API with REST, GraphQL, WebSocket, metrics, rate limiting, chat, semantic retrieval, and device/auth flows
 - Neo4j graph engine with traversal and dependency handling
 - Discovery orchestration and Python Cartography service
-- Chatbot and agent packages for retrieval, query reasoning, and actions
-- CLI flows for login, install, bootstrap, enroll, connect, and local state management
+- Chatbot and agent packages for retrieval, query reasoning, semantic indexing, and actions
+- CLI flows for login, install, bootstrap, enroll, connect, demo provisioning, and local state management
 - Authentication helpers and shared auth/session utilities
 - Infrastructure wrapper and Terraform-backed deployment assets
 - Shared packages for config, i18n, UI primitives, node runtime, and runtime contracts

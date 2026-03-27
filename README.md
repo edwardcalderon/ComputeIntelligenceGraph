@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Compute Intelligence Graph</strong><br />
-  Self-hosted infrastructure intelligence for discovery, graph modeling, querying, cost analysis, and security review.
+  Self-hosted and managed infrastructure intelligence for discovery, graph modeling, querying, cost analysis, security review, live/demo graph exploration, and chat-assisted operations.
 </p>
 
 <p align="center">
@@ -35,6 +35,19 @@
 - Deployment: [docs/deployment/README.md](docs/deployment/README.md)
 - Authentication: [docs/authentication/README.md](docs/authentication/README.md)
 
+## Current Product State
+
+- `apps/landing` is the public entrypoint and authentication handoff surface at `https://cig.lat`
+- `apps/dashboard` is the protected application at `https://app.cig.lat` with live/demo graph source switching, 2D/3D graph visualization, and chat workflows
+- `packages/api` is the canonical Fastify API for REST, GraphQL, WebSocket, chat, graph snapshots, semantic retrieval, and auth bridges
+- `packages/cli` is the operator and install surface, including interactive demo-data provisioning for new installs
+- `packages/discovery`, `services/cartography`, `packages/graph`, `packages/chatbot`, and `packages/agents` power discovery, graph indexing, retrieval, and refinement workflows
+
+### Operating Modes
+
+- `live` uses real discovery-backed infrastructure for managed or self-hosted environments
+- `demo` uses the shared seeded demo workspace for managed demo accounts and local development when live discovery is unavailable
+
 ## <a id="english"></a>English
 
 ### Overview
@@ -44,15 +57,17 @@ Compute Intelligence Graph is a monorepo for a self-hosted platform focused on:
 - infrastructure discovery
 - graph-based modeling and querying
 - cost and security analysis
-- dashboard and API workflows
-- CLI and deployment tooling
+- live/demo graph exploration with 2D and 3D visualization
+- dashboard, chat, and API workflows
+- CLI and deployment tooling with demo provisioning
 
 ### System Foundations
 
 - `packages/api` is the canonical domain API and the target public API surface for `https://api.cig.technology/`
-- `apps/dashboard` is the protected UI shell; internal Next.js routes should stay limited to web-session, auth-relay, and browser-bridge concerns
+- `apps/dashboard` is the protected UI shell; internal Next.js routes should stay limited to web-session, auth-relay, browser-bridge, and graph-source concerns
 - `packages/sdk` is the shared typed client foundation for dashboard and CLI, with an optional follow-up path to absorb higher-level CIG business workflows
 - `packages/iac` owns AWS API core data such as networking and Neo4j, while `packages/infra` owns the ECS/Fargate runtime delivery path
+- `packages/runtime-contracts` keeps cross-package runtime types aligned where shared contracts are needed
 
 ### Repository Layout
 
@@ -72,6 +87,7 @@ packages/
   graph/         Neo4j graph engine
   iac/           Terraform modules
   infra/         AWS deployment wrapper
+  runtime-contracts/  Shared runtime contract types
   sdk/           Shared typed API client foundation
 services/
   cartography/   Python FastAPI discovery service
@@ -109,6 +125,15 @@ pnpm env:validate
 docker-compose -f docker-compose.dev.yml up -d
 ```
 
+#### Provision demo or self-hosted installs
+
+```bash
+curl -fsSL https://cig.lat/install.sh | bash
+cig install
+cig install --demo
+cig install --mode self-hosted --profile discovery
+```
+
 #### Start the apps you need
 
 ```bash
@@ -135,8 +160,8 @@ pnpm version:status
 
 ### Contact
 
-- Support: [support@cig.technolgy](mailto:support@cig.technolgy)
-- Development: [dev@cig.technolgy](mailto:dev@cig.technolgy)
+- Support: [support@cig.technology](mailto:support@cig.technology)
+- Development: [dev@cig.technology](mailto:dev@cig.technology)
 - General contact: [contact@cig.technology](mailto:contact@cig.technology)
 
 ## <a id="espanol"></a>Español
@@ -148,8 +173,9 @@ Compute Intelligence Graph es un monorepo para una plataforma self-hosted enfoca
 - descubrimiento de infraestructura
 - modelado y consultas basadas en grafos
 - análisis de costos y seguridad
-- flujos de trabajo con dashboard y API
-- herramientas de CLI y despliegue
+- exploración de grafos en modo demo o live
+- flujos de trabajo con dashboard, chat y API
+- herramientas de CLI y despliegue con provisión demo
 
 ### Fundamentos del Sistema
 
@@ -239,8 +265,8 @@ pnpm version:status
 
 ### Contacto
 
-- Soporte: [support@cig.technolgy](mailto:support@cig.technolgy)
-- Desarrollo: [dev@cig.technolgy](mailto:dev@cig.technolgy)
+- Soporte: [support@cig.technology](mailto:support@cig.technology)
+- Desarrollo: [dev@cig.technology](mailto:dev@cig.technology)
 - Contacto general: [contact@cig.technology](mailto:contact@cig.technology)
 
 ## <a id="zhongwen"></a>中文
@@ -252,8 +278,9 @@ Compute Intelligence Graph 是一个面向自托管基础设施智能平台的 m
 - 基础设施发现
 - 图模型与图查询
 - 成本与安全分析
-- Dashboard 与 API 工作流
-- CLI 与部署工具
+- Demo / Live 图谱探索
+- Dashboard、Chat 与 API 工作流
+- CLI 与部署工具以及 demo 预置
 
 ### 系统基础
 
@@ -343,8 +370,8 @@ pnpm version:status
 
 ### 联系方式
 
-- 技术支持: [support@cig.technolgy](mailto:support@cig.technolgy)
-- 开发团队: [dev@cig.technolgy](mailto:dev@cig.technolgy)
+- 技术支持: [support@cig.technology](mailto:support@cig.technology)
+- 开发团队: [dev@cig.technology](mailto:dev@cig.technology)
 - 综合联系: [contact@cig.technology](mailto:contact@cig.technology)
 
 ## License
