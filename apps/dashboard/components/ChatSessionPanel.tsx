@@ -487,7 +487,7 @@ export function ChatSessionPanel({
 
       <aside
         className={[
-          "hidden shrink-0 border-r border-slate-100 bg-slate-50/55 dark:border-zinc-700/40 dark:bg-zinc-950/20 sm:flex sm:flex-col",
+          "hidden shrink-0 border-r border-slate-100 bg-slate-50/55 dark:border-zinc-700/40 dark:bg-zinc-950/20 sm:flex sm:flex-col rounded-bl-3xl",
           "transition-[width] duration-300 ease-out",
           desktopCompact ? "w-16" : "w-48",
         ].join(" ")}

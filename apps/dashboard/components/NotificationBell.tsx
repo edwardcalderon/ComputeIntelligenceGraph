@@ -144,7 +144,7 @@ export function NotificationBell() {
     <div ref={panelRef} className="relative">
       {/* Bell button */}
       <button
-        onClick={() => setOpen(true)}
+        onClick={() => setOpen((v) => !v)}
         className="relative flex items-center justify-center size-8 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         aria-label={t("notifications.title")}
       >

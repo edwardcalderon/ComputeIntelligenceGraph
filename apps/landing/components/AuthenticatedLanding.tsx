@@ -898,7 +898,7 @@ export function AuthenticatedLanding() {
 
       {/* ── Hero ────────────────────────────────────────────── */}
       <div className="relative z-30 px-4 pt-24 pb-14 text-center sm:px-6 sm:pt-28 sm:pb-16">
-        <div className="mx-auto flex max-w-4xl flex-col items-center rounded-[2rem] border border-cyan-500/10 bg-white/70 px-6 py-8 shadow-[0_24px_90px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/55 dark:shadow-[0_24px_90px_rgba(0,0,0,0.42)] sm:px-10 sm:py-11 md:py-12">
+        <div key={theme} className="mx-auto flex max-w-4xl flex-col items-center rounded-[2rem] border border-cyan-500/10 bg-white/70 px-6 py-8 shadow-[0_24px_90px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/55 dark:shadow-[0_24px_90px_rgba(0,0,0,0.42)] sm:px-10 sm:py-11 md:py-12">
           {/* Headline */}
           <h1 className="mb-3 text-4xl font-bold tracking-tight md:text-5xl">
             <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-violet-400 bg-clip-text text-transparent">
