@@ -5,7 +5,9 @@ import { registerRoutes } from './routes';
 import { registerGraphQL } from './graphql';
 import { registerWebSocket } from './websocket';
 import { getMetrics, recordHttpRequest } from './metrics';
-import { startHeartbeatMonitor } from './jobs/heartbeat-monitor';
+import { startHeartbeatMonitor, stopHeartbeatMonitor } from './jobs/heartbeat-monitor';
+import { startSemanticIndexSync, stopSemanticIndexSync } from './jobs/semantic-index-sync';
+import { ensureDemoWorkspaceProvisioned } from './demo-workspace';
 import { closeDatabase } from './db/client';
 
 const VERSION = '0.1.0';
@@ -25,6 +27,20 @@ type ChatHealthStatus = {
 };
 
 let openAiHealthCache: { checkedAt: number; status: ChatHealthStatus } | null = null;
+
+export function startBackgroundJobs(app: FastifyInstance): void {
+  startHeartbeatMonitor();
+  startSemanticIndexSync(app.log);
+
+  if (process.env.CIG_AUTH_MODE === 'managed') {
+    void ensureDemoWorkspaceProvisioned(app.log).catch((error) => {
+      app.log.warn(
+        { err: error },
+        'Demo workspace auto-provision failed; falling back to seeded demo snapshot'
+      );
+    });
+  }
+}
 
 function resolveCorsOrigins(): true | string[] {
   const configuredOrigins = process.env.CORS_ORIGINS?.trim();
@@ -202,6 +218,8 @@ export async function createServer(): Promise<FastifyInstance> {
   await registerWebSocket(app);
 
   app.addHook('onClose', async () => {
+    stopHeartbeatMonitor();
+    stopSemanticIndexSync();
     await closeDatabase();
   });
 
@@ -217,8 +235,8 @@ export async function start(): Promise<void> {
   try {
     await app.listen({ port, host });
     app.log.info(`Server listening on ${host}:${port}`);
-    // Start background job for heartbeat status monitoring (Requirement 14.7)
-    startHeartbeatMonitor();
+    // Start background jobs after the server is listening so startup remains responsive.
+    startBackgroundJobs(app);
   } catch (err) {
     app.log.error(err);
     process.exit(1);

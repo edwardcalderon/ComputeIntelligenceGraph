@@ -1,3 +1,17 @@
+## [0.2.86](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.85...v0.2.86) (2026-03-27)
+
+### Detected changes
+- packages: 2 changed file(s)
+  - packages/api/src/__tests__/startup.test.ts
+  - packages/api/src/index.ts
+
+
+## [0.2.86](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.85...v0.2.86) (2026-03-27)
+
+
+
+
+
 ## [0.2.85](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.84...v0.2.85) (2026-03-27)
 
 
