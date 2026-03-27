@@ -1,3 +1,27 @@
+## [0.2.69](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.68...v0.2.69) (2026-03-27)
+
+
+### Features
+
+* add CHROMA_URI to self-hosted API for internal vector db access ([a87bd82](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/a87bd82a8cc1f1ad84007c812cf36e74753c3358))
+* implement demo mode with simulation provider and CLI --demo flag ([059411f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/059411f70fc0d10a5c334efbd32bc60dd89d9d5d))
+
+
+
+
+
+## [0.2.69](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.68...v0.2.69) (2026-03-27)
+
+
+### Features
+
+* add CHROMA_URI to self-hosted API for internal vector db access ([a87bd82](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/a87bd82a8cc1f1ad84007c812cf36e74753c3358))
+* implement demo mode with simulation provider and CLI --demo flag ([059411f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/059411f70fc0d10a5c334efbd32bc60dd89d9d5d))
+
+
+
+
+
 ## [0.2.68](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.67...v0.2.68) (2026-03-27)
 
 

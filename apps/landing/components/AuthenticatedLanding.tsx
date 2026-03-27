@@ -260,8 +260,9 @@ function FeatureModal({ feature, onClose, onOpen }: FeatureModalProps) {
       >
         <div
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-lg rounded-3xl overflow-hidden pointer-events-auto"
+          className="relative w-full max-w-lg rounded-3xl overflow-hidden"
           style={{
+            pointerEvents: visible ? "auto" : "none",
             background: isDark
               ? `radial-gradient(circle at top right, ${withAlpha(c, 0.22)} 0%, transparent 50%), linear-gradient(180deg, rgba(14,20,35,0.98) 0%, rgba(3,7,18,0.99) 100%)`
               : `radial-gradient(circle at top right, ${withAlpha(c, 0.16)} 0%, transparent 50%), linear-gradient(180deg, rgba(255,255,255,0.99) 0%, rgba(241,245,249,0.99) 100%)`,

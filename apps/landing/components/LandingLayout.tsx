@@ -16,11 +16,20 @@ function cn(...classes: (string | false | undefined)[]) {
 function BackToTop() {
   const t = useTranslation();
   const [show, setShow] = useState(false);
+  const [bottomPx, setBottomPx] = useState(16);
 
   useEffect(() => {
-    const onScroll = () => setShow(window.scrollY > 400);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    function update() {
+      setShow(window.scrollY > 400);
+      const footer = document.getElementById("site-footer");
+      if (footer) {
+        const gap = window.innerHeight - footer.getBoundingClientRect().top;
+        setBottomPx(gap > 0 ? gap + 8 : 16);
+      }
+    }
+    window.addEventListener("scroll", update, { passive: true });
+    update();
+    return () => window.removeEventListener("scroll", update);
   }, []);
 
   return (
@@ -28,8 +37,9 @@ function BackToTop() {
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       aria-label={t("hero.backToTop")}
       title={t("hero.backToTop")}
+      style={{ bottom: `${bottomPx}px` }}
       className={cn(
-        "fixed bottom-4 right-4 z-40 rounded-full border border-zinc-200/80 dark:border-zinc-800 bg-white/85 dark:bg-zinc-950/85 px-3 py-3 sm:px-4 shadow-lg shadow-zinc-900/10 backdrop-blur transition-all duration-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:scale-105 hover:border-zinc-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer",
+        "fixed right-4 z-40 rounded-full border border-zinc-200/80 dark:border-zinc-800 bg-white/85 dark:bg-zinc-950/85 px-3 py-3 sm:px-4 shadow-lg shadow-zinc-900/10 backdrop-blur transition-all duration-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:scale-105 hover:border-zinc-300 dark:hover:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer",
         show ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-4 pointer-events-none"
       )}
     >
@@ -61,7 +71,7 @@ function Footer() {
     .join(" · ");
 
   return (
-    <footer className="relative w-full border-t border-zinc-200 dark:border-zinc-800/50 px-4 py-4 sm:px-6">
+    <footer id="site-footer" className="relative w-full border-t border-zinc-200 dark:border-zinc-800/50 px-4 py-4 sm:px-6">
       <div className="relative z-10">
         <FooterBar
           brandLabel={t("footer.brandTitle")}
