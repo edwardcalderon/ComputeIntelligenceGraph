@@ -137,6 +137,7 @@ function generateComposeFile(
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_PASSWORD=\${NEO4J_PASSWORD}
       - DATABASE_URL=\${DATABASE_URL:-}
+      - CIG_DEMO_MODE=\${CIG_DEMO_MODE:-false}
     depends_on:
       - neo4j
 

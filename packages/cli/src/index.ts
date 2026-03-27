@@ -235,13 +235,14 @@ program
   .option('--mode <mode>', 'Installation mode: managed or self-hosted')
   .option('--profile <profile>', 'Installation profile: core, discovery, or full')
   .option('--api-url <url>', 'Control plane API URL')
-  .option('--demo', 'Include demo data in the installation', false)
+  .option('--demo', 'Include demo data in the installation')
   .action(async (cmdOpts: { mode?: string; profile?: string; apiUrl?: string; demo?: boolean }) => {
     const { setup } = await import('./commands/setup.js');
     await setup({
       mode: cmdOpts.mode as 'managed' | 'self-hosted' | undefined,
       profile: cmdOpts.profile as 'core' | 'discovery' | 'full' | undefined,
       apiUrl: cmdOpts.apiUrl,
+      // undefined when flag not passed → wizard will prompt; true when --demo passed → skip prompt
       demo: cmdOpts.demo,
     });
   });
