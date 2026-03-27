@@ -93,6 +93,9 @@ function generateServiceConfig(
         PORT: '8000',
         LOG_LEVEL: 'info',
         OPENAI_API_KEY: '${OPENAI_API_KEY:-}',
+        OPENAI_TRANSCRIPTION_MODEL: '${OPENAI_TRANSCRIPTION_MODEL:-whisper-1}',
+        CHAT_UPLOAD_MAX_BYTES: '${CHAT_UPLOAD_MAX_BYTES:-10485760}',
+        CHAT_AUDIO_MAX_SECONDS: '${CHAT_AUDIO_MAX_SECONDS:-120}',
       },
       healthcheck: {
         test: ['CMD', 'curl', '-f', 'http://localhost:8000/health'],

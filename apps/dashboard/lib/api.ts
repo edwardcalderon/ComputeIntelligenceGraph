@@ -1,15 +1,22 @@
-import type { BootstrapCompletePayload } from "@cig/sdk";
+import type { BootstrapCompletePayload, SendChatMessagePayload } from "@cig/sdk";
 import { getDashboardClient } from "./cigClient";
 
 export type {
   BootstrapCompletePayload,
   BootstrapCompleteResponse,
   BootstrapStatus,
+  ChatAttachmentContextItem,
+  ChatAttachmentUploadResponse,
+  ChatCodeSnippetContextItem,
+  ChatContextItem,
   ChatMessage,
   ChatResponse,
   ChatSessionDetailResponse,
   ChatSessionListResponse,
   ChatSessionSummary,
+  ChatResourceLinkContextItem,
+  ChatTranscriptContextItem,
+  ChatTranscriptionResponse,
   CostBreakdown,
   CostBreakdownEntry,
   CostEntry,
@@ -33,6 +40,7 @@ export type {
   SecurityFindingsResponse,
   SecurityScanResult,
   SecurityScore,
+  SendChatMessagePayload,
   SessionListResponse,
   TargetsResponse,
 } from "@cig/sdk";
@@ -90,8 +98,16 @@ export const deleteChatSession = (sessionId: string) =>
 export const renameChatSession = (sessionId: string, title: string) =>
   getClient().renameChatSession(sessionId, { title });
 
-export const sendChatMessage = (message: string, sessionId?: string) =>
-  getClient().sendChatMessage(message, sessionId);
+export const uploadChatAttachment = (file: Blob, filename?: string) =>
+  getClient().uploadChatAttachment(file, filename);
+
+export const transcribeChatAudio = (
+  file: Blob,
+  options?: { filename?: string; durationMs?: number; mode?: "review" | "auto-send" },
+) => getClient().transcribeChatAudio(file, options);
+
+export const sendChatMessage = (payload: SendChatMessagePayload) =>
+  getClient().sendChatMessage(payload);
 
 export const getTargets = () => getClient().getTargets();
 

@@ -151,6 +151,26 @@ module.exports = {
       secret: true,
       targets: { api: 'OPENAI_API_KEY', agents: 'OPENAI_API_KEY', chatbot: 'OPENAI_API_KEY' },
     },
+    OPENAI_CHAT_MODEL: {
+      description: 'OpenAI chat model for infrastructure responses and image summaries',
+      example: 'gpt-4o-mini',
+      targets: { api: 'OPENAI_CHAT_MODEL' },
+    },
+    OPENAI_TRANSCRIPTION_MODEL: {
+      description: 'OpenAI transcription model used for voice-to-text chat input',
+      example: 'whisper-1',
+      targets: { api: 'OPENAI_TRANSCRIPTION_MODEL' },
+    },
+    CHAT_UPLOAD_MAX_BYTES: {
+      description: 'Maximum attachment upload size per file in bytes',
+      example: '10485760',
+      targets: { api: 'CHAT_UPLOAD_MAX_BYTES' },
+    },
+    CHAT_AUDIO_MAX_SECONDS: {
+      description: 'Maximum voice recording length per transcription request in seconds',
+      example: '120',
+      targets: { api: 'CHAT_AUDIO_MAX_SECONDS' },
+    },
     API_OPENAI_API_KEY_SECRET_ARN: {
       description: 'AWS Secrets Manager ARN for the API OpenAI key',
       example: 'arn:aws:secretsmanager:us-east-2:123456789012:secret:cig/api/openai',

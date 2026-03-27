@@ -84,6 +84,62 @@ pnpm --filter @cig/infra diff:api:prod
 
 Terraform-owned API core data lives in `packages/iac/environments/api-prod`, while the AWS runtime stack lives in `packages/infra`.
 
+## Chat Tools And Voice Input
+
+The dashboard chat composer now supports four structured input tools:
+
+- `Attach`: images and simple documents
+- `Link`: live infrastructure resources from the indexed graph
+- `Code`: SQL, search, and Cypher snippets as structured prompt context
+- `Mic`: browser audio recording with server-side transcription
+
+The API persists only normalized metadata, extracted text, and transcript text in chat history. Raw uploaded files and raw audio are not stored in the main session history.
+
+### Required Local Env
+
+The API now reads these chat-specific env vars:
+
+```bash
+OPENAI_TRANSCRIPTION_MODEL=whisper-1
+CHAT_UPLOAD_MAX_BYTES=10485760
+CHAT_AUDIO_MAX_SECONDS=120
+```
+
+`OPENAI_API_KEY` is required for image summaries and audio transcription. If it is missing, the chat endpoint still runs, but upload/image enrichment and voice transcription will fail closed.
+
+### Supported Local Inputs
+
+Attachments:
+
+- images: `png`, `jpg`, `jpeg`, `webp`
+- documents: `pdf`, `txt`, `md`, `json`, `yaml`, `yml`, `sql`, `csv`
+
+Defaults:
+
+- up to `5` context items per draft
+- max attachment size: `10 MB` per file
+- max audio duration: `120` seconds per recording
+
+### Browser Voice Notes
+
+- `localhost` works for microphone access during local development
+- deployed environments should use `https`
+- the current browser implementation uses `MediaRecorder`
+- review mode inserts the transcript back into the draft
+- auto-send mode sends the transcript as the next user turn immediately
+
+### Resource Linking In Local Dev
+
+The `Link` picker only shows real resources that are already indexed into the graph.
+
+If the picker is empty:
+
+1. start the local stack with `docker-compose -f docker-compose.dev.yml up -d`
+2. run discovery with `pnpm dev:discovery` or the full stack with `pnpm dev:all`
+3. confirm the docs app is running at `http://localhost:3004/documentation`
+
+When the graph is still empty, the chat fallback now points users to the local self-hosted setup flow instead of pretending the environment already has indexed resources.
+
 ## Release Workflow
 
 The repository release flow is driven by `scripts/release.sh` and exposed through:

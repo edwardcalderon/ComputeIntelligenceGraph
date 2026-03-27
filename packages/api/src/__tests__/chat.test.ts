@@ -1,10 +1,11 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { GraphQueryEngine, Provider, ResourceState, ResourceType, type Resource_Model } from '@cig/graph';
+import { CartographyClient } from '@cig/discovery';
 import { createServer } from '../index';
 import { clearPersistedChatSessionsForTests } from '../chat-store';
 import { generateJwt, Permission } from '../auth';
-import { answerChatQuestion } from '../chat';
+import { answerChatQuestion, type ChatInfrastructureSnapshot } from '../chat';
 
 function makeAuthHeader(): string {
   const token = generateJwt({
@@ -33,9 +34,43 @@ function makeResource(): Resource_Model {
   };
 }
 
+function buildMultipartBody(
+  boundary: string,
+  parts: Array<
+    | { type: 'field'; name: string; value: string }
+    | { type: 'file'; name: string; filename: string; mimeType: string; content: string }
+  >
+): string {
+  return parts
+    .map((part) => {
+      if (part.type === 'field') {
+        return [
+          `--${boundary}`,
+          `Content-Disposition: form-data; name="${part.name}"`,
+          '',
+          part.value,
+        ].join('\r\n');
+      }
+
+      return [
+        `--${boundary}`,
+        `Content-Disposition: form-data; name="${part.name}"; filename="${part.filename}"`,
+        `Content-Type: ${part.mimeType}`,
+        '',
+        part.content,
+      ].join('\r\n');
+    })
+    .concat(`--${boundary}--`)
+    .join('\r\n');
+}
+
 describe('POST /api/v1/chat', () => {
   let app: FastifyInstance;
   const searchResourcesSpy = vi.spyOn(GraphQueryEngine.prototype, 'searchResources');
+  const getResourceCountsSpy = vi.spyOn(GraphQueryEngine.prototype, 'getResourceCounts');
+  const listResourcesPagedSpy = vi.spyOn(GraphQueryEngine.prototype, 'listResourcesPaged');
+  const cartographyHealthSpy = vi.spyOn(CartographyClient.prototype, 'healthCheck');
+  const cartographyStatusSpy = vi.spyOn(CartographyClient.prototype, 'getStatus');
 
   beforeAll(async () => {
     process.env['DATABASE_URL'] = 'sqlite://:memory:';
@@ -49,11 +84,30 @@ describe('POST /api/v1/chat', () => {
 
   afterAll(async () => {
     searchResourcesSpy.mockRestore();
+    getResourceCountsSpy.mockRestore();
+    listResourcesPagedSpy.mockRestore();
+    cartographyHealthSpy.mockRestore();
+    cartographyStatusSpy.mockRestore();
     await app.close();
   });
 
   beforeEach(async () => {
     searchResourcesSpy.mockReset();
+    getResourceCountsSpy.mockReset();
+    listResourcesPagedSpy.mockReset();
+    cartographyHealthSpy.mockReset();
+    cartographyStatusSpy.mockReset();
+    getResourceCountsSpy.mockResolvedValue({});
+    listResourcesPagedSpy.mockResolvedValue({ items: [], total: 0, hasMore: false });
+    cartographyHealthSpy.mockResolvedValue(true);
+    cartographyStatusSpy.mockResolvedValue({
+      running: true,
+      run_count: 1,
+      last_run_start: '2026-03-26T00:00:00.000Z',
+      last_run_end: null,
+      last_run_success: true,
+      last_error: null,
+    });
     await clearPersistedChatSessionsForTests();
   });
 
@@ -208,6 +262,56 @@ describe('POST /api/v1/chat', () => {
     expect(sessions.items[0]?.title).toBe('Production alerts');
   });
 
+  it('persists user context item metadata in session history', async () => {
+    searchResourcesSpy.mockResolvedValueOnce([]);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/chat',
+      headers: {
+        authorization: makeAuthHeader(),
+      },
+      payload: {
+        contextItems: [
+          {
+            type: 'code_snippet',
+            language: 'sql',
+            title: 'Cost SQL',
+            content: 'SELECT service, amount FROM usage_costs LIMIT 25;',
+          },
+        ],
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json<{ sessionId: string }>();
+
+    const messagesResponse = await app.inject({
+      method: 'GET',
+      url: `/api/v1/chat/sessions/${body.sessionId}/messages`,
+      headers: {
+        authorization: makeAuthHeader(),
+      },
+    });
+
+    expect(messagesResponse.statusCode).toBe(200);
+    const messages = messagesResponse.json<{
+      items: Array<{
+        role: 'user' | 'assistant';
+        content: string;
+        contextItems?: Array<{ type: string; language?: string; title?: string }>;
+      }>;
+    }>();
+
+    expect(messages.items[0]?.contextItems).toEqual([
+      expect.objectContaining({
+        type: 'code_snippet',
+        language: 'sql',
+        title: 'Cost SQL',
+      }),
+    ]);
+  });
+
   it('asks for clarification and allows a stored session to be deleted', async () => {
     searchResourcesSpy.mockResolvedValueOnce([]);
 
@@ -230,8 +334,10 @@ describe('POST /api/v1/chat', () => {
       clarifyingQuestion?: string;
     }>();
     expect(body.needsClarification).toBe(true);
-    expect(body.clarifyingQuestion).toContain('provider');
-    expect(body.answer).toContain('I could not match');
+    expect(body.clarifyingQuestion).toContain('local self-hosted');
+    expect(body.answer).toContain('Discovery is reachable');
+    expect(body.answer).toContain('docker-compose -f docker-compose.dev.yml up -d');
+    expect(body.answer).toContain('http://localhost:3004/documentation');
 
     const messagesResponse = await app.inject({
       method: 'GET',
@@ -245,8 +351,9 @@ describe('POST /api/v1/chat', () => {
     const messages = messagesResponse.json<{
       items: Array<{ role: 'user' | 'assistant'; content: string }>;
     }>();
-    expect(messages.items[1]?.content).toContain('I could not match');
-    expect(messages.items[1]?.content).toContain('provider');
+    expect(messages.items[1]?.content).toContain('Discovery is reachable');
+    expect(messages.items[1]?.content).toContain('docker-compose -f docker-compose.dev.yml up -d');
+    expect(messages.items[1]?.content).toContain('http://localhost:3004/documentation');
 
     const deleteResponse = await app.inject({
       method: 'DELETE',
@@ -268,6 +375,84 @@ describe('POST /api/v1/chat', () => {
 
     expect(sessionsResponse.json<{ total: number }>().total).toBe(0);
   });
+
+  it('accepts text document uploads and returns normalized attachment metadata', async () => {
+    const boundary = '----chat-upload-boundary';
+    const payload = buildMultipartBody(boundary, [
+      {
+        type: 'file',
+        name: 'file',
+        filename: 'schema.sql',
+        mimeType: 'text/x-sql',
+        content: 'SELECT * FROM schema_migrations;',
+      },
+    ]);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/chat/uploads',
+      headers: {
+        authorization: makeAuthHeader(),
+        'content-type': `multipart/form-data; boundary=${boundary}`,
+      },
+      payload,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json<{ item: { type: string; name: string; kind: string } }>()).toEqual({
+      item: expect.objectContaining({
+        type: 'attachment',
+        name: 'schema.sql',
+        kind: 'document',
+      }),
+    });
+  });
+
+  it('transcribes audio uploads through the OpenAI transcription API', async () => {
+    process.env['OPENAI_API_KEY'] = 'test-openai-key';
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ text: 'Database CPU is spiking in prod.' }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })
+    ) as typeof fetch;
+
+    const boundary = '----chat-audio-boundary';
+    const payload = buildMultipartBody(boundary, [
+      { type: 'field', name: 'durationMs', value: '1500' },
+      { type: 'field', name: 'mode', value: 'review' },
+      {
+        type: 'file',
+        name: 'file',
+        filename: 'voice.webm',
+        mimeType: 'audio/webm',
+        content: 'fake-audio-content',
+      },
+    ]);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/v1/chat/transcriptions',
+      headers: {
+        authorization: makeAuthHeader(),
+        'content-type': `multipart/form-data; boundary=${boundary}`,
+      },
+      payload,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json<{ text: string; item: { type: string; mode: string } }>()).toEqual({
+      text: 'Database CPU is spiking in prod.',
+      item: expect.objectContaining({
+        type: 'transcript',
+        mode: 'review',
+      }),
+    });
+
+    globalThis.fetch = originalFetch;
+    process.env['OPENAI_API_KEY'] = '';
+  });
 });
 
 describe('answerChatQuestion', () => {
@@ -282,11 +467,61 @@ describe('answerChatQuestion', () => {
     expect(response.answer.toLowerCase()).toContain('cig assistant');
   });
 
-  it('uses a domain-specific clarification for cost questions without matches', async () => {
-    const response = await answerChatQuestion('show me the cost of my databases', []);
+  it('summarizes actual resources when no exact match is found', async () => {
+    const infrastructure: ChatInfrastructureSnapshot = {
+      deploymentMode: 'self-hosted',
+      discoveryHealthy: true,
+      discoveryRunning: false,
+      discoveryLastRun: '2026-03-26T00:00:00.000Z',
+      discoveryNextRun: '2026-03-26T00:05:00.000Z',
+      resourceCounts: {
+        service: 2,
+        database: 1,
+        compute: 4,
+      },
+      sampleResources: [
+        makeResource(),
+        {
+          ...makeResource(),
+          id: 'db-prod',
+          name: 'prod-db',
+          type: ResourceType.DATABASE,
+          state: ResourceState.ACTIVE,
+        },
+        {
+          ...makeResource(),
+          id: 'worker-1',
+          name: 'worker-1',
+          type: ResourceType.COMPUTE,
+          state: ResourceState.RUNNING,
+        },
+      ],
+    };
+
+    const response = await answerChatQuestion('show me the cost of my databases', [], [], infrastructure);
 
     expect(response.needsClarification).toBe(true);
-    expect(response.answer.toLowerCase()).toContain('could not match');
+    expect(response.answer.toLowerCase()).toContain('indexed resource');
+    expect(response.answer).toContain('service: 2');
+    expect(response.answer).toContain('prod-db');
     expect(response.clarifyingQuestion).toContain('provider, service, region, or resource');
+  });
+
+  it('returns setup guidance when no resources are indexed', async () => {
+    const response = await answerChatQuestion('cost', [], [], {
+      deploymentMode: 'self-hosted',
+      discoveryHealthy: true,
+      discoveryRunning: false,
+      discoveryLastRun: null,
+      discoveryNextRun: null,
+      resourceCounts: {},
+      sampleResources: [],
+    });
+
+    expect(response.needsClarification).toBe(true);
+    expect(response.answer).toContain('graph still has no indexed resources yet');
+    expect(response.answer).toContain('docker-compose -f docker-compose.dev.yml up -d');
+    expect(response.answer).toContain('http://localhost:3004/documentation');
+    expect(response.clarifyingQuestion).toContain('local self-hosted');
   });
 });

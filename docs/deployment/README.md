@@ -50,6 +50,52 @@ The repository release workflow currently verifies:
 
 That verification is performed by `scripts/release.sh` during patch, minor, and major releases.
 
+## Chat Runtime Requirements
+
+The production API now owns the full chat tool surface:
+
+- structured file attachments
+- infra-aware resource linking
+- query/code snippets
+- voice transcription through OpenAI
+
+### Required API Env
+
+These values must be present in the API runtime for the full feature set:
+
+```bash
+OPENAI_API_KEY=...
+OPENAI_CHAT_MODEL=gpt-4o-mini
+OPENAI_TRANSCRIPTION_MODEL=whisper-1
+CHAT_UPLOAD_MAX_BYTES=10485760
+CHAT_AUDIO_MAX_SECONDS=120
+```
+
+`OPENAI_API_KEY` is required for:
+
+- image summary generation
+- audio transcription
+- the OpenAI-backed answer path
+
+If the key is missing, the chat endpoint can still answer through the internal fallback logic, but transcription and image enrichment are unavailable.
+
+### Resource Linking And Empty Infrastructure States
+
+The `Link` picker uses the indexed graph, not arbitrary user-provided URLs.
+
+Production behavior now splits clearly:
+
+- if indexed resources exist, chat answers should anchor to those actual resources
+- if discovery is reachable but the graph is empty, chat returns setup guidance and docs links
+- if discovery is unhealthy, chat states that directly instead of giving a misleading generic clarification
+
+### Browser And Network Requirements For Voice
+
+- microphone capture should run over `https` in cloud environments
+- `localhost` remains valid for local development
+- the API only persists transcript text and normalized metadata in session history
+- raw audio files are not stored in the chat history tables
+
 ## Related Deployment Docs
 
 - API on AWS: [api-aws.md](api-aws.md)

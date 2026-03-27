@@ -119,6 +119,7 @@ async function resolveChatHealth(endpointReady: boolean): Promise<ChatHealthStat
 }
 
 export async function createServer(): Promise<FastifyInstance> {
+  const multipart = require('@fastify/multipart') as typeof import('@fastify/multipart');
   const app = Fastify({
     logger: {
       level: process.env.LOG_LEVEL ?? 'info',
@@ -132,6 +133,12 @@ export async function createServer(): Promise<FastifyInstance> {
   // CORS
   await app.register(cors, {
     origin: resolveCorsOrigins(),
+  });
+
+  await app.register(multipart, {
+    limits: {
+      files: 1,
+    },
   });
 
   // Rate limiting (100 req/min per client, Requirement 16.9)

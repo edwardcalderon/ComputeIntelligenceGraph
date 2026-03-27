@@ -1,6 +1,6 @@
 {
   "name": "@cig/api",
-  "version": "0.2.45",
+  "version": "0.2.46",
   "description": "CIG REST/GraphQL API server",
   "files": [
     "dist"
@@ -22,11 +22,12 @@
     "@cig/chatbot": "workspace:*",
     "@cig/discovery": "workspace:*",
     "@cig/graph": "workspace:*",
-    "@langchain/openai": "^0.1.0",
     "@escape.tech/graphql-armor-cost-limit": "^2.0.0",
     "@escape.tech/graphql-armor-max-depth": "^2.0.0",
     "@fastify/cors": "^8.0.0",
+    "@fastify/multipart": "^8.3.1",
     "@fastify/websocket": "^8.3.1",
+    "@langchain/openai": "^0.1.0",
     "@supabase/supabase-js": "^2.0.0",
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^9.4.3",
@@ -37,6 +38,7 @@
     "jose": "^5.2.3",
     "jsonwebtoken": "^9.0.0",
     "nodemailer": "^6.9.15",
+    "pdf-parse": "^2.4.5",
     "pg": "^8.11.3",
     "pino": "^8.0.0",
     "prom-client": "^15.1.3",

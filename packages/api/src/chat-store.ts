@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { QueryResultRow } from 'pg';
 import { query, withTransaction } from './db/client';
-import type { ChatTurn } from './chat';
+import type { ChatContextItem, ChatTurn } from './chat-context';
 
 export interface ChatSessionSummary {
   id: string;
@@ -30,6 +30,7 @@ interface ChatMessageRow extends QueryResultRow {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  metadata_json?: string | null;
 }
 
 const DEFAULT_CHAT_TITLE = 'New chat';
@@ -85,11 +86,25 @@ function mapSession(row: ChatSessionRow): ChatSessionSummary {
 }
 
 function mapMessage(row: ChatMessageRow): PersistedChatMessage {
+  let contextItems: ChatContextItem[] | undefined;
+
+  if (row.metadata_json) {
+    try {
+      const parsed = JSON.parse(row.metadata_json) as { contextItems?: ChatContextItem[] };
+      if (Array.isArray(parsed.contextItems) && parsed.contextItems.length > 0) {
+        contextItems = parsed.contextItems;
+      }
+    } catch {
+      contextItems = undefined;
+    }
+  }
+
   return {
     id: row.id,
     role: row.role,
     content: row.content,
     timestamp: row.timestamp,
+    contextItems,
   };
 }
 
@@ -119,6 +134,7 @@ async function ensureChatTables(): Promise<void> {
           session_id TEXT NOT NULL,
           role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
           content TEXT NOT NULL,
+          metadata_json TEXT,
           created_at TEXT NOT NULL
         )
       `);
@@ -127,6 +143,12 @@ async function ensureChatTables(): Promise<void> {
         CREATE INDEX IF NOT EXISTS chat_messages_session_created_idx
           ON chat_messages (session_id, created_at ASC)
       `);
+
+      try {
+        await query(`ALTER TABLE chat_messages ADD COLUMN metadata_json TEXT`);
+      } catch {
+        // Column already exists.
+      }
     })();
   }
 
@@ -177,6 +199,7 @@ export async function getChatSessionMessages(
            SELECT m.id,
                   m.role,
                   m.content,
+                  m.metadata_json,
                   m.created_at AS timestamp
              FROM chat_messages m
              JOIN chat_sessions s ON s.id = m.session_id
@@ -188,6 +211,7 @@ export async function getChatSessionMessages(
     : `SELECT m.id,
               m.role,
               m.content,
+              m.metadata_json,
               m.created_at AS timestamp
          FROM chat_messages m
          JOIN chat_sessions s ON s.id = m.session_id
@@ -250,13 +274,25 @@ export async function appendChatExchange(
   userId: string,
   sessionId: string,
   userMessage: string,
-  assistantMessage: string
+  assistantMessage: string,
+  options: {
+    userContextItems?: ChatContextItem[];
+    assistantContextItems?: ChatContextItem[];
+  } = {}
 ): Promise<ChatSessionSummary> {
   await ensureChatTables();
 
   const now = new Date().toISOString();
   const nextTitle = deriveTitle(userMessage);
   const nextPreview = derivePreview(assistantMessage);
+  const userMetadataJson =
+    options.userContextItems && options.userContextItems.length > 0
+      ? JSON.stringify({ contextItems: options.userContextItems })
+      : null;
+  const assistantMetadataJson =
+    options.assistantContextItems && options.assistantContextItems.length > 0
+      ? JSON.stringify({ contextItems: options.assistantContextItems })
+      : null;
 
   await withTransaction(async (txQuery) => {
     const sessionResult = await txQuery<ChatSessionRow>(
@@ -278,15 +314,15 @@ export async function appendChatExchange(
         : session.title;
 
     await txQuery(
-      `INSERT INTO chat_messages (id, session_id, role, content, created_at)
-       VALUES (?, ?, 'user', ?, ?)`,
-      [randomUUID(), sessionId, userMessage, now]
+      `INSERT INTO chat_messages (id, session_id, role, content, metadata_json, created_at)
+       VALUES (?, ?, 'user', ?, ?, ?)`,
+      [randomUUID(), sessionId, userMessage, userMetadataJson, now]
     );
 
     await txQuery(
-      `INSERT INTO chat_messages (id, session_id, role, content, created_at)
-       VALUES (?, ?, 'assistant', ?, ?)`,
-      [randomUUID(), sessionId, assistantMessage, now]
+      `INSERT INTO chat_messages (id, session_id, role, content, metadata_json, created_at)
+       VALUES (?, ?, 'assistant', ?, ?, ?)`,
+      [randomUUID(), sessionId, assistantMessage, assistantMetadataJson, now]
     );
 
     await txQuery(
@@ -363,5 +399,10 @@ export async function clearPersistedChatSessionsForTests(): Promise<void> {
 
 export async function getChatHistory(userId: string, sessionId: string): Promise<ChatTurn[]> {
   const messages = await getChatSessionMessages(userId, sessionId, CHAT_HISTORY_LIMIT);
-  return messages.map(({ role, content, timestamp }) => ({ role, content, timestamp }));
+  return messages.map(({ role, content, timestamp, contextItems }) => ({
+    role,
+    content,
+    timestamp,
+    contextItems,
+  }));
 }

@@ -1,3 +1,47 @@
+## [0.2.46](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.45...v0.2.46) (2026-03-27)
+
+### Detected changes
+- root: 3 changed file(s)
+  - .env.example
+  - docker-compose.yml
+  - pnpm-lock.yaml
+- apps: 8 changed file(s)
+  - apps/dashboard/components/ChatCodeComposerDialog.tsx
+  - apps/dashboard/components/ChatContextItems.tsx
+  - apps/dashboard/components/ChatLinkPickerDialog.tsx
+  - apps/dashboard/components/ChatVoiceDialog.tsx
+  - apps/dashboard/components/ChatWidget.tsx
+  - apps/dashboard/components/__tests__/ChatWidget.test.tsx
+  - apps/dashboard/jest.config.js
+  - apps/dashboard/lib/api.ts
+- config: config/env/manifest.cjs
+- docs: 2 changed file(s)
+  - docs/deployment/README.md
+  - docs/development/README.md
+- packages: 15 changed file(s)
+  - packages/api/.env.example
+  - packages/api/package.json
+  - packages/api/src/__tests__/chat-inputs.test.ts
+  - packages/api/src/__tests__/chat.test.ts
+  - packages/api/src/chat-context.ts
+  - packages/api/src/chat-inputs.ts
+  - packages/api/src/chat-store.ts
+  - packages/api/src/chat.ts
+  - packages/api/src/db/migrations/004_chat_message_metadata.sql
+  - packages/api/src/index.ts
+  - packages/api/src/routes/chat.ts
+  - packages/cli/src/compose-generator.ts
+  - packages/infra/infra.config.ts
+  - packages/sdk/src/client.ts
+  - packages/sdk/src/types.ts
+
+
+## [0.2.46](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.45...v0.2.46) (2026-03-27)
+
+
+
+
+
 ## [0.2.45](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.44...v0.2.45) (2026-03-27)
 
 ### Detected changes

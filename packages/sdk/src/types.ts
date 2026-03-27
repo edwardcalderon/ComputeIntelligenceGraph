@@ -139,6 +139,44 @@ export interface SecurityScore {
   };
 }
 
+export type ChatContextItem =
+  | ChatResourceLinkContextItem
+  | ChatAttachmentContextItem
+  | ChatCodeSnippetContextItem
+  | ChatTranscriptContextItem;
+
+export interface ChatResourceLinkContextItem {
+  type: "resource_link";
+  resourceId: string;
+  title: string;
+  href: string;
+  provider?: string;
+  resourceType?: string;
+}
+
+export interface ChatAttachmentContextItem {
+  type: "attachment";
+  kind: "image" | "document";
+  name: string;
+  mimeType: string;
+  extractedText?: string;
+  summary?: string;
+}
+
+export interface ChatCodeSnippetContextItem {
+  type: "code_snippet";
+  language: "sql" | "search" | "cypher";
+  title: string;
+  content: string;
+}
+
+export interface ChatTranscriptContextItem {
+  type: "transcript";
+  text: string;
+  durationMs: number;
+  mode: "review" | "auto-send";
+}
+
 export interface SecurityScanResult {
   findings: SecurityFinding[];
   score: SecurityScore;
@@ -150,6 +188,7 @@ export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   timestamp: string;
+  contextItems?: ChatContextItem[];
 }
 
 export interface ChatSessionSummary {
@@ -182,6 +221,21 @@ export interface ChatResponse {
   needsClarification: boolean;
   clarifyingQuestion?: string;
   sessionId?: string;
+}
+
+export interface SendChatMessagePayload {
+  message?: string;
+  sessionId?: string;
+  contextItems?: ChatContextItem[];
+}
+
+export interface ChatAttachmentUploadResponse {
+  item: ChatAttachmentContextItem;
+}
+
+export interface ChatTranscriptionResponse {
+  text: string;
+  item: ChatTranscriptContextItem;
 }
 
 export interface ManagedTarget {

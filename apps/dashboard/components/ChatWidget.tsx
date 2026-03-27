@@ -2,6 +2,7 @@
 
 import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import {
   Bot,
   ChevronDown,
@@ -20,18 +21,32 @@ import {
 import { ConfirmDialog } from "@cig/ui";
 import { useTranslation } from "@cig-technology/i18n/react";
 import {
+  getResource,
   deleteChatSession,
   getChatSessionMessages,
   getChatSessions,
   getHealth,
+  getResourcesPaged,
   renameChatSession,
   sendChatMessage,
+  transcribeChatAudio,
+  uploadChatAttachment,
+  type ChatCodeSnippetContextItem,
+  type ChatContextItem,
   type ChatMessage,
+  type ChatResourceLinkContextItem,
   type ChatSessionSummary,
+  type ChatTranscriptContextItem,
   type HealthResponse,
+  type Resource,
 } from "../lib/api";
+import { resolveDocsUrl } from "../lib/siteUrl";
 import { ChatTemplatesTab } from "./ChatExamplesTab";
+import { ChatCodeComposerDialog } from "./ChatCodeComposerDialog";
+import { ChatContextItems } from "./ChatContextItems";
+import { ChatLinkPickerDialog } from "./ChatLinkPickerDialog";
 import { ChatSessionPanel } from "./ChatSessionPanel";
+import { ChatVoiceDialog } from "./ChatVoiceDialog";
 
 const ACTIVE_SESSION_STORAGE_KEY = "cig-chat-active-session";
 const MAX_CHARS = 2000;
@@ -83,6 +98,7 @@ function buildAssistantMessageContent(response: {
 
 export function ChatWidget() {
   const t = useTranslation();
+  const pathname = usePathname();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -94,6 +110,8 @@ export function ChatWidget() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
+  const [draftContextItems, setDraftContextItems] = useState<ChatContextItem[]>([]);
+  const [pendingUploads, setPendingUploads] = useState<string[]>([]);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [pendingSessionId, setPendingSessionId] = useState<string | null>(null);
@@ -105,8 +123,14 @@ export function ChatWidget() {
   const [healthReady, setHealthReady] = useState(false);
   const [isStatusTooltipOpen, setIsStatusTooltipOpen] = useState(false);
   const [statusTooltipPosition, setStatusTooltipPosition] = useState<{ left: number; top: number } | null>(null);
+  const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+  const [isCodeDialogOpen, setIsCodeDialogOpen] = useState(false);
+  const [isVoiceDialogOpen, setIsVoiceDialogOpen] = useState(false);
+  const [currentPageResource, setCurrentPageResource] = useState<Resource | null>(null);
+  const [suggestedResources, setSuggestedResources] = useState<Resource[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const statusPillRef = useRef<HTMLButtonElement>(null);
   const statusTooltipCloseTimerRef = useRef<number | null>(null);
   const sessionMessagesRequestRef = useRef(0);
@@ -279,6 +303,67 @@ export function ChatWidget() {
     };
   }, [hasHydratedSessions, isOpen, t]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const match = pathname?.match(/\/resources\/([^/?#]+)/);
+    const resourceId = match?.[1];
+    if (!resourceId) {
+      setCurrentPageResource(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadCurrentResource = async () => {
+      try {
+        const resource = await getResource(resourceId);
+        if (!cancelled) {
+          setCurrentPageResource(resource);
+        }
+      } catch {
+        if (!cancelled) {
+          setCurrentPageResource(null);
+        }
+      }
+    };
+
+    void loadCurrentResource();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, pathname]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadSuggestedResources = async () => {
+      try {
+        const response = await getResourcesPaged("limit=24");
+        if (!cancelled) {
+          setSuggestedResources(response.items);
+        }
+      } catch {
+        if (!cancelled) {
+          setSuggestedResources([]);
+        }
+      }
+    };
+
+    void loadSuggestedResources();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
   function handleClose() {
     setIsOpen(false);
     setIsExpanded(false);
@@ -332,6 +417,7 @@ export function ChatWidget() {
     setActiveTab("chat");
     setError(null);
     setInput("");
+    setDraftContextItems([]);
     setActiveSessionId(null);
     setMessages([]);
     writeStoredActiveSessionId(null);
@@ -342,6 +428,7 @@ export function ChatWidget() {
     setActiveTab("chat");
     setError(null);
     setInput("");
+    setDraftContextItems([]);
     setActiveSessionId(sessionId);
     writeStoredActiveSessionId(sessionId);
     await loadSessionMessages(sessionId);
@@ -405,23 +492,41 @@ export function ChatWidget() {
     }
   }
 
-  async function handleSend() {
-    const text = input.trim();
-    if (!text || isLoading) return;
+  async function performSend({
+    text,
+    contextItems,
+    shouldClearDraft = true,
+  }: {
+    text: string;
+    contextItems: ChatContextItem[];
+    shouldClearDraft?: boolean;
+  }) {
+    const trimmedText = text.trim();
+    if ((!trimmedText && contextItems.length === 0) || isLoading) {
+      return;
+    }
 
     const userMsg: ChatMessage = {
       role: "user",
-      content: text,
+      content: trimmedText,
+      contextItems,
       timestamp: new Date().toISOString(),
     };
     const next = [...messages, userMsg];
     setMessages(next);
-    setInput("");
     setError(null);
     setIsLoading(true);
+    if (shouldClearDraft) {
+      setInput("");
+      setDraftContextItems([]);
+    }
 
     try {
-      const res = await sendChatMessage(text, activeSessionId ?? undefined);
+      const res = await sendChatMessage({
+        message: trimmedText,
+        sessionId: activeSessionId ?? undefined,
+        contextItems,
+      });
       const content = buildAssistantMessageContent(res);
       const assistantMsg: ChatMessage = {
         role: "assistant",
@@ -446,6 +551,97 @@ export function ChatWidget() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  async function handleSend() {
+    await performSend({
+      text: input,
+      contextItems: draftContextItems,
+    });
+  }
+
+  function removeDraftContextItem(index: number) {
+    setDraftContextItems((current) => current.filter((_, itemIndex) => itemIndex !== index));
+  }
+
+  async function handleAttachmentSelection(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) {
+      return;
+    }
+
+    setError(null);
+
+    for (const file of files) {
+      setPendingUploads((current) => [...current, file.name]);
+      try {
+        const response = await uploadChatAttachment(file, file.name);
+        setDraftContextItems((current) => [...current, response.item].slice(0, 5));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t("chat.errorFallback"));
+      } finally {
+        setPendingUploads((current) => current.filter((name) => name !== file.name));
+      }
+    }
+
+    event.target.value = "";
+  }
+
+  function handleSelectResourceLink(resource: Resource) {
+    const item: ChatResourceLinkContextItem = {
+      type: "resource_link",
+      resourceId: resource.id,
+      title: resource.name || resource.id,
+      href: `/resources/${encodeURIComponent(resource.id)}`,
+      provider: resource.provider,
+      resourceType: resource.type,
+    };
+
+    setDraftContextItems((current) => {
+      if (current.some((existing) => existing.type === "resource_link" && existing.resourceId === resource.id)) {
+        return current;
+      }
+
+      return [...current, item].slice(0, 5);
+    });
+    setIsLinkDialogOpen(false);
+  }
+
+  function handleSaveCodeSnippet(item: ChatCodeSnippetContextItem) {
+    setDraftContextItems((current) => [...current, item].slice(0, 5));
+  }
+
+  async function handleVoiceTranscription(payload: {
+    blob: Blob;
+    filename: string;
+    durationMs: number;
+    mode: ChatTranscriptContextItem["mode"];
+  }) {
+    setError(null);
+    const response = await transcribeChatAudio(payload.blob, {
+      filename: payload.filename,
+      durationMs: payload.durationMs,
+      mode: payload.mode,
+    });
+
+    if (payload.mode === "auto-send") {
+      await performSend({
+        text: response.text,
+        contextItems: [response.item],
+        shouldClearDraft: false,
+      });
+      return;
+    }
+
+    setInput((current) => {
+      if (!current.trim()) {
+        return response.text;
+      }
+
+      return `${current.trim()}\n${response.text}`;
+    });
+    setDraftContextItems((current) => [...current, response.item].slice(0, 5));
+    requestAnimationFrame(() => textareaRef.current?.focus());
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -480,6 +676,49 @@ export function ChatWidget() {
     : chatProviderReachable
     ? "Chat backend is reachable and ready."
     : "Chat endpoint is live, but OpenAI is not reachable right now.";
+  const docsUrl =
+    typeof window === "undefined"
+      ? resolveDocsUrl()
+      : resolveDocsUrl({
+          hostname: window.location.hostname,
+          protocol: window.location.protocol,
+        });
+  const linkedResourceIds = draftContextItems
+    .filter((item): item is ChatResourceLinkContextItem => item.type === "resource_link")
+    .map((item) => item.resourceId);
+  const recentLinkedResources = (() => {
+    const next = new Map<string, Resource>();
+
+    const pushResource = (resource: Resource | null | undefined) => {
+      if (!resource) {
+        return;
+      }
+
+      next.set(resource.id, resource);
+    };
+
+    for (const message of messages) {
+      for (const item of message.contextItems ?? []) {
+        if (item.type !== "resource_link") {
+          continue;
+        }
+
+        const matchingResource = suggestedResources.find((resource) => resource.id === item.resourceId);
+        pushResource(
+          matchingResource ?? {
+            id: item.resourceId,
+            name: item.title,
+            provider: item.provider ?? "unknown",
+            type: item.resourceType ?? "resource",
+          },
+        );
+      }
+    }
+
+    pushResource(currentPageResource);
+
+    return [...next.values()].slice(0, 6);
+  })();
 
   useEffect(() => {
     if (!isStatusTooltipOpen) {
@@ -499,6 +738,37 @@ export function ChatWidget() {
 
   return (
     <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept=".png,.jpg,.jpeg,.webp,.pdf,.txt,.md,.json,.yaml,.yml,.sql,.csv"
+        className="hidden"
+        onChange={handleAttachmentSelection}
+      />
+
+      <ChatLinkPickerDialog
+        open={isLinkDialogOpen}
+        docsUrl={docsUrl}
+        currentResource={currentPageResource}
+        recentResources={recentLinkedResources}
+        linkedResourceIds={linkedResourceIds}
+        onClose={() => setIsLinkDialogOpen(false)}
+        onSelectResource={handleSelectResourceLink}
+      />
+
+      <ChatCodeComposerDialog
+        open={isCodeDialogOpen}
+        onClose={() => setIsCodeDialogOpen(false)}
+        onSave={handleSaveCodeSnippet}
+      />
+
+      <ChatVoiceDialog
+        open={isVoiceDialogOpen}
+        onClose={() => setIsVoiceDialogOpen(false)}
+        onTranscribe={handleVoiceTranscription}
+      />
+
       {/* Mobile backdrop — only when sheet is not full-screen */}
       {isOpen && !(isExpanded && isMobile) && (
         <button
@@ -818,23 +1088,32 @@ export function ChatWidget() {
                         key={msg.id ?? `${msg.role}-${msg.timestamp}-${index}`}
                         className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                       >
-                        <div
-                          className={[
-                            "max-w-[80%] rounded-2xl px-3.5 py-2 text-sm",
-                            msg.role === "user"
-                              ? [
-                                  "rounded-br-sm border",
-                                  "border-indigo-200/60 bg-gradient-to-br from-indigo-50 to-purple-50 text-slate-800",
-                                  "dark:border-indigo-500/20 dark:from-indigo-500/20 dark:to-purple-600/20 dark:text-white/90",
-                                ].join(" ")
-                              : [
-                                  "rounded-bl-sm border",
-                                  "border-slate-200/70 bg-slate-50 text-slate-700",
-                                  "dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-white/70",
-                                ].join(" "),
-                          ].join(" ")}
-                        >
-                          {msg.content}
+                        <div className="max-w-[84%] space-y-2">
+                          {msg.contextItems?.length ? (
+                            <div className={msg.role === "user" ? "flex justify-end" : ""}>
+                              <ChatContextItems items={msg.contextItems} variant="message" />
+                            </div>
+                          ) : null}
+                          {msg.content ? (
+                            <div
+                              className={[
+                                "rounded-2xl px-3.5 py-2 text-sm",
+                                msg.role === "user"
+                                  ? [
+                                      "rounded-br-sm border",
+                                      "border-indigo-200/60 bg-gradient-to-br from-indigo-50 to-purple-50 text-slate-800",
+                                      "dark:border-indigo-500/20 dark:from-indigo-500/20 dark:to-purple-600/20 dark:text-white/90",
+                                    ].join(" ")
+                                  : [
+                                      "rounded-bl-sm border",
+                                      "border-slate-200/70 bg-slate-50 text-slate-700",
+                                      "dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-white/70",
+                                    ].join(" "),
+                              ].join(" ")}
+                            >
+                              {msg.content}
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     ))}
@@ -858,6 +1137,30 @@ export function ChatWidget() {
                   </div>
 
                   <div className="relative z-10 border-t border-slate-100 dark:border-zinc-700/40">
+                    {draftContextItems.length > 0 || pendingUploads.length > 0 ? (
+                      <div className="space-y-2 px-4 pt-3 sm:px-6">
+                        {draftContextItems.length > 0 ? (
+                          <ChatContextItems
+                            items={draftContextItems}
+                            variant="draft"
+                            onRemove={removeDraftContextItem}
+                          />
+                        ) : null}
+                        {pendingUploads.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {pendingUploads.map((name) => (
+                              <span
+                                key={name}
+                                className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-slate-50 px-3 py-1.5 text-[11px] font-medium text-slate-500 dark:border-zinc-700/70 dark:bg-zinc-900 dark:text-zinc-400"
+                              >
+                                <span className="h-2 w-2 animate-pulse rounded-full bg-violet-400" />
+                                Uploading {name}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
                     <textarea
                       ref={textareaRef}
                       value={input}
@@ -875,23 +1178,40 @@ export function ChatWidget() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-0.5 rounded-xl border border-slate-200/70 bg-slate-50 p-1 dark:border-zinc-700/50 dark:bg-zinc-800/40">
-                          {[
-                            { icon: Paperclip, label: t("chat.uploadFiles") },
-                            { icon: Link, label: t("chat.webLink") },
-                            { icon: Code, label: t("chat.codeRepo") },
-                          ].map(({ icon: Icon, label }) => (
-                            <button
-                              key={label}
-                              title={label}
-                              className="rounded-lg p-2 text-slate-400 transition-all duration-200 hover:bg-slate-100 hover:text-slate-600 dark:text-zinc-500 dark:hover:bg-zinc-800/80 dark:hover:text-zinc-200 sm:p-2.5"
-                            >
-                              <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                            </button>
-                          ))}
+                          <button
+                            type="button"
+                            title={t("chat.uploadFiles")}
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isLoading || pendingUploads.length > 0}
+                            className="rounded-lg p-2 text-slate-400 transition-all duration-200 hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-500 dark:hover:bg-zinc-800/80 dark:hover:text-zinc-200 sm:p-2.5"
+                          >
+                            <Paperclip className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            title={t("chat.webLink")}
+                            onClick={() => setIsLinkDialogOpen(true)}
+                            disabled={isLoading}
+                            className="rounded-lg p-2 text-slate-400 transition-all duration-200 hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-500 dark:hover:bg-zinc-800/80 dark:hover:text-zinc-200 sm:p-2.5"
+                          >
+                            <Link className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            title={t("chat.codeRepo")}
+                            onClick={() => setIsCodeDialogOpen(true)}
+                            disabled={isLoading}
+                            className="rounded-lg p-2 text-slate-400 transition-all duration-200 hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50 dark:text-zinc-500 dark:hover:bg-zinc-800/80 dark:hover:text-zinc-200 sm:p-2.5"
+                          >
+                            <Code className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          </button>
                         </div>
                         <button
+                          type="button"
                           title={t("chat.voiceInput")}
-                          className="rounded-lg border border-slate-200/70 p-2 text-slate-400 transition-all duration-200 hover:border-red-200 hover:bg-red-50 hover:text-red-500 dark:border-zinc-700/30 dark:text-zinc-500 dark:hover:border-red-500/30 dark:hover:bg-zinc-800/80 dark:hover:text-red-400 sm:p-2.5"
+                          onClick={() => setIsVoiceDialogOpen(true)}
+                          disabled={isLoading}
+                          className="rounded-lg border border-slate-200/70 p-2 text-slate-400 transition-all duration-200 hover:border-red-200 hover:bg-red-50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700/30 dark:text-zinc-500 dark:hover:border-red-500/30 dark:hover:bg-zinc-800/80 dark:hover:text-red-400 sm:p-2.5"
                         >
                           <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </button>
@@ -906,7 +1226,12 @@ export function ChatWidget() {
                         </span>
                         <button
                           onClick={handleSend}
-                          disabled={isLoading || isLoadingMessages || !input.trim()}
+                          disabled={
+                            isLoading ||
+                            isLoadingMessages ||
+                            pendingUploads.length > 0 ||
+                            (!input.trim() && draftContextItems.length === 0)
+                          }
                           aria-label={t("chat.sendMessage")}
                           className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-red-600 to-red-500 p-2.5 text-white shadow-lg transition-all duration-300 hover:from-red-500 hover:to-red-400 hover:scale-110 hover:shadow-red-500/30 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 sm:p-3"
                         >
@@ -928,7 +1253,7 @@ export function ChatWidget() {
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <div className={`h-1.5 w-1.5 rounded-full ${activeSessionId ? "bg-emerald-500" : "bg-amber-400"}`} />
+                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                         <span>
                           {activeSessionId
                             ? t("chat.sessionSaved")

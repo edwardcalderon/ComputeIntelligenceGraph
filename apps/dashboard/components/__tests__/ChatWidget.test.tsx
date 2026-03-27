@@ -5,45 +5,65 @@ import "@testing-library/jest-dom";
 import { ChatWidget } from "../ChatWidget";
 import {
   deleteChatSession,
+  getResource,
+  getResourcesPaged,
   getChatSessionMessages,
   getChatSessions,
   getHealth,
   renameChatSession,
   sendChatMessage,
+  uploadChatAttachment,
+  transcribeChatAudio,
 } from "../../lib/api";
 
 const translate = (key: string) => key;
 
 const mockedDeleteChatSession = jest.mocked(deleteChatSession);
+const mockedGetResource = jest.mocked(getResource);
+const mockedGetResourcesPaged = jest.mocked(getResourcesPaged);
 const mockedGetChatSessionMessages = jest.mocked(getChatSessionMessages);
 const mockedGetChatSessions = jest.mocked(getChatSessions);
 const mockedGetHealth = jest.mocked(getHealth);
 const mockedRenameChatSession = jest.mocked(renameChatSession);
 const mockedSendChatMessage = jest.mocked(sendChatMessage);
+const mockedTranscribeChatAudio = jest.mocked(transcribeChatAudio);
+const mockedUploadChatAttachment = jest.mocked(uploadChatAttachment);
 
 jest.mock("../../lib/api", () => ({
   deleteChatSession: jest.fn(),
+  getResource: jest.fn(),
+  getResourcesPaged: jest.fn(),
   getChatSessionMessages: jest.fn(),
   getChatSessions: jest.fn(),
   getHealth: jest.fn(),
   renameChatSession: jest.fn(),
   sendChatMessage: jest.fn(),
+  transcribeChatAudio: jest.fn(),
+  uploadChatAttachment: jest.fn(),
 }));
 
 jest.mock("@cig-technology/i18n/react", () => ({
   useTranslation: () => translate,
 }));
 
+jest.mock("next/navigation", () => ({
+  usePathname: () => "/dashboard",
+}));
+
 describe("ChatWidget", () => {
   beforeEach(() => {
     mockedDeleteChatSession.mockReset();
+    mockedGetResource.mockReset();
+    mockedGetResourcesPaged.mockReset();
     mockedGetChatSessionMessages.mockReset();
     mockedGetChatSessions.mockReset();
     mockedGetHealth.mockReset();
     mockedRenameChatSession.mockReset();
     mockedSendChatMessage.mockReset();
+    mockedTranscribeChatAudio.mockReset();
+    mockedUploadChatAttachment.mockReset();
     sessionStorage.clear();
-    jest.spyOn(window, "confirm").mockImplementation(() => true);
+    mockedGetResourcesPaged.mockResolvedValue({ items: [], total: 0, hasMore: false });
   });
 
   afterEach(() => {
@@ -403,8 +423,83 @@ describe("ChatWidget", () => {
       expect(screen.getAllByText("Two critical alerts need attention.").length).toBeGreaterThan(0);
     });
 
-    expect(mockedSendChatMessage).toHaveBeenCalledWith("Summarize alerts today", undefined);
+    expect(mockedSendChatMessage).toHaveBeenCalledWith({
+      message: "Summarize alerts today",
+      sessionId: undefined,
+      contextItems: [],
+    });
     expect(sessionStorage.getItem("cig-chat-active-session")).toBe("chat-9");
+  });
+
+  it("uploads an attachment and includes it in the next chat request", async () => {
+    mockedGetHealth.mockResolvedValue({
+      status: "ok",
+      version: "0.2.43",
+      timestamp: "2026-03-26T09:00:00.000Z",
+      chat: {
+        provider: "openai",
+        model: "gpt-4o-mini",
+        configured: true,
+        reachable: true,
+        providerReachable: true,
+        checkedAt: "2026-03-26T09:00:00.000Z",
+        latencyMs: 42,
+      },
+    });
+    mockedGetChatSessions.mockResolvedValue({ items: [], total: 0 });
+    mockedUploadChatAttachment.mockResolvedValue({
+      item: {
+        type: "attachment",
+        kind: "document",
+        name: "schema.sql",
+        mimeType: "text/x-sql",
+        extractedText: "select * from schema_migrations;",
+        summary: 'Document attachment "schema.sql" (text/x-sql).',
+      },
+    });
+    mockedSendChatMessage.mockResolvedValue({
+      answer: "I reviewed the SQL snippet.",
+      needsClarification: false,
+      sessionId: "chat-12",
+    });
+
+    const { container } = render(<ChatWidget />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "chat.openChat" }));
+    });
+
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement | null;
+    expect(input).not.toBeNull();
+
+    const file = new File(["select * from schema_migrations;"], "schema.sql", {
+      type: "text/x-sql",
+    });
+
+    await act(async () => {
+      fireEvent.change(input!, { target: { files: [file] } });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("schema.sql")).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "chat.sendMessage" }));
+    });
+
+    await waitFor(() => {
+      expect(mockedSendChatMessage).toHaveBeenCalledWith({
+        message: "",
+        sessionId: undefined,
+        contextItems: [
+          expect.objectContaining({
+            type: "attachment",
+            name: "schema.sql",
+          }),
+        ],
+      });
+    });
   });
 
   it("loads a template prompt into the composer and returns to chat", async () => {

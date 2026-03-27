@@ -2,10 +2,12 @@ import type {
   BootstrapCompletePayload,
   BootstrapCompleteResponse,
   BootstrapStatus,
+  ChatAttachmentUploadResponse,
   ChatResponse,
   ChatSessionSummary,
   ChatSessionDetailResponse,
   ChatSessionListResponse,
+  ChatTranscriptionResponse,
   CostBreakdown,
   CostSummary,
   CostsResponse,
@@ -22,6 +24,7 @@ import type {
   HealthResponse,
   TargetsResponse,
   RenameChatSessionPayload,
+  SendChatMessagePayload,
 } from "./types";
 
 type AccessTokenResolver = () => string | null | undefined | Promise<string | null | undefined>;
@@ -225,10 +228,35 @@ export class CigClient {
     );
   }
 
-  sendChatMessage(message: string, sessionId?: string): Promise<ChatResponse> {
+  uploadChatAttachment(file: Blob, filename = "attachment"): Promise<ChatAttachmentUploadResponse> {
+    const formData = new FormData();
+    formData.append("file", file, filename);
+
+    return this.request<ChatAttachmentUploadResponse>("/api/v1/chat/uploads", {
+      method: "POST",
+      body: formData,
+    });
+  }
+
+  transcribeChatAudio(
+    file: Blob,
+    options: { filename?: string; durationMs?: number; mode?: "review" | "auto-send" } = {},
+  ): Promise<ChatTranscriptionResponse> {
+    const formData = new FormData();
+    formData.append("file", file, options.filename ?? "voice.webm");
+    formData.append("durationMs", String(options.durationMs ?? 0));
+    formData.append("mode", options.mode ?? "review");
+
+    return this.request<ChatTranscriptionResponse>("/api/v1/chat/transcriptions", {
+      method: "POST",
+      body: formData,
+    });
+  }
+
+  sendChatMessage(payload: SendChatMessagePayload): Promise<ChatResponse> {
     return this.request<ChatResponse>("/api/v1/chat", {
       method: "POST",
-      body: JSON.stringify({ message, sessionId }),
+      body: JSON.stringify(payload),
     });
   }
 
