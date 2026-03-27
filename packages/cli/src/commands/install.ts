@@ -32,6 +32,8 @@ import type { NodeIdentity } from '../types/runtime.js';
 import { resolveDemoDataPreference } from '../demo-data.js';
 import { resolveCliPaths } from '../storage/paths.js';
 import { StateManager } from '../managers/state-manager.js';
+import { resolvePublishedImageManifest } from '../services/image-manifest.js';
+import { CLI_VERSION } from '../version.js';
 
 // ---------------------------------------------------------------------------
 // Inline infra helpers (mirrors packages/infra/src/compose.ts and install.ts)
@@ -66,51 +68,42 @@ async function writeBootstrapToken(token: string, installDir: string): Promise<v
  *
  * Requirements: 5.9, 6.1
  */
-function generateComposeFile(manifest: SetupManifest, profile: 'core' | 'discovery' | 'full'): string {
+function generateComposeFile(
+  manifest: SetupManifest,
+  profile: 'core' | 'discovery' | 'full',
+  serviceImages: Record<string, string> = {}
+): string {
   const selfHosted = manifest.targetMode === 'host';
 
-  const coreServices = `\
-  node-runtime:
-    image: ghcr.io/cig/node-runtime:\${CIG_VERSION}
-    restart: unless-stopped
-    volumes:
-      - ./identity:/opt/cig-node/identity:ro
-      - ./config:/opt/cig-node/config:ro
-    environment:
-      - CIG_NODE_ID=\${CIG_NODE_ID}
-      - CIG_CONTROL_PLANE=\${CIG_CONTROL_PLANE_ENDPOINT}
-      - CIG_CLOUD_PROVIDER=\${CIG_CLOUD_PROVIDER}
-    depends_on:
-      - discovery-worker
-      - graph-writer
+  const img = (service: string, fallback: string): string =>
+    serviceImages[service] ?? `docker.io/cigtechnology/${fallback}`;
 
-  discovery-worker:
-    image: ghcr.io/cig/discovery-worker:\${CIG_VERSION}
+  const neo4jImage = serviceImages['neo4j'] ?? 'neo4j:5';
+
+  const coreServices = `\
+  discovery:
+    image: ${img('discovery', 'cig-discovery:latest')}
     restart: unless-stopped
     environment:
       - CIG_CLOUD_PROVIDER=\${CIG_CLOUD_PROVIDER}
-      - AWS_ROLE_ARN=\${AWS_ROLE_ARN}
-      - AWS_EXTERNAL_ID=\${AWS_EXTERNAL_ID}
-      - GCP_PROJECT_ID=\${GCP_PROJECT_ID}
-      - GCP_SA_EMAIL=\${GCP_SA_EMAIL}
+      - AWS_ROLE_ARN=\${AWS_ROLE_ARN:-}
+      - AWS_EXTERNAL_ID=\${AWS_EXTERNAL_ID:-}
+      - GCP_PROJECT_ID=\${GCP_PROJECT_ID:-}
+      - GCP_SA_EMAIL=\${GCP_SA_EMAIL:-}
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_PASSWORD=\${NEO4J_PASSWORD}
 
   cartography:
-    image: ghcr.io/cig/cartography:\${CIG_VERSION}
+    image: ${img('cartography', 'cig-cartography:latest')}
     restart: unless-stopped
     environment:
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_PASSWORD=\${NEO4J_PASSWORD}
-
-  graph-writer:
-    image: ghcr.io/cig/graph-writer:\${CIG_VERSION}
-    restart: unless-stopped
-    environment:
-      - NEO4J_URI=bolt://neo4j:7687
-      - NEO4J_PASSWORD=\${NEO4J_PASSWORD}
-      - CIG_CONTROL_PLANE=\${CIG_CONTROL_PLANE_ENDPOINT}
+    depends_on:
+      - neo4j
 
   neo4j:
-    image: neo4j:5
+    image: ${neo4jImage}
     restart: unless-stopped
     volumes:
       - neo4j-data:/data
@@ -121,47 +114,34 @@ function generateComposeFile(manifest: SetupManifest, profile: 'core' | 'discove
 
   if (profile === 'full') {
     services += `
+
   chatbot:
-    image: ghcr.io/cig/chatbot:\${CIG_VERSION}
+    image: ${img('chatbot', 'cig-chatbot:latest')}
     restart: unless-stopped
     environment:
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_PASSWORD=\${NEO4J_PASSWORD}
-      - CIG_CONTROL_PLANE=\${CIG_CONTROL_PLANE_ENDPOINT}
-
-  chroma:
-    image: ghcr.io/cig/chroma:\${CIG_VERSION}
-    restart: unless-stopped
-    volumes:
-      - chroma-data:/chroma/chroma
-
-  agents:
-    image: ghcr.io/cig/agents:\${CIG_VERSION}
-    restart: unless-stopped
-    environment:
-      - NEO4J_URI=bolt://neo4j:7687
-      - NEO4J_PASSWORD=\${NEO4J_PASSWORD}
-      - CHROMA_URI=http://chroma:8000
       - CIG_CONTROL_PLANE=\${CIG_CONTROL_PLANE_ENDPOINT}`;
   }
 
   if (selfHosted) {
     services += `
+
   api:
-    image: ghcr.io/cig/api:\${CIG_VERSION}
+    image: ${img('api', 'cig-api:latest')}
     restart: unless-stopped
     ports:
       - "3003:3003"
     environment:
+      - PORT=3003
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_PASSWORD=\${NEO4J_PASSWORD}
-      - DATABASE_URL=\${DATABASE_URL}
-      - CHROMA_URI=http://chroma:8000
+      - DATABASE_URL=\${DATABASE_URL:-}
     depends_on:
       - neo4j
 
   dashboard:
-    image: ghcr.io/cig/dashboard:\${CIG_VERSION}
+    image: ${img('dashboard', 'cig-dashboard:latest')}
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -170,17 +150,8 @@ function generateComposeFile(manifest: SetupManifest, profile: 'core' | 'discove
     depends_on:
       - api`;
   }
-  if (manifest.isDemo) {
-    // Inject mock-dbs mount into discovery-worker and graph-writer
-    services = services.replace(
-      '    depends_on:',
-      '    volumes:\n      - ./mock-dbs:/opt/cig-node/mock-dbs:ro\n    depends_on:'
-    );
-  }
 
   const volumes: string[] = ['  neo4j-data:'];
-  if (profile === 'full') volumes.push('  chroma-data:');
-  if (selfHosted) volumes.push('  postgres-data:');
 
   return [
     "version: '3.8'",
@@ -488,7 +459,21 @@ async function runInstall(opts: InstallOptions): Promise<void> {
   effectiveManifest.isDemo = demo;
 
   const effectiveProfile = manifest?.installProfile ?? profile;
-  const composeContent = generateComposeFile(effectiveManifest, effectiveProfile);
+
+  // Resolve pinned image digests from the published release manifest.
+  // Fall back to Docker Hub :latest tags if the release asset is unavailable.
+  let serviceImages: Record<string, string> = {};
+  try {
+    const s = spinner();
+    s.start('Resolving published image manifest…');
+    const imageManifest = await resolvePublishedImageManifest(CLI_VERSION);
+    serviceImages = imageManifest.images;
+    s.stop('Image manifest resolved.');
+  } catch {
+    console.warn('  Warning: could not resolve pinned image manifest — falling back to :latest tags.');
+  }
+
+  const composeContent = generateComposeFile(effectiveManifest, effectiveProfile, serviceImages);
 
   // Build a stub identity for env generation — real identity comes after enrollment
   const stubIdentity = buildStubNodeIdentity();
