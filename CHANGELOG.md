@@ -1,3 +1,29 @@
+## [0.2.68](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.67...v0.2.68) (2026-03-27)
+
+
+### Bug Fixes
+
+* **ci:** build workspace packages before api lint in deploy workflow ([5f80cd7](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/5f80cd724f30ea5ffa9497461bba10c2fdaa1557))
+* **ci:** build workspace packages before lint to resolve @cig/sdk and @cig/graph types ([0d75473](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/0d75473fd54c17a47b11c5dd2f32c9f1f3fdd0ac))
+* **ui:** bell toggle, session panel corner, hero animation on theme change ([9ff2ece](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/9ff2ecee2eca6f08fe0b8ba80566db856877b6da))
+
+
+
+
+
+## [0.2.68](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.67...v0.2.68) (2026-03-27)
+
+
+### Bug Fixes
+
+* **ci:** build workspace packages before api lint in deploy workflow ([5f80cd7](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/5f80cd724f30ea5ffa9497461bba10c2fdaa1557))
+* **ci:** build workspace packages before lint to resolve @cig/sdk and @cig/graph types ([0d75473](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/0d75473fd54c17a47b11c5dd2f32c9f1f3fdd0ac))
+* **ui:** bell toggle, session panel corner, hero animation on theme change ([9ff2ece](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/9ff2ecee2eca6f08fe0b8ba80566db856877b6da))
+
+
+
+
+
 ## [0.2.67](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.66...v0.2.67) (2026-03-27)
 
 ### Detected changes
