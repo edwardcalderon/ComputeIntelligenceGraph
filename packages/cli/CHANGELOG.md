@@ -1,3 +1,14 @@
+## [0.1.22](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.21...cli-v0.1.22) (2026-03-27)
+
+
+### Bug Fixes
+
+* **cli:** register setup command and add e2e smoke test in CI ([74f17f7](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/74f17f75f55de37f05b60224586560b633d3681f))
+
+
+
+
+
 
 ## [0.1.21](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.20...cli-v0.1.21) (2026-03-27)
 
