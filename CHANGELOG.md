@@ -1,3 +1,19 @@
+## [0.2.82](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.81...v0.2.82) (2026-03-27)
+
+### Detected changes
+- apps: 4 changed file(s)
+  - apps/docs/docs/en/architecture/components.md
+  - apps/docs/docs/en/architecture/index.md
+  - apps/docs/docs/en/getting-started/installation.md
+  - apps/docs/sidebars.ts
+
+
+## [0.2.82](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.81...v0.2.82) (2026-03-27)
+
+
+
+
+
 ## [0.2.81](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.80...v0.2.81) (2026-03-27)
 
 ### Detected changes

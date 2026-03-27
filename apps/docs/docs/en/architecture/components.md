@@ -83,3 +83,7 @@ CIG is a monorepo containing specialized packages that work together to provide 
 *   **Role**: Raw Discovery Data Engine.
 *   **Tech**: FastAPI, Python Cartography.
 *   **Responsibility**: The worker service that connects to cloud APIs (AWS/GCP/Azure) and pushes raw data into Neo4j.
+
+### Vector Store (Chroma)
+*   **Role**: Specialized Vector Semantic Engine.
+*   **Responsibility**: Powers the RAG pipeline by storing infrastructure metadata as high-dimensional embeddings for semantic retrieval.

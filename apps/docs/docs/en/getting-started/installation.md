@@ -45,7 +45,7 @@ pnpm env:doctor
 ```
 
 ### 4. Database Setup
-Launch the core persistence and discovery engines:
+Launch the core persistence and discovery engines (Neo4j, Chroma):
 ```bash
 docker-compose -f docker-compose.dev.yml up -d
 ```

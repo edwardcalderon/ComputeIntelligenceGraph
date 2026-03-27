@@ -69,3 +69,4 @@ graph TD
 
 - [System Design](./system-design.md)
 - [Component Breakdown](./components.md)
+- [Vector Store (Chroma)](./vector-store.md)

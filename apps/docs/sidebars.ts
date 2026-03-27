@@ -30,6 +30,7 @@ const sidebars: SidebarsConfig = {
         'en/architecture/index',
         'en/architecture/system-design',
         'en/architecture/components',
+        'en/architecture/vector-store',
       ],
     },
     {
