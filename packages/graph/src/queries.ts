@@ -1,6 +1,6 @@
 import { Session } from 'neo4j-driver';
 import { getReadSession } from './neo4j';
-import { Resource_Model, ResourceType, Provider, ResourceState } from './types';
+import { Resource_Model, ResourceType, Provider, ResourceState, Relationship } from './types';
 import { ResourceFilters } from './engine';
 
 // ─── Query Types ──────────────────────────────────────────────────────────────
@@ -50,6 +50,17 @@ function recordToResource(record: Record<string, unknown>): Resource_Model {
     createdAt: toDate(record['createdAt']),
     updatedAt: toDate(record['updatedAt']),
     discoveredAt: toDate(record['discoveredAt']),
+  };
+}
+
+function recordToRelationship(record: Record<string, unknown>): Relationship {
+  const r = record as Record<string, unknown>;
+  return {
+    id: r['id'] as string,
+    type: r['type'] as Relationship['type'],
+    fromId: r['fromId'] as string,
+    toId: r['toId'] as string,
+    properties: r['properties'] ? JSON.parse(r['properties'] as string) : {},
   };
 }
 
@@ -273,6 +284,39 @@ export class GraphQueryEngine {
           : Number(count);
       }
       return counts;
+    });
+  }
+
+  /**
+   * Returns all relationships in the graph, capped by `limit`.
+   * Requirements: 8.9, 24.8
+   */
+  async listRelationships(limit = DEFAULT_LIMIT): Promise<Relationship[]> {
+    const cappedLimit = Math.min(Math.max(1, limit), 1_000);
+
+    return runRead(async (session) => {
+      const result = await session.run(
+        `MATCH (a:Resource)-[rel]->(b:Resource)
+         RETURN rel.id AS id,
+                type(rel) AS type,
+                a.id AS fromId,
+                b.id AS toId,
+                rel.properties AS properties
+         ORDER BY type(rel), a.id, b.id
+         LIMIT $limit`,
+        { limit: cappedLimit },
+        { timeout: QUERY_TIMEOUT_MS }
+      );
+
+      return result.records.map((rec) =>
+        recordToRelationship({
+          id: rec.get('id') as string,
+          type: rec.get('type') as string,
+          fromId: rec.get('fromId') as string,
+          toId: rec.get('toId') as string,
+          properties: rec.get('properties') as string,
+        })
+      );
     });
   }
 }

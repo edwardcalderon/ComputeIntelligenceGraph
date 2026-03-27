@@ -40,6 +40,50 @@ export interface ActionIntent {
   params: Record<string, unknown>;
 }
 
+export interface GraphRefinementResourceSummary {
+  id: string;
+  name: string;
+  type: string;
+  provider: string;
+  region?: string;
+  state?: string;
+}
+
+export interface GraphRefinementRelationshipSummary {
+  id: string;
+  type: string;
+  fromId: string;
+  toId: string;
+}
+
+export interface GraphRefinementSnapshot {
+  resourceCounts: Record<string, number>;
+  resources: GraphRefinementResourceSummary[];
+  relationships: GraphRefinementRelationshipSummary[];
+  discovery: {
+    healthy: boolean;
+    running: boolean;
+    lastRun: string | null;
+    nextRun: string | null;
+  };
+}
+
+export interface GraphRefinementPreviewChange {
+  kind: 'resource' | 'relationship';
+  action: 'create' | 'update' | 'delete';
+  id: string;
+  label?: string;
+  detail?: string;
+}
+
+export interface GraphRefinementProposal {
+  summary: string;
+  proposedCypher: string;
+  previewDiff: GraphRefinementPreviewChange[];
+  requiresApproval: boolean;
+  rationale?: string;
+}
+
 export interface OpenClawResponse {
   answer: string;
   cypher?: string;
@@ -80,6 +124,141 @@ Cypher guidelines:
 - Use relationship types like :DEPENDS_ON, :CONNECTS_TO, :HOSTS
 - Always include RETURN clause
 - Keep queries efficient with LIMIT when appropriate`;
+
+const GRAPH_REFINEMENT_SYSTEM_PROMPT = `You are OpenClaw Graph Refiner, a safe Cypher proposal assistant.
+
+You receive a real infrastructure snapshot with discovered resources, relationships, and discovery health.
+You must only reference resources and relationships that appear in the snapshot.
+Do not invent nodes, relationships, providers, or regions.
+
+Return strict JSON with this shape:
+{
+  "summary": "short human readable summary",
+  "proposedCypher": "MATCH ... SET ... RETURN ...",
+  "previewDiff": [
+    { "kind": "resource" | "relationship", "action": "create" | "update" | "delete", "id": "resource-or-relationship-id", "label": "optional label", "detail": "optional detail" }
+  ],
+  "requiresApproval": true,
+  "rationale": "optional explanation"
+}
+
+Rules:
+- Use only discovered resource ids and relationship ids from the snapshot.
+- Prefer small, targeted updates over broad graph rewrites.
+- Mark requiresApproval=true for any destructive, topology-changing, or broad mutation Cypher.
+- Mark requiresApproval=false only for narrow, non-destructive updates that clearly target discovered infrastructure.
+- Never return prose outside the JSON object.
+`;
+
+function serializeGraphRefinementSnapshot(snapshot: GraphRefinementSnapshot): string {
+  const resourceLines = snapshot.resources
+    .slice(0, 12)
+    .map((resource, index) => {
+      const region = resource.region ? `, ${resource.region}` : '';
+      const state = resource.state ? `, ${resource.state}` : '';
+      return `  ${index + 1}. ${resource.id} — ${resource.name} (${resource.type}, ${resource.provider}${region}${state})`;
+    })
+    .join('\n');
+
+  const relationshipLines = snapshot.relationships
+    .slice(0, 12)
+    .map((relationship, index) =>
+      `  ${index + 1}. ${relationship.id} :: ${relationship.fromId} -[${relationship.type}]-> ${relationship.toId}`,
+    )
+    .join('\n');
+
+  const counts = Object.entries(snapshot.resourceCounts)
+    .map(([type, count]) => `${type}: ${count}`)
+    .join(', ');
+
+  return [
+    `[Graph Snapshot]`,
+    `Discovery healthy: ${snapshot.discovery.healthy}`,
+    `Discovery running: ${snapshot.discovery.running}`,
+    `Discovery last run: ${snapshot.discovery.lastRun ?? 'unknown'}`,
+    `Discovery next run: ${snapshot.discovery.nextRun ?? 'unknown'}`,
+    `Resource counts: ${counts || 'none'}`,
+    `Resources:`,
+    resourceLines || '  none',
+    `Relationships:`,
+    relationshipLines || '  none',
+  ].join('\n');
+}
+
+function normalizeGraphRefinementProposal(value: unknown): GraphRefinementProposal {
+  const fallback: GraphRefinementProposal = {
+    summary: 'Could not produce a structured graph refinement proposal.',
+    proposedCypher: 'MATCH (n:Resource) RETURN n LIMIT 10',
+    previewDiff: [],
+    requiresApproval: true,
+    rationale: 'The model response was missing the required refinement structure.',
+  };
+
+  if (!value || typeof value !== 'object') {
+    return fallback;
+  }
+
+  const item = value as Record<string, unknown>;
+  const previewDiff = Array.isArray(item['previewDiff'])
+    ? item['previewDiff']
+        .map((entry): GraphRefinementPreviewChange | null => {
+          if (!entry || typeof entry !== 'object') {
+            return null;
+          }
+
+          const diff = entry as Record<string, unknown>;
+          const kind = diff['kind'] === 'resource' || diff['kind'] === 'relationship' ? diff['kind'] : null;
+          const action = diff['action'] === 'create' || diff['action'] === 'update' || diff['action'] === 'delete'
+            ? diff['action']
+            : null;
+          const id = typeof diff['id'] === 'string' ? diff['id'].trim() : '';
+
+          if (!kind || !action || !id) {
+            return null;
+          }
+
+          const preview: GraphRefinementPreviewChange = {
+            kind,
+            action,
+            id,
+          };
+
+          const label = typeof diff['label'] === 'string' ? diff['label'].trim() : '';
+          const detail = typeof diff['detail'] === 'string' ? diff['detail'].trim() : '';
+
+          if (label) {
+            preview.label = label;
+          }
+          if (detail) {
+            preview.detail = detail;
+          }
+
+          return preview;
+        })
+        .filter((entry): entry is GraphRefinementPreviewChange => entry !== null)
+    : [];
+
+  const summary = typeof item['summary'] === 'string' && item['summary'].trim()
+    ? item['summary'].trim()
+    : fallback.summary;
+  const proposedCypher = typeof item['proposedCypher'] === 'string' && item['proposedCypher'].trim()
+    ? item['proposedCypher'].trim()
+    : fallback.proposedCypher;
+  const requiresApproval = typeof item['requiresApproval'] === 'boolean'
+    ? item['requiresApproval']
+    : true;
+  const rationale = typeof item['rationale'] === 'string' && item['rationale'].trim()
+    ? item['rationale'].trim()
+    : undefined;
+
+  return {
+    summary,
+    proposedCypher,
+    previewDiff,
+    requiresApproval,
+    rationale,
+  };
+}
 
 export class ConversationContext {
   private messages: ChatMessage[] = [];
@@ -343,5 +522,32 @@ export class OpenClawAgent {
       ? response.content
       : JSON.stringify(response.content);
     return cypher.trim();
+  }
+
+  async refineGraph(goal: string, snapshot: GraphRefinementSnapshot): Promise<GraphRefinementProposal> {
+    const messages = [
+      new SystemMessage(GRAPH_REFINEMENT_SYSTEM_PROMPT),
+      new HumanMessage(
+        [
+          `User goal: ${goal.trim()}`,
+          '',
+          serializeGraphRefinementSnapshot(snapshot),
+          '',
+          'Return only the JSON object.',
+        ].join('\n')
+      ),
+    ];
+
+    const response = await this.llm.invoke(messages);
+    const raw = typeof response.content === 'string'
+      ? response.content
+      : JSON.stringify(response.content);
+
+    try {
+      const cleaned = raw.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim();
+      return normalizeGraphRefinementProposal(JSON.parse(cleaned) as unknown);
+    } catch {
+      return normalizeGraphRefinementProposal(null);
+    }
   }
 }

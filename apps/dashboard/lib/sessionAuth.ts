@@ -25,21 +25,34 @@ function looksLikeSupabaseIssuer(issuer: string): boolean {
   );
 }
 
+function inferAuthSourceFromToken(token: string | null | undefined): DashboardAuthSource | null {
+  const payload = decodeJwtPayload(token ?? "");
+  const issuer = typeof payload?.iss === "string" ? payload.iss.trim() : "";
+  if (issuer && looksLikeSupabaseIssuer(issuer)) {
+    return "supabase";
+  }
+
+  if (payload) {
+    return "authentik";
+  }
+
+  return null;
+}
+
 export function resolveDashboardAuthSource(params: {
   explicitAuthSource?: string | null;
   accessToken?: string | null;
   idToken?: string | null;
   defaultSource?: DashboardAuthSource;
 }): DashboardAuthSource {
+  const inferred = inferAuthSourceFromToken(params.idToken ?? params.accessToken ?? null);
+  if (inferred) {
+    return inferred;
+  }
+
   const explicit = normalizeAuthSource(params.explicitAuthSource);
   if (explicit) {
     return explicit;
-  }
-
-  const payload = decodeJwtPayload(params.idToken ?? params.accessToken ?? "");
-  const issuer = typeof payload?.iss === "string" ? payload.iss.trim() : "";
-  if (issuer && looksLikeSupabaseIssuer(issuer)) {
-    return "supabase";
   }
 
   return params.defaultSource ?? "authentik";

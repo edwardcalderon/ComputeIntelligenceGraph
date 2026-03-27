@@ -148,6 +148,51 @@ describe('OpenClawAgent', () => {
     const messages = mockInvoke.mock.calls[0][0] as Array<{ content: string }>;
     expect(messages[0].content).not.toContain('Infrastructure context:');
   });
+
+  it('refineGraph returns a proposal grounded in the supplied snapshot', async () => {
+    const { agent, mockInvoke } = makeAgent();
+    mockInvoke.mockResolvedValueOnce({
+      content: JSON.stringify({
+        summary: 'Connect the service to the discovered database.',
+        proposedCypher: 'MATCH (svc:Resource {id: "svc-prod-api"}), (db:Resource {id: "db-prod"}) MERGE (svc)-[:DEPENDS_ON]->(db) RETURN svc, db',
+        previewDiff: [
+          {
+            kind: 'relationship',
+            action: 'create',
+            id: 'svc-prod-api:DEPENDS_ON:db-prod',
+            label: 'DEPENDS_ON',
+            detail: 'Create the dependency edge between the discovered resources.',
+          },
+        ],
+        requiresApproval: true,
+        rationale: 'This creates a new graph edge and should be reviewed first.',
+      }),
+    });
+
+    const proposal = await agent.refineGraph('Connect the service to the database', {
+      resourceCounts: { service: 1, database: 1 },
+      resources: [
+        { id: 'svc-prod-api', name: 'prod-api', type: 'service', provider: 'aws', region: 'us-east-1', state: 'running' },
+        { id: 'db-prod', name: 'prod-db', type: 'database', provider: 'aws', region: 'us-east-1', state: 'running' },
+      ],
+      relationships: [],
+      discovery: {
+        healthy: true,
+        running: true,
+        lastRun: '2026-03-27T00:00:00.000Z',
+        nextRun: '2026-03-27T00:05:00.000Z',
+      },
+    });
+
+    expect(proposal.summary).toContain('Connect the service');
+    expect(proposal.proposedCypher).toContain('MERGE');
+    expect(proposal.requiresApproval).toBe(true);
+
+    const messages = mockInvoke.mock.calls[0][0] as Array<{ content: string }>;
+    expect(messages[0].content).toContain('OpenClaw Graph Refiner');
+    expect(messages[1].content).toContain('svc-prod-api');
+    expect(messages[1].content).toContain('db-prod');
+  });
 });
 
 // ─── ConversationContext — pendingAction ──────────────────────────────────────

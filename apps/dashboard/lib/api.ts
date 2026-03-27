@@ -1,4 +1,8 @@
-import type { BootstrapCompletePayload, SendChatMessagePayload } from "@cig/sdk";
+import type {
+  BootstrapCompletePayload,
+  GraphRefinementRequest,
+  SendChatMessagePayload,
+} from "@cig/sdk";
 import { getDashboardClient } from "./cigClient";
 
 export type {
@@ -30,6 +34,9 @@ export type {
   DiscoveryStatus,
   EnrollmentTokenResponse,
   GraphStats,
+  GraphRefinementRequest,
+  GraphRefinementResponse,
+  GraphSnapshot,
   ManagedTarget,
   PagedResources,
   Relationship,
@@ -60,6 +67,8 @@ export const getDiscoveryStatus = () => getClient().getDiscoveryStatus();
 export const getHealth = () => getClient().getHealth();
 
 export const triggerDiscovery = () => getClient().triggerDiscovery();
+
+export const getGraphSnapshot = () => getClient().getGraphSnapshot();
 
 export const getResource = (id: string) => getClient().getResource(id);
 
@@ -108,6 +117,9 @@ export const transcribeChatAudio = (
 
 export const sendChatMessage = (payload: SendChatMessagePayload) =>
   getClient().sendChatMessage(payload);
+
+export const refineGraph = (payload: GraphRefinementRequest) =>
+  getClient().refineGraph(payload);
 
 export const getTargets = () => getClient().getTargets();
 

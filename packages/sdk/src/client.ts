@@ -13,6 +13,9 @@ import type {
   CostsResponse,
   DeviceAuthResponse,
   DiscoveryStatus,
+  GraphRefinementRequest,
+  GraphRefinementResponse,
+  GraphSnapshot,
   EnrollmentTokenResponse,
   PagedResources,
   Relationship,
@@ -169,6 +172,10 @@ export class CigClient {
     return this.request<{ items: Relationship[] }>(`/api/v1/relationships?limit=${limit}`);
   }
 
+  getGraphSnapshot(): Promise<GraphSnapshot> {
+    return this.request<GraphSnapshot>("/api/v1/graph/snapshot");
+  }
+
   getResourceCost(resourceId: string): Promise<CostsResponse> {
     return this.request<CostsResponse>(`/api/v1/costs?resourceId=${encodeURIComponent(resourceId)}`);
   }
@@ -255,6 +262,15 @@ export class CigClient {
 
   sendChatMessage(payload: SendChatMessagePayload): Promise<ChatResponse> {
     return this.request<ChatResponse>("/api/v1/chat", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  refineGraph(
+    payload: GraphRefinementRequest,
+  ): Promise<GraphRefinementResponse> {
+    return this.request<GraphRefinementResponse>("/api/v1/graph/refine", {
       method: "POST",
       body: JSON.stringify(payload),
     });

@@ -53,6 +53,20 @@ export interface Relationship {
   type: string;
 }
 
+export interface GraphDiscoverySnapshot {
+  healthy: boolean;
+  running: boolean;
+  lastRun: string | null;
+  nextRun: string | null;
+}
+
+export interface GraphSnapshot {
+  resourceCounts: Record<string, number>;
+  resources: Resource[];
+  relationships: Relationship[];
+  discovery: GraphDiscoverySnapshot;
+}
+
 export interface ResourceDependencies {
   items: Resource[];
 }
@@ -387,6 +401,46 @@ export interface GraphDelta {
   deletions: string[];
   timestamp: string;
   scanId: string;
+}
+
+export interface GraphRefinementSnapshot {
+  resourceCounts: Record<string, number>;
+  resources: Resource[];
+  relationships: Relationship[];
+  discovery: GraphDiscoverySnapshot;
+}
+
+export interface GraphRefinementPreviewChange {
+  kind: 'resource' | 'relationship';
+  action: 'create' | 'update' | 'delete';
+  id: string;
+  label?: string;
+  detail?: string;
+}
+
+export interface GraphRefinementProposal {
+  summary: string;
+  proposedCypher: string;
+  previewDiff: GraphRefinementPreviewChange[];
+  requiresApproval: boolean;
+  rationale?: string;
+}
+
+export interface GraphRefinementRequest {
+  goal: string;
+  snapshot: GraphRefinementSnapshot;
+  proposal: GraphRefinementProposal;
+  confirmed?: boolean;
+}
+
+export interface GraphRefinementResponse {
+  applied: boolean;
+  preview: GraphRefinementProposal;
+  result?: {
+    affectedNodes: number;
+    affectedRelationships: number;
+  };
+  message?: string;
 }
 
 export interface HeartbeatPayload {

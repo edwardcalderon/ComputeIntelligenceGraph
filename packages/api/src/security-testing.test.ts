@@ -11,12 +11,14 @@ import type { FastifyInstance } from 'fastify';
 vi.mock('@cig/graph', () => ({
   GraphEngine: vi.fn().mockImplementation(() => ({
     getResource: vi.fn().mockResolvedValue(null),
+    executeCypher: vi.fn().mockResolvedValue({ rowCount: 0 }),
   })),
   GraphQueryEngine: vi.fn().mockImplementation(() => ({
     listResourcesPaged: vi.fn().mockResolvedValue({ items: [], total: 0, hasMore: false }),
     searchResources: vi.fn().mockResolvedValue([]),
     getDependencies: vi.fn().mockResolvedValue([]),
     getDependents: vi.fn().mockResolvedValue([]),
+    listRelationships: vi.fn().mockResolvedValue([]),
   })),
   Resource_Model: {},
 }));
@@ -78,9 +80,12 @@ const PROTECTED_ENDPOINTS: Array<{ method: 'GET' | 'POST'; url: string; body?: u
   { method: 'GET', url: '/api/v1/resources/some-id' },
   { method: 'GET', url: '/api/v1/resources/some-id/dependencies' },
   { method: 'GET', url: '/api/v1/resources/some-id/dependents' },
+  { method: 'GET', url: '/api/v1/relationships' },
+  { method: 'GET', url: '/api/v1/graph/snapshot' },
   { method: 'GET', url: '/api/v1/discovery/status' },
   { method: 'POST', url: '/api/v1/discovery/trigger' },
   { method: 'POST', url: '/api/v1/graph/query', body: { query: 'MATCH (n) RETURN n' } },
+  { method: 'POST', url: '/api/v1/graph/refine', body: { goal: 'test', proposal: { summary: 'x', proposedCypher: 'MATCH (n) RETURN n', previewDiff: [], requiresApproval: true } } },
   { method: 'GET', url: '/api/v1/costs' },
   { method: 'GET', url: '/api/v1/costs/breakdown' },
   { method: 'GET', url: '/api/v1/security/findings' },

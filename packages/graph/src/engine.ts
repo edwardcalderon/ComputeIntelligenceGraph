@@ -12,6 +12,10 @@ export interface ResourceFilters {
   tags?: Record<string, string>;
 }
 
+export interface CypherExecutionResult {
+  rowCount: number;
+}
+
 // ─── Circuit Breaker ──────────────────────────────────────────────────────────
 
 type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';
@@ -357,6 +361,21 @@ export class GraphEngine {
           properties: rec.get('properties') as string,
         })
       );
+    });
+  }
+
+  async executeCypher(
+    query: string,
+    parameters: Record<string, unknown> = {},
+    mode: 'read' | 'write' = 'read'
+  ): Promise<CypherExecutionResult> {
+    const runner = mode === 'write' ? this.runWrite.bind(this) : this.runRead.bind(this);
+
+    return runner(async (session) => {
+      const result = await session.run(query, parameters);
+      return {
+        rowCount: result.records.length,
+      };
     });
   }
 }

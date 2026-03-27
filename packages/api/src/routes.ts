@@ -24,6 +24,7 @@ import { nodeGraphDeltaRoutes } from './routes/nodes/graphDelta';
 import { nodeListRoutes } from './routes/nodes/list';
 import { bootstrapNodeRoutes } from './routes/bootstrap-node';
 import { nodeSSERoutes } from './sse/nodeStatus';
+import { graphRoutes } from './routes/graph';
 
 // Shared instances
 const graphEngine = new GraphEngine();
@@ -115,6 +116,9 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── Chat (RAG + OpenAI) ─────────────────────────────────────────────────────
   await app.register(chatRoutes);
+
+  // ─── Graph snapshot, relationships, and refinement ────────────────────────
+  await app.register(graphRoutes);
 
   // ─── CIG Node Onboarding (Phase 1, Requirements 3.1–3.9, 17.1–17.3) ─────────
   await app.register(onboardingRoutes);
@@ -255,33 +259,6 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
     async (_request: FastifyRequest, reply: FastifyReply) => {
       const result = await cartographyClient.triggerRun();
       return reply.status(202).send(result);
-    }
-  );
-
-  // ─── Graph ──────────────────────────────────────────────────────────────────
-
-  // POST /api/v1/graph/query — execute a custom Cypher query (read-only)
-  app.post(
-    '/api/v1/graph/query',
-    { preHandler: readResources },
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const body = request.body as { query?: string; parameters?: Record<string, unknown> };
-      if (!body?.query) {
-        return reply.status(400).send({ error: 'Missing required field: query', statusCode: 400 });
-      }
-      // Delegate to searchResources as a simple passthrough for now;
-      // full custom Cypher execution is handled by the graph package's Neo4j session.
-      // For safety, only allow read queries (MATCH/CALL/WITH) and block write keywords anywhere in the query.
-      const q = body.query.trim().toUpperCase();
-      if (!q.startsWith('MATCH') && !q.startsWith('CALL') && !q.startsWith('WITH')) {
-        return reply.status(400).send({ error: 'Only read queries (MATCH/CALL/WITH) are allowed', statusCode: 400 });
-      }
-      const WRITE_KEYWORDS = /\b(CREATE|MERGE|DELETE|DETACH|SET|REMOVE|DROP|FOREACH)\b/;
-      if (WRITE_KEYWORDS.test(q)) {
-        return reply.status(400).send({ error: 'Only read queries (MATCH/CALL/WITH) are allowed', statusCode: 400 });
-      }
-      // Return stub — full Cypher passthrough requires direct Neo4j session exposure
-      return reply.send({ query: body.query, parameters: body.parameters ?? {}, results: [] });
     }
   );
 

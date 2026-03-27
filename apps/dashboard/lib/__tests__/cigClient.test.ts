@@ -11,6 +11,11 @@ jest.mock("@cig/auth", () => ({
 
 const mockGetSupabaseClient = getSupabaseClient as jest.MockedFunction<typeof getSupabaseClient>;
 
+function makeJwt(issuer: string): string {
+  const payload = Buffer.from(JSON.stringify({ iss: issuer }), "utf8").toString("base64url");
+  return `header.${payload}.signature`;
+}
+
 describe("dashboard cigClient token resolution", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -34,6 +39,14 @@ describe("dashboard cigClient token resolution", () => {
     sessionStorage.setItem("cig_expires_at", String(Date.now() + 60_000));
 
     expect(getBrowserAccessToken()).toBe("access-token");
+  });
+
+  it("prefers the JWT issuer over a stale explicit auth source tag", () => {
+    sessionStorage.setItem("cig_access_token", makeJwt("https://project.supabase.co/auth/v1"));
+    sessionStorage.setItem("cig_auth_source", "authentik");
+    sessionStorage.setItem("cig_expires_at", String(Date.now() + 60_000));
+
+    expect(getBrowserAccessToken()).toBe(sessionStorage.getItem("cig_access_token"));
   });
 
   it("syncs the live Supabase session into browser storage", () => {

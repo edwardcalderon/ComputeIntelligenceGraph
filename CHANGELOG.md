@@ -1,20 +1,51 @@
+## [0.2.67](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.66...v0.2.67) (2026-03-27)
+
+### Detected changes
+- root: 4 changed file(s)
+  - CHANGELOG.md
+  - package.json
+  - pnpm-lock.yaml
+  - release-metadata.json
+- apps: 10 changed file(s)
+  - apps/dashboard/app/(dashboard)/graph/page.tsx
+  - apps/dashboard/components/Graph3DCanvas.tsx
+  - apps/dashboard/lib/__tests__/cigClient.test.ts
+  - apps/dashboard/lib/api.ts
+  - apps/dashboard/lib/sessionAuth.ts
+  - apps/dashboard/package.json
+  - apps/dashboard/types/react-force-graph-3d.d.ts
+  - apps/docs/package.json
+  - apps/landing/package.json
+  - apps/wizard-ui/package.json
+- packages: 19 changed file(s)
+  - packages/agents/package.json
+  - packages/agents/src/index.ts
+  - packages/agents/src/openclaw.test.ts
+  - packages/agents/src/openclaw.ts
+  - packages/api/package.json
+  - packages/api/src/integration.test.ts
+  - packages/api/src/routes.ts
+  - packages/api/src/routes/graph.ts
+  - packages/api/src/security-testing.test.ts
+  - packages/chatbot/package.json
+  - packages/config/package.json
+  - packages/discovery/package.json
+  - packages/graph/package.json
+  - packages/graph/src/engine.test.ts
+  - packages/graph/src/engine.ts
+  - packages/graph/src/queries.ts
+  - packages/sdk/package.json
+  - packages/sdk/src/client.ts
+  - packages/sdk/src/types.ts
+
+
+## [0.2.67](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.65...v0.2.67) (2026-03-27)
+
+
+
+
+
 ## [0.2.66](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.65...v0.2.66) (2026-03-27)
-
-
-### Bug Fixes
-
-* **landing:** button click blocker, hero entrance animations, pill weaving ([2d9ac7e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/2d9ac7e009999f88fd2f4d8705855cf9b2917540))
-
-
-
-
-
-## [0.2.66](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.65...v0.2.66) (2026-03-27)
-
-
-### Bug Fixes
-
-* **landing:** button click blocker, hero entrance animations, pill weaving ([2d9ac7e](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/2d9ac7e009999f88fd2f4d8705855cf9b2917540))
 
 
 

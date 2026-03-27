@@ -35,9 +35,20 @@ const graphMocks = vi.hoisted(() => ({
   ]),
   getDependencies: vi.fn().mockResolvedValue([]),
   getDependents: vi.fn().mockResolvedValue([]),
+  getResourceCounts: vi.fn().mockResolvedValue({ service: 1, database: 1 }),
+  listRelationships: vi.fn().mockResolvedValue([
+    {
+      id: 'res-1:DEPENDS_ON:res-2',
+      fromId: 'res-1',
+      toId: 'res-2',
+      type: 'DEPENDS_ON',
+      properties: {},
+    },
+  ]),
 }));
 
 const discoveryMocks = vi.hoisted(() => ({
+  healthCheck: vi.fn().mockResolvedValue(true),
   getStatus: vi.fn().mockResolvedValue({
     running: false,
     run_count: 5,
@@ -57,18 +68,22 @@ const discoveryMocks = vi.hoisted(() => ({
 vi.mock('@cig/graph', () => ({
   GraphEngine: vi.fn().mockImplementation(() => ({
     getResource: graphMocks.getResource,
+    executeCypher: vi.fn().mockResolvedValue({ rowCount: 0 }),
   })),
   GraphQueryEngine: vi.fn().mockImplementation(() => ({
     listResourcesPaged: graphMocks.listResourcesPaged,
     searchResources: graphMocks.searchResources,
     getDependencies: graphMocks.getDependencies,
     getDependents: graphMocks.getDependents,
+    getResourceCounts: graphMocks.getResourceCounts,
+    listRelationships: graphMocks.listRelationships,
   })),
   Resource_Model: {},
 }));
 
 vi.mock('@cig/discovery', () => ({
   CartographyClient: vi.fn().mockImplementation(() => ({
+    healthCheck: discoveryMocks.healthCheck,
     getStatus: discoveryMocks.getStatus,
     getRecentRuns: discoveryMocks.getRecentRuns,
     triggerRun: discoveryMocks.triggerRun,
@@ -281,6 +296,76 @@ describe('API Integration Tests', () => {
       });
 
       expect(response.statusCode).toBe(400);
+    });
+  });
+
+  // ── Graph ─────────────────────────────────────────────────────────────────
+
+  describe('GET /api/v1/relationships', () => {
+    it('returns mapped relationship items', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v1/relationships?limit=2',
+        headers: {
+          authorization: makeAuthHeader([Permission.READ_RESOURCES]),
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json<{ items: Array<{ sourceId: string; targetId: string; type: string }>; total: number }>();
+      expect(body.total).toBe(1);
+      expect(body.items[0]).toEqual({
+        sourceId: 'res-1',
+        targetId: 'res-2',
+        type: 'DEPENDS_ON',
+      });
+    });
+  });
+
+  describe('GET /api/v1/graph/snapshot', () => {
+    it('returns a normalized graph snapshot', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v1/graph/snapshot',
+        headers: {
+          authorization: makeAuthHeader([Permission.READ_RESOURCES]),
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json<{ resources: Array<{ id: string }>; relationships: Array<{ sourceId: string; targetId: string }>; discovery: { healthy: boolean } }>();
+      expect(Array.isArray(body.resources)).toBe(true);
+      expect(Array.isArray(body.relationships)).toBe(true);
+      expect(body.discovery.healthy).toBe(true);
+    });
+  });
+
+  describe('POST /api/v1/graph/refine', () => {
+    it('returns a confirmation response when a proposal requires approval', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/v1/graph/refine',
+        headers: {
+          authorization: makeAuthHeader([Permission.WRITE_RESOURCES]),
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          goal: 'connect service to database',
+          proposal: {
+            summary: 'Create a dependency edge.',
+            proposedCypher: 'MATCH (a:Resource {id: "res-1"}), (b:Resource {id: "res-2"}) MERGE (a)-[:DEPENDS_ON]->(b)',
+            previewDiff: [
+              { kind: 'relationship', action: 'create', id: 'res-1:DEPENDS_ON:res-2', label: 'DEPENDS_ON' },
+            ],
+            requiresApproval: true,
+          },
+        }),
+      });
+
+      expect(response.statusCode).toBe(202);
+      const body = response.json<{ applied: boolean; preview: { proposedCypher: string } }>();
+      expect(body.applied).toBe(false);
+      expect(body.preview.proposedCypher).toContain('MERGE');
     });
   });
 
