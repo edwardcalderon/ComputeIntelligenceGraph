@@ -599,22 +599,24 @@ function GraphContent() {
           </div>
         )}
 
-        <div className="pointer-events-none absolute right-2 top-2 z-10 max-w-xs rounded-lg border border-gray-200 bg-white/90 px-2 py-1.5 shadow-sm backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/90 sm:right-4 sm:top-4 sm:px-3 sm:py-2">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            {t("graph.providers")}
-          </p>
-          <div className="space-y-0.5 sm:space-y-1">
-            {Object.entries(PROVIDER_LABELS).map(([key, label]) => (
-              <div key={key} className="flex items-center gap-2">
-                <span
-                  className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                  style={{ backgroundColor: PROVIDER_COLORS[key] }}
-                />
-                <span className="text-xs text-gray-700 dark:text-gray-300">{label}</span>
-              </div>
-            ))}
+        {graphMode === "2d" ? (
+          <div className="pointer-events-none absolute right-2 top-2 z-10 max-w-xs rounded-lg border border-gray-200 bg-white/90 px-2 py-1.5 shadow-sm backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/90 sm:right-4 sm:top-4 sm:px-3 sm:py-2">
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              {t("graph.providers")}
+            </p>
+            <div className="space-y-0.5 sm:space-y-1">
+              {Object.entries(PROVIDER_LABELS).map(([key, label]) => (
+                <div key={key} className="flex items-center gap-2">
+                  <span
+                    className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-full"
+                    style={{ backgroundColor: PROVIDER_COLORS[key] }}
+                  />
+                  <span className="text-xs text-gray-700 dark:text-gray-300">{label}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : null}
 
         {visibleNodeCount === 0 && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">

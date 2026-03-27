@@ -5,7 +5,7 @@ import ForceGraph3D from "react-force-graph-3d";
 import type { ForceGraph3DInstance } from "react-force-graph-3d";
 import * as THREE from "three";
 import type { Resource } from "../lib/api";
-import { getProviderColor } from "../lib/providers";
+import { PROVIDER_COLORS, PROVIDER_LABELS, getProviderColor } from "../lib/providers";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -366,8 +366,8 @@ export function Graph3DCanvas({
       lastInteraction.current = Date.now();
     };
     window.addEventListener("mousedown", handleInteraction);
-    window.addEventListener("wheel", handleInteraction);
-    window.addEventListener("touchstart", handleInteraction);
+    window.addEventListener("wheel", handleInteraction, { passive: true });
+    window.addEventListener("touchstart", handleInteraction, { passive: true });
     return () => {
       window.removeEventListener("mousedown", handleInteraction);
       window.removeEventListener("wheel", handleInteraction);
@@ -460,17 +460,35 @@ export function Graph3DCanvas({
       ) : null}
 
       {/* Legend */}
-      <div className="pointer-events-none absolute right-3 top-3 flex flex-col gap-1 rounded-xl border border-slate-700/40 bg-slate-900/70 px-3 py-2.5 text-[10px] backdrop-blur-sm">
-        <span className="mb-1 font-semibold uppercase tracking-[0.2em] text-slate-500">Resource types</span>
-        {Object.entries(TYPE_GLOW).map(([type, color]) => (
-          <span key={type} className="flex items-center gap-2 text-slate-400">
-            <span
-              className="inline-block h-2 w-2 rounded-full"
-              style={{ background: color, boxShadow: `0 0 6px ${color}` }}
-            />
-            {type}
-          </span>
-        ))}
+      <div className="pointer-events-none absolute right-3 top-3 flex max-w-[11rem] flex-col gap-3 rounded-xl border border-slate-700/40 bg-slate-900/70 px-3 py-2.5 text-[10px] backdrop-blur-sm sm:right-4 sm:top-4">
+        <div className="flex flex-col gap-1">
+          <span className="mb-1 font-semibold uppercase tracking-[0.2em] text-slate-500">Resource types</span>
+          {Object.entries(TYPE_GLOW).map(([type, color]) => (
+            <span key={type} className="flex items-center gap-2 text-slate-400">
+              <span
+                className="inline-block h-2 w-2 rounded-full"
+                style={{ background: color, boxShadow: `0 0 6px ${color}` }}
+              />
+              {type}
+            </span>
+          ))}
+        </div>
+
+        <div className="flex flex-col gap-1 border-t border-slate-700/50 pt-2">
+          <span className="mb-1 font-semibold uppercase tracking-[0.2em] text-slate-500">Providers</span>
+          {Object.entries(PROVIDER_LABELS).map(([provider, label]) => (
+            <span key={provider} className="flex items-center gap-2 text-slate-400">
+              <span
+                className="inline-block h-2 w-2 rounded-full"
+                style={{
+                  background: PROVIDER_COLORS[provider],
+                  boxShadow: `0 0 6px ${PROVIDER_COLORS[provider]}`,
+                }}
+              />
+              {label}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );

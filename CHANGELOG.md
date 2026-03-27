@@ -1,3 +1,18 @@
+## [0.2.87](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.86...v0.2.87) (2026-03-27)
+
+### Detected changes
+- apps: 2 changed file(s)
+  - apps/dashboard/app/(dashboard)/graph/page.tsx
+  - apps/dashboard/components/Graph3DCanvas.tsx
+- infra: infra/docker/Dockerfile.api
+
+
+## [0.2.87](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.86...v0.2.87) (2026-03-27)
+
+
+
+
+
 ## [0.2.86](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.85...v0.2.86) (2026-03-27)
 
 ### Detected changes

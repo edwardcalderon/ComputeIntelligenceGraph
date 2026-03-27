@@ -20,6 +20,7 @@ COPY packages/graph/package.json ./packages/graph/
 COPY packages/discovery/package.json ./packages/discovery/
 COPY packages/agents/package.json ./packages/agents/
 COPY packages/chatbot/package.json ./packages/chatbot/
+COPY packages/sdk/package.json ./packages/sdk/
 
 # Install only the API workspace tree needed for the runtime image.
 # The cache mount keeps pnpm's store warm across workflow runs.
@@ -38,11 +39,17 @@ COPY packages/graph/src ./packages/graph/src
 COPY packages/graph/tsconfig.json ./packages/graph/
 COPY packages/discovery/src ./packages/discovery/src
 COPY packages/discovery/tsconfig.json ./packages/discovery/
+COPY packages/chatbot/src ./packages/chatbot/src
+COPY packages/chatbot/tsconfig.json ./packages/chatbot/
+COPY packages/sdk/src ./packages/sdk/src
+COPY packages/sdk/tsconfig.json ./packages/sdk/
 COPY packages/emails/src/templates ./packages/emails/src/templates
 
 # Build
 RUN pnpm --filter @cig/config build
 RUN pnpm --filter @cig/auth build
+RUN pnpm --filter @cig/sdk build
+RUN pnpm --filter @cig/chatbot build
 RUN pnpm --filter @cig/discovery build
 RUN pnpm --filter @cig/graph build
 RUN pnpm --filter @cig/api build
