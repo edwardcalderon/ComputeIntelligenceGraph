@@ -15,7 +15,18 @@ describe('setup command', () => {
       apiUrl: 'http://localhost:8000',
     });
 
-    expect(install).toHaveBeenCalledWith('http://localhost:8000', 'self-hosted', 'discovery');
+    expect(install).toHaveBeenCalledWith('http://localhost:8000', 'self-hosted', 'discovery', false);
+  });
+
+  it('forwards demo mode when explicitly requested', async () => {
+    await setup({
+      mode: 'self-hosted',
+      profile: 'discovery',
+      apiUrl: 'http://localhost:8000',
+      demo: true,
+    });
+
+    expect(install).toHaveBeenCalledWith('http://localhost:8000', 'self-hosted', 'discovery', true);
   });
 
   it('returns cleanly when installation is cancelled', async () => {

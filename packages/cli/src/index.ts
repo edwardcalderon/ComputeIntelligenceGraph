@@ -121,7 +121,7 @@ program
   .option('--ssh-user <user>', 'SSH user (default: root)', 'root')
   .option('--ssh-key-path <path>', 'Path to SSH private key file')
   .option('--ssh-port <port>', 'SSH port (default: 22)', '22')
-  .option('--demo', 'Provision with demo/mock data for immediate visualization', false)
+  .option('--demo', 'Include demo/mock data in the installation')
   .action(async (cmdOpts: Record<string, any>) => {
     const globals = getGlobalOptions();
     const mode = (cmdOpts['mode'] ?? globals.mode) as 'managed' | 'self-hosted';
@@ -140,7 +140,7 @@ program
       sshUser: cmdOpts['sshUser'] ?? 'root',
       sshKeyPath: cmdOpts['sshKeyPath'],
       sshPort: cmdOpts['sshPort'] ? parseInt(cmdOpts['sshPort'], 10) : 22,
-      demo: !!cmdOpts['demo'],
+      demo: typeof cmdOpts['demo'] === 'boolean' ? cmdOpts['demo'] : undefined,
     });
   });
 

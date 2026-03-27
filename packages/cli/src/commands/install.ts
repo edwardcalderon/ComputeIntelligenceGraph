@@ -28,6 +28,7 @@ import { resolveManifest } from '../manifest.js';
 import { doctor } from './doctor.js';
 import { installViaSSH } from '../ssh.js';
 import type { SetupManifest, NodeIdentity } from '@cig/sdk';
+import { resolveDemoDataPreference } from '../demo-data.js';
 
 // ---------------------------------------------------------------------------
 // Inline infra helpers (mirrors packages/infra/src/compose.ts and install.ts)
@@ -388,7 +389,8 @@ function buildStubNodeIdentity(): NodeIdentity {
 export async function install(
   apiUrlOrOptions?: string | InstallOptions,
   mode?: 'managed' | 'self-hosted',
-  profile?: 'core' | 'discovery' | 'full'
+  profile?: 'core' | 'discovery' | 'full',
+  demo?: boolean
 ): Promise<void> {
   // Normalise arguments — support both legacy positional call and new options object
   let opts: InstallOptions;
@@ -401,6 +403,7 @@ export async function install(
       mode: mode ?? 'managed',
       profile: profile ?? 'core',
       target: 'local',
+      demo,
     };
   }
 
@@ -449,6 +452,12 @@ async function runInstall(opts: InstallOptions): Promise<void> {
     );
   }
 
+  const demo = await resolveDemoDataPreference({
+    explicitDemo: opts.demo,
+    defaultValue: Boolean(manifest?.isDemo),
+    message: 'Include demo data in this installation?',
+  });
+
   // -------------------------------------------------------------------------
   // Step 2 — Run doctor prerequisite checks (Requirements 5.7, 5.8)
   // -------------------------------------------------------------------------
@@ -466,11 +475,8 @@ async function runInstall(opts: InstallOptions): Promise<void> {
   // -------------------------------------------------------------------------
 
   // For self-hosted mode without a manifest, build a synthetic manifest
-  const effectiveManifest: SetupManifest = manifest ?? buildSelfHostedManifest(apiUrl, profile, opts.demo);
-
-  if (opts.demo) {
-    effectiveManifest.isDemo = true;
-  }
+  const effectiveManifest: SetupManifest = manifest ?? buildSelfHostedManifest(apiUrl, profile, demo);
+  effectiveManifest.isDemo = demo;
 
   const effectiveProfile = manifest?.installProfile ?? profile;
   const composeContent = generateComposeFile(effectiveManifest, effectiveProfile);
@@ -486,7 +492,7 @@ async function runInstall(opts: InstallOptions): Promise<void> {
   const installDir = INSTALL_DIR;
 
   // Demo mode: Copy mock DBs
-  if (effectiveManifest.isDemo) {
+  if (demo) {
     const assetsSrc = path.join(process.cwd(), 'assets', 'mock-dbs');
     const assetsDest = path.join(installDir, 'mock-dbs');
     if (fs.existsSync(assetsSrc)) {

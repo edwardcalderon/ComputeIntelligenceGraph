@@ -19,6 +19,9 @@ continuous discovery engine. In the current foundation release, it can:
 - store connection profiles, encrypted credentials, install state, and node identity
 - report local install status and print the active dashboard URL
 
+During `cig setup` and `cig install`, the CLI asks whether to include the
+seeded demo graph/data bundle unless you pass `--demo` explicitly.
+
 ## Current State
 
 This package is a real foundation release with the new onboarding flow, but not the final platform shape.
@@ -40,11 +43,13 @@ container provenance data.
 - Package: https://www.npmjs.com/package/@cig-technology/cli
 - GitHub releases: https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases
 
-## 📋 Latest Changes (v0.1.18)
+## 📋 Latest Changes (v0.1.20)
 
-### Bug Fixes
+### Features
 
-* **cli:** align neo4j bundle image handling ([f974a8d](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f974a8d9483b1e9cf6f2b3e05de49b01ff7101c4))
+* add CHROMA_URI to self-hosted API for internal vector db access ([a87bd82](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/a87bd82a8cc1f1ad84007c812cf36e74753c3358))
+* current workspace changes ([82dba0f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/82dba0f6e8ed2dea6ee319ad690993ff3ecfb526))
+* implement demo mode with simulation provider and CLI --demo flag ([059411f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/059411f70fc0d10a5c334efbd32bc60dd89d9d5d))
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 
@@ -222,6 +227,7 @@ browser process.
 cig login --api-url http://localhost:8000
 cig logout --api-url http://localhost:8000
 cig install --mode managed --profile discovery --api-url http://localhost:8000
+cig install --mode self-hosted --profile discovery --demo
 cig install --mode self-hosted --profile discovery
 cig enroll --api-url http://localhost:8000 --profile discovery
 cig bootstrap-reset

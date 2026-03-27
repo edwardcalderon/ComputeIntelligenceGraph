@@ -1,3 +1,40 @@
+## [0.1.20](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.18...cli-v0.1.20) (2026-03-27)
+
+
+### Features
+
+* add CHROMA_URI to self-hosted API for internal vector db access ([a87bd82](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/a87bd82a8cc1f1ad84007c812cf36e74753c3358))
+* current workspace changes ([82dba0f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/82dba0f6e8ed2dea6ee319ad690993ff3ecfb526))
+* implement demo mode with simulation provider and CLI --demo flag ([059411f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/059411f70fc0d10a5c334efbd32bc60dd89d9d5d))
+
+
+
+
+
+## [0.1.19](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.18...cli-v0.1.19) (2026-03-27)
+
+
+### Features
+
+* add CHROMA_URI to self-hosted API for internal vector db access ([a87bd82](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/a87bd82a8cc1f1ad84007c812cf36e74753c3358))
+* current workspace changes ([82dba0f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/82dba0f6e8ed2dea6ee319ad690993ff3ecfb526))
+* implement demo mode with simulation provider and CLI --demo flag ([059411f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/059411f70fc0d10a5c334efbd32bc60dd89d9d5d))
+
+
+
+
+
+## [0.1.19](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.18...cli-v0.1.19) (2026-03-27)
+
+
+### Bug Fixes
+
+* prompt for demo data during setup/install unless `--demo` is passed
+* keep CLI type-checking by including DOM libs for shared SDK fetch types
+* add regression coverage for the demo-data selection flow
+
+
+
 ## [0.1.18](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.17...cli-v0.1.18) (2026-03-26)
 
 

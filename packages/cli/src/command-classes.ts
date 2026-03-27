@@ -70,15 +70,18 @@ export class SetupCommand extends CigCommand {
       options: ['core', 'discovery', 'full'] as const,
     }),
     'api-url': Flags.string({ description: 'API URL' }),
+    demo: Flags.boolean({ description: 'Include demo/mock data in the installation' }),
   };
 
   async run(): Promise<void> {
     const { flags } = await this.parse(SetupCommand);
+    const demo = this.argv.includes('--demo') ? Boolean(flags.demo) : undefined;
     await this.runSafely(() =>
       setup({
         mode: flags.mode as 'managed' | 'self-hosted' | undefined,
         profile: flags.profile as 'core' | 'discovery' | 'full' | undefined,
         apiUrl: flags['api-url'],
+        demo,
       })
     );
   }
@@ -96,15 +99,18 @@ export class InstallCommand extends CigCommand {
       options: ['core', 'discovery', 'full'] as const,
     }),
     'api-url': Flags.string({ description: 'API URL', default: 'http://localhost:8000' }),
+    demo: Flags.boolean({ description: 'Include demo/mock data in the installation' }),
   };
 
   async run(): Promise<void> {
     const { flags } = await this.parse(InstallCommand);
+    const demo = this.argv.includes('--demo') ? Boolean(flags.demo) : undefined;
     await this.runSafely(() =>
         install(
           flags['api-url'],
           flags.mode as 'managed' | 'self-hosted' | undefined,
-          flags.profile as 'core' | 'discovery' | 'full' | undefined
+          flags.profile as 'core' | 'discovery' | 'full' | undefined,
+          demo
         )
       );
   }
