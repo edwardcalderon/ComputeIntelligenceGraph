@@ -3,10 +3,6 @@ name: Deploy Landing + Docs → GitHub Pages
 on:
   push:
     branches: [ main ]
-    tags:
-      - "v*.*.*"
-  release:
-    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -121,95 +117,6 @@ jobs:
     name: Deploy Pages (branch push)
     runs-on: ubuntu-latest
     needs: [build-on-branch]
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-        with:
-          artifact_name: github-pages
-
-  # Deploy on tags or GitHub Release regardless of path changes
-  build-on-release:
-    name: Build Pages Artifact (tag/release)
-    if: |
-      github.event_name == 'release' ||
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) ||
-      github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '22'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v5
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build landing page
-        run: pnpm --filter @cig/landing build
-        env:
-          NODE_ENV: production
-          NEXT_PUBLIC_SITE_URL: https://cig.lat
-          NEXT_PUBLIC_API_URL: https://api.cig.technology
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_DASHBOARD_URL: ${{ secrets.NEXT_PUBLIC_DASHBOARD_URL }}
-
-      - name: Build Docusaurus docs
-        run: pnpm --filter @cig/docs build
-        env:
-          NODE_ENV: production
-
-      - name: Merge docs into landing at /documentation
-        run: |
-          mkdir -p ./apps/landing/out/documentation
-          cp -r ./apps/docs/build/. ./apps/landing/out/documentation/
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          name: github-pages
-          path: ./apps/landing/out
-
-  # Deploy after the release artifact is available to the Pages service
-  deploy-on-release:
-    name: Deploy Pages (tag/release)
-    runs-on: ubuntu-latest
-    needs: [build-on-release]
     permissions:
       contents: read
       pages: write

@@ -1,3 +1,15 @@
+## [0.2.89](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.88...v0.2.89) (2026-03-27)
+
+### Detected changes
+- .github: .github/workflows/deploy-pages.yml
+
+
+## [0.2.89](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.88...v0.2.89) (2026-03-27)
+
+
+
+
+
 ## [0.2.88](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.87...v0.2.88) (2026-03-27)
 
 
