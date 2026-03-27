@@ -1,6 +1,7 @@
 import { Session } from 'neo4j-driver';
 import { getReadSession, getWriteSession } from './neo4j';
-import { Resource_Model, Relationship, RelationshipType, ResourceType, Provider, ResourceState } from './types';
+import { Resource_Model, Relationship, RelationshipType, ResourceType, Provider, ResourceState, type GraphScope } from './types';
+import { applyGraphScope, buildGraphScopeConditions } from './scope';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -113,6 +114,9 @@ function recordToResource(record: Record<string, unknown>): Resource_Model {
     tags: r['tags'] ? JSON.parse(r['tags'] as string) : {},
     metadata: r['metadata'] ? JSON.parse(r['metadata'] as string) : {},
     cost: r['cost'] != null ? Number(r['cost']) : undefined,
+    ownerId: r['ownerId'] as string | undefined,
+    tenant: r['tenant'] as string | undefined,
+    workspace: r['workspace'] as string | undefined,
     createdAt: toDate(r['createdAt']),
     updatedAt: toDate(r['updatedAt']),
     discoveredAt: toDate(r['discoveredAt']),
@@ -192,8 +196,9 @@ export class GraphEngine {
 
   // ─── Resource CRUD ──────────────────────────────────────────────────────────
 
-  async createResource(resource: Resource_Model): Promise<void> {
+  async createResource(resource: Resource_Model, scope?: GraphScope): Promise<void> {
     log('info', 'createResource', { id: resource.id, type: resource.type });
+    const scopedResource = applyGraphScope(resource, scope);
     await this.runWrite(async (session) => {
       await session.run(
         `MERGE (r:Resource {id: $id})
@@ -207,30 +212,36 @@ export class GraphEngine {
            tags: $tags,
            metadata: $metadata,
            cost: $cost,
+           ownerId: $ownerId,
+           tenant: $tenant,
+           workspace: $workspace,
            createdAt: $createdAt,
            updatedAt: $updatedAt,
            discoveredAt: $discoveredAt
          }`,
         {
-          id: resource.id,
-          name: resource.name,
-          type: resource.type,
-          provider: resource.provider,
-          region: resource.region ?? null,
-          zone: resource.zone ?? null,
-          state: resource.state,
-          tags: JSON.stringify(resource.tags),
-          metadata: JSON.stringify(resource.metadata),
-          cost: resource.cost ?? null,
-          createdAt: resource.createdAt.toISOString(),
-          updatedAt: resource.updatedAt.toISOString(),
-          discoveredAt: resource.discoveredAt.toISOString(),
+          id: scopedResource.id,
+          name: scopedResource.name,
+          type: scopedResource.type,
+          provider: scopedResource.provider,
+          region: scopedResource.region ?? null,
+          zone: scopedResource.zone ?? null,
+          state: scopedResource.state,
+          tags: JSON.stringify(scopedResource.tags),
+          metadata: JSON.stringify(scopedResource.metadata),
+          cost: scopedResource.cost ?? null,
+          ownerId: scopedResource.ownerId ?? null,
+          tenant: scopedResource.tenant ?? null,
+          workspace: scopedResource.workspace ?? null,
+          createdAt: scopedResource.createdAt.toISOString(),
+          updatedAt: scopedResource.updatedAt.toISOString(),
+          discoveredAt: scopedResource.discoveredAt.toISOString(),
         }
       );
     });
   }
 
-  async updateResource(id: string, updates: Partial<Resource_Model>): Promise<void> {
+  async updateResource(id: string, updates: Partial<Resource_Model>, scope?: GraphScope): Promise<void> {
     log('info', 'updateResource', { id });
     const params: Record<string, unknown> = { id, updatedAt: new Date().toISOString() };
     const setClauses: string[] = ['r.updatedAt = $updatedAt'];
@@ -244,37 +255,49 @@ export class GraphEngine {
     if (updates.tags !== undefined) { params['tags'] = JSON.stringify(updates.tags); setClauses.push('r.tags = $tags'); }
     if (updates.metadata !== undefined) { params['metadata'] = JSON.stringify(updates.metadata); setClauses.push('r.metadata = $metadata'); }
     if (updates.cost !== undefined) { params['cost'] = updates.cost; setClauses.push('r.cost = $cost'); }
+    if (updates.ownerId !== undefined) { params['ownerId'] = updates.ownerId; setClauses.push('r.ownerId = $ownerId'); }
+    if (updates.tenant !== undefined) { params['tenant'] = updates.tenant; setClauses.push('r.tenant = $tenant'); }
+    if (updates.workspace !== undefined) { params['workspace'] = updates.workspace; setClauses.push('r.workspace = $workspace'); }
+
+    const scopeWhere = buildGraphScopeConditions('r', scope, params);
+    const whereClause = scopeWhere.length > 0 ? ` WHERE ${scopeWhere.join(' AND ')}` : '';
 
     await this.runWrite(async (session) => {
       await session.run(
-        `MATCH (r:Resource {id: $id}) SET ${setClauses.join(', ')}`,
+        `MATCH (r:Resource {id: $id})${whereClause} SET ${setClauses.join(', ')}`,
         params
       );
     });
   }
 
-  async deleteResource(id: string): Promise<void> {
+  async deleteResource(id: string, scope?: GraphScope): Promise<void> {
     log('info', 'deleteResource', { id });
+    const params: Record<string, unknown> = { id };
+    const scopeWhere = buildGraphScopeConditions('r', scope, params);
+    const whereClause = scopeWhere.length > 0 ? ` WHERE ${scopeWhere.join(' AND ')}` : '';
     await this.runWrite(async (session) => {
       await session.run(
-        `MATCH (r:Resource {id: $id}) DETACH DELETE r`,
-        { id }
+        `MATCH (r:Resource {id: $id})${whereClause} DETACH DELETE r`,
+        params
       );
     });
   }
 
-  async getResource(id: string): Promise<Resource_Model | null> {
+  async getResource(id: string, scope?: GraphScope): Promise<Resource_Model | null> {
     return this.runRead(async (session) => {
+      const params: Record<string, unknown> = { id };
+      const scopeWhere = buildGraphScopeConditions('r', scope, params);
+      const whereClause = scopeWhere.length > 0 ? ` WHERE ${scopeWhere.join(' AND ')}` : '';
       const result = await session.run(
-        `MATCH (r:Resource {id: $id}) RETURN properties(r) AS r`,
-        { id }
+        `MATCH (r:Resource {id: $id})${whereClause} RETURN properties(r) AS r`,
+        params
       );
       if (result.records.length === 0) return null;
       return recordToResource(result.records[0].get('r') as Record<string, unknown>);
     });
   }
 
-  async listResources(filters?: ResourceFilters): Promise<Resource_Model[]> {
+  async listResources(filters?: ResourceFilters, scope?: GraphScope): Promise<Resource_Model[]> {
     return this.runRead(async (session) => {
       const conditions: string[] = [];
       const params: Record<string, unknown> = {};
@@ -283,6 +306,7 @@ export class GraphEngine {
       if (filters?.provider) { conditions.push('r.provider = $provider'); params['provider'] = filters.provider; }
       if (filters?.region) { conditions.push('r.region = $region'); params['region'] = filters.region; }
       if (filters?.state) { conditions.push('r.state = $state'); params['state'] = filters.state; }
+      conditions.push(...buildGraphScopeConditions('r', scope, params));
 
       const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
       const result = await session.run(
@@ -312,45 +336,61 @@ export class GraphEngine {
     from: string,
     to: string,
     type: RelationshipType,
-    props: Record<string, unknown> = {}
+    props: Record<string, unknown> = {},
+    scope?: GraphScope
   ): Promise<void> {
     log('info', 'createRelationship', { from, to, type });
     const relId = `${from}:${type}:${to}`;
+    const params: Record<string, unknown> = {
+      from,
+      to,
+      relId,
+      properties: JSON.stringify(props),
+    };
+    const fromConditions = buildGraphScopeConditions('a', scope, params);
+    const toConditions = buildGraphScopeConditions('b', scope, params);
+    const scopeConditions = [...fromConditions, ...toConditions];
+    const whereClause = scopeConditions.length > 0 ? ` WHERE ${scopeConditions.join(' AND ')}` : '';
     await this.runWrite(async (session) => {
       await session.run(
-        `MATCH (a:Resource {id: $from}), (b:Resource {id: $to})
+        `MATCH (a:Resource {id: $from}), (b:Resource {id: $to})${whereClause}
          MERGE (a)-[rel:${type} {id: $relId}]->(b)
          SET rel.properties = $properties`,
-        {
-          from,
-          to,
-          relId,
-          properties: JSON.stringify(props),
-        }
+        params
       );
     });
   }
 
-  async deleteRelationship(from: string, to: string, type: RelationshipType): Promise<void> {
+  async deleteRelationship(from: string, to: string, type: RelationshipType, scope?: GraphScope): Promise<void> {
     log('info', 'deleteRelationship', { from, to, type });
+    const params: Record<string, unknown> = { from, to };
+    const fromConditions = buildGraphScopeConditions('a', scope, params);
+    const toConditions = buildGraphScopeConditions('b', scope, params);
+    const scopeConditions = [...fromConditions, ...toConditions];
+    const whereClause = scopeConditions.length > 0 ? ` WHERE ${scopeConditions.join(' AND ')}` : '';
     await this.runWrite(async (session) => {
       await session.run(
-        `MATCH (a:Resource {id: $from})-[rel:${type}]->(b:Resource {id: $to})
+        `MATCH (a:Resource {id: $from})-[rel:${type}]->(b:Resource {id: $to})${whereClause}
          DELETE rel`,
-        { from, to }
+        params
       );
     });
   }
 
-  async getRelationships(resourceId: string): Promise<Relationship[]> {
+  async getRelationships(resourceId: string, scope?: GraphScope): Promise<Relationship[]> {
     return this.runRead(async (session) => {
+      const params: Record<string, unknown> = { id: resourceId };
+      const leftConditions = buildGraphScopeConditions('a', scope, params);
+      const rightConditions = buildGraphScopeConditions('b', scope, params);
+      const leftWhere = leftConditions.length > 0 ? ` WHERE ${leftConditions.join(' AND ')}` : '';
+      const rightWhere = rightConditions.length > 0 ? ` WHERE ${rightConditions.join(' AND ')}` : '';
       const result = await session.run(
-        `MATCH (a:Resource {id: $id})-[rel]->(b:Resource)
+        `MATCH (a:Resource {id: $id})-[rel]->(b:Resource)${leftWhere}
          RETURN rel.id AS id, type(rel) AS type, a.id AS fromId, b.id AS toId, rel.properties AS properties
          UNION
-         MATCH (a:Resource)-[rel]->(b:Resource {id: $id})
+         MATCH (a:Resource)-[rel]->(b:Resource {id: $id})${rightWhere}
          RETURN rel.id AS id, type(rel) AS type, a.id AS fromId, b.id AS toId, rel.properties AS properties`,
-        { id: resourceId }
+        params
       );
       return result.records.map((rec) =>
         recordToRelationship({
@@ -367,12 +407,18 @@ export class GraphEngine {
   async executeCypher(
     query: string,
     parameters: Record<string, unknown> = {},
-    mode: 'read' | 'write' = 'read'
+    mode: 'read' | 'write' = 'read',
+    scope?: GraphScope
   ): Promise<CypherExecutionResult> {
     const runner = mode === 'write' ? this.runWrite.bind(this) : this.runRead.bind(this);
 
     return runner(async (session) => {
-      const result = await session.run(query, parameters);
+      const scopedParameters = { ...parameters };
+      if (scope) {
+        const scopeParams: Record<string, unknown> = scopedParameters;
+        buildGraphScopeConditions('r', scope, scopeParams);
+      }
+      const result = await session.run(query, scopedParameters);
       return {
         rowCount: result.records.length,
       };

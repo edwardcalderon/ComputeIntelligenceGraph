@@ -20,6 +20,7 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import crypto from 'crypto';
 import { query } from '../../db/client';
 import { requireNodeAuth } from '../../middleware/auth';
+import { indexGraphDeltaResources, type SemanticScope } from '../../semantic-rag';
 import type { GraphDelta } from '@cig/sdk';
 
 // ---------------------------------------------------------------------------
@@ -166,6 +167,36 @@ export async function nodeGraphDeltaRoutes(app: FastifyInstance): Promise<void> 
             'applyDelta not available in @cig/graph — skipping graph write'
           );
         }
+
+        let semanticScope: SemanticScope | undefined;
+        if (process.env.CIG_AUTH_MODE === 'managed') {
+          const managedNodeResult = await query<{ user_id: string; tenant: string | null }>(
+            `SELECT user_id, tenant
+               FROM managed_nodes
+              WHERE id = ?
+              LIMIT 1`,
+            [nodeId]
+          );
+
+          const managedNode = managedNodeResult.rows[0];
+          if (managedNode) {
+            semanticScope = {
+              deploymentMode: 'managed',
+              userId: managedNode.user_id,
+              tenant: managedNode.tenant,
+            };
+          }
+        }
+
+        await indexGraphDeltaResources(
+          {
+            additions: delta.additions ?? [],
+            modifications: delta.modifications ?? [],
+            deletions: delta.deletions ?? [],
+          },
+          semanticScope,
+          request.log
+        );
       } catch (err) {
         request.log.warn(
           { err, nodeId, scanId, deltaType },

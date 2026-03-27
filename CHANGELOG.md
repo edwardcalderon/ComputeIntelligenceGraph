@@ -1,3 +1,29 @@
+## [0.2.71](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.70...v0.2.71) (2026-03-27)
+
+### Detected changes
+- packages: 14 changed file(s)
+  - packages/api/src/db/migrations/005_graph_tenancy.sql
+  - packages/api/src/graph-scope.ts
+  - packages/api/src/jobs/semantic-index-sync.ts
+  - packages/api/src/managed-scope.ts
+  - packages/api/src/routes/nodes/graphDelta.test.ts
+  - packages/api/src/routes/nodes/graphDelta.ts
+  - packages/api/src/semantic-rag.test.ts
+  - packages/api/src/semantic-rag.ts
+  - packages/chatbot/src/vectordb.ts
+  - packages/graph/src/engine.ts
+  - packages/graph/src/index.ts
+  - packages/graph/src/queries.ts
+  - packages/graph/src/scope.ts
+  - packages/graph/src/types.ts
+
+
+## [0.2.71](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.70...v0.2.71) (2026-03-27)
+
+
+
+
+
 ## [0.2.70](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.69...v0.2.70) (2026-03-27)
 
 ### Detected changes

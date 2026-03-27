@@ -22,6 +22,10 @@ export interface ChromaConnectionConfig {
   collectionName: string;
 }
 
+export interface VectorStoreOptions {
+  collectionName?: string;
+}
+
 function normalizeCloudHost(host: string): string {
   const trimmed = host.trim();
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
@@ -31,12 +35,12 @@ function normalizeCloudHost(host: string): string {
   return `https://${trimmed}`;
 }
 
-export function resolveChromaConnectionConfig(): ChromaConnectionConfig {
+export function resolveChromaConnectionConfig(collectionNameOverride?: string): ChromaConnectionConfig {
   const cloudApiKey = process.env.CHROMA_API_KEY?.trim();
   const cloudTenant = process.env.CHROMA_TENANT?.trim();
   const cloudDatabase = process.env.CHROMA_DATABASE?.trim();
   const cloudHost = process.env.CHROMA_HOST?.trim();
-  const collectionName = process.env.CHROMA_COLLECTION?.trim() || DEFAULT_COLLECTION_NAME;
+  const collectionName = collectionNameOverride?.trim() || process.env.CHROMA_COLLECTION?.trim() || DEFAULT_COLLECTION_NAME;
 
   if (cloudApiKey) {
     if (!cloudTenant || !cloudDatabase) {
@@ -81,16 +85,18 @@ function createClient(): ChromaClient {
 export class VectorStore {
   private client: ChromaClient;
   private collection: Collection | null = null;
+  private readonly collectionNameOverride?: string;
 
-  constructor() {
+  constructor(options: VectorStoreOptions = {}) {
     if (!clientInstance) {
       clientInstance = createClient();
     }
     this.client = clientInstance;
+    this.collectionNameOverride = options.collectionName?.trim() || undefined;
   }
 
   async connect(): Promise<void> {
-    const { collectionName } = resolveChromaConnectionConfig();
+    const { collectionName } = resolveChromaConnectionConfig(this.collectionNameOverride);
     const cachedCollection = collectionCache.get(collectionName);
 
     if (cachedCollection) {
