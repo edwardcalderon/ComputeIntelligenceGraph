@@ -43,13 +43,11 @@ container provenance data.
 - Package: https://www.npmjs.com/package/@cig-technology/cli
 - GitHub releases: https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases
 
-## 📋 Latest Changes (v0.1.19)
+## 📋 Latest Changes (v0.1.20)
 
-### Features
+### Bug Fixes
 
-* add CHROMA_URI to self-hosted API for internal vector db access ([a87bd82](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/a87bd82a8cc1f1ad84007c812cf36e74753c3358))
-* current workspace changes ([82dba0f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/82dba0f6e8ed2dea6ee319ad690993ff3ecfb526))
-* implement demo mode with simulation provider and CLI --demo flag ([059411f](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/059411f70fc0d10a5c334efbd32bc60dd89d9d5d))
+* **cli:** build sdk before publishing ([72a3600](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/72a360052456a012a40e3e9a8d9937c13999a2f9))
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 

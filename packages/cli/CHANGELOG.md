@@ -1,3 +1,14 @@
+## [0.1.20](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.19...cli-v0.1.20) (2026-03-27)
+
+
+### Bug Fixes
+
+* **cli:** build sdk before publishing ([72a3600](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/72a360052456a012a40e3e9a8d9937c13999a2f9))
+
+
+
+
+
 ## [0.1.19](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.20...cli-v0.1.19) (2026-03-27)
 
 

@@ -10,8 +10,8 @@
  * This module never writes anything to disk.
  */
 
-import { deserializeManifest, verifyManifestSignature } from '@cig/sdk';
-import type { SetupManifest } from '@cig/sdk';
+import { deserializeManifest, verifyManifestSignature } from './sdk.js';
+import type { SetupManifest } from './sdk.js';
 
 /**
  * Fetches the raw base64-encoded manifest string from a URL.

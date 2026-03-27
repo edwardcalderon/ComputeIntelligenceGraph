@@ -1,6 +1,6 @@
 {
   "name": "@cig-technology/cli",
-  "version": "0.1.19",
+  "version": "0.1.20",
   "description": "Production-oriented CLI for bootstrapping and operating CIG nodes and self-hosted installs",
   "type": "module",
   "keywords": [
@@ -39,7 +39,7 @@
     "cig": "dist/index.js"
   },
   "scripts": {
-    "build": "npm run clean && pnpm --filter @cig/sdk build && tsc",
+    "build": "npm run clean && tsc",
     "dev": "tsc --watch",
     "lint": "tsc --noEmit -p tsconfig.lint.json",
     "test": "vitest run",
@@ -58,7 +58,6 @@
     "prepublishOnly": "npm run version:validate && npm run build && npm run test"
   },
   "dependencies": {
-    "@cig/sdk": "workspace:*",
     "@clack/prompts": "^1.1.0",
     "@oclif/core": "^4.10.2",
     "commander": "^12.1.0",

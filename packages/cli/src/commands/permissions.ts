@@ -15,7 +15,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { ApiClient } from '../services/api-client.js';
 import { CredentialManager } from '../credentials.js';
-import type { NodeIdentity } from '@cig/sdk';
+import type { NodeIdentity } from '../types/runtime.js';
 
 const DEFAULT_API_URL = process.env['CIG_API_URL'] ?? 'https://api.cig.lat';
 

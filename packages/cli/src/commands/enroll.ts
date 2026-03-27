@@ -3,7 +3,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { ApiClient } from '../services/api-client.js';
 import { CredentialManager } from '../credentials.js';
-import type { NodeIdentity } from '@cig/sdk';
+import type { NodeIdentity } from '../sdk.js';
 
 export interface EnrollCommandOptions {
   apiUrl: string;

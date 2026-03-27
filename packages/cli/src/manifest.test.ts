@@ -5,8 +5,8 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { deserializeManifest, serializeManifest, signManifest } from '@cig/sdk';
-import type { SetupManifest } from '@cig/sdk';
+import { deserializeManifest, serializeManifest, signManifest } from './sdk.js';
+import type { SetupManifest } from './sdk.js';
 import { fetchManifestFromUrl, resolveManifest } from './manifest.js';
 
 // ---------------------------------------------------------------------------

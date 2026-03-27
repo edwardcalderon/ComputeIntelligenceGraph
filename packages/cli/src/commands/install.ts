@@ -27,7 +27,8 @@ import { spinner } from '@clack/prompts';
 import { resolveManifest } from '../manifest.js';
 import { doctor } from './doctor.js';
 import { installViaSSH } from '../ssh.js';
-import type { SetupManifest, NodeIdentity } from '@cig/sdk';
+import type { SetupManifest } from '../sdk.js';
+import type { NodeIdentity } from '../types/runtime.js';
 import { resolveDemoDataPreference } from '../demo-data.js';
 
 // ---------------------------------------------------------------------------
@@ -374,7 +375,7 @@ function buildStubNodeIdentity(): NodeIdentity {
     nodeId: 'pending-enrollment',
     privateKey: '',
     publicKey: '',
-    issuedAt: new Date().toISOString(),
+    enrolledAt: new Date().toISOString(),
   };
 }
 

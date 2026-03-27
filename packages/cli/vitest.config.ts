@@ -1,15 +1,10 @@
 import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
+import { dirname } from 'node:path';
 import { defineConfig } from 'vitest/config';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  resolve: {
-    alias: {
-      '@cig/sdk': resolve(__dirname, '../sdk/src/index.ts'),
-    },
-  },
   test: {
     environment: 'node',
   },

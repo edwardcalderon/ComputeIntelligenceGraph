@@ -146,28 +146,34 @@ describe('Property 6: Token refresh predicate correctness', () => {
      * For any AuthTokens where expiresAt < Date.now() + 5 * 60 * 1000,
      * CredentialManager.needsRefresh() should return true.
      */
-    fc.assert(
-      fc.property(
-        fc
-          .tuple(
-            hexStringArb(32),
-            hexStringArb(32),
-            fc.integer({ min: 0, max: 299999 }), // 0 to ~5 minutes
-            fc.integer({ min: 300000, max: 604800000 })
-          )
-          .map(([accessToken, refreshToken, expiresAtOffset, refreshExpiresAtOffset]) => ({
-            accessToken,
-            refreshToken,
-            expiresAt: Date.now() + expiresAtOffset,
-            refreshExpiresAt: Date.now() + refreshExpiresAtOffset,
-          })),
-        (tokens) => {
-          const result = manager.needsRefresh(tokens);
-          expect(result).toBe(true);
-        }
-      ),
-      { numRuns: 100 }
-    );
+    const now = 1_700_000_000_000;
+    vi.spyOn(Date, 'now').mockReturnValue(now);
+    try {
+      fc.assert(
+        fc.property(
+          fc
+            .tuple(
+              hexStringArb(32),
+              hexStringArb(32),
+              fc.integer({ min: 0, max: 299999 }), // 0 to ~5 minutes
+              fc.integer({ min: 300000, max: 604800000 })
+            )
+            .map(([accessToken, refreshToken, expiresAtOffset, refreshExpiresAtOffset]) => ({
+              accessToken,
+              refreshToken,
+              expiresAt: now + expiresAtOffset,
+              refreshExpiresAt: now + refreshExpiresAtOffset,
+            })),
+          (tokens) => {
+            const result = manager.needsRefresh(tokens);
+            expect(result).toBe(true);
+          }
+        ),
+        { numRuns: 100 }
+      );
+    } finally {
+      vi.restoreAllMocks();
+    }
   });
 
   it('needsRefresh() returns false when expiresAt >= now + 5 minutes', () => {
@@ -177,28 +183,34 @@ describe('Property 6: Token refresh predicate correctness', () => {
      * For any AuthTokens where expiresAt >= Date.now() + 5 * 60 * 1000,
      * CredentialManager.needsRefresh() should return false.
      */
-    fc.assert(
-      fc.property(
-        fc
-          .tuple(
-            hexStringArb(32),
-            hexStringArb(32),
-            fc.integer({ min: 300000, max: 86400000 }), // >= 5 minutes
-            fc.integer({ min: 300000, max: 604800000 })
-          )
-          .map(([accessToken, refreshToken, expiresAtOffset, refreshExpiresAtOffset]) => ({
-            accessToken,
-            refreshToken,
-            expiresAt: Date.now() + expiresAtOffset,
-            refreshExpiresAt: Date.now() + refreshExpiresAtOffset,
-          })),
-        (tokens) => {
-          const result = manager.needsRefresh(tokens);
-          expect(result).toBe(false);
-        }
-      ),
-      { numRuns: 100 }
-    );
+    const now = 1_700_000_000_000;
+    vi.spyOn(Date, 'now').mockReturnValue(now);
+    try {
+      fc.assert(
+        fc.property(
+          fc
+            .tuple(
+              hexStringArb(32),
+              hexStringArb(32),
+              fc.integer({ min: 300000, max: 86400000 }), // >= 5 minutes
+              fc.integer({ min: 300000, max: 604800000 })
+            )
+            .map(([accessToken, refreshToken, expiresAtOffset, refreshExpiresAtOffset]) => ({
+              accessToken,
+              refreshToken,
+              expiresAt: now + expiresAtOffset,
+              refreshExpiresAt: now + refreshExpiresAtOffset,
+            })),
+          (tokens) => {
+            const result = manager.needsRefresh(tokens);
+            expect(result).toBe(false);
+          }
+        ),
+        { numRuns: 100 }
+      );
+    } finally {
+      vi.restoreAllMocks();
+    }
   });
 
   it('needsRefresh() boundary: exactly at 5 minute threshold', () => {
