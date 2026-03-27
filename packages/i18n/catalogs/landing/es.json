@@ -199,5 +199,15 @@
   "authed.discovery.detail.highlights.4": "Descubrimiento multi-cuenta y multi-cloud en una sola ejecución",
   "authed.discovery.detail.useCases.0": "Crea un inventario completo de activos desde cero en menos de una hora",
   "authed.discovery.detail.useCases.1": "Detecta shadow IT — recursos creados fuera de tu pipeline IaC",
-  "authed.discovery.detail.useCases.2": "Mapea workloads de contenedores junto con la infraestructura cloud subyacente"
+  "authed.discovery.detail.useCases.2": "Mapea workloads de contenedores junto con la infraestructura cloud subyacente",
+
+  "unsubscribe.title": "Cancelar suscripción a CIG",
+  "unsubscribe.desc": "Estás a punto de cancelar tu suscripción al boletín de CIG. No recibirás más correos de nuestra parte.",
+  "unsubscribe.confirm": "Confirmar cancelación",
+  "unsubscribe.processing": "Procesando…",
+  "unsubscribe.success": "Has cancelado tu suscripción",
+  "unsubscribe.successDesc": "Tu correo ha sido eliminado de nuestra lista. Puedes volver a suscribirte en cig.lat.",
+  "unsubscribe.error": "Enlace inválido o expirado",
+  "unsubscribe.errorDesc": "Este enlace de cancelación es inválido o ya fue utilizado.",
+  "unsubscribe.backHome": "Volver al inicio"
 }

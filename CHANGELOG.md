@@ -1,3 +1,30 @@
+## [0.2.73](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.72...v0.2.73) (2026-03-27)
+
+### Detected changes
+- apps: 4 changed file(s)
+  - apps/landing/.env.example
+  - apps/landing/app/page.tsx
+  - apps/landing/app/unsubscribe/page.tsx
+  - apps/landing/next.config.js
+- packages: 9 changed file(s)
+  - packages/api/.env.example
+  - packages/api/src/email-sender.ts
+  - packages/api/src/newsletter.ts
+  - packages/api/src/routes.ts
+  - packages/i18n/catalogs/landing/en.json
+  - packages/i18n/catalogs/landing/es.json
+  - packages/i18n/catalogs/landing/zh.json
+  - packages/i18n/src/locales/keys.ts
+  - packages/i18n/src/locales/landing.ts
+- supabase: supabase/migrations/20260327_001_newsletter_unsubscribe.sql
+
+
+## [0.2.73](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.72...v0.2.73) (2026-03-27)
+
+
+
+
+
 ## [0.2.72](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.71...v0.2.72) (2026-03-27)
 
 ### Detected changes

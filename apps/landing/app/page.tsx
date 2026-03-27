@@ -2,14 +2,13 @@
 
 import { Fragment, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
-import { createClient } from "@supabase/supabase-js"; // newsletter only
 import { GraphParticleTypography } from "../components/GraphParticleTypography";
 import { SpaceBackground } from "../components/SpaceBackground";
 import { AuthButton } from "../components/AuthButton";
 import { AuthenticatedLanding } from "../components/AuthenticatedLanding";
 import { PreferencesMenu } from "../components/PreferencesMenu";
 import { useCIGAuth } from "../components/AuthProvider";
-import { useTranslation } from "@cig-technology/i18n/react";
+import { useTranslation, useLocale } from "@cig-technology/i18n/react";
 import { FooterBar } from "@cig/ui/components";
 import { useResolvedDocsUrl } from "@cig/ui/siteUrl.client";
 import {
@@ -588,11 +587,9 @@ function ResourcesBlock() {
 
 type SubmitState = "idle" | "loading" | "success" | "duplicate" | "error";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
 function GetStartedSection() {
   const t = useTranslation();
+  const locale = useLocale();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [state, setState] = useState<SubmitState>("idle");
@@ -618,17 +615,23 @@ function GetStartedSection() {
     inputRef.current?.blur();
 
     try {
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
-      const { error: sbError } = await supabase
-        .from("newsletter_subscriptions")
-        .insert({ email: email.trim().toLowerCase(), source: "landing" });
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+      const res = await fetch(`${apiUrl}/api/v1/newsletter/subscribe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          source: "landing",
+          locale,
+        }),
+      });
 
-      if (sbError) {
-        if (sbError.code === "23505") {
-          setState("duplicate");
-        } else {
-          setState("error");
-        }
+      if (res.status === 409) {
+        setState("duplicate");
+        return;
+      }
+      if (!res.ok) {
+        setState("error");
         return;
       }
 

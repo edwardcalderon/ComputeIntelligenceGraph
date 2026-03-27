@@ -339,12 +339,16 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
   app.post(
     '/api/v1/newsletter/subscribe',
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const body = request.body as { email?: string; source?: string };
+      const body = request.body as { email?: string; source?: string; locale?: string };
       if (!body?.email) {
         return reply.status(400).send({ error: 'Missing required field: email', statusCode: 400 });
       }
       try {
-        const result = await newsletterManager.subscribe(body.email, body.source ?? 'landing');
+        const result = await newsletterManager.subscribe(
+          body.email,
+          body.source ?? 'landing',
+          body.locale ?? 'en',
+        );
         if (!result.success) {
           const status = result.duplicate ? 409 : 400;
           return reply.status(status).send({ error: result.message, statusCode: status });
@@ -352,6 +356,27 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
         return reply.status(201).send({ subscription: result.subscription });
       } catch (err) {
         app.log.error({ err }, 'Newsletter subscription error');
+        return reply.status(500).send({ error: 'Internal server error', statusCode: 500 });
+      }
+    }
+  );
+
+  // POST /api/v1/newsletter/unsubscribe — public, token-based unsubscription
+  app.post(
+    '/api/v1/newsletter/unsubscribe',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const body = request.body as { token?: string };
+      if (!body?.token || typeof body.token !== 'string') {
+        return reply.status(400).send({ error: 'Missing required field: token', statusCode: 400 });
+      }
+      try {
+        const result = await newsletterManager.unsubscribe(body.token);
+        if (!result.success) {
+          return reply.status(404).send({ error: 'Invalid or expired unsubscribe token', statusCode: 404 });
+        }
+        return reply.send({ message: 'Successfully unsubscribed' });
+      } catch (err) {
+        app.log.error({ err }, 'Newsletter unsubscribe error');
         return reply.status(500).send({ error: 'Internal server error', statusCode: 500 });
       }
     }

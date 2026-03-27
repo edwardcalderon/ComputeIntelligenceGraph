@@ -199,5 +199,15 @@
   "authed.discovery.detail.highlights.4": "单次运行即可完成多账户和多云发现",
   "authed.discovery.detail.useCases.0": "在一小时内从零开始构建完整资产清单",
   "authed.discovery.detail.useCases.1": "检测影子 IT — 在 IaC 管道之外创建的资源",
-  "authed.discovery.detail.useCases.2": "将容器工作负载与底层云基础设施一起映射"
+  "authed.discovery.detail.useCases.2": "将容器工作负载与底层云基础设施一起映射",
+
+  "unsubscribe.title": "取消订阅 CIG",
+  "unsubscribe.desc": "您即将取消订阅 CIG 新闻邮件，之后将不再收到我们的邮件。",
+  "unsubscribe.confirm": "确认取消订阅",
+  "unsubscribe.processing": "处理中…",
+  "unsubscribe.success": "已成功取消订阅",
+  "unsubscribe.successDesc": "您的邮箱已从我们的列表中移除，随时可以在 cig.lat 重新订阅。",
+  "unsubscribe.error": "链接无效或已过期",
+  "unsubscribe.errorDesc": "此取消订阅链接无效或已被使用。",
+  "unsubscribe.backHome": "返回主页"
 }

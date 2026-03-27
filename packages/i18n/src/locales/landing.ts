@@ -180,7 +180,16 @@ const en: TranslationCatalog = {
   "authed.discovery.detail.highlights.4": "Multi-account and multi-cloud discovery in a single run",
   "authed.discovery.detail.useCases.0": "Bootstrap a complete asset inventory from scratch in under an hour",
   "authed.discovery.detail.useCases.1": "Detect shadow IT — resources created outside your IaC pipeline",
-  "authed.discovery.detail.useCases.2": "Map container workloads alongside the underlying cloud infrastructure"
+  "authed.discovery.detail.useCases.2": "Map container workloads alongside the underlying cloud infrastructure",
+  "unsubscribe.title": "Unsubscribe from CIG",
+  "unsubscribe.desc": "You are about to unsubscribe from the CIG newsletter. You won't receive any more emails from us.",
+  "unsubscribe.confirm": "Confirm Unsubscribe",
+  "unsubscribe.processing": "Processing…",
+  "unsubscribe.success": "You've been unsubscribed",
+  "unsubscribe.successDesc": "Your email has been removed from our list. You can always resubscribe at cig.lat.",
+  "unsubscribe.error": "Invalid or expired link",
+  "unsubscribe.errorDesc": "This unsubscribe link is invalid or has already been used.",
+  "unsubscribe.backHome": "Back to home"
 };
 
 const es: TranslationCatalog = {
@@ -362,7 +371,16 @@ const es: TranslationCatalog = {
   "authed.discovery.detail.highlights.4": "Descubrimiento multi-cuenta y multi-cloud en una sola ejecución",
   "authed.discovery.detail.useCases.0": "Crea un inventario completo de activos desde cero en menos de una hora",
   "authed.discovery.detail.useCases.1": "Detecta shadow IT — recursos creados fuera de tu pipeline IaC",
-  "authed.discovery.detail.useCases.2": "Mapea workloads de contenedores junto con la infraestructura cloud subyacente"
+  "authed.discovery.detail.useCases.2": "Mapea workloads de contenedores junto con la infraestructura cloud subyacente",
+  "unsubscribe.title": "Cancelar suscripción a CIG",
+  "unsubscribe.desc": "Estás a punto de cancelar tu suscripción al boletín de CIG. No recibirás más correos de nuestra parte.",
+  "unsubscribe.confirm": "Confirmar cancelación",
+  "unsubscribe.processing": "Procesando…",
+  "unsubscribe.success": "Has cancelado tu suscripción",
+  "unsubscribe.successDesc": "Tu correo ha sido eliminado de nuestra lista. Puedes volver a suscribirte en cig.lat.",
+  "unsubscribe.error": "Enlace inválido o expirado",
+  "unsubscribe.errorDesc": "Este enlace de cancelación es inválido o ya fue utilizado.",
+  "unsubscribe.backHome": "Volver al inicio"
 };
 
 const zh: TranslationCatalog = {
@@ -544,7 +562,16 @@ const zh: TranslationCatalog = {
   "authed.discovery.detail.highlights.4": "单次运行即可完成多账户和多云发现",
   "authed.discovery.detail.useCases.0": "在一小时内从零开始构建完整资产清单",
   "authed.discovery.detail.useCases.1": "检测影子 IT — 在 IaC 管道之外创建的资源",
-  "authed.discovery.detail.useCases.2": "将容器工作负载与底层云基础设施一起映射"
+  "authed.discovery.detail.useCases.2": "将容器工作负载与底层云基础设施一起映射",
+  "unsubscribe.title": "取消订阅 CIG",
+  "unsubscribe.desc": "您即将取消订阅 CIG 新闻邮件，之后将不再收到我们的邮件。",
+  "unsubscribe.confirm": "确认取消订阅",
+  "unsubscribe.processing": "处理中…",
+  "unsubscribe.success": "已成功取消订阅",
+  "unsubscribe.successDesc": "您的邮箱已从我们的列表中移除，随时可以在 cig.lat 重新订阅。",
+  "unsubscribe.error": "链接无效或已过期",
+  "unsubscribe.errorDesc": "此取消订阅链接无效或已被使用。",
+  "unsubscribe.backHome": "返回主页"
 };
 
 const catalogs: Record<SupportedLocale, TranslationCatalog> = { en, es, zh };

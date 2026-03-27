@@ -199,5 +199,15 @@
   "authed.discovery.detail.highlights.4": "Multi-account and multi-cloud discovery in a single run",
   "authed.discovery.detail.useCases.0": "Bootstrap a complete asset inventory from scratch in under an hour",
   "authed.discovery.detail.useCases.1": "Detect shadow IT — resources created outside your IaC pipeline",
-  "authed.discovery.detail.useCases.2": "Map container workloads alongside the underlying cloud infrastructure"
+  "authed.discovery.detail.useCases.2": "Map container workloads alongside the underlying cloud infrastructure",
+
+  "unsubscribe.title": "Unsubscribe from CIG",
+  "unsubscribe.desc": "You are about to unsubscribe from the CIG newsletter. You won't receive any more emails from us.",
+  "unsubscribe.confirm": "Confirm Unsubscribe",
+  "unsubscribe.processing": "Processing…",
+  "unsubscribe.success": "You've been unsubscribed",
+  "unsubscribe.successDesc": "Your email has been removed from our list. You can always resubscribe at cig.lat.",
+  "unsubscribe.error": "Invalid or expired link",
+  "unsubscribe.errorDesc": "This unsubscribe link is invalid or has already been used.",
+  "unsubscribe.backHome": "Back to home"
 }
