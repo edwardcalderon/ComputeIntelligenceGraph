@@ -1,3 +1,12 @@
+
+## [0.1.21](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.20...cli-v0.1.21) (2026-03-27)
+
+
+### Bug Fixes
+
+* **cli:** register `setup` command so `cig setup` works from install.sh ([828d433](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/828d43345085574df66b1cc142fbecb6043be8df))
+
+
 ## [0.1.20](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.19...cli-v0.1.20) (2026-03-27)
 
 

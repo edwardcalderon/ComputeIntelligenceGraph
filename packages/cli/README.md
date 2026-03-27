@@ -43,11 +43,11 @@ container provenance data.
 - Package: https://www.npmjs.com/package/@cig-technology/cli
 - GitHub releases: https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases
 
-## 📋 Latest Changes (v0.1.20)
+## 📋 Latest Changes (v0.1.21)
 
 ### Bug Fixes
 
-* **cli:** build sdk before publishing ([72a3600](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/72a360052456a012a40e3e9a8d9937c13999a2f9))
+* **cli:** register `setup` command so `cig setup` works from install.sh ([828d433](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/828d43345085574df66b1cc142fbecb6043be8df))
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 
