@@ -2,8 +2,15 @@
   "name": "@cig/sdk",
   "version": "0.2.84",
   "description": "CIG TypeScript SDK for programmatic access",
-  "main": "dist/index.js",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
