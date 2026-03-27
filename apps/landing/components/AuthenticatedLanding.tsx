@@ -1,6 +1,14 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from "react";
 import { useCIGAuth } from "./AuthProvider";
 import { useTranslation } from "@cig-technology/i18n/react";
 import { SpaceBackground } from "./SpaceBackground";
@@ -151,9 +159,9 @@ interface Feature {
   descKey: string;
   tagKey: string;
   path: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   color: string;
-  preview: React.ReactNode;
+  preview: ReactNode;
 }
 
 const FEATURES: Feature[] = [
@@ -493,7 +501,7 @@ function HoloCard({ feature, onOpen, onRevealChange }: HoloCardProps) {
       onClick={onOpen}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="cig-holocard relative flex-shrink-0 w-64 rounded-2xl cursor-pointer select-none overflow-hidden"
+      className="cig-holocard relative flex-shrink-0 w-[min(18rem,78vw)] sm:w-64 rounded-2xl cursor-pointer select-none overflow-hidden"
       style={{
         height: revealed ? "auto" : 220,
         minHeight: 220,
@@ -732,7 +740,7 @@ function ScrollingRow({
 
   const pointerIdRef = useRef<number | null>(null);
 
-  const onPointerDown = (e: React.PointerEvent) => {
+  const onPointerDown = (e: ReactPointerEvent) => {
     // Don't intercept clicks on interactive children (buttons, links).
     if ((e.target as HTMLElement).closest("button, a")) return;
     dragging.current   = false; // not yet dragging — wait for movement
@@ -742,7 +750,7 @@ function ScrollingRow({
     pointerIdRef.current = e.pointerId;
   };
 
-  const onPointerMove = (e: React.PointerEvent) => {
+  const onPointerMove = (e: ReactPointerEvent) => {
     if (pointerIdRef.current === null) return;
     const delta = e.clientX - startX.current;
     totalDelta.current = delta;
@@ -759,7 +767,7 @@ function ScrollingRow({
     }
   };
 
-  const onPointerUp = (e: React.PointerEvent) => {
+  const onPointerUp = (e: ReactPointerEvent) => {
     pointerIdRef.current = null;
     if (!dragging.current) return; // was a tap — let native click bubble
     dragging.current = false;
@@ -769,7 +777,7 @@ function ScrollingRow({
     setManualOffset(null);
   };
 
-  const trackStyle: React.CSSProperties =
+  const trackStyle: CSSProperties =
     manualOffset !== null
       ? { transform: `translateX(${manualOffset}px)`, willChange: "transform" }
       : {
@@ -779,13 +787,13 @@ function ScrollingRow({
 
   return (
     <div
-      className="relative z-0 w-full overflow-x-clip py-3 cursor-grab active:cursor-grabbing touch-pan-y"
+      className="relative z-0 w-full overflow-x-clip py-4 sm:py-3 cursor-grab active:cursor-grabbing touch-pan-y"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={(e) => { pointerIdRef.current = null; dragging.current = false; setManualOffset(null); }}
     >
-      <div ref={trackRef} className="flex gap-4 w-max px-4" style={trackStyle}>
+      <div ref={trackRef} className="flex w-max gap-4 px-6 sm:px-7" style={trackStyle}>
         {doubled.map((f, i) => (
           <HoloCard
             key={`${f.id}-${i}`}
@@ -844,7 +852,7 @@ export function AuthenticatedLanding() {
   }, [startDashboardTransition]);
 
   return (
-    <div className="relative min-h-screen w-full overflow-x-hidden text-zinc-900 dark:text-white flex flex-col bg-gradient-to-br from-zinc-50 via-white to-zinc-100 dark:from-transparent dark:via-transparent dark:to-transparent">
+    <div className="relative isolate min-h-screen w-full overflow-x-hidden text-zinc-900 dark:text-white flex flex-col bg-gradient-to-br from-zinc-50 via-white to-zinc-100 dark:from-transparent dark:via-transparent dark:to-transparent">
       {/* ── Keyframes ──────────────────────────────────────── */}
       <style>{`
         @keyframes cig-scroll-left  { from { transform: translateX(0); }    to { transform: translateX(-50%); } }
@@ -889,47 +897,51 @@ export function AuthenticatedLanding() {
       <SpaceBackground particleCount={80} particleColor="rgba(6,182,212,0.7)" />
 
       {/* ── Hero ────────────────────────────────────────────── */}
-      <div className="relative z-20 flex flex-col items-center px-6 pt-24 pb-10 text-center">
-        {/* Headline */}
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3">
-          <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-violet-400 bg-clip-text text-transparent">
-            {t("authed.title.line1")}
-          </span>
-          <br />
-          <span className="text-zinc-900 dark:text-zinc-100">{t("authed.title.line2")}</span>
-        </h1>
-        <p className="text-zinc-600 dark:text-zinc-400 text-base max-w-md mb-8 leading-relaxed">
-          {t("authed.desc")}
-        </p>
+      <div className="relative z-30 px-4 pt-24 pb-14 text-center sm:px-6 sm:pt-28 sm:pb-16">
+        <div className="mx-auto flex max-w-4xl flex-col items-center rounded-[2rem] border border-cyan-500/10 bg-white/70 px-6 py-8 shadow-[0_24px_90px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/55 dark:shadow-[0_24px_90px_rgba(0,0,0,0.42)] sm:px-10 sm:py-11 md:py-12">
+          {/* Headline */}
+          <h1 className="mb-3 text-4xl font-bold tracking-tight md:text-5xl">
+            <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-violet-400 bg-clip-text text-transparent">
+              {t("authed.title.line1")}
+            </span>
+            <br />
+            <span className="text-zinc-900 dark:text-zinc-100">{t("authed.title.line2")}</span>
+          </h1>
+          <p className="mb-8 max-w-2xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400 sm:text-lg">
+            {t("authed.desc")}
+          </p>
 
-        {/* Status pills */}
-        <div className="flex flex-wrap items-center justify-center gap-2.5 mb-10">
-          {STATUS_BADGE_DEFS.map(({ key, color }, idx) => (
-            <div key={key} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border"
-              style={{ borderColor: `${color}35`, backgroundColor: `${color}0e`, color }}>
-              <div className="size-1.5 rounded-full"
-                style={{ backgroundColor: color, animation: "cig-glow-pulse 2s ease-in-out infinite", animationDelay: `${idx * 0.3}s` }} />
-              {t(key)}
-            </div>
-          ))}
+          {/* Status pills */}
+          <div className="mb-8 flex flex-wrap items-center justify-center gap-2.5">
+            {STATUS_BADGE_DEFS.map(({ key, color }, idx) => (
+              <div key={key} className="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium"
+                style={{ borderColor: `${color}35`, backgroundColor: `${color}0e`, color }}>
+                <div className="size-1.5 rounded-full"
+                  style={{ backgroundColor: color, animation: "cig-glow-pulse 2s ease-in-out infinite", animationDelay: `${idx * 0.3}s` }} />
+                {t(key)}
+              </div>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <div className="w-full max-w-md pb-2 sm:max-w-none sm:pb-3">
+            <button
+              type="button"
+              data-dashboard-cta="true"
+              onClick={handleEnterDashboard}
+              className="relative z-40 inline-flex w-full cursor-pointer touch-manipulation items-center justify-center gap-2.5 rounded-full px-8 py-4 text-base font-semibold text-white transition-all duration-300 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-cyan-400/60 sm:min-w-[20rem] sm:w-auto sm:px-10"
+              style={{ background: "linear-gradient(135deg, #06b6d4, #3b82f6, #8b5cf6)", boxShadow: "0 0 24px rgba(6,182,212,0.3), 0 4px 20px rgba(0,0,0,0.4)" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 40px rgba(6,182,212,0.5), 0 8px 32px rgba(0,0,0,0.5)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 24px rgba(6,182,212,0.3), 0 4px 20px rgba(0,0,0,0.4)"; }}
+            >
+              <DashboardIcon /> {t("authed.enterDashboard")}
+            </button>
+          </div>
         </div>
-
-        {/* CTA */}
-        <button
-          type="button"
-          data-dashboard-cta="true"
-          onClick={handleEnterDashboard}
-          className="relative z-30 inline-flex cursor-pointer touch-manipulation items-center gap-2.5 rounded-full px-8 py-3.5 text-sm font-semibold text-white transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
-          style={{ background: "linear-gradient(135deg, #06b6d4, #3b82f6, #8b5cf6)", boxShadow: "0 0 24px rgba(6,182,212,0.3), 0 4px 20px rgba(0,0,0,0.4)" }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 40px rgba(6,182,212,0.5), 0 8px 32px rgba(0,0,0,0.5)"; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 24px rgba(6,182,212,0.3), 0 4px 20px rgba(0,0,0,0.4)"; }}
-        >
-          <DashboardIcon /> {t("authed.enterDashboard")}
-        </button>
       </div>
 
       {/* ── Feature carousels ────────────────────────────────── */}
-      <div className="relative z-10 mt-4 flex flex-col gap-5 pb-12">
+      <div className="relative z-10 mt-2 flex flex-col gap-6 pb-12 pt-12 sm:mt-6 sm:gap-6 sm:pt-12 md:pt-14">
         <div
           className="pointer-events-none absolute top-0 left-0 right-0 h-6 z-10"
           style={{
@@ -939,7 +951,7 @@ export function AuthenticatedLanding() {
           }}
         />
 
-        <p className="text-center text-xs text-zinc-500 dark:text-zinc-500 mb-1 select-none">
+        <p className="mb-2 select-none px-6 text-center text-xs text-zinc-500 dark:text-zinc-500">
           {t("authed.carouselHint")}
         </p>
 

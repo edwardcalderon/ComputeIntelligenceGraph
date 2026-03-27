@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { createClient } from "@supabase/supabase-js"; // newsletter only
 import { GraphParticleTypography } from "../components/GraphParticleTypography";
@@ -12,7 +12,11 @@ import { useCIGAuth } from "../components/AuthProvider";
 import { useTranslation } from "@cig-technology/i18n/react";
 import { FooterBar } from "@cig/ui/components";
 import { useResolvedDocsUrl } from "@cig/ui/siteUrl.client";
-import { consumePendingDashboardRedirect, goToDashboard } from "../lib/dashboardHandoff";
+import {
+  consumePendingDashboardRedirect,
+  goToDashboard,
+  persistPendingDashboardRedirect,
+} from "../lib/dashboardHandoff";
 import {
   Cloud,
   GitGraph,
@@ -77,7 +81,8 @@ function smoothScrollTo(id: string) {
 
 /* ─── CIG Icon (inline SVG) ───────────────────────────────────────────── */
 
-const CigIconSvg: React.FC<{ className?: string }> = ({ className }) => (
+function CigIconSvg({ className }: { className?: string }) {
+  return (
   <svg className={className} viewBox="20 20 216 216" xmlns="http://www.w3.org/2000/svg" fill="none">
     <defs>
       <linearGradient id="graphGrad" x1="48" y1="40" x2="208" y2="208" gradientUnits="userSpaceOnUse">
@@ -125,7 +130,8 @@ const CigIconSvg: React.FC<{ className?: string }> = ({ className }) => (
       <circle cx="128" cy="86" r="8" fill="url(#coreGlow)"/>
     </g>
   </svg>
-);
+  );
+}
 
 /* ─── Hero (animated icon + title sequence) ───────────────────────────── */
 
@@ -137,7 +143,7 @@ const PHASES = [
   { word: "all",           icon: "cig" },
 ] as const;
 
-const HeroPhaseIcon: React.FC<{ phase: number }> = ({ phase }) => {
+function HeroPhaseIcon({ phase }: { phase: number }) {
   const cls = "size-14 transition-all duration-500";
   switch (PHASES[Math.min(Math.max(phase, 0), PHASES.length - 1)]?.icon) {
     case "monitor":
@@ -151,9 +157,9 @@ const HeroPhaseIcon: React.FC<{ phase: number }> = ({ phase }) => {
     default:
       return <Monitor className={cn(cls, "text-zinc-500")} strokeWidth={1.5} />;
   }
-};
+}
 
-const HeroSection: React.FC = () => {
+function HeroSection() {
   const t = useTranslation();
   const docsUrl = useResolvedDocsUrl();
   const [phase, setPhase] = useState(-1); // -1 = initial idle
@@ -255,7 +261,7 @@ const HeroSection: React.FC = () => {
           const isActive = highlight === "highlight";
 
           return (
-            <React.Fragment key={key}>
+            <Fragment key={key}>
               <span
                 className={cn(
                   "inline-block transition-all duration-500",
@@ -271,7 +277,7 @@ const HeroSection: React.FC = () => {
               {i < titleKeys.length - 1 && (
                 <>{i === 1 ? <br /> : " "}</>
               )}
-            </React.Fragment>
+            </Fragment>
           );
         })}
       </h1>
@@ -344,7 +350,7 @@ const HeroSection: React.FC = () => {
     </button>
   </section>
   );
-};
+}
 
 /* ─── How It Works ────────────────────────────────────────────────────── */
 
@@ -352,7 +358,7 @@ interface Step {
   num: string;
   titleKey: string;
   descKey: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
 }
 
 const steps: Step[] = [
@@ -362,7 +368,7 @@ const steps: Step[] = [
   { num: "04", titleKey: "howItWorks.step4.title", descKey: "howItWorks.step4.desc", icon: <MessageSquare size={24} className="text-emerald-400" /> },
 ];
 
-const HowItWorks: React.FC = () => {
+function HowItWorks() {
   const t = useTranslation();
   const { ref, visible } = useReveal<HTMLElement>();
   return (
@@ -412,12 +418,12 @@ const HowItWorks: React.FC = () => {
       </div>
     </section>
   );
-};
+}
 
 /* ─── Features ────────────────────────────────────────────────────────── */
 
 interface Feature {
-  icon: React.ReactNode;
+  icon: ReactNode;
   titleKey: string;
   descKey: string;
 }
@@ -431,7 +437,7 @@ const features: Feature[] = [
   { icon: <Server size={22} className="text-rose-400" />, titleKey: "features.selfHosted.title", descKey: "features.selfHosted.desc" },
 ];
 
-const FeaturesSection: React.FC = () => {
+function FeaturesSection() {
   const t = useTranslation();
   const { ref, visible } = useReveal<HTMLElement>();
   return (
@@ -471,11 +477,11 @@ const FeaturesSection: React.FC = () => {
       </div>
     </section>
   );
-};
+}
 
 /* ─── Architecture Snippet ────────────────────────────────────────────── */
 
-const ArchitectureBlock: React.FC = () => {
+function ArchitectureBlock() {
   const t = useTranslation();
   const { ref, visible } = useReveal<HTMLElement>();
   const flow = [
@@ -529,17 +535,17 @@ const ArchitectureBlock: React.FC = () => {
       </p>
     </section>
   );
-};
+}
 
 /* ─── Links / Resources ──────────────────────────────────────────────── */
 
 interface ResourceLink {
   href: string;
   labelKey: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
 }
 
-const ResourcesBlock: React.FC = () => {
+function ResourcesBlock() {
   const t = useTranslation();
   const docsUrl = useResolvedDocsUrl();
   const { ref, visible } = useReveal<HTMLDivElement>();
@@ -576,7 +582,7 @@ const ResourcesBlock: React.FC = () => {
       ))}
     </div>
   );
-};
+}
 
 /* ─── Get Started (CTA) ──────────────────────────────────────────────── */
 
@@ -585,7 +591,7 @@ type SubmitState = "idle" | "loading" | "success" | "duplicate" | "error";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-const GetStartedSection: React.FC = () => {
+function GetStartedSection() {
   const t = useTranslation();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
@@ -600,7 +606,7 @@ const GetStartedSection: React.FC = () => {
     return "";
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const err = validate(email);
     if (err) {
@@ -751,11 +757,11 @@ const GetStartedSection: React.FC = () => {
       )}
     </section>
   );
-};
+}
 
 /* ─── Footer ──────────────────────────────────────────────────────────── */
 
-const Footer: React.FC = () => {
+function Footer() {
   const t = useTranslation();
   const version = process.env.NEXT_PUBLIC_APP_VERSION || "";
   const build = process.env.NEXT_PUBLIC_APP_BUILD || "";
@@ -786,11 +792,11 @@ const Footer: React.FC = () => {
       </div>
     </footer>
   );
-};
+}
 
 /* ─── Back to Top ─────────────────────────────────────────────────────── */
 
-const BackToTop: React.FC = () => {
+function BackToTop() {
   const t = useTranslation();
   const [show, setShow] = useState(false);
 
@@ -820,7 +826,7 @@ const BackToTop: React.FC = () => {
       </span>
     </button>
   );
-};
+}
 
 /* ─── Page ────────────────────────────────────────────────────────────── */
 
@@ -918,6 +924,7 @@ export default function HomePage() {
 
     dashboardRedirectHandledRef.current = true;
     void goToDashboard(dashboardRedirect).catch(() => {
+      persistPendingDashboardRedirect(dashboardRedirect);
       dashboardRedirectHandledRef.current = false;
     });
   }, [isHydrated, user]);

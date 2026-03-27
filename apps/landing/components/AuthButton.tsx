@@ -1,6 +1,14 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  type ClipboardEvent as ReactClipboardEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+} from "react";
 import Image from "next/image";
 import { z } from "zod";
 import { startAuthentikSocialLogin, getSupabaseClient, sendEmailOtp, sendMagicLinkEmail, verifyEmailOtp, type AuthentikSocialProvider } from "@cig/auth";
@@ -464,7 +472,7 @@ function SignInModal({
   }, [onClose]);
 
   const handleBackdrop = useCallback(
-    (e: React.MouseEvent) => {
+    (e: ReactMouseEvent) => {
       if (e.target === backdropRef.current) onClose();
     },
     [onClose]
@@ -649,7 +657,7 @@ function OtpCodeInput({
   );
 
   const handleKeyDown = useCallback(
-    (idx: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    (idx: number, e: ReactKeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Backspace") {
         e.preventDefault();
         const chars = value.padEnd(length, " ").split("");
@@ -672,7 +680,7 @@ function OtpCodeInput({
   );
 
   const handlePaste = useCallback(
-    (e: React.ClipboardEvent) => {
+    (e: ReactClipboardEvent) => {
       e.preventDefault();
       const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, length);
       onChange(pasted);
@@ -1218,8 +1226,10 @@ export function AuthButton() {
       return;
     }
 
-    void goToDashboard(dashboardRedirect).catch(() => {
-      // Stay on landing if the dashboard handoff cannot be completed yet.
+    window.requestAnimationFrame(() => {
+      void goToDashboard(dashboardRedirect).catch(() => {
+        persistPendingDashboardRedirect(dashboardRedirect);
+      });
     });
   }, []);
 

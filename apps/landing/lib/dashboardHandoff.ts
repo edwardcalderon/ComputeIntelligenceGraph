@@ -8,9 +8,16 @@ import {
 
 const PENDING_DASHBOARD_REDIRECT_KEY = "cig_pending_dashboard_redirect";
 const PENDING_DASHBOARD_AUTH_INTENT_KEY = "cig_pending_dashboard_auth_intent";
-const AUTH_PROVIDER = process.env.NEXT_PUBLIC_AUTH_PROVIDER || "authentik";
 const DASHBOARD_URL =
   process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3001";
+const SUPABASE_HANDOFF_ATTEMPTS = 8;
+const SUPABASE_HANDOFF_DELAY_MS = 180;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
 
 function readStorage(): Storage | null {
   if (typeof window === "undefined") {
@@ -99,9 +106,98 @@ export function cleanLandingAuthSearchParams(): void {
   window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
+function buildDashboardCallbackHash(params: Record<string, string>): string {
+  return new URLSearchParams(params).toString();
+}
+
+function getAuthentikDashboardCallbackHash(): string | null {
+  try {
+    const authSource = sessionStorage.getItem("cig_auth_source");
+    if (authSource && authSource !== "authentik") {
+      return null;
+    }
+
+    const accessToken = sessionStorage.getItem("cig_access_token");
+    if (!accessToken) {
+      return null;
+    }
+
+    const expiresAt = sessionStorage.getItem("cig_expires_at");
+    if (expiresAt) {
+      const parsedExpiresAt = Number.parseInt(expiresAt, 10);
+      if (Number.isFinite(parsedExpiresAt) && Date.now() >= parsedExpiresAt) {
+        return null;
+      }
+    }
+
+    const idToken = sessionStorage.getItem("cig_id_token") ?? "";
+    const expiresIn = sessionStorage.getItem("cig_expires_in") ?? "3600";
+    return buildDashboardCallbackHash({
+      access_token: accessToken,
+      ...(idToken && { id_token: idToken }),
+      expires_in: expiresIn,
+      auth_source: "authentik",
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function getSupabaseDashboardCallbackHash(): Promise<string | null> {
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    return null;
+  }
+
+  for (let attempt = 0; attempt < SUPABASE_HANDOFF_ATTEMPTS; attempt += 1) {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session?.access_token) {
+        return buildDashboardCallbackHash({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token ?? "",
+          token_type: session.token_type ?? "bearer",
+          expires_in: String(session.expires_in ?? 3600),
+          auth_source: "supabase",
+        });
+      }
+    } catch {
+      // Retry below for freshly-created sessions.
+    }
+
+    if (attempt === 2 || attempt === 5) {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.refreshSession();
+
+        if (session?.access_token) {
+          return buildDashboardCallbackHash({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token ?? "",
+            token_type: session.token_type ?? "bearer",
+            expires_in: String(session.expires_in ?? 3600),
+            auth_source: "supabase",
+          });
+        }
+      } catch {
+        // Fall through to retry delay below.
+      }
+    }
+
+    if (attempt < SUPABASE_HANDOFF_ATTEMPTS - 1) {
+      await delay(SUPABASE_HANDOFF_DELAY_MS);
+    }
+  }
+
+  return null;
+}
+
 export async function goToDashboard(path = "/"): Promise<void> {
   const normalizedPath = normalizeDashboardRedirectPath(path, "/");
-  clearPendingDashboardRedirect();
   const dashboardHostname = (() => {
     try {
       return new URL(DASHBOARD_URL).hostname;
@@ -111,48 +207,22 @@ export async function goToDashboard(path = "/"): Promise<void> {
   })();
   const requiresProtectedHandoff = isProtectedDashboardHostname(dashboardHostname);
 
-  if (AUTH_PROVIDER === "supabase") {
-    try {
-      const supabase = getSupabaseClient();
-      if (supabase) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          const hash = new URLSearchParams({
-            access_token: session.access_token,
-            refresh_token: session.refresh_token ?? "",
-            token_type: "bearer",
-            expires_in: String(session.expires_in ?? 3600),
-            auth_source: "supabase",
-          }).toString();
-          window.location.replace(
-            `${DASHBOARD_URL}/auth/callback?redirect=${encodeURIComponent(normalizedPath)}#${hash}`,
-          );
-          return;
-        }
-      }
-    } catch {
-      // fall through to a guarded redirect decision
-    }
-  } else {
-    try {
-      const accessToken = sessionStorage.getItem("cig_access_token");
-      if (accessToken) {
-        const idToken = sessionStorage.getItem("cig_id_token") ?? "";
-        const expiresIn = sessionStorage.getItem("cig_expires_in") ?? "3600";
-        const hash = new URLSearchParams({
-          access_token: accessToken,
-          ...(idToken && { id_token: idToken }),
-          expires_in: expiresIn,
-          auth_source: "authentik",
-        }).toString();
-        window.location.replace(
-          `${DASHBOARD_URL}/auth/callback?redirect=${encodeURIComponent(normalizedPath)}#${hash}`,
-        );
-        return;
-      }
-    } catch {
-      // fall through to a guarded redirect decision
-    }
+  const authentikHash = getAuthentikDashboardCallbackHash();
+  if (authentikHash) {
+    clearPendingDashboardRedirect();
+    window.location.replace(
+      `${DASHBOARD_URL}/auth/callback?redirect=${encodeURIComponent(normalizedPath)}#${authentikHash}`,
+    );
+    return;
+  }
+
+  const supabaseHash = await getSupabaseDashboardCallbackHash();
+  if (supabaseHash) {
+    clearPendingDashboardRedirect();
+    window.location.replace(
+      `${DASHBOARD_URL}/auth/callback?redirect=${encodeURIComponent(normalizedPath)}#${supabaseHash}`,
+    );
+    return;
   }
 
   if (requiresProtectedHandoff) {

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import type { ReactNode } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { AuthProvider } from "../components/AuthProvider";
 import { AppUpdateWatcher } from "../components/AppUpdateWatcher";
 import { I18nProvider, useLocale } from "@cig-technology/i18n/react";
@@ -28,7 +29,7 @@ function LocaleSync() {
   return null;
 }
 
-function ThemeProvider({ children }: { children: React.ReactNode }) {
+function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("dark");
 
   useEffect(() => {
@@ -58,7 +59,7 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
 // Initialize i18n catalogs once at module level
 initI18n();
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children }: { children: ReactNode }) {
   return (
     <I18nProvider>
       <LocaleSync />

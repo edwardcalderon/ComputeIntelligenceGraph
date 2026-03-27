@@ -1,3 +1,25 @@
+## [0.2.53](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.52...v0.2.53) (2026-03-27)
+
+### Detected changes
+- apps: 10 changed file(s)
+  - apps/landing/app/layout.tsx
+  - apps/landing/app/page.tsx
+  - apps/landing/app/providers.tsx
+  - apps/landing/components/AuthButton.tsx
+  - apps/landing/components/AuthProvider.tsx
+  - apps/landing/components/AuthenticatedLanding.tsx
+  - apps/landing/components/AuthentikProvider.tsx
+  - apps/landing/components/DitheringShader.tsx
+  - apps/landing/components/LandingLayout.tsx
+  - apps/landing/lib/dashboardHandoff.ts
+
+
+## [0.2.53](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.52...v0.2.53) (2026-03-27)
+
+
+
+
+
 ## [0.2.52](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.51...v0.2.52) (2026-03-27)
 
 ### Detected changes

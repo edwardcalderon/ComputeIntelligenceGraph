@@ -1,7 +1,6 @@
 "use client";
 
-import type React from "react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 
 const declarePI = `
 #define TWO_PI 6.28318530718
@@ -221,7 +220,7 @@ interface DitheringShaderProps {
   pxSize?: number;
   speed?: number;
   className?: string;
-  style?: React.CSSProperties;
+  style?: CSSProperties;
 }
 
 function hexToRgba(hex: string): [number, number, number, number] {

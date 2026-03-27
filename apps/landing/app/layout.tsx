@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import type { ReactNode } from "react";
 import { headers } from "next/headers";
 import { LOCALE_META } from "@cig-technology/i18n";
 import "./globals.css";
@@ -58,7 +59,7 @@ function getServerPreferredLocale(): keyof typeof LOCALE_META {
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const initialLocale = getServerPreferredLocale();
   // Note: Client-side i18n will detect this lang/dir and hydrate accordingly.

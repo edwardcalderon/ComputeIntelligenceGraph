@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { FooterBar } from "@cig/ui/components";
 import { useResolvedDocsUrl } from "@cig/ui/siteUrl.client";
 import { AuthButton } from "./AuthButton";
@@ -13,7 +13,7 @@ function cn(...classes: (string | false | undefined)[]) {
 }
 
 /* ─── Back to Top Button ──────────────────────────────────────────────── */
-const BackToTop: React.FC = () => {
+function BackToTop() {
   const t = useTranslation();
   const [show, setShow] = useState(false);
 
@@ -43,10 +43,10 @@ const BackToTop: React.FC = () => {
       </span>
     </button>
   );
-};
+}
 
 /* ─── Footer ──────────────────────────────────────────────────────────── */
-const Footer: React.FC = () => {
+function Footer() {
   const t = useTranslation();
   const version = process.env.NEXT_PUBLIC_APP_VERSION || "";
   const build = process.env.NEXT_PUBLIC_APP_BUILD || "";
@@ -77,15 +77,15 @@ const Footer: React.FC = () => {
       </div>
     </footer>
   );
-};
+}
 
 /* ─── Landing Layout ──────────────────────────────────────────────────── */
 interface LandingLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
 }
 
-export const LandingLayout: React.FC<LandingLayoutProps> = ({ children, className }) => {
+export function LandingLayout({ children, className }: LandingLayoutProps) {
   return (
     <div className={cn(
       "min-h-screen w-full bg-gradient-to-br from-zinc-50 via-white to-zinc-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 text-zinc-900 dark:text-zinc-50 relative overflow-x-hidden",
@@ -112,4 +112,4 @@ export const LandingLayout: React.FC<LandingLayoutProps> = ({ children, classNam
       <BackToTop />
     </div>
   );
-};
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { revokeSessionViaApi } from "@cig/auth";
 
 interface AuthentikUser {
@@ -69,7 +69,7 @@ function clearSession() {
   } catch { /* ignore */ }
 }
 
-export function AuthentikProvider({ children }: { children: React.ReactNode }) {
+export function AuthentikProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthentikUser | null>(null);
 
   // On mount: check for tokens in the URL hash (redirected from dashboard callback)

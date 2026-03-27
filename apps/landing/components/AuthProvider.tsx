@@ -1,6 +1,14 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  type ReactNode,
+} from "react";
 import { getSupabaseClient, revokeSessionViaApi } from "@cig/auth";
 
 /* ─── Shared auth interface ──────────────────────────────────────────── */
@@ -103,6 +111,14 @@ function clearAuthentikSession() {
   } catch { /* ignore */ }
 }
 
+function persistAuthSource(source: "authentik" | "supabase") {
+  try {
+    sessionStorage.setItem("cig_auth_source", source);
+  } catch {
+    // Ignore storage failures in private browsing modes.
+  }
+}
+
 function getLandingLoggedOutUrl(): string {
   return `${window.location.origin}?logged_out=1`;
 }
@@ -135,7 +151,7 @@ async function readSupabaseSession(): Promise<CIGUser | null> {
 
 /* ─── Unified Provider ──────────────────────────────────────────────── */
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [authState, setAuthState] = useState<{
     user: CIGUser | null;
     isHydrated: boolean;
@@ -160,6 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Immediately set hydrated state if we have a local user
     // This prevents the "Restoring session" screen from showing too long
     if (localUser) {
+      persistAuthSource("authentik");
       setAuthState({
         user: localUser,
         isHydrated: true,
@@ -182,6 +199,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 3. We had no local user but Supabase has one
     if (supabaseUser) {
       // Supabase user takes precedence
+      persistAuthSource("supabase");
       setAuthState({
         user: supabaseUser,
         isHydrated: true,
@@ -263,6 +281,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (supabase) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
         if (session?.user) {
+          persistAuthSource("supabase");
           const u = session.user;
           const detectedProvider =
             (u.app_metadata?.provider as string) ||
