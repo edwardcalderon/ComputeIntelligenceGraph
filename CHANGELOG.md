@@ -1,3 +1,25 @@
+## [0.2.63](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.62...v0.2.63) (2026-03-27)
+
+
+### Bug Fixes
+
+* **ui:** voice waveform, mobile session actions, landing dot pattern ([c4e0551](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/c4e05514155593119b8ef470b294909cc429f67c))
+
+
+
+
+
+## [0.2.63](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.62...v0.2.63) (2026-03-27)
+
+
+### Bug Fixes
+
+* **ui:** voice waveform, mobile session actions, landing dot pattern ([c4e0551](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/c4e05514155593119b8ef470b294909cc429f67c))
+
+
+
+
+
 ## [0.2.62](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.61...v0.2.62) (2026-03-27)
 
 ### Detected changes
