@@ -1,3 +1,14 @@
+## [0.1.23](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.22...cli-v0.1.23) (2026-03-27)
+
+
+### Bug Fixes
+
+* **cli:** fix default api-url port and skip network check on self-hosted install ([ebd1782](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/ebd17824ec856b4020a347727cac20bae1b50718))
+
+
+
+
+
 ## [0.1.22](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.21...cli-v0.1.22) (2026-03-27)
 
 
