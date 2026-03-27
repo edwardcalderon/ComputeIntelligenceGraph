@@ -1,6 +1,6 @@
 {
   "name": "@cig-technology/cli",
-  "version": "0.1.19",
+  "version": "0.1.20",
   "description": "Production-oriented CLI for bootstrapping and operating CIG nodes and self-hosted installs",
   "type": "module",
   "keywords": [
@@ -41,7 +41,7 @@
   "scripts": {
     "build": "npm run clean && tsc",
     "dev": "tsc --watch",
-    "lint": "tsc --noEmit",
+    "lint": "tsc --noEmit -p tsconfig.lint.json",
     "test": "vitest run",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "version:status": "versioning status -c versioning.config.json",
