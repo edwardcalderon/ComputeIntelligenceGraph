@@ -246,8 +246,8 @@ export interface InstallOptions {
 // Health polling
 // ---------------------------------------------------------------------------
 
-const HEALTH_POLL_INTERVAL_MS = 5_000;
-const HEALTH_POLL_TIMEOUT_MS = 300_000; // 5 minutes
+const HEALTH_POLL_INTERVAL_MS = 3_000;
+const HEALTH_POLL_TIMEOUT_MS = 120_000; // 2 minutes
 
 /**
  * Poll the node-runtime health endpoint until it responds 200 or timeout.
@@ -258,8 +258,8 @@ const HEALTH_POLL_TIMEOUT_MS = 300_000; // 5 minutes
 async function pollNodeHealth(
   timeoutMs = HEALTH_POLL_TIMEOUT_MS
 ): Promise<boolean> {
-  // Poll the node-runtime health endpoint on the local host.
-  const healthUrl = 'http://127.0.0.1:8080/health';
+  // Poll the API health endpoint on the local host.
+  const healthUrl = 'http://127.0.0.1:3003/api/v1/health';
   const deadline = Date.now() + timeoutMs;
 
   while (Date.now() < deadline) {
