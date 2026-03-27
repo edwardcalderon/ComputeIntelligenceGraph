@@ -22,6 +22,7 @@
     "@cig/chatbot": "workspace:*",
     "@cig/discovery": "workspace:*",
     "@cig/graph": "workspace:*",
+    "@cig/sdk": "workspace:*",
     "@escape.tech/graphql-armor-cost-limit": "^2.0.0",
     "@escape.tech/graphql-armor-max-depth": "^2.0.0",
     "@fastify/cors": "^8.0.0",

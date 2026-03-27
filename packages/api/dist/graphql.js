@@ -15,6 +15,34 @@ const discovery_1 = require("@cig/discovery");
 const graphEngine = new graph_1.GraphEngine();
 const queryEngine = new graph_1.GraphQueryEngine();
 const cartographyClient = new discovery_1.CartographyClient();
+const DEFAULT_DISCOVERY_INTERVAL_MINUTES = 5;
+function resolveDiscoveryIntervalMinutes() {
+    const parsed = Number.parseInt(process.env.DISCOVERY_INTERVAL_MINUTES ?? '', 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_DISCOVERY_INTERVAL_MINUTES;
+}
+function resolveNextRun(lastRun) {
+    if (!lastRun) {
+        return null;
+    }
+    const startedAt = new Date(lastRun);
+    if (Number.isNaN(startedAt.getTime())) {
+        return null;
+    }
+    startedAt.setMinutes(startedAt.getMinutes() + resolveDiscoveryIntervalMinutes());
+    return startedAt.toISOString();
+}
+function buildDiscoveryStatusSnapshot(status) {
+    const lastRun = status?.last_run_end ?? status?.last_run_start ?? null;
+    return {
+        running: status?.running ?? false,
+        lastRunStart: status?.last_run_start ?? null,
+        lastRunEnd: status?.last_run_end ?? null,
+        lastRunSuccess: status?.last_run_success ?? null,
+        lastError: status?.last_error ?? null,
+        runCount: status?.run_count ?? 0,
+        nextRun: resolveNextRun(lastRun),
+    };
+}
 // ─── PubSub for subscriptions ─────────────────────────────────────────────────
 const pubSub = (0, graphql_yoga_1.createPubSub)();
 exports.pubSub = pubSub;
@@ -308,15 +336,14 @@ const resolvers = {
         },
         // Requirement 17.4 — discovery queries
         discoveryStatus: async () => {
-            const status = await cartographyClient.getStatus();
-            return {
-                running: status.running,
-                lastRunStart: status.last_run_start,
-                lastRunEnd: status.last_run_end,
-                lastRunSuccess: status.last_run_success,
-                lastError: status.last_error,
-                runCount: status.run_count,
-            };
+            try {
+                const status = await cartographyClient.getStatus();
+                return buildDiscoveryStatusSnapshot(status);
+            }
+            catch (error) {
+                console.warn('[GraphQL] Discovery status unavailable; returning fallback snapshot:', error);
+                return buildDiscoveryStatusSnapshot(null);
+            }
         },
         // Requirement 17.5 — cost queries (stub)
         costSummary: async () => ({

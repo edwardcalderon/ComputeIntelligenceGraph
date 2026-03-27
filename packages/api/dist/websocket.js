@@ -42,7 +42,7 @@ const PING_INTERVAL_MS = 30_000;
 const API_KEY_HEADER = 'x-api-key';
 async function registerWebSocket(app) {
     await app.register(websocket_1.default);
-    app.get('/ws', { websocket: true }, (connection, request) => {
+    app.get('/ws', { websocket: true }, async (connection, request) => {
         const ws = connection.socket;
         // ── Authentication ──────────────────────────────────────────────────────
         const query = request.query;
@@ -51,11 +51,11 @@ async function registerWebSocket(app) {
         let authenticated = false;
         if (token) {
             try {
-                (0, auth_js_1.verifyJwt)(token);
+                await (0, auth_js_1.verifyBearerToken)(token);
                 authenticated = true;
             }
             catch {
-                // invalid JWT — fall through
+                // invalid JWT / upstream token — fall through
             }
         }
         if (!authenticated && apiKey && apiKey.length > 0) {

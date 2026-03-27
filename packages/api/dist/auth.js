@@ -8,11 +8,13 @@ exports.generateApiKey = generateApiKey;
 exports.verifyApiKey = verifyApiKey;
 exports.generateJwt = generateJwt;
 exports.verifyJwt = verifyJwt;
+exports.verifyBearerToken = verifyBearerToken;
 exports.authenticate = authenticate;
 exports.authorize = authorize;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const crypto_1 = __importDefault(require("crypto"));
+const oidc_verify_1 = require("./middleware/oidc-verify");
 // Permission model (Requirements 16.8, 17.8)
 var Permission;
 (function (Permission) {
@@ -22,6 +24,7 @@ var Permission;
     Permission["MANAGE_DISCOVERY"] = "MANAGE_DISCOVERY";
     Permission["ADMIN"] = "ADMIN";
 })(Permission || (exports.Permission = Permission = {}));
+const MANAGED_ADMIN_GROUPS = new Set(['admin', 'admins', 'cig-admin', 'cig-admins']);
 // In-memory API key store: hashedKey -> entry
 const apiKeyStore = new Map();
 const BCRYPT_ROUNDS = 10;
@@ -53,6 +56,38 @@ function verifyJwt(token) {
     }
     return jsonwebtoken_1.default.verify(token, secret);
 }
+function permissionsFromManagedGroups(groups) {
+    const normalizedGroups = groups.map((group) => group.toLowerCase());
+    const permissions = [Permission.READ_RESOURCES];
+    if (normalizedGroups.some((group) => MANAGED_ADMIN_GROUPS.has(group))) {
+        permissions.push(Permission.WRITE_RESOURCES, Permission.EXECUTE_ACTIONS, Permission.MANAGE_DISCOVERY, Permission.ADMIN);
+    }
+    return [...new Set(permissions)];
+}
+function canVerifyManagedToken() {
+    return Boolean(process.env.AUTHENTIK_JWKS_URI && process.env.OIDC_CLIENT_ID);
+}
+async function verifyBearerToken(token) {
+    try {
+        return verifyJwt(token);
+    }
+    catch (localError) {
+        const managedMode = process.env.CIG_AUTH_MODE === 'managed';
+        if (!managedMode && !canVerifyManagedToken()) {
+            throw localError;
+        }
+        try {
+            const managedClaims = await (0, oidc_verify_1.verifyIdToken)(token);
+            return {
+                sub: managedClaims.sub,
+                permissions: permissionsFromManagedGroups(managedClaims.groups),
+            };
+        }
+        catch {
+            throw localError;
+        }
+    }
+}
 // Fastify preHandler: authenticate via Bearer JWT or X-API-Key header
 async function authenticate(request, reply) {
     const authHeader = request.headers['authorization'];
@@ -60,7 +95,7 @@ async function authenticate(request, reply) {
     if (authHeader?.startsWith('Bearer ')) {
         const token = authHeader.slice(7);
         try {
-            const payload = verifyJwt(token);
+            const payload = await verifyBearerToken(token);
             request.user = payload;
             return;
         }

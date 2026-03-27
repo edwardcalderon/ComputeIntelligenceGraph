@@ -16,6 +16,8 @@ const audit_1 = require("./routes/audit");
 const sessions_1 = require("./routes/sessions");
 const scans_1 = require("./routes/scans");
 const auth_email_1 = require("./routes/auth-email");
+const chat_1 = require("./routes/chat");
+const onboarding_1 = require("./routes/onboarding");
 // Shared instances
 const graphEngine = new graph_1.GraphEngine();
 const queryEngine = new graph_1.GraphQueryEngine();
@@ -31,6 +33,30 @@ function parseInteger(value, fallback) {
 }
 function emptyPagedResources() {
     return { items: [], total: 0, hasMore: false };
+}
+const DEFAULT_DISCOVERY_INTERVAL_MINUTES = 5;
+function resolveDiscoveryIntervalMinutes() {
+    const parsed = Number.parseInt(process.env.DISCOVERY_INTERVAL_MINUTES ?? '', 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_DISCOVERY_INTERVAL_MINUTES;
+}
+function resolveNextRun(lastRun) {
+    if (!lastRun) {
+        return null;
+    }
+    const startedAt = new Date(lastRun);
+    if (Number.isNaN(startedAt.getTime())) {
+        return null;
+    }
+    startedAt.setMinutes(startedAt.getMinutes() + resolveDiscoveryIntervalMinutes());
+    return startedAt.toISOString();
+}
+function buildDiscoveryStatusSnapshot(status, recentRuns) {
+    const lastRun = recentRuns?.last_run ?? status?.last_run_end ?? status?.last_run_start ?? null;
+    return {
+        running: status?.running ?? false,
+        lastRun,
+        nextRun: resolveNextRun(lastRun),
+    };
 }
 async function registerRoutes(app) {
     // ─── Device Authorization (RFC 8628) ────────────────────────────────────────
@@ -51,6 +77,10 @@ async function registerRoutes(app) {
     await app.register(scans_1.scanRoutes);
     // ─── Custom Auth Email Endpoints ─────────────────────────────────────────────
     await app.register(auth_email_1.authEmailRoutes);
+    // ─── Chat (RAG + OpenAI) ─────────────────────────────────────────────────────
+    await app.register(chat_1.chatRoutes);
+    // ─── CIG Node Onboarding (Phase 1, Requirements 3.1–3.9, 17.1–17.3) ─────────
+    await app.register(onboarding_1.onboardingRoutes);
     // ─── Resources ──────────────────────────────────────────────────────────────
     // GET /api/v1/resources — list all resources with optional filtering
     app.get('/api/v1/resources', { preHandler: readResources }, async (request, reply) => {
@@ -109,10 +139,22 @@ async function registerRoutes(app) {
     });
     // ─── Discovery ──────────────────────────────────────────────────────────────
     // GET /api/v1/discovery/status — get discovery status
-    app.get('/api/v1/discovery/status', { preHandler: readResources }, async (_request, reply) => {
-        const status = await cartographyClient.getStatus();
-        const recentRuns = await cartographyClient.getRecentRuns();
-        return reply.send({ ...status, ...recentRuns });
+    app.get('/api/v1/discovery/status', { preHandler: readResources }, async (request, reply) => {
+        let status = null;
+        let recentRuns = null;
+        try {
+            status = await cartographyClient.getStatus();
+        }
+        catch (error) {
+            request.log.warn({ err: error }, 'Discovery status unavailable; falling back to empty status');
+        }
+        try {
+            recentRuns = await cartographyClient.getRecentRuns();
+        }
+        catch (error) {
+            request.log.warn({ err: error }, 'Discovery recent runs unavailable; falling back to status-only snapshot');
+        }
+        return reply.send(buildDiscoveryStatusSnapshot(status, recentRuns));
     });
     // POST /api/v1/discovery/trigger — manually trigger discovery
     app.post('/api/v1/discovery/trigger', { preHandler: manageDiscovery }, async (_request, reply) => {

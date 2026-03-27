@@ -1,490 +1,587 @@
+/**
+ * `cig install` — CIG Node Runtime Installation
+ *
+ * Orchestrates the full install flow:
+ *   1. Fetch and verify the Setup_Manifest (signature + expiry)
+ *   2. Run doctor prerequisite checks (docker, docker-compose, network)
+ *   3. Generate docker-compose.yml and .env from the manifest
+ *   4. Write files to INSTALL_DIR (/opt/cig-node)
+ *   5. Run `docker compose up -d` (locally or via SSH for --target ssh)
+ *   6. Poll node health endpoint until healthy or timeout
+ *   7. Exit 0 on success, non-zero on failure
+ *
+ * For --mode self-hosted: installs full CIG control plane stack, generates
+ * a Bootstrap_Token, writes it to the install dir, and displays it once.
+ *
+ * The CLI exits after confirming the node is healthy — it is NOT the
+ * discovery engine.
+ *
+ * Requirements: 5.1–5.10, 4.3, 13.1, 13.2
+ */
+
 import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { execSync } from 'node:child_process';
-import { cancel, confirm, isCancel, password, select, spinner, text } from '@clack/prompts';
-import { runAllChecks } from '../prereqs.js';
-import { generateCompose, InstallManifest } from '../compose-generator.js';
-import { CredentialManager } from '../credentials.js';
-import type { PrereqCheckResult } from '../prereqs.js';
-import { enrollmentFlow } from './enrollment.js';
-import { bootstrapFlow } from './bootstrap.js';
-import { StateManager } from '../managers/state-manager.js';
-import { InstallPlanner } from '../services/install-planner.js';
-import { resolvePublishedImageManifest } from '../services/image-manifest.js';
-import { normalizeInstallProfile } from '../services/install-profile.js';
-import { NodeBundleInstaller } from '../services/node-bundle-installer.js';
-import { ConnectionProfileStore } from '../stores/connection-profile-store.js';
-import { seedInitialGraph } from '../services/initial-graph.js';
-import {
-  buildDependencyInstallPrompt,
-  buildDockerDaemonStartPrompt,
-  installMissingDependencies,
-  startDockerDaemon,
-  splitPrereqFailures,
-} from '../services/dependency-installer.js';
-import { CLI_VERSION } from '../version.js';
+import crypto from 'node:crypto';
+import { spinner } from '@clack/prompts';
+import { resolveManifest } from '../manifest.js';
+import { doctor } from './doctor.js';
+import { installViaSSH } from '../ssh.js';
+import type { SetupManifest, NodeIdentity } from '@cig/sdk';
 
-function abortInstall(message: string): never {
-  throw new Error(message);
+// ---------------------------------------------------------------------------
+// Inline infra helpers (mirrors packages/infra/src/compose.ts and install.ts)
+// These are inlined to avoid a cross-package dependency that isn't yet wired.
+// ---------------------------------------------------------------------------
+
+const INSTALL_DIR = '/opt/cig-node';
+
+/**
+ * Generate a cryptographically random 32-character bootstrap token.
+ * Mirrors packages/infra/src/install.ts generateBootstrapToken().
+ */
+function generateBootstrapToken(): string {
+  return crypto.randomBytes(16).toString('hex');
 }
 
-function formatChoiceLabel(value: string): string {
-  return value
-    .split('-')
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(' ');
+/**
+ * Write the bootstrap token to the install directory with 0600 permissions.
+ * Mirrors packages/infra/src/install.ts writeBootstrapToken().
+ */
+async function writeBootstrapToken(token: string): Promise<void> {
+  const tokenFile = path.join(INSTALL_DIR, '.bootstrap-token');
+  fs.mkdirSync(path.dirname(tokenFile), { recursive: true, mode: 0o700 });
+  fs.writeFileSync(tokenFile, token, { mode: 0o600, encoding: 'utf8' });
 }
 
-function promptCancelled(message: string): never {
-  cancel(message);
-  throw new Error(message);
-}
+/**
+ * Generate a docker-compose.yml string from a SetupManifest and install profile.
+ * Mirrors packages/infra/src/compose.ts generateComposeFile().
+ *
+ * Requirements: 5.9, 6.1
+ */
+function generateComposeFile(manifest: SetupManifest, profile: 'core' | 'full'): string {
+  const selfHosted = manifest.targetMode === 'host';
 
-function resolveEnvValue(name: string, fallback = ''): string {
-  return process.env[name]?.trim() ?? fallback;
-}
+  const coreServices = `\
+  node-runtime:
+    image: ghcr.io/cig/node-runtime:\${CIG_VERSION}
+    restart: unless-stopped
+    volumes:
+      - ./identity:/opt/cig-node/identity:ro
+      - ./config:/opt/cig-node/config:ro
+    environment:
+      - CIG_NODE_ID=\${CIG_NODE_ID}
+      - CIG_CONTROL_PLANE=\${CIG_CONTROL_PLANE_ENDPOINT}
+      - CIG_CLOUD_PROVIDER=\${CIG_CLOUD_PROVIDER}
+    depends_on:
+      - discovery-worker
+      - graph-writer
 
-async function promptChoice(question: string, options: string[]): Promise<string> {
-  const result = await select({
-    message: question,
-    options: options.map((option) => ({
-      value: option,
-      label: formatChoiceLabel(option),
-    })),
-  });
+  discovery-worker:
+    image: ghcr.io/cig/discovery-worker:\${CIG_VERSION}
+    restart: unless-stopped
+    environment:
+      - CIG_CLOUD_PROVIDER=\${CIG_CLOUD_PROVIDER}
+      - AWS_ROLE_ARN=\${AWS_ROLE_ARN}
+      - AWS_EXTERNAL_ID=\${AWS_EXTERNAL_ID}
+      - GCP_PROJECT_ID=\${GCP_PROJECT_ID}
+      - GCP_SA_EMAIL=\${GCP_SA_EMAIL}
 
-  if (isCancel(result)) {
-    promptCancelled('Installation was cancelled.');
-  }
+  cartography:
+    image: ghcr.io/cig/cartography:\${CIG_VERSION}
+    restart: unless-stopped
+    environment:
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_PASSWORD=\${NEO4J_PASSWORD}
 
-  return String(result);
-}
+  graph-writer:
+    image: ghcr.io/cig/graph-writer:\${CIG_VERSION}
+    restart: unless-stopped
+    environment:
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_PASSWORD=\${NEO4J_PASSWORD}
+      - CIG_CONTROL_PLANE=\${CIG_CONTROL_PLANE_ENDPOINT}
 
-async function promptYesNo(question: string): Promise<boolean> {
-  const result = await confirm({
-    message: question,
-    initialValue: true,
-  });
+  neo4j:
+    image: neo4j:5
+    restart: unless-stopped
+    volumes:
+      - neo4j-data:/data
+    environment:
+      - NEO4J_AUTH=neo4j/\${NEO4J_PASSWORD}`;
 
-  if (isCancel(result)) {
-    promptCancelled('Installation was cancelled.');
-  }
+  let services = coreServices;
 
-  return Boolean(result);
-}
-
-async function promptTextValue(question: string, defaultValue = ''): Promise<string> {
-  const result = await text({
-    message: question,
-    placeholder: defaultValue || undefined,
-    defaultValue,
-  });
-
-  if (isCancel(result)) {
-    promptCancelled('Installation was cancelled.');
-  }
-
-  const value = String(result).trim();
-  if (!value) {
-    return defaultValue;
-  }
-
-  return value;
-}
-
-async function promptSecretValue(question: string, defaultValue = ''): Promise<string> {
-  if (defaultValue) {
-    return defaultValue;
-  }
-
-  const result = await password({
-    message: question,
-  });
-
-  if (isCancel(result)) {
-    promptCancelled('Installation was cancelled.');
-  }
-
-  const value = String(result).trim();
-  if (!value) {
-    return defaultValue;
-  }
-
-  return value;
-}
-
-function printPrereqFailures(results: PrereqCheckResult[]): void {
-  results.forEach((result) => {
-    console.error(`✗ ${result.message}`);
-    if (result.remediation) {
-      console.error(`  ${result.remediation}`);
-    }
-  });
-}
-
-function printAdminAccessGuidance(context: string): void {
-  console.error(context);
-  console.error('Re-run this installer from an administrator shell or a sudo-capable user, then try again.');
-}
-
-function getRequiredBundleImages(profile: 'discovery' | 'full'): string[] {
   if (profile === 'full') {
-    return ['api', 'dashboard', 'neo4j', 'discovery', 'cartography', 'chatbot'];
+    services += `
+  chatbot:
+    image: ghcr.io/cig/chatbot:\${CIG_VERSION}
+    restart: unless-stopped
+    environment:
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_PASSWORD=\${NEO4J_PASSWORD}
+      - CIG_CONTROL_PLANE=\${CIG_CONTROL_PLANE_ENDPOINT}
+
+  chroma:
+    image: ghcr.io/cig/chroma:\${CIG_VERSION}
+    restart: unless-stopped
+    volumes:
+      - chroma-data:/chroma/chroma
+
+  agents:
+    image: ghcr.io/cig/agents:\${CIG_VERSION}
+    restart: unless-stopped
+    environment:
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_PASSWORD=\${NEO4J_PASSWORD}
+      - CHROMA_URI=http://chroma:8000
+      - CIG_CONTROL_PLANE=\${CIG_CONTROL_PLANE_ENDPOINT}`;
   }
 
-  return ['api', 'dashboard', 'neo4j', 'discovery', 'cartography'];
+  if (selfHosted) {
+    services += `
+  api:
+    image: ghcr.io/cig/api:\${CIG_VERSION}
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    environment:
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_PASSWORD=\${NEO4J_PASSWORD}
+      - DATABASE_URL=\${DATABASE_URL}
+    depends_on:
+      - neo4j
+
+  dashboard:
+    image: ghcr.io/cig/dashboard:\${CIG_VERSION}
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3003
+    depends_on:
+      - api`;
+  }
+
+  const volumes: string[] = ['  neo4j-data:'];
+  if (profile === 'full') volumes.push('  chroma-data:');
+  if (selfHosted) volumes.push('  postgres-data:');
+
+  return [
+    "version: '3.8'",
+    'services:',
+    services,
+    '',
+    'volumes:',
+    volumes.join('\n'),
+    '',
+  ].join('\n');
 }
 
-function ensureRequiredBundleImages(
-  images: Record<string, string>,
-  profile: 'discovery' | 'full'
-): void {
-  const missing = getRequiredBundleImages(profile).filter((service) => !images[service]);
-  if (missing.length > 0) {
-    throw new Error(`Published image manifest is missing pinned images for: ${missing.join(', ')}`);
+/**
+ * Generate a .env file string from a SetupManifest and NodeIdentity.
+ * Mirrors packages/infra/src/compose.ts generateEnvFile().
+ *
+ * Requirements: 5.9, 6.2
+ */
+function generateEnvFile(manifest: SetupManifest, nodeIdentity: NodeIdentity): string {
+  const lines: string[] = [
+    '# Generated by CIG CLI — do not edit manually',
+    `# Generated at: ${new Date().toISOString()}`,
+    '',
+    '# Node identity',
+    `CIG_NODE_ID=${nodeIdentity.nodeId}`,
+    '',
+    '# Control plane',
+    `CIG_CONTROL_PLANE_ENDPOINT=${manifest.controlPlaneEndpoint}`,
+    '',
+    '# Cloud provider',
+    `CIG_CLOUD_PROVIDER=${manifest.cloudProvider}`,
+    '',
+    '# Image version',
+    'CIG_VERSION=latest',
+    '',
+    '# Neo4j credentials (auto-generated)',
+    `NEO4J_PASSWORD=${crypto.randomBytes(16).toString('hex')}`,
+    '',
+  ];
+
+  if (manifest.cloudProvider === 'aws' && manifest.awsConfig) {
+    lines.push('# AWS configuration');
+    lines.push(`AWS_ROLE_ARN=${manifest.awsConfig.roleArn}`);
+    lines.push(`AWS_EXTERNAL_ID=${manifest.awsConfig.externalId}`);
+    lines.push(`AWS_REGION=${manifest.awsConfig.region}`);
+    lines.push('');
+    lines.push('GCP_PROJECT_ID=');
+    lines.push('GCP_SA_EMAIL=');
+    lines.push('');
+  } else if (manifest.cloudProvider === 'gcp' && manifest.gcpConfig) {
+    lines.push('# GCP configuration');
+    lines.push(`GCP_PROJECT_ID=${manifest.gcpConfig.projectId}`);
+    lines.push(`GCP_SA_EMAIL=${manifest.gcpConfig.serviceAccountEmail}`);
+    lines.push('');
+    lines.push('AWS_ROLE_ARN=');
+    lines.push('AWS_EXTERNAL_ID=');
+    lines.push('');
   }
+
+  return lines.join('\n');
 }
 
-async function displayProfileDetails(profile: 'discovery' | 'full'): Promise<void> {
-  const servicesByProfile: Record<'discovery' | 'full', string[]> = {
-    discovery: ['API', 'Dashboard', 'Neo4j', 'Discovery', 'Cartography', 'cig-node'],
-    full: ['API', 'Dashboard', 'Neo4j', 'Discovery', 'Cartography', 'cig-node', 'Chatbot'],
-  };
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
-  console.log(`\n${profile.toUpperCase()} profile services:`);
-  servicesByProfile[profile].forEach((service) => console.log(`  - ${service}`));
-  if (profile === 'full') {
-    console.log('  - Chatbot uses Chroma Cloud + OpenAI credentials from the install wizard.');
-  }
+export interface InstallOptions {
+  /** URL or base64-encoded SetupManifest */
+  manifest?: string;
+  mode: 'managed' | 'self-hosted';
+  cloud?: 'aws' | 'gcp';
+  profile: 'core' | 'full';
+  target: 'local' | 'ssh' | 'host';
+  apiUrl?: string;
+  /** SSH options (required when --target ssh) */
+  sshHost?: string;
+  sshUser?: string;
+  sshKeyPath?: string;
+  sshPort?: number;
 }
 
-async function collectChatbotEnvOverrides(): Promise<Record<string, string>> {
-  const defaults = {
-    CHROMA_HOST: resolveEnvValue('CHROMA_HOST', 'api.trychroma.com'),
-    CHROMA_API_KEY: resolveEnvValue('CHROMA_API_KEY'),
-    CHROMA_TENANT: resolveEnvValue('CHROMA_TENANT'),
-    CHROMA_DATABASE: resolveEnvValue('CHROMA_DATABASE', 'cig'),
-    OPENAI_API_KEY: resolveEnvValue('OPENAI_API_KEY'),
-  };
+// ---------------------------------------------------------------------------
+// Health polling
+// ---------------------------------------------------------------------------
 
-  const allPresent = Object.values(defaults).every((value) => value.trim() !== '');
-  if (allPresent) {
-    return defaults;
-  }
+const HEALTH_POLL_INTERVAL_MS = 5_000;
+const HEALTH_POLL_TIMEOUT_MS = 300_000; // 5 minutes
 
-  console.log('\nFull profile requires Chatbot runtime credentials.');
-  const chromaHost = await promptTextValue('Chroma host', defaults.CHROMA_HOST);
-  const chromaTenant = await promptTextValue('Chroma tenant', defaults.CHROMA_TENANT);
-  const chromaDatabase = await promptTextValue('Chroma database', defaults.CHROMA_DATABASE);
-  const chromaApiKey = await promptSecretValue('Chroma API key', defaults.CHROMA_API_KEY);
-  const openAiApiKey = await promptSecretValue('OpenAI API key', defaults.OPENAI_API_KEY);
-
-  if (!chromaHost || !chromaTenant || !chromaDatabase || !chromaApiKey || !openAiApiKey) {
-    throw new Error(
-      'Chatbot configuration is incomplete. Provide CHROMA_HOST, CHROMA_TENANT, CHROMA_DATABASE, CHROMA_API_KEY, and OPENAI_API_KEY.'
-    );
-  }
-
-  return {
-    CHROMA_HOST: chromaHost,
-    CHROMA_API_KEY: chromaApiKey,
-    CHROMA_TENANT: chromaTenant,
-    CHROMA_DATABASE: chromaDatabase,
-    OPENAI_API_KEY: openAiApiKey,
-  };
-}
-
-async function pollHealthChecks(manifest: InstallManifest, timeoutMs = 300_000): Promise<boolean> {
-  const healthEndpoints: Record<string, string> = {
-    api: 'http://127.0.0.1:8000/api/v1/health',
-    dashboard: 'http://127.0.0.1:3000',
-    discovery: 'http://127.0.0.1:8080/health',
-  };
-
+/**
+ * Poll the node-runtime health endpoint until it responds 200 or timeout.
+ * Returns true if healthy within the timeout, false otherwise.
+ *
+ * Requirement 5.10 — CLI exits after confirming node is healthy
+ */
+async function pollNodeHealth(
+  timeoutMs = HEALTH_POLL_TIMEOUT_MS
+): Promise<boolean> {
+  // Poll the node-runtime health endpoint on the local host.
+  const healthUrl = 'http://127.0.0.1:8080/health';
   const deadline = Date.now() + timeoutMs;
 
   while (Date.now() < deadline) {
-    let healthy = true;
-
-    for (const service of manifest.services) {
-      const endpoint = healthEndpoints[service];
-      if (!endpoint) {
-        continue;
+    try {
+      const response = await fetch(healthUrl, { signal: AbortSignal.timeout(4_000) });
+      if (response.ok) {
+        return true;
       }
-
-      try {
-        const response = await fetch(endpoint);
-        if (!response.ok) {
-          healthy = false;
-        }
-      } catch {
-        healthy = false;
-      }
+    } catch {
+      // Not yet healthy — keep polling
     }
 
-    if (healthy) {
-      return true;
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 5_000));
+    await new Promise<void>((resolve) => setTimeout(resolve, HEALTH_POLL_INTERVAL_MS));
   }
 
   return false;
 }
 
+// ---------------------------------------------------------------------------
+// Local docker compose up
+// ---------------------------------------------------------------------------
+
+/**
+ * Run `docker compose up -d` in the given directory.
+ * Throws on non-zero exit.
+ *
+ * Requirement 5.9
+ */
+function dockerComposeUp(installDir: string): void {
+  execSync('docker compose up -d', { cwd: installDir, stdio: 'inherit' });
+}
+
+// ---------------------------------------------------------------------------
+// Write compose + env files to install dir
+// ---------------------------------------------------------------------------
+
+/**
+ * Write docker-compose.yml and .env to the install directory.
+ * Creates the directory (mode 0700) if it does not exist.
+ *
+ * Requirements: 5.9, 6.1
+ */
+function writeInstallFiles(
+  installDir: string,
+  composeContent: string,
+  envContent: string
+): { composePath: string; envPath: string } {
+  fs.mkdirSync(installDir, { recursive: true, mode: 0o700 });
+
+  const composePath = path.join(installDir, 'docker-compose.yml');
+  const envPath = path.join(installDir, '.env');
+
+  fs.writeFileSync(composePath, composeContent, { encoding: 'utf8', mode: 0o600 });
+  fs.writeFileSync(envPath, envContent, { encoding: 'utf8', mode: 0o600 });
+
+  return { composePath, envPath };
+}
+
+// ---------------------------------------------------------------------------
+// Rollback helper
+// ---------------------------------------------------------------------------
+
 async function rollback(installDir: string): Promise<void> {
   try {
     execSync('docker compose down', { cwd: installDir, stdio: 'pipe' });
   } catch {
-    // Best effort only.
+    // Best-effort only
   }
 
   for (const fileName of ['docker-compose.yml', '.env']) {
-    const filePath = `${installDir}/${fileName}`;
+    const filePath = path.join(installDir, fileName);
     if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+      try {
+        fs.unlinkSync(filePath);
+      } catch {
+        // Best-effort only
+      }
     }
   }
 }
 
+// ---------------------------------------------------------------------------
+// Build a stub NodeIdentity for env file generation when no enrollment yet
+// ---------------------------------------------------------------------------
+
+function buildStubNodeIdentity(): NodeIdentity {
+  return {
+    nodeId: 'pending-enrollment',
+    privateKey: '',
+    publicKey: '',
+    issuedAt: new Date().toISOString(),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Main exported function
+// ---------------------------------------------------------------------------
+
+/**
+ * Legacy-compatible overload: called from index.ts with positional args.
+ * Delegates to the full InstallOptions path.
+ */
 export async function install(
-  apiUrl = 'http://localhost:8000',
+  apiUrlOrOptions?: string | InstallOptions,
   mode?: 'managed' | 'self-hosted',
-  profile?: 'core' | 'discovery' | 'full'
+  profile?: 'core' | 'full'
 ): Promise<void> {
-  const credentialManager = new CredentialManager();
-  const stateManager = new StateManager();
-  const planner = new InstallPlanner();
-  const profileStore = new ConnectionProfileStore();
+  // Normalise arguments — support both legacy positional call and new options object
+  let opts: InstallOptions;
 
-  console.log(`\nCIG installation (v${CLI_VERSION})`);
-
-  const checkSpinner = spinner();
-  checkSpinner.start('Running CIG prerequisite checks...');
-  let prereqResults = await runAllChecks();
-  checkSpinner.stop('CIG prerequisite checks completed.');
-  let failedChecks = prereqResults.filter((result) => !result.passed);
-  if (failedChecks.length > 0) {
-    let groups = splitPrereqFailures(failedChecks);
-    printPrereqFailures(failedChecks);
-
-    if (groups.admin.length > 0) {
-      printAdminAccessGuidance('Docker is installed, but this user cannot access the daemon.');
-      abortInstall('Docker daemon access requires administrator privileges in this environment.');
-    }
-
-    if (groups.startable.length > 0) {
-      const shouldStartDocker = await promptYesNo(buildDockerDaemonStartPrompt(groups));
-      if (!shouldStartDocker) {
-        abortInstall('Docker daemon startup was skipped by the operator.');
-      }
-
-      const startSpinner = spinner();
-      startSpinner.start('Starting Docker daemon...');
-      const startResult = await startDockerDaemon();
-      startSpinner.stop(startResult.succeeded ? 'Docker daemon start attempted.' : 'Docker daemon start failed.');
-      if (!startResult.succeeded) {
-        console.error(startResult.summary);
-        if (startResult.requiresAdmin) {
-          printAdminAccessGuidance('Docker daemon startup requires administrator privileges in this environment.');
-        }
-        if (startResult.error) {
-          console.error(startResult.error);
-        }
-        abortInstall('Docker daemon startup did not complete.');
-      }
-
-      console.log(startResult.summary);
-      checkSpinner.start('Re-running prerequisite checks...');
-      prereqResults = await runAllChecks();
-      checkSpinner.stop('Prerequisite checks completed.');
-      failedChecks = prereqResults.filter((result) => !result.passed);
-      groups = splitPrereqFailures(failedChecks);
-      if (failedChecks.length > 0) {
-        printPrereqFailures(failedChecks);
-        if (groups.startable.length > 0) {
-          console.error('Docker is still not running after the automatic start attempt.');
-          abortInstall('Prerequisite checks still failed after attempting to start Docker.');
-        }
-      }
-    }
-
-    if (groups.installable.length > 0) {
-      const shouldTryInstall = await promptYesNo(buildDependencyInstallPrompt(groups));
-      if (!shouldTryInstall) {
-        abortInstall('Automatic Docker prerequisite installation was skipped by the operator.');
-      }
-
-      const installSpinner = spinner();
-      installSpinner.start('Installing Docker prerequisites...');
-      const installResult = await installMissingDependencies();
-      installSpinner.stop(installResult.succeeded ? 'Docker prerequisite installation attempted.' : 'Docker prerequisite installation failed.');
-      if (!installResult.succeeded) {
-        console.error(installResult.summary);
-        if (installResult.requiresAdmin) {
-          printAdminAccessGuidance('Installing Docker prerequisites requires administrator privileges in this environment.');
-        }
-        if (installResult.error) {
-          console.error(installResult.error);
-        }
-        abortInstall('Automatic Docker prerequisite installation did not complete.');
-      }
-
-      console.log(installResult.summary);
-
-      checkSpinner.start('Re-running prerequisite checks...');
-      const retryResults = await runAllChecks();
-      checkSpinner.stop('Prerequisite checks completed.');
-      const remainingFailures = retryResults.filter((result) => !result.passed);
-      groups = splitPrereqFailures(remainingFailures);
-      if (remainingFailures.length > 0) {
-        console.error('Some prerequisites are still missing after the automatic install attempt:');
-        printPrereqFailures(remainingFailures);
-        if (groups.startable.length > 0) {
-          console.error('Docker is still not running after the automatic install attempt.');
-        }
-        abortInstall('Prerequisite checks still failed after attempting automatic remediation.');
-      }
-    }
-
-    if (groups.startable.length > 0) {
-      console.error('Docker is still not running. Start it manually and try again.');
-      abortInstall('Docker daemon is not running.');
-    }
-
-    if (groups.manual.length > 0) {
-      console.error('Some prerequisites require manual remediation before installation can continue.');
-      abortInstall('Manual prerequisite remediation is required before installation can continue.');
-    }
-  }
-
-  if (!mode) {
-    mode = (await promptChoice('Select installation mode:', ['self-hosted', 'managed'])) as
-      | 'managed'
-      | 'self-hosted';
-  }
-
-  if (!profile) {
-    profile = (await promptChoice('Select installation profile:', ['discovery', 'full'])) as
-      | 'discovery'
-      | 'full';
-  }
-
-  const installProfile = normalizeInstallProfile(profile);
-  await displayProfileDetails(installProfile);
-
-  let publishedImageManifest: Record<string, string> | undefined;
-  if (mode === 'self-hosted') {
-    const resolvedImageManifest = await resolvePublishedImageManifest(CLI_VERSION);
-    ensureRequiredBundleImages(resolvedImageManifest.images, installProfile);
-    publishedImageManifest = resolvedImageManifest.images;
-    if (resolvedImageManifest.resolutionSource === 'docker-hub-latest') {
-      console.log(
-        `✓ Resolved pinned container images from Docker Hub latest tags for v${resolvedImageManifest.version}.`
-      );
-      console.log('  The GitHub release asset was missing or invalid, so the Docker Hub bundle became the source of truth.');
-    } else {
-      console.log(`✓ Resolved published image manifest v${resolvedImageManifest.version}.`);
-    }
-  }
-
-  const plan = planner.createPlan({ mode, profile: installProfile, apiUrl });
-  const installDir = plan.installDir;
-  fs.mkdirSync(installDir, { recursive: true, mode: 0o700 });
-
-  let manifest: InstallManifest;
-  let identity = credentialManager.loadIdentity();
-
-  if (mode === 'managed') {
-    const result = await enrollmentFlow({ apiUrl, profile: installProfile });
-    manifest = result.manifest;
-    identity = result.identity;
+  if (typeof apiUrlOrOptions === 'object' && apiUrlOrOptions !== null) {
+    opts = apiUrlOrOptions;
   } else {
-    manifest = await bootstrapFlow({ profile: installProfile });
-  }
-
-  manifest.profile = installProfile;
-  if (installProfile === 'full') {
-    const chatbotEnvOverrides = await collectChatbotEnvOverrides();
-    manifest.env_overrides = {
-      ...(manifest.env_overrides ?? {}),
-      ...chatbotEnvOverrides,
+    opts = {
+      apiUrl: typeof apiUrlOrOptions === 'string' ? apiUrlOrOptions : 'http://localhost:8000',
+      mode: mode ?? 'managed',
+      profile: profile ?? 'core',
+      target: 'local',
     };
   }
-  if (publishedImageManifest) {
-    manifest.service_images = publishedImageManifest;
-  }
-  await generateCompose(manifest, installDir);
 
-  if (identity) {
-    const bundleInstaller = new NodeBundleInstaller(installDir);
-    bundleInstaller.writeBundle(plan.nodeConfig, {
-      nodeId: identity.targetId,
-      publicKey: identity.publicKey,
-      privateKey: identity.privateKey,
-      enrolledAt: identity.enrolledAt,
-    });
-  }
+  await runInstall(opts);
+}
 
-  if (mode === 'self-hosted') {
+// ---------------------------------------------------------------------------
+// Core install orchestration
+// ---------------------------------------------------------------------------
+
+async function runInstall(opts: InstallOptions): Promise<void> {
+  const {
+    mode,
+    profile,
+    target,
+    apiUrl = 'http://localhost:8000',
+    sshHost,
+    sshUser = 'root',
+    sshKeyPath,
+    sshPort = 22,
+  } = opts;
+
+  // -------------------------------------------------------------------------
+  // Step 1 — Fetch and verify the Setup_Manifest (Requirements 5.1, 5.2)
+  // -------------------------------------------------------------------------
+
+  let manifest: SetupManifest | undefined;
+
+  if (opts.manifest) {
+    const s = spinner();
+    s.start('Fetching and verifying Setup_Manifest…');
     try {
-      execSync('docker compose up -d', { cwd: installDir, stdio: 'inherit' });
-    } catch (error) {
-      await rollback(installDir);
-      throw error;
+      manifest = await resolveManifest(opts.manifest);
+      s.stop('Setup_Manifest verified.');
+    } catch (err) {
+      s.stop('Manifest verification failed.');
+      // Requirement 5.2 — abort with clear error, write nothing to disk
+      throw new Error(
+        `Manifest error: ${err instanceof Error ? err.message : String(err)}`
+      );
     }
-
-    const healthChecksPassed = await pollHealthChecks(manifest);
-    if (!healthChecksPassed) {
-      await rollback(installDir);
-      throw new Error('Timed out waiting for self-hosted services to become healthy');
-    }
-  } else {
-    console.log('Managed mode staged the node runtime bundle only. Install it on the target host via SSH/systemd.');
+  } else if (mode !== 'self-hosted') {
+    // Managed mode requires a manifest
+    throw new Error(
+      'A Setup_Manifest is required for managed mode. Use --manifest <url-or-base64>.'
+    );
   }
 
-  await stateManager.save({
-    version: CLI_VERSION,
-    mode,
-    profile,
-    installDir,
-    installedAt: new Date().toISOString(),
-    status: mode === 'self-hosted' ? 'ready' : 'stopped',
-    services: manifest.services.map((service) => ({
-      name: service,
-      status: mode === 'self-hosted' ? 'running' : 'stopped',
-    })),
+  // -------------------------------------------------------------------------
+  // Step 2 — Run doctor prerequisite checks (Requirements 5.7, 5.8)
+  // -------------------------------------------------------------------------
+
+  console.log('\nRunning prerequisite checks…');
+  await doctor({
+    target,
+    sshHost,
+    sshKeyPath,
+    controlPlaneUrl: manifest?.controlPlaneEndpoint ?? apiUrl,
   });
 
-  const now = new Date().toISOString();
-  profileStore.save({
-    id: mode === 'self-hosted' ? 'self-hosted-local' : 'managed-cloud',
-    name: mode === 'self-hosted' ? 'Self-hosted Local' : 'Managed Cloud',
-    type: mode === 'self-hosted' ? 'self-hosted' : 'managed-cloud',
-    apiUrl,
-    authMode: mode,
-    dashboardUrl: mode === 'self-hosted' ? 'http://127.0.0.1:3000' : apiUrl,
-    createdAt: now,
-    updatedAt: now,
-    isDefault: true,
-  });
-  profileStore.setDefault(mode === 'self-hosted' ? 'self-hosted-local' : 'managed-cloud');
+  // -------------------------------------------------------------------------
+  // Step 3 — Generate compose + env files (Requirement 5.9)
+  // -------------------------------------------------------------------------
 
-  const graphBootstrap = await seedInitialGraph({
-    installDir,
-    apiUrl,
-    mode,
-    profile,
-    credentialManager,
-  });
+  // For self-hosted mode without a manifest, build a synthetic manifest
+  const effectiveManifest: SetupManifest = manifest ?? buildSelfHostedManifest(apiUrl, profile);
 
-  console.log(`✓ Installation assets written to ${installDir}`);
-  if (graphBootstrap.uploaded) {
-    console.log(`✓ Initial graph seeded and uploaded (${graphBootstrap.assetCount} assets).`);
-  } else {
-    console.log(`✓ Initial graph snapshot saved to ${graphBootstrap.artifactPath}.`);
-    console.log('  It will upload automatically after authentication is available.');
-  }
+  const effectiveProfile = manifest?.installProfile ?? profile;
+  const composeContent = generateComposeFile(effectiveManifest, effectiveProfile);
+
+  // Build a stub identity for env generation — real identity comes after enrollment
+  const stubIdentity = buildStubNodeIdentity();
+  const envContent = generateEnvFile(effectiveManifest, stubIdentity);
+
+  // -------------------------------------------------------------------------
+  // Step 4 — Write files to install dir (Requirements 5.9, 6.1)
+  // -------------------------------------------------------------------------
+
+  const installDir = INSTALL_DIR;
+  const { composePath, envPath } = writeInstallFiles(installDir, composeContent, envContent);
+  console.log(`\n✓ Install files written to ${installDir}`);
+
+  // -------------------------------------------------------------------------
+  // Step 5 — Self-hosted: generate and display Bootstrap_Token (Req 13.2)
+  // -------------------------------------------------------------------------
+
+  let bootstrapToken: string | undefined;
   if (mode === 'self-hosted') {
-    console.log('Open http://127.0.0.1:3000 to complete bootstrap.');
+    bootstrapToken = generateBootstrapToken();
+    await writeBootstrapToken(bootstrapToken);
   }
+
+  // -------------------------------------------------------------------------
+  // Step 6 — Run `docker compose up -d` (local or via SSH) (Req 5.3, 5.4)
+  // -------------------------------------------------------------------------
+
+  if (target === 'ssh') {
+    // Requirement 5.4 — SSH install
+    if (!sshHost) {
+      throw new Error('--ssh-host is required when --target ssh is set.');
+    }
+
+    const s = spinner();
+    s.start(`Installing CIG Node on ${sshHost} via SSH…`);
+    try {
+      await installViaSSH(
+        { host: sshHost, user: sshUser, keyPath: sshKeyPath, port: sshPort },
+        composePath,
+        envPath,
+        installDir
+      );
+      s.stop(`CIG Node installed on ${sshHost}.`);
+    } catch (err) {
+      s.stop('SSH installation failed.');
+      await rollback(installDir);
+      throw new Error(
+        `SSH installation failed: ${err instanceof Error ? err.message : String(err)}`
+      );
+    }
+  } else {
+    // target === 'local' or target === 'host' — install locally (Req 5.3, 5.6)
+    const s = spinner();
+    s.start('Starting CIG Node runtime…');
+    try {
+      dockerComposeUp(installDir);
+      s.stop('CIG Node runtime started.');
+    } catch (err) {
+      s.stop('docker compose up failed.');
+      await rollback(installDir);
+      throw new Error(
+        `docker compose up -d failed: ${err instanceof Error ? err.message : String(err)}`
+      );
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Step 7 — Poll node health until healthy or timeout (Requirement 5.10)
+  // -------------------------------------------------------------------------
+
+  const healthSpinner = spinner();
+  healthSpinner.start('Waiting for CIG Node to become healthy…');
+  const healthy = await pollNodeHealth();
+
+  if (!healthy) {
+    healthSpinner.stop('Health check timed out.');
+    await rollback(installDir);
+    throw new Error(
+      'Timed out waiting for CIG Node to become healthy. ' +
+        'Check `docker compose logs` in ' + installDir + ' for details.'
+    );
+  }
+
+  healthSpinner.stop('CIG Node is healthy.');
+
+  // -------------------------------------------------------------------------
+  // Step 8 — Display Bootstrap_Token for self-hosted (shown once) (Req 13.2)
+  // -------------------------------------------------------------------------
+
+  if (mode === 'self-hosted' && bootstrapToken) {
+    console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('Bootstrap Token (shown once — save it now):');
+    console.log(`\n  ${bootstrapToken}\n`);
+    console.log('Open http://localhost:3000 to complete the self-hosted bootstrap.');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+  }
+
+  // -------------------------------------------------------------------------
+  // Done — CLI exits (Requirement 5.10)
+  // -------------------------------------------------------------------------
+
+  console.log('✓ CIG Node installation complete.');
+  if (manifest) {
+    console.log(`  Node will enroll with control plane at ${manifest.controlPlaneEndpoint}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Build a synthetic SetupManifest for self-hosted mode (no --manifest flag)
+// ---------------------------------------------------------------------------
+
+function buildSelfHostedManifest(
+  apiUrl: string,
+  profile: 'core' | 'full'
+): SetupManifest {
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + 15 * 60 * 1000);
+
+  return {
+    version: '1.0',
+    cloudProvider: 'aws', // placeholder — self-hosted doesn't require cloud creds at install time
+    credentialsRef: '',
+    enrollmentToken: '',
+    nodeIdentitySeed: '',
+    installProfile: profile,
+    targetMode: 'host',
+    controlPlaneEndpoint: apiUrl,
+    signature: '',
+    issuedAt: now.toISOString(),
+    expiresAt: expiresAt.toISOString(),
+  };
 }

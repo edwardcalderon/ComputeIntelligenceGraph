@@ -49,6 +49,11 @@ class RAGPipeline {
         };
         await this.vectorStore.addDocumentsWithEmbeddings([doc], [embedding]);
     }
+    async indexResources(resources) {
+        for (const resource of resources) {
+            await this.indexResource(resource);
+        }
+    }
     async removeResource(id) {
         await this.vectorStore.deleteDocument(id);
     }

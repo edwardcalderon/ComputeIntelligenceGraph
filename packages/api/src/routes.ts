@@ -16,6 +16,14 @@ import { sessionRoutes } from './routes/sessions';
 import { scanRoutes } from './routes/scans';
 import { authEmailRoutes } from './routes/auth-email';
 import { chatRoutes } from './routes/chat';
+import { onboardingRoutes } from './routes/onboarding';
+import { nodeEnrollmentRoutes } from './routes/nodes/enroll';
+import { nodeHeartbeatRoutes } from './routes/nodes/heartbeat';
+import { nodeRevocationRoutes } from './routes/nodes/revoke';
+import { nodeGraphDeltaRoutes } from './routes/nodes/graphDelta';
+import { nodeListRoutes } from './routes/nodes/list';
+import { bootstrapNodeRoutes } from './routes/bootstrap-node';
+import { nodeSSERoutes } from './sse/nodeStatus';
 
 // Shared instances
 const graphEngine = new GraphEngine();
@@ -107,6 +115,30 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
 
   // ─── Chat (RAG + OpenAI) ─────────────────────────────────────────────────────
   await app.register(chatRoutes);
+
+  // ─── CIG Node Onboarding (Phase 1, Requirements 3.1–3.9, 17.1–17.3) ─────────
+  await app.register(onboardingRoutes);
+
+  // ─── CIG Node Enrollment (Phase 3, Requirements 7.1–7.3, 7.10, 3.4, 3.5, 22.4) ─
+  await app.register(nodeEnrollmentRoutes);
+
+  // ─── CIG Node Heartbeat (Phase 3, Requirements 16.1–16.10, 17.5) ─────────────
+  await app.register(nodeHeartbeatRoutes);
+
+  // ─── CIG Node Revocation (Phase 3, Requirements 7.8, 14.9) ──────────────────
+  await app.register(nodeRevocationRoutes);
+
+  // ─── CIG Node Graph Delta (Phase 3, Requirements 8.9, 8.10, 17.6) ────────────
+  await app.register(nodeGraphDeltaRoutes);
+
+  // ─── CIG Node List (Phase 3, Requirements 12.7, 16.7, 17.7) ─────────────────
+  await app.register(nodeListRoutes);
+
+  // ─── CIG Node Self-Hosted Bootstrap (Phase 6, Requirements 13.4–13.7) ────────
+  await app.register(bootstrapNodeRoutes);
+
+  // ─── CIG Node SSE (Phase 3, Requirements 12.8, 16.10) ────────────────────────
+  await app.register(nodeSSERoutes);
 
   // ─── Resources ──────────────────────────────────────────────────────────────
 

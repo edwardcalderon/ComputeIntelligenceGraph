@@ -21,6 +21,7 @@ export declare class RAGPipeline {
     private embeddingService;
     constructor(vectorStore: VectorStore, embeddingService: EmbeddingService);
     indexResource(resource: ResourceDoc): Promise<void>;
+    indexResources(resources: ResourceDoc[]): Promise<void>;
     removeResource(id: string): Promise<void>;
     retrieve(query: string, topK?: number): Promise<VectorDocument[]>;
     assembleContext(query: string, history: ChatMessage[], topK?: number): Promise<string>;

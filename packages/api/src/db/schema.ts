@@ -170,3 +170,144 @@ export type NewEmailOtpChallenge = Omit<EmailOtpChallenge, 'created_at' | 'updat
 export type NewDeviceAuthRecord = Omit<DeviceAuthRecord, 'created_at' | 'status' | 'user_id' | 'access_token' | 'refresh_token' | 'session_id' | 'last_polled_at'>;
 export type NewAuditEvent = Omit<AuditEvent, 'id' | 'created_at'>;
 export type NewAdminAccount = Omit<AdminAccount, 'id' | 'created_at'>;
+
+// ─── CIG Node Onboarding Entities ────────────────────────────────────────────
+// Requirements: 18.1–18.10
+
+// onboarding_intents
+export interface OnboardingIntent {
+  id: string; // UUID
+  user_id: string;
+  cloud_provider: 'aws' | 'gcp';
+  credentials_ref: string; // Role ARN or SA email
+  install_profile: 'core' | 'full';
+  target_mode: 'local' | 'ssh' | 'host';
+  status:
+    | 'draft'
+    | 'manifest_ready'
+    | 'cli_started'
+    | 'node_enrolled'
+    | 'credential_validated'
+    | 'discovery_started'
+    | 'online'
+    | 'enrollment_failed'
+    | 'credential_error'
+    | 'discovery_failed';
+  created_at: Date;
+  updated_at: Date;
+}
+
+// setup_manifest_records
+export interface SetupManifestRecord {
+  id: string;
+  intent_id: string;
+  manifest_payload: string; // signed JSON blob
+  enrollment_token_id: string;
+  expires_at: Date;
+  created_at: Date;
+}
+
+// enrollment_token_records
+export interface EnrollmentTokenRecord {
+  id: string;
+  manifest_id: string;
+  token_hash: string; // bcrypt hash of the UUID token
+  used_at: Date | null;
+  expires_at: Date; // issuedAt + 15 minutes
+  created_at: Date;
+}
+
+// managed_nodes
+export interface ManagedNode {
+  id: string; // UUID, the node's identity
+  user_id: string;
+  intent_id: string;
+  hostname: string;
+  os: string;
+  architecture: string;
+  ip_address: string;
+  install_profile: 'core' | 'full';
+  mode: 'managed' | 'self-hosted';
+  status: 'enrolling' | 'online' | 'degraded' | 'offline' | 'credential-error' | 'revoked';
+  last_seen_at: Date | null;
+  permission_tier: 0 | 1 | 2 | 3 | 4;
+  created_at: Date;
+}
+
+// node_identity_records
+export interface NodeIdentityRecord {
+  id: string;
+  node_id: string;
+  public_key: string; // Ed25519 public key, base64
+  revoked_at: Date | null;
+  created_at: Date;
+}
+
+// bootstrap_token_records
+export interface BootstrapTokenRecord {
+  id: string;
+  token_hash: string;
+  first_accessed_at: Date | null;
+  used_at: Date | null;
+  expires_at: Date; // first_accessed_at + 30 minutes
+  created_at: Date;
+}
+
+// heartbeat_records
+export interface HeartbeatRecord {
+  id: string;
+  node_id: string;
+  received_at: Date;
+  service_health: Record<string, string>; // JSONB
+  system_metrics: {
+    cpuPercent: number;
+    memoryPercent: number;
+    diskPercent: number;
+  }; // JSONB
+  permission_tier: number;
+  active_connectors: string[]; // JSONB
+}
+
+// connector_requests
+export interface ConnectorRequest {
+  id: string;
+  node_id: string;
+  connector_type: string;
+  required_permissions: string[]; // JSONB
+  status: 'pending' | 'approved' | 'rejected' | 'revoked';
+  approved_at: Date | null;
+  created_at: Date;
+}
+
+// installation_events
+export interface InstallationEvent {
+  id: string;
+  node_id: string;
+  event_type: string;
+  payload: Record<string, unknown>; // JSONB
+  created_at: Date;
+}
+
+// onboarding_audit_events
+export interface OnboardingAuditEvent {
+  id: string;
+  actor_type: 'human' | 'node' | 'system';
+  actor_id: string;
+  action: string;
+  resource_type: string;
+  resource_id: string;
+  metadata: Record<string, unknown>; // JSONB
+  created_at: Date;
+}
+
+// Insert types
+export type NewOnboardingIntent = Omit<OnboardingIntent, 'created_at' | 'updated_at' | 'status'>;
+export type NewSetupManifestRecord = Omit<SetupManifestRecord, 'created_at'>;
+export type NewEnrollmentTokenRecord = Omit<EnrollmentTokenRecord, 'created_at' | 'used_at'>;
+export type NewManagedNode = Omit<ManagedNode, 'created_at' | 'status' | 'last_seen_at'>;
+export type NewNodeIdentityRecord = Omit<NodeIdentityRecord, 'created_at' | 'revoked_at'>;
+export type NewBootstrapTokenRecord = Omit<BootstrapTokenRecord, 'created_at' | 'first_accessed_at' | 'used_at'>;
+export type NewHeartbeatRecord = Omit<HeartbeatRecord, 'received_at'>;
+export type NewConnectorRequest = Omit<ConnectorRequest, 'created_at' | 'status' | 'approved_at'>;
+export type NewInstallationEvent = Omit<InstallationEvent, 'created_at'>;
+export type NewOnboardingAuditEvent = Omit<OnboardingAuditEvent, 'created_at'>;

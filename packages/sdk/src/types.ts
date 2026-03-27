@@ -309,3 +309,115 @@ export interface DeviceAuthResponse {
   items: DeviceAuthRequest[];
   total: number;
 }
+
+// ─── CIG Node Onboarding Types ───────────────────────────────────────────────
+// Requirements: 3.2, 18.1–18.10, 21.10
+
+export interface AWSManifestConfig {
+  roleArn: string;
+  externalId: string;
+  region: string;
+}
+
+export interface GCPManifestConfig {
+  projectId: string;
+  serviceAccountEmail: string;
+  impersonationEnabled: boolean;
+}
+
+export interface SetupManifest {
+  /** e.g. "1.0" */
+  version: string;
+  cloudProvider: 'aws' | 'gcp';
+  /** IAM Role ARN or SA email */
+  credentialsRef: string;
+  /** single-use UUID */
+  enrollmentToken: string;
+  /** public key fingerprint */
+  nodeIdentitySeed: string;
+  installProfile: 'core' | 'full';
+  targetMode: 'local' | 'ssh' | 'host';
+  /** https://api.cig.lat or http://localhost:3003 */
+  controlPlaneEndpoint: string;
+  awsConfig?: AWSManifestConfig;
+  gcpConfig?: GCPManifestConfig;
+  /** HMAC-SHA256 over manifest body */
+  signature: string;
+  /** ISO 8601 */
+  issuedAt: string;
+  /** ISO 8601, 15 min from issuedAt */
+  expiresAt: string;
+}
+
+export interface NodeIdentity {
+  /** UUID */
+  nodeId: string;
+  /** Ed25519 private key, base64 */
+  privateKey: string;
+  /** Ed25519 public key, base64 */
+  publicKey: string;
+  issuedAt: string;
+}
+
+export interface EnrollmentToken {
+  /** UUID */
+  token: string;
+  expiresAt: string;
+  manifestId: string;
+}
+
+export interface GraphNode {
+  id: string;
+  type: string;
+  provider: 'aws' | 'gcp';
+  properties: Record<string, unknown>;
+}
+
+export interface GraphNodeUpdate {
+  id: string;
+  properties: Record<string, unknown>;
+}
+
+export interface GraphDelta {
+  nodeId: string;
+  deltaType: 'full' | 'targeted' | 'drift';
+  additions: GraphNode[];
+  modifications: GraphNodeUpdate[];
+  /** resource IDs */
+  deletions: string[];
+  timestamp: string;
+  scanId: string;
+}
+
+export interface HeartbeatPayload {
+  nodeId: string;
+  timestamp: string;
+  serviceHealth: Record<string, 'healthy' | 'degraded' | 'down'>;
+  systemMetrics: {
+    cpuPercent: number;
+    memoryPercent: number;
+    diskPercent: number;
+  };
+  permissionTier: 0 | 1 | 2 | 3 | 4;
+  activeConnectors: string[];
+}
+
+export type OnboardingStatus =
+  | 'draft'
+  | 'manifest_ready'
+  | 'cli_started'
+  | 'node_enrolled'
+  | 'credential_validated'
+  | 'discovery_started'
+  | 'online'
+  | 'enrollment_failed'
+  | 'credential_error'
+  | 'discovery_failed';
+
+export type NodeStatus =
+  | 'enrolling'
+  | 'online'
+  | 'degraded'
+  | 'offline'
+  | 'credential-error'
+  | 'revoked';

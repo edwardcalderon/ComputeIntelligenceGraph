@@ -31,3 +31,7 @@ export * from './deployers/GcpCloudRunDeployer.js';
 
 // Orchestration wrapper
 export * from './InfraWrapper.js';
+
+// CIG Node install helpers
+export * from './compose.js';
+export * from './install.js';

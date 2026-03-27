@@ -343,22 +343,22 @@ This implementation plan breaks down the Landing Docs System into actionable tas
     - Test deployment to gh-pages branch
     - Test rollback on failure
 
-- [~] 10. Phase 9: GCloud Infrastructure and DNS
-  - [~] 10.1 Set up GCloud project and resources
+- [ ] 10. Phase 9: GCloud Infrastructure and DNS
+  - [ ] 10.1 Set up GCloud project and resources
     - Create GCloud project for documentation
     - Set up Cloud Storage bucket for static files
     - Configure bucket permissions and access control
     - Enable Cloud CDN for the bucket
     - _Requirements: 7.1, 7.2_
 
-  - [~] 10.2 Configure GCloud Load Balancer
+  - [ ] 10.2 Configure GCloud Load Balancer
     - Create HTTP(S) Load Balancer
     - Configure backend to point to Cloud Storage bucket
     - Set up URL routing rules
     - Configure SSL/TLS certificates with automatic renewal
     - _Requirements: 7.1, 7.8_
 
-  - [~] 10.3 Configure Cloud CDN caching
+  - [ ] 10.3 Configure Cloud CDN caching
     - Enable Cloud CDN for Load Balancer
     - Set cache headers (Cache-Control, ETag)
     - Configure cache TTL and invalidation rules
@@ -366,28 +366,28 @@ This implementation plan breaks down the Landing Docs System into actionable tas
     - _Requirements: 7.3, 7.4, 7.6_
 
 
-  - [~] 10.4 Implement DDoS protection and rate limiting
+  - [ ] 10.4 Implement DDoS protection and rate limiting
     - Configure Cloud Armor for DDoS protection
     - Set up rate limiting rules
     - Configure request logging
     - Test protection mechanisms
     - _Requirements: 7.7, 7.9, 20.8_
 
-  - [~] 10.5 Configure DNS routing for both endpoints
+  - [ ] 10.5 Configure DNS routing for both endpoints
     - Set up DNS records for cig.lat/documentation
     - Set up DNS records for docs.cig.lat
     - Configure CNAME or A records pointing to GitHub Pages and GCloud
     - Verify DNS propagation and resolution
     - _Requirements: 6.1, 6.2, 6.5, 6.10_
 
-  - [~] 10.6 Implement DNS health checks and failover
+  - [ ] 10.6 Implement DNS health checks and failover
     - Configure DNS health checks for both endpoints
     - Set up failover to backup endpoint if primary fails
     - Test failover mechanism
     - Document DNS configuration in infrastructure code
     - _Requirements: 6.7, 6.8, 6.9_
 
-  - [~] 10.7 Add GCloud sync to deployment workflow
+  - [ ] 10.7 Add GCloud sync to deployment workflow
     - Update GitHub Actions workflow to sync to Cloud Storage
     - Implement cache invalidation after deployment
     - Configure deployment to both GitHub Pages and GCloud
@@ -415,15 +415,15 @@ This implementation plan breaks down the Landing Docs System into actionable tas
     - Verify responses are HTTPS or redirect to HTTPS
     - Test across both DNS endpoints
 
-- [~] 11. Phase 10: Analytics, Monitoring, and Security
-  - [~] 11.1 Integrate analytics platform
+- [ ] 11. Phase 10: Analytics, Monitoring, and Security
+  - [ ] 11.1 Integrate analytics platform
     - Set up Google Analytics or alternative analytics platform
     - Implement tracking code in documentation
     - Configure event tracking for user interactions
     - Set up GDPR compliance and cookie consent
     - _Requirements: 12.1, 12.2, 12.3, 12.8, 20.6, 20.7_
 
-  - [~] 11.2 Implement analytics tracking
+  - [ ] 11.2 Implement analytics tracking
     - Track page views for all documentation pages
     - Track language usage patterns
     - Track documentation section popularity
@@ -432,13 +432,13 @@ This implementation plan breaks down the Landing Docs System into actionable tas
     - Track referral sources
     - _Requirements: 12.2, 12.3, 12.4, 12.5, 12.6, 12.7_
 
-  - [~] 11.3 Create analytics dashboard
+  - [ ] 11.3 Create analytics dashboard
     - Set up analytics dashboard for documentation maintainers
     - Configure data export for reporting
     - Create visualizations for key metrics
     - _Requirements: 12.9, 12.10_
 
-  - [~] 11.4 Set up uptime and performance monitoring
+  - [ ] 11.4 Set up uptime and performance monitoring
     - Configure uptime monitoring for documentation endpoints
     - Monitor response times for documentation pages
     - Monitor error rates and log errors
@@ -446,7 +446,7 @@ This implementation plan breaks down the Landing Docs System into actionable tas
     - Monitor DNS resolution times
     - _Requirements: 25.1, 25.2, 25.3, 25.4, 25.5_
 
-  - [~] 11.5 Configure alerting and incident response
+  - [ ] 11.5 Configure alerting and incident response
     - Set up alerts for downtime or performance degradation
     - Set up alerts for build failures
     - Set up alerts for deployment failures
@@ -455,7 +455,7 @@ This implementation plan breaks down the Landing Docs System into actionable tas
     - _Requirements: 25.6, 25.7, 25.8, 25.9, 25.10_
 
 
-  - [~] 11.6 Implement security headers and policies
+  - [ ] 11.6 Implement security headers and policies
     - Configure Content Security Policy (CSP) headers
     - Implement X-Frame-Options headers to prevent clickjacking
     - Implement X-Content-Type-Options headers
@@ -463,7 +463,7 @@ This implementation plan breaks down the Landing Docs System into actionable tas
     - Configure Referrer-Policy headers
     - _Requirements: 20.2, 20.3, 20.4, 20.9_
 
-  - [~] 11.7 Implement security scanning and audits
+  - [ ] 11.7 Implement security scanning and audits
     - Set up npm audit in CI/CD pipeline
     - Configure Dependabot for automated security updates
     - Run security vulnerability scanning
@@ -634,50 +634,50 @@ This implementation plan breaks down the Landing Docs System into actionable tas
     - _Requirements: 9.9, 14.6_
 
 
-- [~] 16. Phase 14: Translation and Localization
-  - [~] 16.1 Translate core documentation to Spanish
+- [ ] 16. Phase 14: Translation and Localization
+  - [ ] 16.1 Translate core documentation to Spanish
     - Translate Getting Started guide
     - Translate User Guide
     - Translate FAQ
     - Review translations for accuracy
     - _Requirements: 3.2, 4.1_
 
-  - [~] 16.2 Translate core documentation to Portuguese
+  - [ ] 16.2 Translate core documentation to Portuguese
     - Translate Getting Started guide
     - Translate User Guide
     - Translate FAQ
     - Review translations for accuracy
     - _Requirements: 3.2, 4.1_
 
-  - [~] 16.3 Translate core documentation to French
+  - [ ] 16.3 Translate core documentation to French
     - Translate Getting Started guide
     - Translate User Guide
     - Translate FAQ
     - Review translations for accuracy
     - _Requirements: 3.2, 4.1_
 
-  - [~] 16.4 Translate core documentation to German
+  - [ ] 16.4 Translate core documentation to German
     - Translate Getting Started guide
     - Translate User Guide
     - Translate FAQ
     - Review translations for accuracy
     - _Requirements: 3.2, 4.1_
 
-  - [~] 16.5 Translate core documentation to Chinese
+  - [ ] 16.5 Translate core documentation to Chinese
     - Translate Getting Started guide
     - Translate User Guide
     - Translate FAQ
     - Review translations for accuracy
     - _Requirements: 3.2, 4.1_
 
-  - [~] 16.6 Translate core documentation to Japanese
+  - [ ] 16.6 Translate core documentation to Japanese
     - Translate Getting Started guide
     - Translate User Guide
     - Translate FAQ
     - Review translations for accuracy
     - _Requirements: 3.2, 4.1_
 
-  - [~] 16.7 Create translation workflow documentation
+  - [ ] 16.7 Create translation workflow documentation
     - Document translation contribution process
     - Create translation templates
     - Document translation review process

@@ -16,6 +16,10 @@ const heartbeat_monitor_1 = require("./jobs/heartbeat-monitor");
 const client_1 = require("./db/client");
 const VERSION = '0.1.0';
 const RATE_LIMIT_EXEMPT_ROUTES = new Set(['GET /api/v1/health', 'GET /metrics']);
+const OPENAI_MODEL_DEFAULT = 'gpt-4o-mini';
+const OPENAI_HEALTH_CACHE_MS = 30_000;
+const OPENAI_HEALTH_TIMEOUT_MS = 2_500;
+let openAiHealthCache = null;
 function resolveCorsOrigins() {
     const configuredOrigins = process.env.CORS_ORIGINS?.trim();
     if (configuredOrigins === '*') {
@@ -36,6 +40,67 @@ function resolveCorsOrigins() {
         'https://www.cig.lat',
         'https://edwardcalderon.github.io',
     ];
+}
+async function resolveChatHealth(endpointReady) {
+    const model = process.env.OPENAI_CHAT_MODEL?.trim() || OPENAI_MODEL_DEFAULT;
+    const apiKey = process.env.OPENAI_API_KEY?.trim() || '';
+    const now = Date.now();
+    if (openAiHealthCache && now - openAiHealthCache.checkedAt < OPENAI_HEALTH_CACHE_MS) {
+        return openAiHealthCache.status;
+    }
+    const checkedAt = new Date().toISOString();
+    if (!apiKey) {
+        const status = {
+            provider: 'fallback',
+            model,
+            configured: false,
+            reachable: endpointReady,
+            providerReachable: false,
+            checkedAt,
+            latencyMs: null,
+        };
+        openAiHealthCache = { checkedAt: now, status };
+        return status;
+    }
+    const controller = new AbortController();
+    const startedAt = Date.now();
+    const timeout = setTimeout(() => controller.abort(), OPENAI_HEALTH_TIMEOUT_MS);
+    try {
+        const response = await fetch(`https://api.openai.com/v1/models/${encodeURIComponent(model)}`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${apiKey}`,
+            },
+            signal: controller.signal,
+        });
+        const status = {
+            provider: 'openai',
+            model,
+            configured: true,
+            reachable: endpointReady,
+            providerReachable: response.ok,
+            checkedAt,
+            latencyMs: Date.now() - startedAt,
+        };
+        openAiHealthCache = { checkedAt: now, status };
+        return status;
+    }
+    catch (_error) {
+        const status = {
+            provider: 'openai',
+            model,
+            configured: true,
+            reachable: endpointReady,
+            providerReachable: false,
+            checkedAt,
+            latencyMs: Date.now() - startedAt,
+        };
+        openAiHealthCache = { checkedAt: now, status };
+        return status;
+    }
+    finally {
+        clearTimeout(timeout);
+    }
 }
 async function createServer() {
     const app = (0, fastify_1.default)({
@@ -80,10 +145,12 @@ async function createServer() {
     });
     // Health check
     app.get('/api/v1/health', async (_request, reply) => {
+        const chat = await resolveChatHealth(app.hasRoute({ method: 'POST', url: '/api/v1/chat' }));
         return reply.send({
             status: 'ok',
             version: VERSION,
             timestamp: new Date().toISOString(),
+            chat,
         });
     });
     // Prometheus metrics endpoint (no auth — internal scraping, Requirement 25.1)

@@ -4,16 +4,16 @@
  * Implements the bootstrap flow for self-hosted mode:
  * 1. Generate cryptographically random 32-character Bootstrap_Token
  * 2. Save to the encrypted CLI secrets store
- * 3. Display Dashboard URL and token prominently
- * 4. Return minimal InstallManifest for compose generation
+ * 3. Write to install dir with 0600 permissions (Requirements 13.2, 13.3)
+ * 4. Display Dashboard URL and token prominently
+ * 5. Return minimal InstallManifest for compose generation
  *
  * Requirement 5: Self-Hosted Bootstrap Flow
  */
 
 import * as crypto from 'crypto';
-import * as os from 'os';
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
 import { CredentialManager, BootstrapToken } from '../credentials.js';
 import { InstallManifest } from '../compose-generator.js';
 import { resolveCliPaths } from '../storage/paths.js';
@@ -30,11 +30,22 @@ function generateBootstrapToken(): string {
 }
 
 /**
+ * Write the bootstrap token to the install dir with 0600 permissions.
+ * Requirements: 13.2, 13.3
+ */
+function writeBootstrapTokenToInstallDir(token: string, installDir: string): void {
+  const tokenFile = path.join(installDir, '.bootstrap-token');
+  fs.mkdirSync(installDir, { recursive: true, mode: 0o700 });
+  fs.writeFileSync(tokenFile, token, { mode: 0o600, encoding: 'utf8' });
+}
+
+/**
  * Bootstrap flow for self-hosted mode.
  * Returns minimal InstallManifest for compose generation.
  */
 export async function bootstrapFlow(options: BootstrapFlowOptions = {}): Promise<InstallManifest> {
   const credentialManager = new CredentialManager();
+  const paths = resolveCliPaths();
   const profile = options.profile ?? 'discovery';
 
   // Step 1: Generate bootstrap token
@@ -51,12 +62,21 @@ export async function bootstrapFlow(options: BootstrapFlowOptions = {}): Promise
 
   try {
     credentialManager.saveBootstrapToken(bootstrapTokenData);
-    console.log(`✓ Bootstrap token saved to ${resolveCliPaths().secretsFile}`);
+    console.log(`✓ Bootstrap token saved to ${paths.secretsFile}`);
   } catch (err) {
     throw new Error(`Failed to save bootstrap token: ${err instanceof Error ? err.message : String(err)}`);
   }
 
-  // Step 3: Display Dashboard URL and token prominently
+  // Step 3: Write to install dir with 0600 permissions (Requirements 13.2, 13.3)
+  try {
+    writeBootstrapTokenToInstallDir(token, paths.installDir);
+    console.log(`✓ Bootstrap token written to ${path.join(paths.installDir, '.bootstrap-token')} (0600)`);
+  } catch (err) {
+    // Non-fatal — the secrets store copy is the primary path
+    console.warn(`Warning: Could not write bootstrap token to install dir: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  // Step 4: Display Dashboard URL and token prominently
   console.log('\n╔════════════════════════════════════════════════════════════╗');
   console.log('║              Self-Hosted Bootstrap Setup                   ║');
   console.log('╠════════════════════════════════════════════════════════════╣');
@@ -72,7 +92,7 @@ export async function bootstrapFlow(options: BootstrapFlowOptions = {}): Promise
   console.log('║                                                            ║');
   console.log('╚════════════════════════════════════════════════════════════╝\n');
 
-  // Step 4: Return minimal InstallManifest for compose generation
+  // Step 5: Return minimal InstallManifest for compose generation
   const manifest: InstallManifest = {
     profile,
     services:

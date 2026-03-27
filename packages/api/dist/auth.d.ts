@@ -22,6 +22,7 @@ export declare function generateApiKey(permissions?: Permission[]): Promise<{
 export declare function verifyApiKey(key: string, hashedKey: string): Promise<boolean>;
 export declare function generateJwt(payload: Omit<JwtPayload, 'iat' | 'exp'>): string;
 export declare function verifyJwt(token: string): JwtPayload;
+export declare function verifyBearerToken(token: string): Promise<JwtPayload>;
 export declare function authenticate(request: FastifyRequest, reply: FastifyReply): Promise<void>;
 export declare function authorize(requiredPermissions: Permission[]): (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
 //# sourceMappingURL=auth.d.ts.map

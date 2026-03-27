@@ -1,30 +1,75 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VectorStore = void 0;
+exports.resolveChromaConnectionConfig = resolveChromaConnectionConfig;
 const chromadb_1 = require("chromadb");
-const COLLECTION_NAME = 'infrastructure_resources';
+const DEFAULT_COLLECTION_NAME = 'infrastructure_resources';
 // Singleton client instance (connection pooling via reuse)
 let clientInstance = null;
-let collectionInstance = null;
+const collectionCache = new Map();
+function normalizeCloudHost(host) {
+    const trimmed = host.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+        return trimmed;
+    }
+    return `https://${trimmed}`;
+}
+function resolveChromaConnectionConfig() {
+    const cloudApiKey = process.env.CHROMA_API_KEY?.trim();
+    const cloudTenant = process.env.CHROMA_TENANT?.trim();
+    const cloudDatabase = process.env.CHROMA_DATABASE?.trim();
+    const cloudHost = process.env.CHROMA_HOST?.trim();
+    const collectionName = process.env.CHROMA_COLLECTION?.trim() || DEFAULT_COLLECTION_NAME;
+    if (cloudApiKey) {
+        if (!cloudTenant || !cloudDatabase) {
+            throw new Error('CHROMA_TENANT and CHROMA_DATABASE are required when CHROMA_API_KEY is set.');
+        }
+        return {
+            mode: 'cloud',
+            apiKey: cloudApiKey,
+            tenant: cloudTenant,
+            database: cloudDatabase,
+            cloudHost: normalizeCloudHost(cloudHost || 'api.trychroma.com'),
+            collectionName,
+        };
+    }
+    const url = process.env.CHROMA_URL ?? 'http://localhost:8000';
+    return {
+        mode: 'local',
+        path: url,
+        collectionName,
+    };
+}
+function createClient() {
+    const config = resolveChromaConnectionConfig();
+    if (config.mode === 'cloud') {
+        return new chromadb_1.CloudClient({
+            apiKey: config.apiKey,
+            tenant: config.tenant,
+            database: config.database,
+            cloudHost: config.cloudHost,
+        });
+    }
+    return new chromadb_1.ChromaClient({ path: config.path });
+}
 class VectorStore {
     client;
     collection = null;
     constructor() {
         if (!clientInstance) {
-            const url = process.env.CHROMA_URL ?? 'http://localhost:8000';
-            clientInstance = new chromadb_1.ChromaClient({ path: url });
+            clientInstance = createClient();
         }
         this.client = clientInstance;
     }
     async connect() {
-        if (collectionInstance) {
-            this.collection = collectionInstance;
+        const { collectionName } = resolveChromaConnectionConfig();
+        const cachedCollection = collectionCache.get(collectionName);
+        if (cachedCollection) {
+            this.collection = cachedCollection;
             return;
         }
-        this.collection = await this.client.getOrCreateCollection({
-            name: COLLECTION_NAME,
-        });
-        collectionInstance = this.collection;
+        this.collection = await this.client.getOrCreateCollection({ name: collectionName });
+        collectionCache.set(collectionName, this.collection);
     }
     ensureConnected() {
         if (!this.collection) {
