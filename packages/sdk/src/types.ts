@@ -25,6 +25,14 @@ export interface DiscoveryStatus {
   nextRun: string | null;
 }
 
+export type GraphSource = 'live' | 'demo';
+
+export interface GraphSourceState {
+  kind: GraphSource;
+  available: boolean;
+  lastSyncedAt: string | null;
+}
+
 export interface ChatHealthStatus {
   provider: "openai" | "fallback";
   model: string;
@@ -61,6 +69,7 @@ export interface GraphDiscoverySnapshot {
 }
 
 export interface GraphSnapshot {
+  source: GraphSourceState;
   resourceCounts: Record<string, number>;
   resources: Resource[];
   relationships: Relationship[];

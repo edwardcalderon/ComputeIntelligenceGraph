@@ -90,7 +90,7 @@ function resolveBaseCollectionName(): string {
   return process.env.CHROMA_COLLECTION?.trim() || DEFAULT_COLLECTION_NAME;
 }
 
-function resolveSemanticCollectionName(scope?: SemanticScope): string {
+export function resolveSemanticCollectionName(scope?: SemanticScope): string {
   const baseCollection = resolveBaseCollectionName();
 
   if (!scope || scope.deploymentMode !== 'managed') {
@@ -113,6 +113,14 @@ function resolveSemanticCollectionName(scope?: SemanticScope): string {
     .slice(0, 24);
 
   return `${baseCollection}__${namespaceHash}`;
+}
+
+export function getDemoSemanticScope(): SemanticScope {
+  return {
+    deploymentMode: 'managed',
+    tenant: 'demo',
+    userId: 'demo',
+  };
 }
 
 function rememberSemanticScope(collectionName: string, scope?: SemanticScope): void {

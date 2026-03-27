@@ -6,6 +6,12 @@ export interface AuthenticatedScopeUser {
   workspace?: string;
 }
 
+export const DEMO_GRAPH_SCOPE: GraphScope = {
+  ownerId: 'demo',
+  tenant: 'demo',
+  workspace: 'demo',
+};
+
 function normalizeOptionalText(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
 }

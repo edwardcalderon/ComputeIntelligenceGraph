@@ -45,6 +45,11 @@ function resolveNextRun(lastRun: string | null): string | null {
 
 function emptyGraphSnapshot(): GraphSnapshot {
   return {
+    source: {
+      kind: 'live',
+      available: false,
+      lastSyncedAt: null,
+    },
     resourceCounts: {},
     resources: [],
     relationships: [],
@@ -182,6 +187,11 @@ async function buildGraphSnapshot(): Promise<GraphSnapshot> {
   const recentRuns = recentRunsResult.status === 'fulfilled' ? recentRunsResult.value : null;
 
   return {
+    source: {
+      kind: 'live',
+      available: discoveryHealthy,
+      lastSyncedAt: status?.last_run_end ?? status?.last_run_start ?? null,
+    },
     resourceCounts,
     resources,
     relationships,

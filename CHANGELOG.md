@@ -1,3 +1,29 @@
+## [0.2.77](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.76...v0.2.77) (2026-03-27)
+
+### Detected changes
+- apps: 3 changed file(s)
+  - apps/dashboard/lib/__tests__/graphSource.test.ts
+  - apps/dashboard/lib/graphSource.ts
+  - apps/dashboard/lib/useGraphSource.ts
+- packages: 10 changed file(s)
+  - packages/api/src/db/migrations/006_demo_workspace_state.sql
+  - packages/api/src/db/migrations/007_newsletter_unsubscribe.sql
+  - packages/api/src/demo-workspace.test.ts
+  - packages/api/src/demo-workspace.ts
+  - packages/api/src/graph-scope.ts
+  - packages/api/src/routes/demo.test.ts
+  - packages/api/src/routes/demo.ts
+  - packages/api/src/routes/graph.ts
+  - packages/api/src/semantic-rag.ts
+  - packages/sdk/src/types.ts
+
+
+## [0.2.77](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.76...v0.2.77) (2026-03-27)
+
+
+
+
+
 ## [0.2.76](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.75...v0.2.76) (2026-03-27)
 
 ### Detected changes
