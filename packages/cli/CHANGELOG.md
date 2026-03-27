@@ -1,3 +1,14 @@
+## [0.1.24](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.23...cli-v0.1.24) (2026-03-27)
+
+
+### Bug Fixes
+
+* **cli:** use user-writable install dir instead of /opt/cig-node ([186bdda](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/186bddaed2b0229c8577fa687d9fe8360c3e184d))
+
+
+
+
+
 ## [0.1.23](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.22...cli-v0.1.23) (2026-03-27)
 
 
