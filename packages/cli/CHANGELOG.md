@@ -1,3 +1,14 @@
+## [0.1.27](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.26...cli-v0.1.27) (2026-03-27)
+
+
+### Bug Fixes
+
+* **cli:** fix demo data prompt and wiring ([825ee34](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/825ee34d184d6eb612fecb20060d99b9a79fb9c7))
+
+
+
+
+
 ## [0.1.26](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.24...cli-v0.1.26) (2026-03-27)
 
 
