@@ -39,7 +39,7 @@
     "cig": "dist/index.js"
   },
   "scripts": {
-    "build": "npm run clean && tsc",
+    "build": "npm run clean && pnpm --filter @cig/sdk build && tsc",
     "dev": "tsc --watch",
     "lint": "tsc --noEmit -p tsconfig.lint.json",
     "test": "vitest run",
