@@ -1,3 +1,25 @@
+## [0.2.57](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.56...v0.2.57) (2026-03-27)
+
+
+### Features
+
+* **node-runtime:** implement exponential backoff retry ([73fc801](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/73fc80131a4f3149d2a5059407c9e01479458c2e))
+
+
+
+
+
+## [0.2.57](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.56...v0.2.57) (2026-03-27)
+
+
+### Features
+
+* **node-runtime:** implement exponential backoff retry ([73fc801](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/73fc80131a4f3149d2a5059407c9e01479458c2e))
+
+
+
+
+
 ## [0.2.56](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.55...v0.2.56) (2026-03-27)
 
 
