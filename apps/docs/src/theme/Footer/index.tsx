@@ -24,6 +24,8 @@ export default function Footer(): JSX.Element {
     { label: 'GitHub', href: 'https://github.com/edwardcalderon/ComputeIntelligenceGraph' },
     { label: 'Issues', href: 'https://github.com/edwardcalderon/ComputeIntelligenceGraph/issues' },
     { label: 'Report', href: 'https://github.com/edwardcalderon/ComputeIntelligenceGraph/issues/new' },
+    { label: 'Terms', href: '/documentation/docs/en/legal/terms-of-service' },
+    { label: 'Privacy', href: '/documentation/docs/en/legal/privacy-policy' },
     { label: 'Landing', href: landingUrl },
   ];
 

@@ -89,6 +89,15 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'Legal',
+      items: [
+        'en/legal/index',
+        'en/legal/terms-of-service',
+        'en/legal/privacy-policy',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Resources',
       items: [
         'en/project-status',
