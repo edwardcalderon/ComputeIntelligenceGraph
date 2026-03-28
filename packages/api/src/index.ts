@@ -15,6 +15,7 @@ import { startSemanticIndexSync, stopSemanticIndexSync } from './jobs/semantic-i
 import { ensureDemoWorkspaceProvisioned } from './demo-workspace';
 import { applyMigrations } from './db/migrate';
 import { closeDatabase } from './db/client';
+import { resolveCorsOrigins } from './cors';
 import { probeInferenceHealth } from '@cig/chatbot';
 
 const VERSION = '0.1.0';
@@ -100,32 +101,6 @@ async function waitForDemoWorkspaceProvisioning(
   throw lastError instanceof Error
     ? lastError
     : new Error('Demo workspace provisioning failed');
-}
-
-function resolveCorsOrigins(): true | string[] {
-  const configuredOrigins = process.env.CORS_ORIGINS?.trim();
-
-  if (configuredOrigins === '*') {
-    return true;
-  }
-
-  if (configuredOrigins) {
-    return configuredOrigins
-      .split(',')
-      .map((origin) => origin.trim())
-      .filter(Boolean);
-  }
-
-  if (process.env.NODE_ENV !== 'production') {
-    return true;
-  }
-
-  // Default production fallback during domain migration.
-  return [
-    'https://cig.lat',
-    'https://www.cig.lat',
-    'https://edwardcalderon.github.io',
-  ];
 }
 
 async function resolveChatHealth(endpointReady: boolean): Promise<ChatHealthStatus> {

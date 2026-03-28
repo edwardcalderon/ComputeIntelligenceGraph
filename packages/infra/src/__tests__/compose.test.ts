@@ -153,6 +153,7 @@ describe('generateComposeFile — self-hosted', () => {
     expect(yaml).toContain('DATABASE_URL=${DATABASE_URL:-sqlite:///var/lib/cig-node/cig.db}');
     expect(yaml).toContain('CHROMA_URL=${CHROMA_URL:-http://chroma:8000}');
     expect(yaml).toContain('CIG_AUTO_MIGRATE=${CIG_AUTO_MIGRATE:-true}');
+    expect(yaml).toContain('CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000');
   });
 
   it('mounts demo mock databases into cartography when demo mode is enabled', () => {

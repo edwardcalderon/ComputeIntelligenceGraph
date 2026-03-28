@@ -174,6 +174,7 @@ const SELF_HOSTED_EXTRA_SERVICES = `
       - CIG_AUTH_MODE=self-hosted
       - CIG_AUTO_MIGRATE=\${CIG_AUTO_MIGRATE:-true}
       - CHROMA_URI=http://chroma:8000
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
     depends_on:
       - ollama
       - neo4j
