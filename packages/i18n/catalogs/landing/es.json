@@ -57,6 +57,10 @@
   "install.webInstall.title": "Instalación web",
   "install.webInstall.subtitle": "Pega el comando hospedado directamente en bash.",
   "install.webInstall.localScript": "El mismo script también está disponible en un checkout clonado como",
+  "install.webInstall.versionLoading": "Último npm cargando…",
+  "install.webInstall.versionBadge": "NPM más reciente {version}",
+  "install.webInstall.versionUnavailable": "NPM más reciente no disponible",
+  "install.webInstall.sourceCode": "Código fuente",
 
   "install.prereqs.title": "Requisitos previos",
   "install.prereqs.node": "Node.js 22 o superior",

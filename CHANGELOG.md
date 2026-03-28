@@ -1,3 +1,24 @@
+## [0.2.92](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.91...v0.2.92) (2026-03-28)
+
+### Detected changes
+- apps: 3 changed file(s)
+  - apps/landing/app/install/InstallContent.tsx
+  - apps/landing/app/install/page.tsx
+  - apps/landing/lib/publishedCli.ts
+- packages: 5 changed file(s)
+  - packages/i18n/catalogs/landing/en.json
+  - packages/i18n/catalogs/landing/es.json
+  - packages/i18n/catalogs/landing/zh.json
+  - packages/i18n/src/locales/keys.ts
+  - packages/i18n/src/locales/landing.ts
+
+
+## [0.2.92](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.91...v0.2.92) (2026-03-28)
+
+
+
+
+
 ## [0.2.91](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.90...v0.2.91) (2026-03-28)
 
 

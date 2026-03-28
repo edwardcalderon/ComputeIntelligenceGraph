@@ -57,6 +57,10 @@
   "install.webInstall.title": "Web install",
   "install.webInstall.subtitle": "Paste the hosted command straight into bash.",
   "install.webInstall.localScript": "The same script is also available in a cloned checkout as",
+  "install.webInstall.versionLoading": "Latest npm loading…",
+  "install.webInstall.versionBadge": "Latest npm {version}",
+  "install.webInstall.versionUnavailable": "Latest npm unavailable",
+  "install.webInstall.sourceCode": "Source code",
 
   "install.prereqs.title": "Prerequisites",
   "install.prereqs.node": "Node.js 22 or newer",

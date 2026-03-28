@@ -57,6 +57,10 @@
   "install.webInstall.title": "网页安装",
   "install.webInstall.subtitle": "将托管脚本直接管道到 bash。",
   "install.webInstall.localScript": "同样的脚本也可以从克隆的代码库中使用",
+  "install.webInstall.versionLoading": "最新 npm 加载中…",
+  "install.webInstall.versionBadge": "最新 npm {version}",
+  "install.webInstall.versionUnavailable": "npm 版本不可用",
+  "install.webInstall.sourceCode": "源码",
 
   "install.prereqs.title": "先决条件",
   "install.prereqs.node": "Node.js 22 或更新版本",

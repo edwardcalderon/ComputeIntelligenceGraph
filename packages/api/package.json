@@ -1,6 +1,6 @@
 {
   "name": "@cig/api",
-  "version": "0.2.91",
+  "version": "0.2.92",
   "description": "CIG REST/GraphQL API server",
   "files": [
     "dist"

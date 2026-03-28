@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   useResolvedDocsUrl,
   useResolvedLandingUrl,
@@ -14,11 +14,14 @@ import {
   Check,
   Copy,
   Download,
+  Github,
   Layers3,
+  Package,
   Sparkles,
   Terminal,
 } from "lucide-react";
 import { useTranslation } from "@cig-technology/i18n/react";
+import { getPublishedCliVersion } from "../../lib/publishedCli";
 
 const steps = [
   {
@@ -52,12 +55,41 @@ const checklistKeys = [
   "install.prereqs.ports",
 ];
 
-export default function InstallContent() {
+interface InstallContentProps {
+  cliNpmUrl: string;
+  cliSourceUrl: string;
+}
+
+export default function InstallContent({
+  cliNpmUrl,
+  cliSourceUrl,
+}: InstallContentProps) {
   const t = useTranslation();
   const [copied, setCopied] = useState(false);
+  const [latestPublishedCliVersion, setLatestPublishedCliVersion] = useState<string | null | undefined>(undefined);
   const docsUrl = useResolvedDocsUrl();
   const landingUrl = useResolvedLandingUrl();
   const installCommand = "curl -fsSL https://cig.lat/install.sh | bash";
+
+  useEffect(() => {
+    let active = true;
+
+    void getPublishedCliVersion().then((version) => {
+      if (active) {
+        setLatestPublishedCliVersion(version);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const latestCliVersionBadge = latestPublishedCliVersion
+    ? t("install.webInstall.versionBadge", { version: `v${latestPublishedCliVersion}` })
+    : latestPublishedCliVersion === null
+      ? t("install.webInstall.versionUnavailable")
+      : t("install.webInstall.versionLoading");
 
   const handleCopy = useCallback(async () => {
     try {
@@ -119,7 +151,7 @@ export default function InstallContent() {
             </div>
 
             <div className="overflow-hidden rounded-3xl border border-zinc-200/80 bg-white/85 p-5 shadow-2xl shadow-cyan-950/10 backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-950/70">
-              <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+              <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500 dark:text-zinc-400">
                     {t("install.webInstall.title")}
@@ -128,9 +160,29 @@ export default function InstallContent() {
                     {t("install.webInstall.subtitle")}
                   </p>
                 </div>
-                <span className="shrink-0 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-cyan-900 dark:border-cyan-800 dark:bg-cyan-950/50 dark:text-cyan-100">
-                  curl | bash
-                </span>
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <a
+                    href={cliNpmUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-cyan-900 transition hover:border-cyan-300 hover:bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/50 dark:text-cyan-100 dark:hover:border-cyan-700 dark:hover:bg-cyan-950"
+                  >
+                    <Package size={12} />
+                    {latestCliVersionBadge}
+                  </a>
+                  <a
+                    href={cliSourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-zinc-300 bg-white/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-zinc-700 transition hover:border-zinc-400 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900/85 dark:text-zinc-200 dark:hover:border-zinc-500 dark:hover:bg-zinc-800"
+                  >
+                    <Github size={12} />
+                    {t("install.webInstall.sourceCode")}
+                  </a>
+                  <span className="shrink-0 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-cyan-900 dark:border-cyan-800 dark:bg-cyan-950/50 dark:text-cyan-100">
+                    curl | bash
+                  </span>
+                </div>
               </div>
               <div className="relative group overflow-hidden rounded-2xl">
                 <pre className="overflow-x-auto rounded-2xl bg-zinc-950 px-4 py-4 text-sm leading-7 text-cyan-100 shadow-inner sm:px-5">
