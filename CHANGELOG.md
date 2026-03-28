@@ -1,3 +1,27 @@
+## [0.2.93](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.92...v0.2.93) (2026-03-28)
+
+
+### Bug Fixes
+
+* **ci:** sync README before version:validate in publish-cli workflow ([4d04fc7](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/4d04fc7b589f91814ddcd4b323ea047174b6c61e))
+* **cli:** use self-hosted dashboard image so API calls hit localhost not production ([8a1ef44](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/8a1ef449596c01cbdb3cfc53a0e3a32a92eacf04))
+
+
+
+
+
+## [0.2.93](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.92...v0.2.93) (2026-03-28)
+
+
+### Bug Fixes
+
+* **ci:** sync README before version:validate in publish-cli workflow ([4d04fc7](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/4d04fc7b589f91814ddcd4b323ea047174b6c61e))
+* **cli:** use self-hosted dashboard image so API calls hit localhost not production ([8a1ef44](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/8a1ef449596c01cbdb3cfc53a0e3a32a92eacf04))
+
+
+
+
+
 ## [0.2.92](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.91...v0.2.92) (2026-03-28)
 
 ### Detected changes

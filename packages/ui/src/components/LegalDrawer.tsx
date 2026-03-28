@@ -13,6 +13,8 @@ export interface LegalDrawerProps {
   backLabel: string;
   sections: LegalSection[];
   note?: string;
+  fullPolicyHref?: string;
+  fullPolicyLabel?: string;
   className?: string;
 }
 
@@ -24,6 +26,8 @@ export function LegalDrawer({
   backLabel,
   sections,
   note,
+  fullPolicyHref,
+  fullPolicyLabel = "Full policy →",
   className = "",
 }: LegalDrawerProps) {
   return (
@@ -54,6 +58,16 @@ export function LegalDrawer({
             >
               {backLabel}
             </a>
+            {fullPolicyHref ? (
+              <a
+                href={fullPolicyHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center rounded-full border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:border-cyan-500 hover:text-cyan-600 dark:border-white/20 dark:text-zinc-300 dark:hover:border-cyan-400 dark:hover:text-cyan-300"
+              >
+                {fullPolicyLabel}
+              </a>
+            ) : null}
           </div>
 
           {note ? (

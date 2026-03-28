@@ -18,7 +18,6 @@
   "common.learnMore": "Más información",
   "common.version": "v{version}",
   "common.build": "compilación {build}",
-
   "nav.dashboard": "Panel de control",
   "nav.graph": "Grafo de infraestructura",
   "nav.resources": "Recursos",
@@ -27,7 +26,6 @@
   "nav.console": "Consola IA",
   "nav.discovery": "Descubrimiento",
   "nav.settings": "Configuración",
-
   "auth.signInTitle": "Iniciar sesión en CIG",
   "auth.signInDesc": "Elige cómo deseas iniciar sesión para acceder al Panel, la Consola y las herramientas de infraestructura.",
   "auth.continueWithGoogle": "Continuar con Google",
@@ -120,14 +118,12 @@
   "auth.sshRsa": "RSA (mínimo 2048 bits)",
   "auth.sshEcdsa": "ECDSA",
   "auth.sshAfter": "Tras registrarte, puedes enviar configuraciones y acceder a los servicios de CIG sin sesión en el navegador.",
-
   "footer.brandTitle": "CIG TECHNOLOGY",
   "footer.rightsReserved": "Todos los derechos reservados.",
   "footer.licenseNotice": "© {year} CIG — Código abierto bajo licencia MIT.",
   "footer.privacy": "Privacidad",
   "footer.terms": "Términos",
   "footer.docs": "Documentación",
-
   "legal.privacy.eyebrow": "Política de privacidad",
   "legal.privacy.title": "Privacidad",
   "legal.privacy.description": "Cómo CIG maneja los datos en el sitio de inicio y en el panel.",
@@ -137,8 +133,7 @@
   "legal.privacy.sections.use.body": "Usamos los datos para iniciar sesión, mostrar el panel, recordar preferencias y mejorar la confiabilidad y la seguridad.",
   "legal.privacy.sections.share.title": "Compartición y retención",
   "legal.privacy.sections.share.body": "No vendemos datos personales. Solo compartimos datos con los servicios necesarios para ejecutar CIG y los conservamos solo el tiempo necesario.",
-  "legal.privacy.note": "Si tienes una pregunta de privacidad, abre un issue o contacta al equipo por el canal de despliegue.",
-
+  "legal.privacy.note": "Para la Política de Privacidad completa, incluyendo retención de datos, tus derechos y datos de contacto, lee la política completa en el enlace de arriba.",
   "legal.terms.eyebrow": "Términos del servicio",
   "legal.terms.title": "Términos",
   "legal.terms.description": "Reglas básicas para usar CIG.",
@@ -148,12 +143,11 @@
   "legal.terms.sections.use.body": "No uses CIG para comprometer sistemas, evadir controles ni violar leyes o políticas aplicables.",
   "legal.terms.sections.changes.title": "Cambios",
   "legal.terms.sections.changes.body": "Podemos actualizar estos términos cuando cambie el producto o sus requisitos legales. El uso continuado implica la aceptación de los términos actualizados.",
-  "legal.terms.note": "Estas páginas son deliberadamente mínimas. Revisa el repositorio o las notas de despliegue para conocer al responsable legal actual.",
-
+  "legal.terms.note": "Para los Términos de Servicio completos, incluyendo responsabilidad, indemnización y resolución de disputas, lee la política completa en el enlace de arriba.",
   "theme.switchToLight": "Cambiar a modo claro",
   "theme.switchToDark": "Cambiar a modo oscuro",
-
   "locale.en": "English",
   "locale.es": "Español",
-  "locale.zh": "中文"
+  "locale.zh": "中文",
+  "legal.fullPolicy": "Política completa →"
 }

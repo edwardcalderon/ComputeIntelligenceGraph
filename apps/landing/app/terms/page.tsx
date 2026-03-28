@@ -15,6 +15,8 @@ export default function TermsPage() {
           description={t("legal.terms.description")}
           backHref="/"
           backLabel={t("common.back")}
+          fullPolicyHref="https://cig.lat/documentation/docs/en/legal/terms-of-service"
+          fullPolicyLabel={t("legal.fullPolicy")}
           note={t("legal.terms.note")}
           sections={[
             {

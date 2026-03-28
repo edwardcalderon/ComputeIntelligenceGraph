@@ -18,7 +18,6 @@
   "common.learnMore": "了解更多",
   "common.version": "v{version}",
   "common.build": "构建 {build}",
-
   "nav.dashboard": "仪表盘",
   "nav.graph": "基础设施图谱",
   "nav.resources": "资源",
@@ -27,7 +26,6 @@
   "nav.console": "AI 控制台",
   "nav.discovery": "自动发现",
   "nav.settings": "设置",
-
   "auth.signInTitle": "登录 CIG",
   "auth.signInDesc": "选择登录方式以访问仪表盘、控制台和基础设施工具。",
   "auth.continueWithGoogle": "使用 Google 继续",
@@ -120,14 +118,12 @@
   "auth.sshRsa": "RSA（最低 2048 位）",
   "auth.sshEcdsa": "ECDSA",
   "auth.sshAfter": "注册后，您无需浏览器会话即可推送配置并访问 CIG 服务。",
-
   "footer.brandTitle": "CIG TECHNOLOGY",
   "footer.rightsReserved": "保留所有权利。",
   "footer.licenseNotice": "© {year} CIG — 基于 MIT 许可证开源。",
   "footer.privacy": "隐私",
   "footer.terms": "条款",
   "footer.docs": "文档",
-
   "legal.privacy.eyebrow": "隐私政策",
   "legal.privacy.title": "隐私",
   "legal.privacy.description": "CIG 如何在登录页和仪表盘中处理数据。",
@@ -137,8 +133,7 @@
   "legal.privacy.sections.use.body": "我们使用数据来完成登录、渲染仪表盘、记住偏好，并提升可靠性与安全性。",
   "legal.privacy.sections.share.title": "共享与保留",
   "legal.privacy.sections.share.body": "我们不会出售个人数据。只会与运行 CIG 所必需的服务共享数据，并且仅在必要期间保留。",
-  "legal.privacy.note": "如果你有隐私问题，请提交 issue 或通过部署渠道联系团队。",
-
+  "legal.privacy.note": "如果你有隐私问题，请提交 issue 或通过部署渠道联系团队。 如需完整隐私政策，请点击上方链接。",
   "legal.terms.eyebrow": "服务条款",
   "legal.terms.title": "条款",
   "legal.terms.description": "使用 CIG 的基本规则。",
@@ -148,12 +143,11 @@
   "legal.terms.sections.use.body": "不要使用 CIG 破坏系统、绕过控制或违反适用的法律和政策。",
   "legal.terms.sections.changes.title": "变更",
   "legal.terms.sections.changes.body": "当产品或法律要求发生变化时，我们可能会更新这些条款。继续使用即表示你接受更新后的条款。",
-  "legal.terms.note": "这些页面保持极简。请查看源码仓库或部署说明以了解当前法律责任方。",
-
+  "legal.terms.note": "这些页面保持极简。请查看源码仓库或部署说明以了解当前法律责任方。 如需完整服务条款，请点击上方链接。",
   "theme.switchToLight": "切换到浅色模式",
   "theme.switchToDark": "切换到深色模式",
-
   "locale.en": "English",
   "locale.es": "Español",
-  "locale.zh": "中文"
+  "locale.zh": "中文",
+  "legal.fullPolicy": "完整政策 →"
 }
