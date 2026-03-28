@@ -33,6 +33,11 @@ import { resolveDemoDataPreference } from '../demo-data.js';
 import { resolveCliPaths } from '../storage/paths.js';
 import { StateManager } from '../managers/state-manager.js';
 import { resolvePublishedImageManifest } from '../services/image-manifest.js';
+import {
+  buildHealthTimeoutMessage,
+  collectDockerComposeDiagnostics,
+  persistDockerComposeDiagnostics,
+} from '../services/install-diagnostics.js';
 import { CLI_VERSION } from '../version.js';
 
 // ---------------------------------------------------------------------------
@@ -377,6 +382,7 @@ export interface InstallOptions {
 
 const HEALTH_POLL_INTERVAL_MS = 3_000;
 const HEALTH_POLL_TIMEOUT_MS = 120_000; // 2 minutes
+const SELF_HOSTED_HEALTH_POLL_TIMEOUT_MS = 300_000; // 5 minutes
 
 /**
  * Poll the node-runtime health endpoint until it responds 200 or timeout.
@@ -419,6 +425,15 @@ async function pollNodeHealth(
  */
 function dockerComposeUp(installDir: string): void {
   execSync('docker compose up -d', { cwd: installDir, stdio: 'inherit' });
+}
+
+function captureInstallDiagnostics(installDir: string): string | null {
+  try {
+    const diagnostics = collectDockerComposeDiagnostics(installDir);
+    return persistDockerComposeDiagnostics(installDir, diagnostics);
+  } catch {
+    return null;
+  }
 }
 
 async function pullOllamaModels(
@@ -734,9 +749,18 @@ async function runInstall(opts: InstallOptions): Promise<void> {
       s.stop('CIG Node runtime started.');
     } catch (err) {
       s.stop('docker compose up failed.');
+      const diagnosticsPath = captureInstallDiagnostics(installDir);
       await rollback(installDir);
+      const diagnosticsNote = diagnosticsPath
+        ? `Recent Docker Compose diagnostics were saved to ${diagnosticsPath}. `
+        : '';
+      const followUpNote = diagnosticsPath
+        ? `The stack at ${installDir} was rolled back after the failure, so inspect that file for the failure details.`
+        : `The stack at ${installDir} was rolled back after the failure.`;
       throw new Error(
-        `docker compose up -d failed: ${err instanceof Error ? err.message : String(err)}`
+        `docker compose up -d failed: ${err instanceof Error ? err.message : String(err)}. ` +
+          diagnosticsNote +
+          followUpNote
       );
     }
   }
@@ -747,15 +771,15 @@ async function runInstall(opts: InstallOptions): Promise<void> {
 
   const healthSpinner = spinner();
   healthSpinner.start('Waiting for CIG Node to become healthy…');
-  const healthy = await pollNodeHealth();
+  const healthTimeoutMs =
+    mode === 'self-hosted' ? SELF_HOSTED_HEALTH_POLL_TIMEOUT_MS : HEALTH_POLL_TIMEOUT_MS;
+  const healthy = await pollNodeHealth(healthTimeoutMs);
 
   if (!healthy) {
-    healthSpinner.stop('Health check timed out.');
+    healthSpinner.stop('Health check timed out. Collecting Docker Compose diagnostics…');
+    const diagnosticsPath = captureInstallDiagnostics(installDir);
     await rollback(installDir);
-    throw new Error(
-      'Timed out waiting for CIG Node to become healthy. ' +
-        'Check `docker compose logs` in ' + installDir + ' for details.'
-    );
+    throw new Error(buildHealthTimeoutMessage(installDir, healthTimeoutMs, diagnosticsPath));
   }
 
   healthSpinner.stop('CIG Node is healthy.');

@@ -1,3 +1,9 @@
+## [0.1.30](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.29...cli-v0.1.30) (2026-03-28)
+
+### Bug Fixes
+
+* **cli:** add install diagnostics for self-hosted health timeouts and extend the wait window
+
 ## [0.1.29](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.26...cli-v0.1.29) (2026-03-28)
 
 
