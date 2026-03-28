@@ -49,6 +49,9 @@ jobs:
       - name: Lint (type-check)
         run: pnpm lint
 
+      - name: Sync README with CHANGELOG
+        run: pnpm run version:update-readme
+
       - name: Validate package versioning state
         run: pnpm run version:validate
 
