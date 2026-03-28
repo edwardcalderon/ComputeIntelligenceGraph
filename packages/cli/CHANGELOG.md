@@ -1,3 +1,23 @@
+## [0.1.29](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.26...cli-v0.1.29) (2026-03-28)
+
+
+### Bug Fixes
+
+* **cli:** fix demo data prompt and wiring ([dcbda56](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/dcbda568f2a1e9c832949b21fed4c9dfccea14f2))
+* **cli:** use self-hosted dashboard image so API calls hit localhost not production ([8a1ef44](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/8a1ef449596c01cbdb3cfc53a0e3a32a92eacf04))
+
+
+
+
+
+## [0.1.29](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.28...cli-v0.1.29) (2026-03-27)
+
+### Chores
+
+* **cli:** align the package tag with the current CLI codebase
+
+
+
 ## [0.1.28](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.27...cli-v0.1.28) (2026-03-27)
 
 
