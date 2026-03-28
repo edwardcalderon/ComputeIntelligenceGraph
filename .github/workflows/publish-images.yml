@@ -3,6 +3,7 @@ name: Publish Docker image bundle
 on:
   push:
     tags:
+      - 'v*.*.*'
       - 'cli-v*.*.*'
   workflow_dispatch:
     inputs:
@@ -540,6 +541,7 @@ jobs:
         with:
           tag_name: ${{ needs.prepare.outputs.release_tag }}
           files: dist/images.json
+          overwrite_files: true
           generate_release_notes: false
           fail_on_unmatched_files: true
 
