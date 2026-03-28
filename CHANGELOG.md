@@ -1,3 +1,25 @@
+## [0.2.96](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.95...v0.2.96) (2026-03-28)
+
+
+### Bug Fixes
+
+* **self-hosted:** allow localhost dashboard CORS ([f12e083](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f12e083729e9eb4348bef4274b8950531447b6c5))
+
+
+
+
+
+## [0.2.96](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.95...v0.2.96) (2026-03-28)
+
+
+### Bug Fixes
+
+* **self-hosted:** allow localhost dashboard CORS ([f12e083](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f12e083729e9eb4348bef4274b8950531447b6c5))
+
+
+
+
+
 ## [0.2.95](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.94...v0.2.95) (2026-03-28)
 
 ### Detected changes

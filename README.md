@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="package.json"><img src="https://img.shields.io/badge/version-0.2.95-blue.svg" alt="Version" /></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/version-0.2.96-blue.svg" alt="Version" /></a>
   <a href="package.json"><img src="https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen.svg" alt="Node" /></a>
   <a href="package.json"><img src="https://img.shields.io/badge/pnpm-%3E%3D9.0.0-orange.svg" alt="pnpm" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /></a>
@@ -35,24 +35,11 @@
 - Deployment: [docs/deployment/README.md](docs/deployment/README.md)
 - Authentication: [docs/authentication/README.md](docs/authentication/README.md)
 
-## 📋 Latest Changes (v0.2.95)
+## 📋 Latest Changes (v0.2.96)
 
-### Detected changes
-- apps: 5 changed file(s)
-  - apps/dashboard/app/bootstrap/page.tsx
-  - apps/dashboard/components/ChatWidget.tsx
-  - apps/dashboard/lib/__tests__/cigClient.test.ts
-  - apps/dashboard/lib/authProvider.ts
-  - apps/dashboard/lib/cigClient.ts
-- packages: 8 changed file(s)
-  - packages/agents/src/openclaw.ts
-  - packages/cli/src/command-classes.ts
-  - packages/cli/src/commands/install.ts
-  - packages/cli/src/commands/setup.test.ts
-  - packages/cli/src/commands/setup.ts
-  - packages/cli/src/index.ts
-  - packages/infra/src/__tests__/compose.test.ts
-  - packages/infra/src/compose.ts
+### Bug Fixes
+
+* **self-hosted:** allow localhost dashboard CORS ([f12e083](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/f12e083729e9eb4348bef4274b8950531447b6c5))
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 
