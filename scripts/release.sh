@@ -527,6 +527,14 @@ fi
 
 # ── Step 8: Update README ──────────────────────────────────────────────────
 step "8/8 Updating README"
+RELEASE_DATE="$(date -u +%F)"
+if ! $DRY_RUN; then
+  node scripts/sync-release-status.mjs --version "${NEXT_VERSION}" --tag "${RELEASE_TAG}" --date "${RELEASE_DATE}"
+  success "Release-aware README and project status files updated"
+else
+  info "[dry-run] Would sync README Latest Changes and project status files"
+fi
+
 if $BUILD_RELEASE; then
   info "Skipping README version update for build-only release"
 else
@@ -539,6 +547,7 @@ else
     sed -i "s/maintain version \*\*[0-9]*\.[0-9]*\.[0-9]*\*\*/maintain version \*\*${NEXT_VERSION}\*\*/g" README.md
     # Try the versioning update-readme command (may no-op if no CHANGELOG yet)
     pnpm exec versioning update-readme 2>&1 || true
+    node scripts/sync-release-status.mjs --version "${NEXT_VERSION}" --tag "${RELEASE_TAG}" --date "${RELEASE_DATE}"
     success "README.md updated with v${NEXT_VERSION}"
   else
     info "[dry-run] Would update README.md version references to ${NEXT_VERSION}"

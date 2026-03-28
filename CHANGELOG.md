@@ -1,3 +1,25 @@
+## [0.2.91](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.90...v0.2.91) (2026-03-28)
+
+
+### Bug Fixes
+
+* **cli:** fix demo data prompt and wiring ([dcbda56](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/dcbda568f2a1e9c832949b21fed4c9dfccea14f2))
+
+
+
+
+
+## [0.2.91](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.90...v0.2.91) (2026-03-28)
+
+
+### Bug Fixes
+
+* **cli:** fix demo data prompt and wiring ([dcbda56](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/dcbda568f2a1e9c832949b21fed4c9dfccea14f2))
+
+
+
+
+
 ## [0.2.90](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.89...v0.2.90) (2026-03-27)
 
 

@@ -22,7 +22,7 @@ Successfully refactored the GitHub Pages deployment to use a **unified workflow*
 
 ### 3. Comprehensive Documentation ✅
 
-#### `.github/README.md`
+#### `.github/DEPLOYMENT_INDEX.md`
 - Overview of all workflows and documentation
 - Quick links to all guides
 - Deployment URLs
@@ -167,7 +167,7 @@ Visit: http://localhost:8000/
 |------|--------|---------|
 | `.github/workflows/deploy-landing.yml` | ✅ Updated | Unified deployment workflow |
 | `.github/workflows/docs-deploy.yml` | ✅ Deleted | Integrated into deploy-landing.yml |
-| `.github/README.md` | ✅ Created | Workflow overview |
+| `.github/DEPLOYMENT_INDEX.md` | ✅ Created | Workflow overview |
 | `.github/DEPLOYMENT_QUICK_START.md` | ✅ Created | Quick reference guide |
 | `.github/DEPLOYMENT_GUIDE.md` | ✅ Created | Detailed guide |
 | `.github/DEPLOYMENT_STRUCTURE.md` | ✅ Created | Directory structure |
@@ -180,7 +180,7 @@ Visit: http://localhost:8000/
 
 ```
 .github/
-├── README.md                           # Overview
+├── DEPLOYMENT_INDEX.md                 # Overview
 ├── DEPLOYMENT_QUICK_START.md           # Quick reference
 ├── DEPLOYMENT_GUIDE.md                 # Detailed guide
 ├── DEPLOYMENT_STRUCTURE.md             # Directory structure
@@ -196,7 +196,7 @@ apps/docs/
 
 ## Next Steps
 
-1. ✅ Review `.github/README.md` for overview
+1. ✅ Review `.github/DEPLOYMENT_INDEX.md` for overview
 2. ✅ Check `.github/DEPLOYMENT_QUICK_START.md` for quick reference
 3. ✅ Verify GitHub Pages is enabled in repository settings
 4. ✅ Ensure all required secrets are configured
