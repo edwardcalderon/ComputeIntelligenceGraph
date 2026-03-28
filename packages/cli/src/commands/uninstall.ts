@@ -18,7 +18,7 @@ import { StateManager } from '../managers/state-manager.js';
 import { resolveCliPaths } from '../storage/paths.js';
 
 // Named volumes created by the CIG Node compose stack
-const CIG_NAMED_VOLUMES = ['neo4j-data', 'cig-node-data'];
+const CIG_NAMED_VOLUMES = ['neo4j-data', 'api-data', 'chroma-data', 'ollama-data', 'cig-node-data'];
 
 function resolveInstallDir(stateInstallDir?: string): string {
   return stateInstallDir ?? process.env['CIG_INSTALL_DIR'] ?? resolveCliPaths().installDir;

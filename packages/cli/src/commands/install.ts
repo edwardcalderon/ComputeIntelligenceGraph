@@ -223,6 +223,7 @@ function generateComposeFile(
 
   api:
     image: ${img('api', 'cig-api:latest')}
+    user: "0:0"
     restart: unless-stopped
     ports:
       - "3003:3003"
@@ -508,7 +509,7 @@ function writeInstallFiles(
 
 async function rollback(installDir: string): Promise<void> {
   try {
-    execSync('docker compose down', { cwd: installDir, stdio: 'pipe' });
+    execSync('docker compose down -v --remove-orphans', { cwd: installDir, stdio: 'pipe' });
   } catch {
     // Best-effort only
   }

@@ -1,3 +1,20 @@
+## [0.2.99](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.98...v0.2.99) (2026-03-28)
+
+### Detected changes
+- infra: infra/docker/Dockerfile.api
+- packages: 4 changed file(s)
+  - packages/cli/src/commands/install.ts
+  - packages/cli/src/commands/uninstall.ts
+  - packages/infra/src/__tests__/compose.test.ts
+  - packages/infra/src/compose.ts
+
+
+## [0.2.99](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.98...v0.2.99) (2026-03-28)
+
+
+
+
+
 ## [0.2.98](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.97...v0.2.98) (2026-03-28)
 
 ### Detected changes

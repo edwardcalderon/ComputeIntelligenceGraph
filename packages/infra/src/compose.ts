@@ -157,6 +157,7 @@ const SELF_HOSTED_CHROMA_SERVICE = `
 const SELF_HOSTED_EXTRA_SERVICES = `
   api:
     image: ghcr.io/cig/api:\${CIG_VERSION}
+    user: "0:0"
     restart: unless-stopped
     ports:
       - "3003:3003"

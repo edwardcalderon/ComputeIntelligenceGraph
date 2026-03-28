@@ -71,6 +71,12 @@ ENV NODE_ENV=production
 # Copy the pruned API runtime tree.
 COPY --chown=1000:1000 --from=builder /app/deploy/. ./
 
+# Pre-seed the self-hosted sqlite data directory so Docker can copy a writable
+# mountpoint into the named volume on first use.
+RUN mkdir -p /var/lib/cig-node \
+    && touch /var/lib/cig-node/.keep \
+    && chown -R 1000:1000 /var/lib/cig-node
+
 USER 1000
 
 EXPOSE 8080

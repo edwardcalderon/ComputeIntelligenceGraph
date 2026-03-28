@@ -136,6 +136,7 @@ describe('generateComposeFile — self-hosted', () => {
     const yaml = generateComposeFile(SELF_HOSTED_MANIFEST, 'core');
     expect(yaml).toContain('  chroma:');
     expect(yaml).toContain('  api:');
+    expect(yaml).toContain('    user: "0:0"');
     expect(yaml).toContain('  dashboard:');
   });
 
