@@ -1,3 +1,14 @@
+## [0.1.28](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.27...cli-v0.1.28) (2026-03-27)
+
+
+### Bug Fixes
+
+* **cli:** use self-hosted dashboard image so API calls go to localhost:3003 not production
+
+
+
+
+
 ## [0.1.27](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/cli-v0.1.26...cli-v0.1.27) (2026-03-27)
 
 

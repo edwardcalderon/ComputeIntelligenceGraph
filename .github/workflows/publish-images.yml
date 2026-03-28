@@ -136,7 +136,7 @@ jobs:
 
           const services = new Set();
           const mark = (...names) => names.forEach((name) => services.add(name));
-          const markNodeServices = () => mark('api', 'dashboard', 'discovery', 'chatbot');
+          const markNodeServices = () => mark('api', 'dashboard', 'dashboard-selfhosted', 'discovery', 'chatbot');
 
           for (const filePath of changedFiles) {
             if (filePath === 'release-metadata.json') {
@@ -178,7 +178,7 @@ jobs:
               filePath.startsWith('packages/i18n/') ||
               filePath.startsWith('packages/sdk/')
             ) {
-              mark('dashboard');
+              mark('dashboard', 'dashboard-selfhosted');
             }
 
             if (
@@ -204,7 +204,7 @@ jobs:
             }
           }
 
-          const orderedServices = ['api', 'dashboard', 'discovery', 'cartography', 'chatbot'];
+          const orderedServices = ['api', 'dashboard', 'dashboard-selfhosted', 'discovery', 'cartography', 'chatbot'];
           const buildServices = previousReleaseTag
             ? orderedServices.filter((service) => services.has(service))
             : orderedServices;
@@ -271,6 +271,21 @@ jobs:
                 echo "NEXT_PUBLIC_DASHBOARD_URL=${{ vars.NEXT_PUBLIC_DASHBOARD_URL || 'https://app.cig.lat' }}"
                 echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}"
                 echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}"
+                echo "NEXT_PUBLIC_AUTHENTIK_URL=${{ vars.NEXT_PUBLIC_AUTHENTIK_URL || 'https://auth.cig.technology' }}"
+                echo "NEXT_PUBLIC_AUTHENTIK_CLIENT_ID=${{ vars.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID || 'G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v' }}"
+                echo "NEXT_PUBLIC_APP_VERSION=${{ needs.prepare.outputs.version }}"
+                echo 'EOF'
+              } >> "$GITHUB_OUTPUT"
+              ;;
+            dashboard-selfhosted)
+              {
+                echo 'image_name=cig-dashboard-selfhosted'
+                echo 'dockerfile=infra/docker/Dockerfile.dashboard'
+                echo 'context=.'
+                echo 'build_args<<EOF'
+                echo "NEXT_PUBLIC_API_URL=http://localhost:3003"
+                echo "NEXT_PUBLIC_SITE_URL=http://localhost:3000"
+                echo "NEXT_PUBLIC_DASHBOARD_URL=http://localhost:3001"
                 echo "NEXT_PUBLIC_AUTHENTIK_URL=${{ vars.NEXT_PUBLIC_AUTHENTIK_URL || 'https://auth.cig.technology' }}"
                 echo "NEXT_PUBLIC_AUTHENTIK_CLIENT_ID=${{ vars.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID || 'G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v' }}"
                 echo "NEXT_PUBLIC_APP_VERSION=${{ needs.prepare.outputs.version }}"
@@ -402,6 +417,7 @@ jobs:
           const imageSources = {
             api: { repositoryPath: `${registryNamespace}/cig-api`, reference: 'latest' },
             dashboard: { repositoryPath: `${registryNamespace}/cig-dashboard`, reference: 'latest' },
+            'dashboard-selfhosted': { repositoryPath: `${registryNamespace}/cig-dashboard-selfhosted`, reference: 'latest' },
             discovery: { repositoryPath: `${registryNamespace}/cig-discovery`, reference: 'latest' },
             cartography: { repositoryPath: `${registryNamespace}/cig-cartography`, reference: 'latest' },
             chatbot: { repositoryPath: `${registryNamespace}/cig-chatbot`, reference: 'latest' },
@@ -506,7 +522,7 @@ jobs:
             manifest.images[fragment.service] = fragment.image;
           }
 
-          const requiredServices = ['api', 'dashboard', 'discovery', 'cartography', 'chatbot', 'neo4j'];
+          const requiredServices = ['api', 'dashboard', 'dashboard-selfhosted', 'discovery', 'cartography', 'chatbot', 'neo4j'];
           for (const service of requiredServices) {
             if (typeof manifest.images[service] !== 'string' || manifest.images[service].trim() === '') {
               manifest.images[service] = await resolveDockerHubDigest(service);

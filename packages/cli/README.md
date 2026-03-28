@@ -43,11 +43,11 @@ container provenance data.
 - Package: https://www.npmjs.com/package/@cig-technology/cli
 - GitHub releases: https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases
 
-## 📋 Latest Changes (v0.1.27)
+## 📋 Latest Changes (v0.1.28)
 
 ### Bug Fixes
 
-* **cli:** fix demo data prompt and wiring ([825ee34](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/825ee34d184d6eb612fecb20060d99b9a79fb9c7))
+* **cli:** use self-hosted dashboard image so API calls go to localhost:3003 not production
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 

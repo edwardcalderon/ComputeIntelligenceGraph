@@ -138,16 +138,15 @@ function generateComposeFile(
       - NEO4J_PASSWORD=\${NEO4J_PASSWORD}
       - DATABASE_URL=\${DATABASE_URL:-}
       - CIG_DEMO_MODE=\${CIG_DEMO_MODE:-false}
+      - CORS_ORIGINS=http://localhost:3000
     depends_on:
       - neo4j
 
   dashboard:
-    image: ${img('dashboard', 'cig-dashboard:latest')}
+    image: ${img('dashboard-selfhosted', 'cig-dashboard-selfhosted:latest')}
     restart: unless-stopped
     ports:
       - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:3003
     depends_on:
       - api`;
   }

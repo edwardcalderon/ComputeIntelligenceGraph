@@ -1,191 +1,221 @@
 #!/usr/bin/env node
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const env_js_1 = require("./env.js");
-const commander_1 = require("commander");
-const login_js_1 = require("./commands/login.js");
-const logout_js_1 = require("./commands/logout.js");
-const doctor_js_1 = require("./commands/doctor.js");
-const install_js_1 = require("./commands/install.js");
-const setup_js_1 = require("./commands/setup.js");
-const bootstrap_reset_js_1 = require("./commands/bootstrap-reset.js");
-const connect_js_1 = require("./commands/connect.js");
-const enroll_js_1 = require("./commands/enroll.js");
-const permissions_js_1 = require("./commands/permissions.js");
-const status_js_1 = require("./commands/status.js");
-const open_js_1 = require("./commands/open.js");
-const upgrade_js_1 = require("./commands/upgrade.js");
-const uninstall_js_1 = require("./commands/uninstall.js");
-const scan_js_1 = require("./commands/scan.js");
-const version_js_1 = require("./version.js");
-(0, env_js_1.loadCliEnv)();
-const program = new commander_1.Command();
-program.name('cig').description('Compute Intelligence Graph CLI').version(version_js_1.CLI_VERSION);
+/**
+ * CIG CLI — main entry point
+ *
+ * Defines the root commander.js program with global flags and registers all
+ * top-level commands.  Individual command implementations live in ./commands/.
+ */
+import { Command } from 'commander';
+import { loadCliEnv } from './env.js';
+import { CLI_VERSION } from './version.js';
+loadCliEnv();
+// ---------------------------------------------------------------------------
+// Root program
+// ---------------------------------------------------------------------------
+export const program = new Command('cig')
+    .version(CLI_VERSION, '-v, --version', 'Print the CLI version')
+    .description('Compute Intelligence Graph — node onboarding and management CLI')
+    // Global flags (Requirements 4.11–4.16)
+    .option('--mode <mode>', 'Operational mode: managed (default) or self-hosted', (value) => {
+    if (value !== 'managed' && value !== 'self-hosted') {
+        throw new Error('--mode must be "managed" or "self-hosted"');
+    }
+    return value;
+}, 'managed')
+    .option('--cloud <cloud>', 'Cloud provider: aws or gcp', (value) => {
+    if (value !== 'aws' && value !== 'gcp') {
+        throw new Error('--cloud must be "aws" or "gcp"');
+    }
+    return value;
+})
+    .option('--profile <profile>', 'Install profile: core (default) or full', (value) => {
+    if (value !== 'core' && value !== 'full') {
+        throw new Error('--profile must be "core" or "full"');
+    }
+    return value;
+}, 'core')
+    .option('--target <target>', 'Target environment: local (default), ssh, or host', (value) => {
+    if (value !== 'local' && value !== 'ssh' && value !== 'host') {
+        throw new Error('--target must be "local", "ssh", or "host"');
+    }
+    return value;
+}, 'local')
+    .option('--manifest <manifest>', 'URL or base64-encoded SetupManifest')
+    .option('--token <token>', 'Enrollment token for re-enrollment');
+// ---------------------------------------------------------------------------
+// Helper: resolve global options from the root program
+// ---------------------------------------------------------------------------
+export function getGlobalOptions() {
+    return program.opts();
+}
+// ---------------------------------------------------------------------------
+// Command registrations (Requirements 4.1–4.10)
+// ---------------------------------------------------------------------------
+// login — Requirement 4.1
 program
     .command('login')
-    .description('Authenticate via device authorization flow')
-    .option('--api-url <url>', 'API URL', 'http://localhost:8000')
-    .action((opts) => {
-    (0, login_js_1.login)(opts.apiUrl).catch((err) => {
-        console.error('Error during login:', err);
-        process.exit(1);
-    });
+    .description('Authenticate the operator via Authentik OIDC device authorization flow (managed mode)')
+    .option('--api-url <url>', 'Control plane API URL', 'http://localhost:3003')
+    .action(async (opts) => {
+    const { login } = await import('./commands/login.js');
+    await login(opts.apiUrl);
 });
+// logout — Requirement 4.2
 program
     .command('logout')
-    .description('Clear stored credentials and logout')
-    .option('--api-url <url>', 'API URL', 'http://localhost:8000')
-    .action((opts) => {
-    (0, logout_js_1.logout)(opts.apiUrl).catch((err) => {
-        console.error('Error during logout:', err);
-        process.exit(1);
-    });
+    .description('Clear stored operator credentials')
+    .option('--api-url <url>', 'Control plane API URL', 'http://localhost:3003')
+    .action(async (opts) => {
+    const { logout } = await import('./commands/logout.js');
+    await logout(opts.apiUrl);
 });
-program
-    .command('doctor')
-    .description('Run prerequisite checks and display system readiness')
-    .action(() => {
-    (0, doctor_js_1.doctor)().catch((err) => {
-        console.error('Error during doctor check:', err);
-        process.exit(1);
-    });
-});
-program
-    .command('setup')
-    .description('Run the guided onboarding wizard and install CIG')
-    .option('--mode <mode>', 'Installation mode: managed or self-hosted')
-    .option('--profile <profile>', 'Installation profile: core or full')
-    .option('--api-url <url>', 'API URL')
-    .action((opts) => {
-    (0, setup_js_1.setup)({
-        apiUrl: opts.apiUrl,
-        mode: opts.mode,
-        profile: opts.profile,
-    }).catch((err) => {
-        console.error('Error during setup:', err);
-        process.exit(1);
-    });
-});
+// install — Requirement 4.3
 program
     .command('install')
-    .description('Install CIG in managed or self-hosted mode')
-    .option('--mode <mode>', 'Installation mode: managed or self-hosted')
-    .option('--profile <profile>', 'Installation profile: core or full')
-    .option('--api-url <url>', 'API URL', 'http://localhost:8000')
-    .action((opts) => {
-    (0, install_js_1.install)(opts.apiUrl, opts.mode, opts.profile).catch((err) => {
-        console.error('Error during install:', err);
-        process.exit(1);
+    .description('Install the CIG Node runtime in the target environment')
+    .option('--mode <mode>', 'Override global --mode for this command')
+    .option('--cloud <cloud>', 'Override global --cloud for this command')
+    .option('--profile <profile>', 'Override global --profile for this command')
+    .option('--target <target>', 'Override global --target for this command')
+    .option('--manifest <manifest>', 'Override global --manifest for this command')
+    .option('--api-url <url>', 'Control plane API URL', 'http://localhost:3003')
+    .option('--ssh-host <host>', 'SSH host (required when --target ssh)')
+    .option('--ssh-user <user>', 'SSH user (default: root)', 'root')
+    .option('--ssh-key-path <path>', 'Path to SSH private key file')
+    .option('--ssh-port <port>', 'SSH port (default: 22)', '22')
+    .option('--demo', 'Include demo/mock data in the installation')
+    .action(async (cmdOpts) => {
+    const globals = getGlobalOptions();
+    const mode = (cmdOpts['mode'] ?? globals.mode);
+    const profile = (cmdOpts['profile'] ?? globals.profile);
+    const target = (cmdOpts['target'] ?? globals.target);
+    const manifestArg = cmdOpts['manifest'] ?? globals.manifest;
+    const apiUrl = cmdOpts['apiUrl'] ?? 'http://localhost:3003';
+    const { install } = await import('./commands/install.js');
+    await install({
+        manifest: manifestArg,
+        mode,
+        profile,
+        target,
+        apiUrl,
+        sshHost: cmdOpts['sshHost'],
+        sshUser: cmdOpts['sshUser'] ?? 'root',
+        sshKeyPath: cmdOpts['sshKeyPath'],
+        sshPort: cmdOpts['sshPort'] ? parseInt(cmdOpts['sshPort'], 10) : 22,
+        demo: typeof cmdOpts['demo'] === 'boolean' ? cmdOpts['demo'] : undefined,
     });
 });
+// enroll — Requirement 4.4
 program
     .command('enroll')
-    .description('Enroll a node against the current control plane')
-    .option('--api-url <url>', 'API URL', 'http://localhost:8000')
-    .option('--profile <profile>', 'Install profile: core or full', 'core')
-    .option('--token <token>', 'Pre-issued enrollment token')
-    .action((opts) => {
-    (0, enroll_js_1.enroll)({
-        apiUrl: opts.apiUrl,
-        profile: opts.profile,
-        token: opts.token,
-    }).catch((err) => {
-        console.error('Error during enrollment:', err);
-        process.exit(1);
-    });
+    .description('Re-enroll an existing CIG Node without reinstalling')
+    .option('--token <token>', 'Enrollment token (Enrollment_Token) for re-enrollment')
+    .option('--node-id <nodeId>', 'Node ID to re-enroll (optional)')
+    .option('--profile <profile>', 'Override global --profile for this command')
+    .option('--api-url <url>', 'Control plane API URL', 'http://localhost:3003')
+    .action(async (cmdOpts) => {
+    const globals = getGlobalOptions();
+    const token = cmdOpts['token'] ?? globals.token;
+    const nodeId = cmdOpts['nodeId'];
+    const profile = (cmdOpts['profile'] ?? globals.profile);
+    const apiUrl = cmdOpts['apiUrl'] ?? 'http://localhost:3003';
+    const { enroll } = await import('./commands/enroll.js');
+    await enroll({ apiUrl, profile, token, nodeId });
 });
-program
-    .command('bootstrap-reset')
-    .description('Generate and display a new bootstrap token for self-hosted mode')
-    .action(() => {
-    (0, bootstrap_reset_js_1.bootstrapReset)().catch((err) => {
-        console.error('Error during bootstrap reset:', err);
-        process.exit(1);
-    });
-});
-const connect = program.command('connect').description('Configure discovery and API connection profiles');
-connect
-    .command('aws')
-    .description('Save the AWS AssumeRole ARN for discovery')
-    .requiredOption('--role-arn <arn>', 'AWS IAM role ARN')
-    .action((opts) => (0, connect_js_1.connectAws)(opts.roleArn));
-connect
-    .command('gcp')
-    .description('Save the GCP service account JSON path for discovery')
-    .requiredOption('--service-account <path>', 'Path to the GCP service account JSON file')
-    .action((opts) => (0, connect_js_1.connectGcp)(opts.serviceAccount));
-connect
-    .command('api')
-    .description('Save a direct API connection profile')
-    .requiredOption('--url <url>', 'API base URL')
-    .option('--auth-mode <mode>', 'managed, self-hosted, or none', 'none')
-    .action((opts) => (0, connect_js_1.connectApi)(opts.url, opts.authMode));
-program
-    .command('permissions')
-    .description('Display the CIG permission tier model')
-    .action(() => {
-    (0, permissions_js_1.permissions)().catch((err) => {
-        console.error('Error during permissions command:', err);
-        process.exit(1);
-    });
-});
+// status — Requirement 4.5
 program
     .command('status')
-    .description('Show installation and connection status')
-    .option('--json', 'Output status as JSON')
-    .action((opts) => {
-    (0, status_js_1.status)(Boolean(opts.json)).catch((err) => {
-        console.error('Error during status command:', err);
-        process.exit(1);
+    .description('Report CIG Node runtime health and enrollment state')
+    .option('--json', 'Output status as JSON', false)
+    .action(async (cmdOpts) => {
+    const { status } = await import('./commands/status.js');
+    await status(cmdOpts.json);
+});
+// doctor — Requirement 4.6
+program
+    .command('doctor')
+    .description('Validate prerequisites without installing')
+    .option('--target <target>', 'Target type: local, ssh, or host (overrides global --target)')
+    .option('--ssh-host <host>', 'SSH host to check reachability for (required when --target ssh)')
+    .option('--ssh-key-path <path>', 'Path to SSH private key file (required when --target ssh)')
+    .option('--control-plane-url <url>', 'Control plane URL to check reachability against', 'https://api.cig.lat')
+    .action(async (cmdOpts) => {
+    const globals = getGlobalOptions();
+    const { doctor } = await import('./commands/doctor.js');
+    await doctor({
+        target: cmdOpts.target ?? globals.target,
+        sshHost: cmdOpts.sshHost,
+        sshKeyPath: cmdOpts.sshKeyPath,
+        controlPlaneUrl: cmdOpts.controlPlaneUrl,
     });
 });
+// open — Requirement 4.7
 program
     .command('open')
-    .description('Print the dashboard URL for the active installation/profile')
-    .action(() => {
-    (0, open_js_1.openDashboard)().catch((err) => {
-        console.error('Error during open command:', err);
-        process.exit(1);
-    });
+    .description('Open the Dashboard URL in the default browser')
+    .action(async () => {
+    const { openDashboard } = await import('./commands/open.js');
+    await openDashboard();
 });
+// permissions — Requirement 4.8
+program
+    .command('permissions')
+    .description('Display the current permission tier and list permissions required for each tier')
+    .action(async () => {
+    const { permissions } = await import('./commands/permissions.js');
+    await permissions();
+});
+// upgrade — Requirement 4.9
 program
     .command('upgrade')
-    .description('Prepare the current installation for a bundle upgrade')
-    .action(() => {
-    (0, upgrade_js_1.upgrade)().catch((err) => {
-        console.error('Error during upgrade:', err);
-        process.exit(1);
-    });
+    .description('Upgrade the CIG Node runtime to a newer version')
+    .action(async () => {
+    const { upgrade } = await import('./commands/upgrade.js');
+    await upgrade();
 });
+// uninstall — Requirement 4.10
 program
     .command('uninstall')
-    .description('Remove installation metadata and optionally purge runtime files')
-    .option('--purge-data', 'Delete the installation directory as well')
-    .action((opts) => {
-    (0, uninstall_js_1.uninstall)(Boolean(opts.purgeData)).catch((err) => {
-        console.error('Error during uninstall:', err);
-        process.exit(1);
-    });
+    .description('Remove the CIG Node runtime and optionally purge data volumes')
+    .option('--purge-data', 'Delete the installation directory as well', false)
+    .action(async (cmdOpts) => {
+    const { uninstall } = await import('./commands/uninstall.js');
+    await uninstall(cmdOpts.purgeData);
 });
+// setup — interactive wizard (used by install.sh)
 program
-    .command('scan')
-    .description('Discover and map local/cloud infrastructure')
-    .option('--type <type>', 'Scan type: local, cloud, or all', 'local')
-    .option('--provider <provider>', 'Cloud provider: aws, gcp, k8s')
-    .option('--upload', 'Upload results to the API', false)
-    .option('--json', 'Output results as JSON', false)
-    .option('--api-url <url>', 'API URL', 'http://localhost:8000')
-    .action((opts) => {
-    (0, scan_js_1.scan)({
-        type: opts.type,
-        provider: opts.provider,
-        upload: Boolean(opts.upload),
-        json: Boolean(opts.json),
-        apiUrl: opts.apiUrl,
-    }).catch((err) => {
-        console.error('Error during scan:', err);
-        process.exit(1);
+    .command('setup')
+    .description('Interactive setup wizard for bootstrapping a CIG Node')
+    .option('--mode <mode>', 'Installation mode: managed or self-hosted')
+    .option('--profile <profile>', 'Installation profile: core, discovery, or full')
+    .option('--api-url <url>', 'Control plane API URL')
+    .option('--demo', 'Include demo data in the installation')
+    .action(async (cmdOpts) => {
+    const { setup } = await import('./commands/setup.js');
+    await setup({
+        mode: cmdOpts.mode,
+        profile: cmdOpts.profile,
+        apiUrl: cmdOpts.apiUrl,
+        // undefined when flag not passed → wizard will prompt; true when --demo passed → skip prompt
+        demo: cmdOpts.demo,
     });
 });
-program.parse();
+// bootstrap-reset — self-hosted only
+program
+    .command('bootstrap-reset')
+    .description('Generate a new Bootstrap Token (self-hosted mode only)')
+    .action(async () => {
+    const { bootstrapReset } = await import('./commands/bootstrap-reset.js');
+    await bootstrapReset();
+});
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+async function main() {
+    await program.parseAsync(process.argv);
+}
+main().catch((error) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+});
 //# sourceMappingURL=index.js.map
