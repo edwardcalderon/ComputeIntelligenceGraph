@@ -5,8 +5,9 @@
  *   - postgres:// / postgresql:// → PostgreSQL via `pg` Pool
  *   - sqlite://                  → SQLite via `better-sqlite3`
  *
- * There is no implicit SQLite fallback in production. SQLite is only used
- * when it is explicitly configured for offline/local relay mode.
+ * There is no implicit SQLite fallback in managed production. SQLite is only
+ * used when it is explicitly configured for offline/local relay mode or for
+ * self-hosted/demo installs.
  *
  * Exports a single `query(sql, params?)` function that works for both.
  */
@@ -76,6 +77,10 @@ function isProductionEnvironment(): boolean {
   return process.env['NODE_ENV'] === 'production';
 }
 
+function allowsLocalSqliteInProduction(): boolean {
+  return process.env['CIG_AUTH_MODE'] === 'self-hosted' || process.env['CIG_DEMO_MODE'] === 'true';
+}
+
 function isPostgresUrl(databaseUrl: string): boolean {
   return /^postgres(?:ql)?:\/\//.test(databaseUrl);
 }
@@ -113,9 +118,9 @@ function resolveDatabaseMode(databaseUrl: string): DatabaseMode {
   }
 
   if (isSqliteUrl(databaseUrl)) {
-    if (isProductionEnvironment()) {
+    if (isProductionEnvironment() && !allowsLocalSqliteInProduction()) {
       throw new Error(
-        'SQLite is not allowed in production. Set DATABASE_URL to the Supabase Postgres connection string.'
+        'SQLite is not allowed in managed production. Set DATABASE_URL to the Supabase Postgres connection string.'
       );
     }
     return 'sqlite';

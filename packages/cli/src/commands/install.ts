@@ -232,7 +232,7 @@ function generateComposeFile(
       - PORT=3003
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_PASSWORD=\${NEO4J_PASSWORD}
-      - DATABASE_URL=\${DATABASE_URL:-${SELF_HOSTED_SQLITE_URL}}
+      - CIG_SELF_HOSTED_DATABASE_URL=\${CIG_SELF_HOSTED_DATABASE_URL:-${SELF_HOSTED_SQLITE_URL}}
       - CHROMA_URL=\${CHROMA_URL:-${SELF_HOSTED_CHROMA_URL}}
       - CIG_INFERENCE_PROVIDER=\${CIG_INFERENCE_PROVIDER:-ollama}
       - OLLAMA_BASE_URL=\${OLLAMA_BASE_URL:-${SELF_HOSTED_OLLAMA_BASE_URL}}
@@ -325,7 +325,7 @@ function generateEnvFile(
   if (manifest.targetMode === 'host') {
     lines.push('# Self-hosted local database configuration');
     lines.push('CIG_AUTH_MODE=self-hosted');
-    lines.push(`DATABASE_URL=${SELF_HOSTED_SQLITE_URL}`);
+    lines.push(`CIG_SELF_HOSTED_DATABASE_URL=${SELF_HOSTED_SQLITE_URL}`);
     lines.push(`CHROMA_URL=${SELF_HOSTED_CHROMA_URL}`);
     lines.push(...resolveSelfHostedInferenceEnv(selfHostedInference));
     lines.push('CIG_AUTO_MIGRATE=true');

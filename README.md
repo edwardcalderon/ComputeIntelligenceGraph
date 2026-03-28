@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="package.json"><img src="https://img.shields.io/badge/version-0.2.97-blue.svg" alt="Version" /></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/version-0.2.98-blue.svg" alt="Version" /></a>
   <a href="package.json"><img src="https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen.svg" alt="Node" /></a>
   <a href="package.json"><img src="https://img.shields.io/badge/pnpm-%3E%3D9.0.0-orange.svg" alt="pnpm" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /></a>
@@ -35,10 +35,15 @@
 - Deployment: [docs/deployment/README.md](docs/deployment/README.md)
 - Authentication: [docs/authentication/README.md](docs/authentication/README.md)
 
-## 📋 Latest Changes (v0.2.97)
+## 📋 Latest Changes (v0.2.98)
 
 ### Detected changes
-- No source changes were detected; this release only advances version metadata.
+- packages: 5 changed file(s)
+  - packages/api/src/db/client.test.ts
+  - packages/api/src/db/client.ts
+  - packages/cli/src/commands/install.ts
+  - packages/infra/src/__tests__/compose.test.ts
+  - packages/infra/src/compose.ts
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 

@@ -146,11 +146,13 @@ describe('generateComposeFile — self-hosted', () => {
     expect(yaml).toContain('"3000:3000"');
   });
 
-  it('mounts a local sqlite data volume and configures the local database URL', () => {
+  it('mounts a local sqlite data volume and exposes the self-hosted database URL', () => {
     const yaml = generateComposeFile(SELF_HOSTED_MANIFEST, 'core');
     expect(yaml).toContain('api-data:/var/lib/cig-node');
     expect(yaml).toContain('chroma-data:/chroma/chroma');
-    expect(yaml).toContain('DATABASE_URL=${DATABASE_URL:-sqlite:///var/lib/cig-node/cig.db}');
+    expect(yaml).toContain(
+      'CIG_SELF_HOSTED_DATABASE_URL=${CIG_SELF_HOSTED_DATABASE_URL:-sqlite:///var/lib/cig-node/cig.db}'
+    );
     expect(yaml).toContain('CHROMA_URL=${CHROMA_URL:-http://chroma:8000}');
     expect(yaml).toContain('CIG_AUTO_MIGRATE=${CIG_AUTO_MIGRATE:-true}');
     expect(yaml).toContain('CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000');
@@ -229,7 +231,7 @@ describe('generateEnvFile — self-hosted manifest', () => {
   it('includes local database and demo-ready runtime configuration', () => {
     const env = generateEnvFile(SELF_HOSTED_MANIFEST, NODE_IDENTITY);
     expect(env).toContain('CIG_AUTH_MODE=self-hosted');
-    expect(env).toContain('DATABASE_URL=sqlite:///var/lib/cig-node/cig.db');
+    expect(env).toContain('CIG_SELF_HOSTED_DATABASE_URL=sqlite:///var/lib/cig-node/cig.db');
     expect(env).toContain('CHROMA_URL=http://chroma:8000');
     expect(env).toContain('CIG_AUTO_MIGRATE=true');
   });

@@ -122,7 +122,7 @@ describe('database mode resolution', () => {
     const { query } = await loadClient();
 
     await expect(query('SELECT 1')).rejects.toThrow(
-      /SQLite is not allowed in production/i
+      /SQLite is not allowed in .*production/i
     );
   });
 
@@ -148,6 +148,7 @@ describe('database mode resolution', () => {
   });
 
   it('falls back to the self-hosted sqlite database when auth mode is self-hosted', async () => {
+    process.env['NODE_ENV'] = 'production';
     delete process.env['DATABASE_URL'];
     delete process.env['SUPABASE_DIRECT_URL_POOLER'];
     delete process.env['SUPABASE_DIRECT_URL'];
@@ -159,10 +160,21 @@ describe('database mode resolution', () => {
   });
 
   it('falls back to the self-hosted sqlite database when demo mode is enabled', async () => {
+    process.env['NODE_ENV'] = 'production';
     delete process.env['DATABASE_URL'];
     delete process.env['SUPABASE_DIRECT_URL_POOLER'];
     delete process.env['SUPABASE_DIRECT_URL'];
     process.env['CIG_DEMO_MODE'] = 'true';
+
+    const { isPostgresDatabase } = await loadClient();
+
+    expect(isPostgresDatabase()).toBe(false);
+  });
+
+  it('allows self-hosted sqlite URLs in production', async () => {
+    process.env['NODE_ENV'] = 'production';
+    process.env['CIG_AUTH_MODE'] = 'self-hosted';
+    process.env['DATABASE_URL'] = 'sqlite://:memory:';
 
     const { isPostgresDatabase } = await loadClient();
 
