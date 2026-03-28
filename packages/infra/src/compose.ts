@@ -246,7 +246,6 @@ export function generateComposeFile(
   const volumes = buildVolumes(profile, selfHosted);
 
   return [
-    "version: '3.8'",
     'services:',
     services,
     '',

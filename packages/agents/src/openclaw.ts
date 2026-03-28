@@ -16,9 +16,43 @@ const SECURITY_KEYWORDS = [
   'iam', 'access key',
 ];
 
+const DEFAULT_CYPHER_QUERY = 'MATCH (n:Resource) RETURN n LIMIT 10';
+
 function isSecurityQuery(input: string): boolean {
   const lower = input.toLowerCase();
   return SECURITY_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
+function normalizeCypherOutput(raw: string): string {
+  const cleaned = raw
+    .replace(/^```(?:cypher|json)?\n?/i, '')
+    .replace(/\n?```$/i, '')
+    .trim();
+
+  if (!cleaned) {
+    return DEFAULT_CYPHER_QUERY;
+  }
+
+  const lines = cleaned.split(/\r?\n/);
+  const cypherLine = lines.find((line) => {
+    const trimmed = line.trim().toUpperCase();
+    return trimmed.startsWith('MATCH') || trimmed.startsWith('CALL') || trimmed.startsWith('WITH');
+  });
+
+  if (cypherLine) {
+    return cypherLine.trim();
+  }
+
+  const keywordMatch = cleaned.match(/\b(MATCH|CALL|WITH)\b[\s\S]*/i);
+  if (keywordMatch && keywordMatch[0].trim()) {
+    const candidate = keywordMatch[0].trim();
+    const candidateUpper = candidate.toUpperCase();
+    if (candidateUpper.startsWith('MATCH') || candidateUpper.startsWith('CALL') || candidateUpper.startsWith('WITH')) {
+      return candidate;
+    }
+  }
+
+  return DEFAULT_CYPHER_QUERY;
 }
 
 // Local type definitions (mirrors @cig/chatbot types)
@@ -467,8 +501,8 @@ export class OpenClawAgent {
 
     const messages: ChatCompletionMessage[] = [
       { role: 'system', content: systemContent },
-      ...history.map((m) => ({
-        role: m.role === 'user' ? 'user' : 'assistant',
+      ...history.map((m): ChatCompletionMessage => ({
+        role: m.role === 'assistant' ? 'assistant' : m.role === 'system' ? 'system' : 'user',
         content: m.content,
       })),
       { role: 'user', content: input },
@@ -486,6 +520,10 @@ export class OpenClawAgent {
       parsed = JSON.parse(cleaned) as OpenClawResponse;
     } catch {
       parsed = { answer: raw, needsClarification: false };
+    }
+
+    if (typeof parsed.cypher === 'string' && parsed.cypher.trim()) {
+      parsed.cypher = normalizeCypherOutput(parsed.cypher);
     }
 
     // Handle action intent from LLM response
@@ -537,7 +575,7 @@ export class OpenClawAgent {
     const cypher = typeof response.content === 'string'
       ? response.content
       : JSON.stringify(response.content);
-    return cypher.trim();
+    return normalizeCypherOutput(cypher);
   }
 
   async refineGraph(goal: string, snapshot: GraphRefinementSnapshot): Promise<GraphRefinementProposal> {

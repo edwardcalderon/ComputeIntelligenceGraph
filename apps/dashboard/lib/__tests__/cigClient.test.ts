@@ -2,6 +2,7 @@ import { getSupabaseClient } from "@cig/auth";
 import {
   getBrowserAccessToken,
   resolveDashboardAccessToken,
+  storeBrowserSession,
   syncSupabaseSessionToBrowserStorage,
 } from "../cigClient";
 
@@ -20,6 +21,7 @@ describe("dashboard cigClient token resolution", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     sessionStorage.clear();
+    localStorage.clear();
     document.cookie = "cig_has_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
   });
 
@@ -65,6 +67,26 @@ describe("dashboard cigClient token resolution", () => {
     expect(sessionStorage.getItem("cig_auth_source")).toBe("supabase");
     expect(sessionStorage.getItem("cig_social_provider")).toBe("email");
     expect(document.cookie).toContain("cig_has_session=1");
+  });
+
+  it("stores a bootstrap session using the dashboard session keys", () => {
+    storeBrowserSession({
+      accessToken: "bootstrap-access-token",
+      authSource: "authentik",
+    });
+
+    expect(sessionStorage.getItem("cig_access_token")).toBe("bootstrap-access-token");
+    expect(sessionStorage.getItem("cig_auth_source")).toBe("authentik");
+    expect(localStorage.getItem("cig-access-token")).toBeNull();
+    expect(document.cookie).toContain("cig_has_session=1");
+  });
+
+  it("migrates the legacy bootstrap token into the dashboard session store", () => {
+    localStorage.setItem("cig-access-token", "legacy-bootstrap-token");
+
+    expect(getBrowserAccessToken()).toBe("legacy-bootstrap-token");
+    expect(sessionStorage.getItem("cig_access_token")).toBe("legacy-bootstrap-token");
+    expect(sessionStorage.getItem("cig_auth_source")).toBe("authentik");
   });
 
   it("resolves the latest Supabase session token from the client", async () => {

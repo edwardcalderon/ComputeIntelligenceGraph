@@ -89,9 +89,9 @@ describe('generateComposeFile — core profile', () => {
     expect(yaml).not.toContain('  dashboard:');
   });
 
-  it('uses compose version 3.8', () => {
+  it('omits the obsolete compose version field', () => {
     const yaml = generateComposeFile(BASE_MANIFEST, 'core');
-    expect(yaml).toContain("version: '3.8'");
+    expect(yaml).not.toContain("version: '3.8'");
   });
 
   it('includes neo4j-data volume', () => {

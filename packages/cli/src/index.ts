@@ -121,6 +121,16 @@ program
   .option('--ssh-user <user>', 'SSH user (default: root)', 'root')
   .option('--ssh-key-path <path>', 'Path to SSH private key file')
   .option('--ssh-port <port>', 'SSH port (default: 22)', '22')
+  .option(
+    '--inference <inference>',
+    'Self-hosted inference: ollama, gemma, or openai',
+    (value: string) => {
+      if (value !== 'ollama' && value !== 'gemma' && value !== 'openai') {
+        throw new Error('--inference must be "ollama", "gemma", or "openai"');
+      }
+      return value as 'ollama' | 'gemma' | 'openai';
+    }
+  )
   .option('--demo', 'Include demo/mock data in the installation')
   .action(async (cmdOpts: Record<string, any>) => {
     const globals = getGlobalOptions();
@@ -140,6 +150,7 @@ program
       sshUser: cmdOpts['sshUser'] ?? 'root',
       sshKeyPath: cmdOpts['sshKeyPath'],
       sshPort: cmdOpts['sshPort'] ? parseInt(cmdOpts['sshPort'], 10) : 22,
+      inference: cmdOpts['inference'],
       demo: typeof cmdOpts['demo'] === 'boolean' ? cmdOpts['demo'] : undefined,
     });
   });
@@ -235,13 +246,30 @@ program
   .option('--mode <mode>', 'Installation mode: managed or self-hosted')
   .option('--profile <profile>', 'Installation profile: core, discovery, or full')
   .option('--api-url <url>', 'Control plane API URL')
+  .option(
+    '--inference <inference>',
+    'Self-hosted inference: ollama, gemma, or openai',
+    (value: string) => {
+      if (value !== 'ollama' && value !== 'gemma' && value !== 'openai') {
+        throw new Error('--inference must be "ollama", "gemma", or "openai"');
+      }
+      return value as 'ollama' | 'gemma' | 'openai';
+    }
+  )
   .option('--demo', 'Include demo data in the installation')
-  .action(async (cmdOpts: { mode?: string; profile?: string; apiUrl?: string; demo?: boolean }) => {
+  .action(async (cmdOpts: {
+    mode?: string;
+    profile?: string;
+    apiUrl?: string;
+    demo?: boolean;
+    inference?: 'ollama' | 'gemma' | 'openai';
+  }) => {
     const { setup } = await import('./commands/setup.js');
     await setup({
       mode: cmdOpts.mode as 'managed' | 'self-hosted' | undefined,
       profile: cmdOpts.profile as 'core' | 'discovery' | 'full' | undefined,
       apiUrl: cmdOpts.apiUrl,
+      inference: cmdOpts.inference as 'ollama' | 'gemma' | 'openai' | undefined,
       // undefined when flag not passed → wizard will prompt; true when --demo passed → skip prompt
       demo: cmdOpts.demo,
     });

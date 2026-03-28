@@ -16,6 +16,18 @@ type BrowserSessionSnapshot = {
   socialProvider: string | null;
 };
 
+type BrowserSessionInput = {
+  accessToken: string;
+  idToken?: string | null;
+  refreshToken?: string | null;
+  expiresAt?: number | null;
+  expiresIn?: number | null;
+  authSource?: "authentik" | "supabase";
+  socialProvider?: string | null;
+};
+
+const LEGACY_BOOTSTRAP_ACCESS_TOKEN_KEY = "cig-access-token";
+
 export function clearBrowserSession(): void {
   try {
     sessionStorage.removeItem("cig_access_token");
@@ -25,6 +37,7 @@ export function clearBrowserSession(): void {
     sessionStorage.removeItem("cig_expires_at");
     sessionStorage.removeItem("cig_auth_source");
     sessionStorage.removeItem("cig_social_provider");
+    localStorage.removeItem(LEGACY_BOOTSTRAP_ACCESS_TOKEN_KEY);
     document.cookie = "cig_has_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
   } catch {
     // ignore
@@ -46,6 +59,51 @@ function setSessionCookie(expiresAt: number | null): void {
     `cig_has_session=1; path=/; expires=${new Date(expiresAt).toUTCString()}; SameSite=Lax${secure}`;
 }
 
+export function storeBrowserSession(session: BrowserSessionInput): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    clearBrowserSession();
+
+    const expiresAtMs =
+      typeof session.expiresAt === "number" && Number.isFinite(session.expiresAt)
+        ? session.expiresAt
+        : typeof session.expiresIn === "number"
+          ? Date.now() + session.expiresIn * 1000
+          : null;
+
+    sessionStorage.setItem("cig_access_token", session.accessToken);
+
+    if (session.idToken) {
+      sessionStorage.setItem("cig_id_token", session.idToken);
+    }
+
+    if (session.refreshToken) {
+      sessionStorage.setItem("cig_refresh_token", session.refreshToken);
+    }
+
+    sessionStorage.setItem("cig_auth_source", session.authSource ?? "authentik");
+
+    if (typeof session.expiresIn === "number") {
+      sessionStorage.setItem("cig_expires_in", String(session.expiresIn));
+    }
+
+    if (expiresAtMs !== null) {
+      sessionStorage.setItem("cig_expires_at", String(expiresAtMs));
+    }
+
+    if (session.socialProvider) {
+      sessionStorage.setItem("cig_social_provider", session.socialProvider);
+    }
+
+    setSessionCookie(expiresAtMs);
+  } catch {
+    // ignore
+  }
+}
+
 function readBrowserSession(): BrowserSessionSnapshot | null {
   if (typeof window === "undefined") return null;
 
@@ -58,7 +116,30 @@ function readBrowserSession(): BrowserSessionSnapshot | null {
     const expiresInRaw = sessionStorage.getItem("cig_expires_in");
 
     if (!accessToken && !idToken) {
-      return null;
+      const legacyAccessToken = localStorage.getItem(LEGACY_BOOTSTRAP_ACCESS_TOKEN_KEY);
+      if (!legacyAccessToken) {
+        return null;
+      }
+
+      const authSource = resolveDashboardAuthSource({
+        explicitAuthSource: localStorage.getItem("cig_auth_source"),
+        accessToken: legacyAccessToken,
+      });
+
+      storeBrowserSession({
+        accessToken: legacyAccessToken,
+        authSource,
+      });
+
+      return {
+        accessToken: legacyAccessToken,
+        idToken: null,
+        refreshToken: null,
+        expiresAt: null,
+        expiresIn: null,
+        authSource,
+        socialProvider: null,
+      };
     }
 
     return {
@@ -98,19 +179,6 @@ export function syncSupabaseSessionToBrowserStorage(session: Session | null): vo
         ? session.expires_at * 1000
         : Date.now() + (session.expires_in ?? 3600) * 1000;
 
-    sessionStorage.setItem("cig_access_token", session.access_token);
-    sessionStorage.removeItem("cig_id_token");
-
-    if (session.refresh_token) {
-      sessionStorage.setItem("cig_refresh_token", session.refresh_token);
-    } else {
-      sessionStorage.removeItem("cig_refresh_token");
-    }
-
-    sessionStorage.setItem("cig_auth_source", "supabase");
-    sessionStorage.setItem("cig_expires_in", String(session.expires_in ?? 3600));
-    sessionStorage.setItem("cig_expires_at", String(expiresAtMs));
-
     const provider =
       typeof session.user?.app_metadata?.provider === "string"
         ? session.user.app_metadata.provider
@@ -118,13 +186,14 @@ export function syncSupabaseSessionToBrowserStorage(session: Session | null): vo
           ? String(session.user?.app_metadata?.['providers']?.[0])
           : null;
 
-    if (provider) {
-      sessionStorage.setItem("cig_social_provider", provider);
-    } else {
-      sessionStorage.removeItem("cig_social_provider");
-    }
-
-    setSessionCookie(expiresAtMs);
+    storeBrowserSession({
+      accessToken: session.access_token,
+      refreshToken: session.refresh_token,
+      expiresAt: expiresAtMs,
+      expiresIn: session.expires_in ?? 3600,
+      authSource: "supabase",
+      socialProvider: provider,
+    });
   } catch {
     // ignore
   }

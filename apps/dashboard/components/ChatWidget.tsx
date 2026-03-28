@@ -872,10 +872,18 @@ export function ChatWidget() {
     }
   }
 
-  const chatModel = health?.chat?.model?.trim() || "gpt-4o-mini";
-  const chatProvider = health?.chat?.provider ?? (healthReady ? "fallback" : "openai");
+  const chatModel = healthReady ? health?.chat?.model?.trim() || "Unavailable" : "Detecting…";
+  const chatProvider = healthReady ? (health?.chat?.provider ?? "fallback") : null;
   const chatProviderLabel =
-    chatProvider === "ollama" ? "Ollama" : chatProvider === "openai" ? "OpenAI" : "Fallback";
+    chatProvider === "ollama"
+      ? chatModel.toLowerCase().includes("gemma")
+        ? "Gemma"
+        : "Ollama"
+      : chatProvider === "openai"
+      ? "OpenAI"
+      : chatProvider === "fallback"
+      ? "Fallback"
+      : "Detecting";
   const chatIsConnected = health?.chat?.reachable ?? false;
   const chatProviderReachable = health?.chat?.providerReachable ?? false;
   const chatIndicatorHealthy =

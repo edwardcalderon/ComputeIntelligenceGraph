@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { storeBrowserSession } from "../../lib/cigClient";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -13,8 +14,9 @@ interface BootstrapStatusResponse {
 
 interface BootstrapCompleteResponse {
   access_token: string;
-  adminId: string;
-  message: string;
+  refresh_token?: string;
+  adminId?: string;
+  message?: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -60,8 +62,8 @@ export default function BootstrapPage() {
           setPhase("token");
         } else {
           setPhase("not-required");
-          // Redirect to login after a short delay
-          setTimeout(() => router.push("/auth/login"), 2000);
+          // Redirect to the dashboard after a short delay
+          setTimeout(() => router.replace("/"), 2000);
         }
       } catch {
         setError("Could not reach the API. Make sure the self-hosted stack is running.");
@@ -121,12 +123,13 @@ export default function BootstrapPage() {
       }
 
       const data = (await res.json()) as BootstrapCompleteResponse;
-      // Store the access token for the session
-      if (typeof window !== "undefined") {
-        localStorage.setItem("cig-access-token", data.access_token);
-      }
+      storeBrowserSession({
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token ?? null,
+        authSource: "authentik",
+      });
       setPhase("done");
-      setTimeout(() => router.push("/auth/login"), 2500);
+      setTimeout(() => router.replace("/"), 2500);
     } catch {
       setError("Network error — could not complete bootstrap");
     } finally {
@@ -369,7 +372,7 @@ export default function BootstrapPage() {
               Bootstrap complete
             </p>
             <p className="text-sm text-cig-secondary">
-              Admin account created. Redirecting to login…
+              Admin account created. Redirecting to the dashboard…
             </p>
           </div>
         )}

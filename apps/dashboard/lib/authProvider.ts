@@ -13,7 +13,20 @@ function getSession() {
   try {
     const token     = sessionStorage.getItem("cig_access_token");
     const expiresAt = sessionStorage.getItem("cig_expires_at");
-    if (!token) return null;
+    if (!token) {
+      const legacyToken = localStorage.getItem("cig-access-token");
+      if (!legacyToken) return null;
+      return {
+        token: legacyToken,
+        idToken: undefined,
+        refreshToken: undefined,
+        expiresAt: null,
+        authSource: resolveDashboardAuthSource({
+          explicitAuthSource: localStorage.getItem("cig_auth_source"),
+          accessToken: legacyToken,
+        }),
+      };
+    }
     if (expiresAt && Date.now() > parseInt(expiresAt, 10)) return null;
     const idToken = sessionStorage.getItem("cig_id_token") ?? undefined;
     const refreshToken = sessionStorage.getItem("cig_refresh_token") ?? undefined;
@@ -36,6 +49,7 @@ function clearSession() {
     sessionStorage.removeItem("cig_expires_in");
     sessionStorage.removeItem("cig_expires_at");
     sessionStorage.removeItem("cig_auth_source");
+    localStorage.removeItem("cig-access-token");
     // Expire the middleware cookie immediately
     document.cookie = "cig_has_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
   } catch { /* ignore */ }

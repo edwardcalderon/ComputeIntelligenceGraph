@@ -3,7 +3,7 @@ import { bootstrapReset } from './commands/bootstrap-reset.js';
 import { connectApi, connectAws, connectGcp } from './commands/connect.js';
 import { doctor } from './commands/doctor.js';
 import { enroll } from './commands/enroll.js';
-import { install } from './commands/install.js';
+import { install, type SelfHostedInferenceChoice } from './commands/install.js';
 import { login } from './commands/login.js';
 import { logout } from './commands/logout.js';
 import { openDashboard } from './commands/open.js';
@@ -71,6 +71,10 @@ export class SetupCommand extends CigCommand {
     }),
     'api-url': Flags.string({ description: 'API URL' }),
     demo: Flags.boolean({ description: 'Include demo/mock data in the installation' }),
+    inference: Flags.string({
+      description: 'Self-hosted inference: ollama, gemma, or openai',
+      options: ['ollama', 'gemma', 'openai'] as const,
+    }),
   };
 
   async run(): Promise<void> {
@@ -82,6 +86,7 @@ export class SetupCommand extends CigCommand {
         profile: flags.profile as 'core' | 'discovery' | 'full' | undefined,
         apiUrl: flags['api-url'],
         demo,
+        inference: flags.inference as SelfHostedInferenceChoice | undefined,
       })
     );
   }
@@ -100,6 +105,10 @@ export class InstallCommand extends CigCommand {
     }),
     'api-url': Flags.string({ description: 'API URL', default: 'http://localhost:3003' }),
     demo: Flags.boolean({ description: 'Include demo/mock data in the installation' }),
+    inference: Flags.string({
+      description: 'Self-hosted inference: ollama, gemma, or openai',
+      options: ['ollama', 'gemma', 'openai'] as const,
+    }),
   };
 
   async run(): Promise<void> {
@@ -110,7 +119,8 @@ export class InstallCommand extends CigCommand {
           flags['api-url'],
           flags.mode as 'managed' | 'self-hosted' | undefined,
           flags.profile as 'core' | 'discovery' | 'full' | undefined,
-          demo
+          demo,
+          flags.inference as SelfHostedInferenceChoice | undefined
         )
       );
   }

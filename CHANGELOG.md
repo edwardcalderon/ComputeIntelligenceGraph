@@ -1,3 +1,29 @@
+## [0.2.95](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.94...v0.2.95) (2026-03-28)
+
+### Detected changes
+- apps: 5 changed file(s)
+  - apps/dashboard/app/bootstrap/page.tsx
+  - apps/dashboard/components/ChatWidget.tsx
+  - apps/dashboard/lib/__tests__/cigClient.test.ts
+  - apps/dashboard/lib/authProvider.ts
+  - apps/dashboard/lib/cigClient.ts
+- packages: 8 changed file(s)
+  - packages/agents/src/openclaw.ts
+  - packages/cli/src/command-classes.ts
+  - packages/cli/src/commands/install.ts
+  - packages/cli/src/commands/setup.test.ts
+  - packages/cli/src/commands/setup.ts
+  - packages/cli/src/index.ts
+  - packages/infra/src/__tests__/compose.test.ts
+  - packages/infra/src/compose.ts
+
+
+## [0.2.95](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.94...v0.2.95) (2026-03-28)
+
+
+
+
+
 ## [0.2.94](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.93...v0.2.94) (2026-03-28)
 
 ### Detected changes

@@ -1,5 +1,9 @@
 import { cancel, intro, isCancel, outro, select, text } from '@clack/prompts';
-import { install } from './install.js';
+import {
+  install,
+  resolveSelfHostedInferenceChoice,
+  type SelfHostedInferenceChoice,
+} from './install.js';
 import { CLI_VERSION } from '../version.js';
 import { resolveDemoDataPreference } from '../demo-data.js';
 
@@ -8,6 +12,7 @@ export interface SetupCommandOptions {
   profile?: 'core' | 'discovery' | 'full';
   apiUrl?: string;
   demo?: boolean;
+  inference?: SelfHostedInferenceChoice;
 }
 
 function promptCancelled(message: string): never {
@@ -73,6 +78,7 @@ export async function setup(options: SetupCommandOptions = {}): Promise<void> {
   let profile = options.profile;
   let apiUrl = options.apiUrl;
   let demo = options.demo;
+  let inference = options.inference;
   let exitMessage = 'Press Enter to return to your shell.';
 
   try {
@@ -95,13 +101,17 @@ export async function setup(options: SetupCommandOptions = {}): Promise<void> {
       apiUrl = await promptInput('Enter the control plane API URL', 'https://api.cig.technology');
     }
 
+    if (mode === 'self-hosted') {
+      inference = await resolveSelfHostedInferenceChoice(inference);
+    }
+
     demo = await resolveDemoDataPreference({
       explicitDemo: demo,
       defaultValue: false,
       message: 'Include demo data in this installation?',
     });
 
-    await install(apiUrl, mode, profile, demo);
+    await install(apiUrl, mode, profile, demo, inference);
     outro('Setup completed successfully.');
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
