@@ -1,3 +1,37 @@
+## [0.2.94](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.93...v0.2.94) (2026-03-28)
+
+### Detected changes
+- root: CHANGELOG.md
+- apps: apps/dashboard/components/ChatWidget.tsx
+- packages: 18 changed file(s)
+  - packages/agents/src/openclaw.ts
+  - packages/api/src/__tests__/startup.test.ts
+  - packages/api/src/chat-inputs.ts
+  - packages/api/src/chat.ts
+  - packages/api/src/db/client.test.ts
+  - packages/api/src/db/client.ts
+  - packages/api/src/index.ts
+  - packages/api/src/semantic-rag.test.ts
+  - packages/api/src/semantic-rag.ts
+  - packages/chatbot/src/index.ts
+  - packages/chatbot/src/inference.test.ts
+  - packages/chatbot/src/inference.ts
+  - packages/chatbot/src/rag.ts
+  - packages/cli/src/commands/install.ts
+  - packages/cli/src/ssh.ts
+  - packages/infra/src/__tests__/compose.test.ts
+  - packages/infra/src/compose.ts
+  - packages/sdk/src/types.ts
+
+
+## [0.2.94](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.93...v0.2.94) (2026-03-28)
+
+
+
+
+
+
+
 ## [0.2.93](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.92...v0.2.93) (2026-03-28)
 
 

@@ -874,6 +874,8 @@ export function ChatWidget() {
 
   const chatModel = health?.chat?.model?.trim() || "gpt-4o-mini";
   const chatProvider = health?.chat?.provider ?? (healthReady ? "fallback" : "openai");
+  const chatProviderLabel =
+    chatProvider === "ollama" ? "Ollama" : chatProvider === "openai" ? "OpenAI" : "Fallback";
   const chatIsConnected = health?.chat?.reachable ?? false;
   const chatProviderReachable = health?.chat?.providerReachable ?? false;
   const chatIndicatorHealthy =
@@ -896,7 +898,7 @@ export function ChatWidget() {
     ? "Chat endpoint is live in fallback mode."
     : chatProviderReachable
     ? "Chat backend is reachable and ready."
-    : "Chat endpoint is live, but OpenAI is not reachable right now.";
+    : `Chat endpoint is live, but ${chatProviderLabel} is not reachable right now.`;
   const docsUrl =
     typeof window === "undefined"
       ? resolveDocsUrl()
@@ -1621,7 +1623,7 @@ export function ChatWidget() {
                   <div className="min-w-0">
                     <p className="truncate text-[11px] font-semibold text-slate-900 dark:text-white">{chatModel}</p>
                     <p className="text-[9px] uppercase tracking-[0.16em] text-slate-500 dark:text-zinc-500">
-                      {chatProvider === "openai" ? "OpenAI" : "Fallback"}
+                      {chatProviderLabel}
                     </p>
                   </div>
                   <span
@@ -1645,7 +1647,7 @@ export function ChatWidget() {
                         : "bg-amber-500/10 text-amber-700 dark:bg-amber-400/12 dark:text-amber-300",
                     ].join(" ")}
                   >
-                    {chatProviderReachable ? "OpenAI ready" : "OpenAI down"}
+                    {chatProviderReachable ? `${chatProviderLabel} ready` : `${chatProviderLabel} down`}
                   </span>
                   <span className="inline-flex items-center rounded-full bg-slate-900/5 px-2 py-0.5 text-[9px] font-medium text-slate-600 dark:bg-white/5 dark:text-zinc-300">
                     {chatLastChecked ?? "pending"}

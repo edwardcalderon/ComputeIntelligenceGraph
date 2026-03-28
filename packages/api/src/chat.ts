@@ -1,5 +1,6 @@
 import type { Resource_Model } from '@cig/graph';
 import type { ChatMessagePresentation } from '@cig/sdk';
+import { runChatCompletion } from '@cig/chatbot';
 import {
   type ChatContextItem,
   type ChatTurn,
@@ -37,14 +38,6 @@ type QuestionTopic =
   | 'dependencies'
   | 'discovery'
   | 'resources';
-
-interface OpenAiChatCompletionResponse {
-  choices?: Array<{
-    message?: {
-      content?: string | null;
-    };
-  }>;
-}
 
 const DEFAULT_CLARIFICATION =
   'Can you mention a provider, resource type, or resource name?';
@@ -329,12 +322,6 @@ async function tryOpenAiResponse(
   contextItems: ChatContextItem[] = [],
   infrastructure?: ChatInfrastructureSnapshot
 ): Promise<ChatResponse | null> {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey) {
-    return null;
-  }
-
-  const model = process.env.OPENAI_CHAT_MODEL?.trim() || 'gpt-4o-mini';
   const topic = inferQuestionTopic(question);
   const infraSummary = infrastructure
     ? {
@@ -367,9 +354,8 @@ async function tryOpenAiResponse(
         : 'You are the CIG assistant. No matching infrastructure context was found for the user question. Return strict JSON with keys: answer (string), needsClarification (boolean), clarifyingQuestion (string or null), cypher (string or null). If the connector has no connected resources or discovery has not indexed the architecture yet, tell the user to connect or discover the resources first instead of asking for clarification.'
       : 'You are the CIG assistant. Answer from the provided infrastructure and chat context. Return strict JSON with keys: answer (string), needsClarification (boolean), clarifyingQuestion (string or null), cypher (string or null). If the context is insufficient, set needsClarification to true and ask one concise question. Use linked resources, attachments, code snippets, and voice transcripts when present.';
 
-  const payload = {
-    model,
-    response_format: { type: 'json_object' },
+  const content = await runChatCompletion({
+    jsonMode: true,
     temperature: resources.length === 0 ? 0.45 : 0.2,
     messages: [
       {
@@ -396,59 +382,40 @@ async function tryOpenAiResponse(
         }),
       },
     ],
-  };
+  });
+
+  if (!content) {
+    return null;
+  }
+
+  const normalized = stripJsonFence(content);
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = (await response.json()) as OpenAiChatCompletionResponse;
-    const content = data.choices?.[0]?.message?.content?.trim();
-    if (!content) {
-      return null;
-    }
-
-    const normalized = stripJsonFence(content);
-
-    try {
-      const parsed = JSON.parse(normalized) as Partial<ChatResponse>;
-      if (typeof parsed.answer !== 'string' || typeof parsed.needsClarification !== 'boolean') {
-        return {
-          answer: normalized,
-          needsClarification: false,
-        };
-      }
-
-      return {
-        answer: parsed.answer,
-        needsClarification: parsed.needsClarification,
-        clarifyingQuestion:
-          typeof parsed.clarifyingQuestion === 'string' && parsed.clarifyingQuestion.trim()
-            ? parsed.clarifyingQuestion.trim()
-            : undefined,
-        cypher:
-          typeof parsed.cypher === 'string' && parsed.cypher.trim()
-            ? parsed.cypher.trim()
-            : undefined,
-      };
-    } catch {
+    const parsed = JSON.parse(normalized) as Partial<ChatResponse>;
+    if (typeof parsed.answer !== 'string' || typeof parsed.needsClarification !== 'boolean') {
       return {
         answer: normalized,
         needsClarification: false,
       };
     }
+
+    return {
+      answer: parsed.answer,
+      needsClarification: parsed.needsClarification,
+      clarifyingQuestion:
+        typeof parsed.clarifyingQuestion === 'string' && parsed.clarifyingQuestion.trim()
+          ? parsed.clarifyingQuestion.trim()
+          : undefined,
+      cypher:
+        typeof parsed.cypher === 'string' && parsed.cypher.trim()
+          ? parsed.cypher.trim()
+          : undefined,
+    };
   } catch {
-    return null;
+    return {
+      answer: normalized,
+      needsClarification: false,
+    };
   }
 }
 

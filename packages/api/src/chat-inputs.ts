@@ -5,11 +5,11 @@ import type {
   ChatAttachmentContextItem,
   ChatTranscriptContextItem,
 } from './chat-context';
+import { resolveInferenceProvider, resolveVisionModel, runChatCompletion } from '@cig/chatbot';
 
 const DEFAULT_CHAT_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
 const DEFAULT_CHAT_AUDIO_MAX_SECONDS = 120;
 const DEFAULT_TRANSCRIPTION_MODEL = 'whisper-1';
-const DEFAULT_CHAT_MODEL = 'gpt-4o-mini';
 const MAX_EXTRACTED_TEXT_LENGTH = 8_000;
 const MAX_SUMMARY_LENGTH = 400;
 
@@ -177,63 +177,54 @@ async function extractPdfText(buffer: Buffer): Promise<string | undefined> {
   }
 }
 
-async function summarizeImageWithOpenAi(
+async function summarizeImageWithInference(
   buffer: Buffer,
   filename: string,
   mimeType: string
 ): Promise<string | undefined> {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey) {
+  const provider = resolveInferenceProvider();
+  if (provider === 'fallback') {
+    return undefined;
+  }
+
+  if (provider === 'ollama' && !process.env.OLLAMA_VISION_MODEL?.trim()) {
     return undefined;
   }
 
   const base64 = buffer.toString('base64');
-  const model = process.env.OPENAI_CHAT_MODEL?.trim() || DEFAULT_CHAT_MODEL;
+  const model = resolveVisionModel(provider);
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        temperature: 0.2,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You summarize uploaded images for an infrastructure assistant. Write one short sentence about what the image likely contains. Mention dashboards, diagrams, alerts, terminals, or code only if visible.',
-          },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: `Summarize this uploaded image named "${filename}".`,
+    const content = await runChatCompletion({
+      provider,
+      model,
+      temperature: 0.2,
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You summarize uploaded images for an infrastructure assistant. Write one short sentence about what the image likely contains. Mention dashboards, diagrams, alerts, terminals, or code only if visible.',
+        },
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: `Summarize this uploaded image named "${filename}".`,
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:${mimeType};base64,${base64}`,
               },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:${mimeType};base64,${base64}`,
-                },
-              },
-            ],
-          },
-        ],
-      }),
+            },
+          ],
+        },
+      ],
     });
 
-    if (!response.ok) {
-      return undefined;
-    }
-
-    const payload = (await response.json()) as {
-      choices?: Array<{ message?: { content?: string | null } }>;
-    };
-    const content = normalizeWhitespace(payload.choices?.[0]?.message?.content ?? '');
-    return content ? truncate(content, MAX_SUMMARY_LENGTH) : undefined;
+    const normalized = normalizeWhitespace(content ?? '');
+    return normalized ? truncate(normalized, MAX_SUMMARY_LENGTH) : undefined;
   } catch {
     return undefined;
   }
@@ -246,7 +237,7 @@ export async function buildAttachmentContextItem(
 
   if (isImageMimeType(file.mimeType)) {
     const summary =
-      (await summarizeImageWithOpenAi(file.buffer, file.filename, file.mimeType)) ??
+      (await summarizeImageWithInference(file.buffer, file.filename, file.mimeType)) ??
       summarizeFallbackAttachment('image', file.filename, file.mimeType);
 
     return {

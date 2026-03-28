@@ -27,6 +27,7 @@ vi.mock('@cig/graph', async () => {
 });
 
 vi.mock('@cig/chatbot', () => ({
+  resolveInferenceProvider: vi.fn(() => 'openai'),
   VectorStore: vi.fn().mockImplementation((options?: { collectionName?: string }) => {
     ragMocks.vectorStoreCtor(options);
     return {

@@ -44,6 +44,12 @@ function resolveInstallDir(): string {
   return process.env['CIG_INSTALL_DIR'] ?? resolveCliPaths().installDir;
 }
 
+const SELF_HOSTED_SQLITE_URL = 'sqlite:///var/lib/cig-node/cig.db';
+const SELF_HOSTED_CHROMA_URL = 'http://chroma:8000';
+const SELF_HOSTED_OLLAMA_BASE_URL = 'http://ollama:11434/v1';
+const SELF_HOSTED_OLLAMA_CHAT_MODEL = 'llama3.2:3b';
+const SELF_HOSTED_OLLAMA_EMBEDDING_MODEL = 'nomic-embed-text-v2-moe';
+
 /**
  * Generate a cryptographically random 32-character bootstrap token.
  * Mirrors packages/infra/src/install.ts generateBootstrapToken().
@@ -121,26 +127,59 @@ function generateComposeFile(
     environment:
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_PASSWORD=\${NEO4J_PASSWORD}
-      - CIG_CONTROL_PLANE=\${CIG_CONTROL_PLANE_ENDPOINT}`;
+      - CIG_CONTROL_PLANE=\${CIG_CONTROL_PLANE_ENDPOINT}
+      - CIG_INFERENCE_PROVIDER=\${CIG_INFERENCE_PROVIDER:-}
+      - OLLAMA_BASE_URL=\${OLLAMA_BASE_URL:-}
+      - OLLAMA_CHAT_MODEL=\${OLLAMA_CHAT_MODEL:-llama3.2:3b}
+      - OLLAMA_EMBEDDING_MODEL=\${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text-v2-moe}`;
   }
 
   if (selfHosted) {
     services += `
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+
+  chroma:
+    image: chromadb/chroma:0.5.0
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma-data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
 
   api:
     image: ${img('api', 'cig-api:latest')}
     restart: unless-stopped
     ports:
       - "3003:3003"
+    volumes:
+      - api-data:/var/lib/cig-node
     environment:
       - PORT=3003
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_PASSWORD=\${NEO4J_PASSWORD}
-      - DATABASE_URL=\${DATABASE_URL:-}
+      - DATABASE_URL=\${DATABASE_URL:-${SELF_HOSTED_SQLITE_URL}}
+      - CHROMA_URL=\${CHROMA_URL:-${SELF_HOSTED_CHROMA_URL}}
+      - CIG_INFERENCE_PROVIDER=\${CIG_INFERENCE_PROVIDER:-ollama}
+      - OLLAMA_BASE_URL=\${OLLAMA_BASE_URL:-${SELF_HOSTED_OLLAMA_BASE_URL}}
+      - OLLAMA_CHAT_MODEL=\${OLLAMA_CHAT_MODEL:-${SELF_HOSTED_OLLAMA_CHAT_MODEL}}
+      - OLLAMA_EMBEDDING_MODEL=\${OLLAMA_EMBEDDING_MODEL:-${SELF_HOSTED_OLLAMA_EMBEDDING_MODEL}}
       - CIG_DEMO_MODE=\${CIG_DEMO_MODE:-false}
+      - CIG_AUTH_MODE=self-hosted
+      - CIG_AUTO_MIGRATE=\${CIG_AUTO_MIGRATE:-true}
       - CORS_ORIGINS=http://localhost:3000
     depends_on:
       - neo4j
+      - chroma
 
   dashboard:
     image: ${img('dashboard-selfhosted', 'cig-dashboard-selfhosted:latest')}
@@ -151,7 +190,16 @@ function generateComposeFile(
       - api`;
   }
 
+  if (manifest.isDemo) {
+    services = injectDemoMockDbMount(services);
+  }
+
   const volumes: string[] = ['  neo4j-data:'];
+  if (selfHosted) {
+    volumes.push('  api-data:');
+    volumes.push('  chroma-data:');
+    volumes.push('  ollama-data:');
+  }
 
   return [
     "version: '3.8'",
@@ -162,6 +210,13 @@ function generateComposeFile(
     volumes.join('\n'),
     '',
   ].join('\n');
+}
+
+function injectDemoMockDbMount(services: string): string {
+  return services.replace(
+    /(  cartography:\n[\s\S]*?    environment:\n[\s\S]*?      - NEO4J_PASSWORD=\$\{NEO4J_PASSWORD\}\n)/,
+    '$1    volumes:\n      - ./mock-dbs:/opt/cig-node/mock-dbs:ro\n'
+  );
 }
 
 /**
@@ -196,6 +251,19 @@ function generateEnvFile(manifest: SetupManifest, nodeIdentity: NodeIdentity): s
     lines.push('# Demo mode configuration');
     lines.push('CIG_DEMO_MODE=true');
     lines.push('CIG_CLOUD_PROVIDER=mock');
+    lines.push('');
+  }
+
+  if (manifest.targetMode === 'host') {
+    lines.push('# Self-hosted local database configuration');
+    lines.push('CIG_AUTH_MODE=self-hosted');
+    lines.push(`DATABASE_URL=${SELF_HOSTED_SQLITE_URL}`);
+    lines.push(`CHROMA_URL=${SELF_HOSTED_CHROMA_URL}`);
+    lines.push('CIG_INFERENCE_PROVIDER=ollama');
+    lines.push(`OLLAMA_BASE_URL=${SELF_HOSTED_OLLAMA_BASE_URL}`);
+    lines.push(`OLLAMA_CHAT_MODEL=${SELF_HOSTED_OLLAMA_CHAT_MODEL}`);
+    lines.push(`OLLAMA_EMBEDDING_MODEL=${SELF_HOSTED_OLLAMA_EMBEDDING_MODEL}`);
+    lines.push('CIG_AUTO_MIGRATE=true');
     lines.push('');
   }
 
@@ -290,6 +358,36 @@ async function pollNodeHealth(
  */
 function dockerComposeUp(installDir: string): void {
   execSync('docker compose up -d', { cwd: installDir, stdio: 'inherit' });
+}
+
+async function pullOllamaModels(installDir: string): Promise<void> {
+  const models = [SELF_HOSTED_OLLAMA_CHAT_MODEL, SELF_HOSTED_OLLAMA_EMBEDDING_MODEL];
+  const maxAttempts = 20;
+  const retryDelayMs = 5_000;
+
+  for (const model of models) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      const s = spinner();
+      s.start(`Pulling Ollama model ${model}…`);
+      try {
+        execSync(`docker compose exec -T ollama ollama pull ${model}`, {
+          cwd: installDir,
+          stdio: 'inherit',
+        });
+        s.stop(`Ollama model ${model} is ready.`);
+        break;
+      } catch (error) {
+        s.stop(`Waiting for Ollama model ${model}…`);
+        if (attempt >= maxAttempts) {
+          throw error instanceof Error
+            ? error
+            : new Error(`Failed to pull Ollama model ${model}: ${String(error)}`);
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+      }
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -528,7 +626,13 @@ async function runInstall(opts: InstallOptions): Promise<void> {
         { host: sshHost, user: sshUser, keyPath: sshKeyPath, port: sshPort },
         composePath,
         envPath,
-        installDir
+        installDir,
+        mode === 'self-hosted'
+          ? [
+              `docker compose exec -T ollama ollama pull ${SELF_HOSTED_OLLAMA_CHAT_MODEL}`,
+              `docker compose exec -T ollama ollama pull ${SELF_HOSTED_OLLAMA_EMBEDDING_MODEL}`,
+            ]
+          : []
       );
       s.stop(`CIG Node installed on ${sshHost}.`);
     } catch (err) {
@@ -544,6 +648,9 @@ async function runInstall(opts: InstallOptions): Promise<void> {
     s.start('Starting CIG Node runtime…');
     try {
       dockerComposeUp(installDir);
+      if (mode === 'self-hosted') {
+        await pullOllamaModels(installDir);
+      }
       s.stop('CIG Node runtime started.');
     } catch (err) {
       s.stop('docker compose up failed.');
@@ -619,7 +726,7 @@ function buildSelfHostedManifest(
 
   return {
     version: '1.0',
-    cloudProvider: isDemo ? 'mock' : ('aws' as any), // placeholder — self-hosted doesn't require cloud creds at install time
+    cloudProvider: 'aws' as any, // self-hosted does not use Supabase/managed cloud creds
     credentialsRef: '',
     enrollmentToken: '',
     nodeIdentitySeed: '',

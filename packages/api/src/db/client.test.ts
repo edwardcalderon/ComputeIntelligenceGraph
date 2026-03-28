@@ -146,4 +146,26 @@ describe('database mode resolution', () => {
 
     expect(() => isPostgresDatabase()).toThrow(/No database URL configured/i);
   });
+
+  it('falls back to the self-hosted sqlite database when auth mode is self-hosted', async () => {
+    delete process.env['DATABASE_URL'];
+    delete process.env['SUPABASE_DIRECT_URL_POOLER'];
+    delete process.env['SUPABASE_DIRECT_URL'];
+    process.env['CIG_AUTH_MODE'] = 'self-hosted';
+
+    const { isPostgresDatabase } = await loadClient();
+
+    expect(isPostgresDatabase()).toBe(false);
+  });
+
+  it('falls back to the self-hosted sqlite database when demo mode is enabled', async () => {
+    delete process.env['DATABASE_URL'];
+    delete process.env['SUPABASE_DIRECT_URL_POOLER'];
+    delete process.env['SUPABASE_DIRECT_URL'];
+    process.env['CIG_DEMO_MODE'] = 'true';
+
+    const { isPostgresDatabase } = await loadClient();
+
+    expect(isPostgresDatabase()).toBe(false);
+  });
 });

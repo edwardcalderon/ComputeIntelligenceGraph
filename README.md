@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="package.json"><img src="https://img.shields.io/badge/version-0.2.93-blue.svg" alt="Version" /></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/version-0.2.94-blue.svg" alt="Version" /></a>
   <a href="package.json"><img src="https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen.svg" alt="Node" /></a>
   <a href="package.json"><img src="https://img.shields.io/badge/pnpm-%3E%3D9.0.0-orange.svg" alt="pnpm" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /></a>
@@ -35,12 +35,30 @@
 - Deployment: [docs/deployment/README.md](docs/deployment/README.md)
 - Authentication: [docs/authentication/README.md](docs/authentication/README.md)
 
-## 📋 Latest Changes (v0.2.93)
+## 📋 Latest Changes (v0.2.94)
 
-### Bug Fixes
-
-* **ci:** sync README before version:validate in publish-cli workflow ([4d04fc7](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/4d04fc7b589f91814ddcd4b323ea047174b6c61e))
-* **cli:** use self-hosted dashboard image so API calls hit localhost not production ([8a1ef44](https://github.com/edwardcalderon/ComputeIntelligenceGraph/commit/8a1ef449596c01cbdb3cfc53a0e3a32a92eacf04))
+### Detected changes
+- root: CHANGELOG.md
+- apps: apps/dashboard/components/ChatWidget.tsx
+- packages: 18 changed file(s)
+  - packages/agents/src/openclaw.ts
+  - packages/api/src/__tests__/startup.test.ts
+  - packages/api/src/chat-inputs.ts
+  - packages/api/src/chat.ts
+  - packages/api/src/db/client.test.ts
+  - packages/api/src/db/client.ts
+  - packages/api/src/index.ts
+  - packages/api/src/semantic-rag.test.ts
+  - packages/api/src/semantic-rag.ts
+  - packages/chatbot/src/index.ts
+  - packages/chatbot/src/inference.test.ts
+  - packages/chatbot/src/inference.ts
+  - packages/chatbot/src/rag.ts
+  - packages/cli/src/commands/install.ts
+  - packages/cli/src/ssh.ts
+  - packages/infra/src/__tests__/compose.test.ts
+  - packages/infra/src/compose.ts
+  - packages/sdk/src/types.ts
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 

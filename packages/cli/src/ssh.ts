@@ -177,8 +177,11 @@ export async function installViaSSH(
   composeFilePath: string,
   envFilePath: string,
   installDir: string,
+  postStartCommands: string[] = [],
 ): Promise<void> {
   const client = await connectSSH(target);
+  const postStartRetryLimit = 20;
+  const postStartRetryDelayMs = 5_000;
 
   try {
     // Create install directory on remote host
@@ -204,6 +207,33 @@ export async function installViaSSH(
       throw new Error(
         `docker compose up -d failed on ${target.host}: ${upResult.stderr}`,
       );
+    }
+
+    for (const command of postStartCommands) {
+      let lastError = '';
+      let succeeded = false;
+
+      for (let attempt = 1; attempt <= postStartRetryLimit; attempt += 1) {
+        const commandResult = await runRemoteCommand(
+          client,
+          `cd ${installDir} && ${command}`,
+        );
+        if (commandResult.exitCode === 0) {
+          succeeded = true;
+          break;
+        }
+
+        lastError = commandResult.stderr || commandResult.stdout || `exit code ${commandResult.exitCode}`;
+        if (attempt < postStartRetryLimit) {
+          await new Promise((resolve) => setTimeout(resolve, postStartRetryDelayMs));
+        }
+      }
+
+      if (!succeeded) {
+        throw new Error(
+          `Failed to run post-start command on ${target.host}: ${lastError}`,
+        );
+      }
     }
   } finally {
     client.end();

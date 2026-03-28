@@ -1,4 +1,9 @@
-import Fastify, { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import Fastify, {
+  FastifyBaseLogger,
+  FastifyInstance,
+  FastifyRequest,
+  FastifyReply,
+} from 'fastify';
 import cors from '@fastify/cors';
 import { createRateLimiter } from './rate-limit';
 import { registerRoutes } from './routes';
@@ -8,16 +13,19 @@ import { getMetrics, recordHttpRequest } from './metrics';
 import { startHeartbeatMonitor, stopHeartbeatMonitor } from './jobs/heartbeat-monitor';
 import { startSemanticIndexSync, stopSemanticIndexSync } from './jobs/semantic-index-sync';
 import { ensureDemoWorkspaceProvisioned } from './demo-workspace';
+import { applyMigrations } from './db/migrate';
 import { closeDatabase } from './db/client';
+import { probeInferenceHealth } from '@cig/chatbot';
 
 const VERSION = '0.1.0';
 const RATE_LIMIT_EXEMPT_ROUTES = new Set(['GET /api/v1/health', 'GET /metrics']);
-const OPENAI_MODEL_DEFAULT = 'gpt-4o-mini';
 const OPENAI_HEALTH_CACHE_MS = 30_000;
-const OPENAI_HEALTH_TIMEOUT_MS = 2_500;
+const AUTO_MIGRATE_ENV = 'CIG_AUTO_MIGRATE';
+const DEMO_WORKSPACE_RETRY_ATTEMPTS = 10;
+const DEMO_WORKSPACE_RETRY_DELAY_MS = 1_500;
 
 type ChatHealthStatus = {
-  provider: 'openai' | 'fallback';
+  provider: 'openai' | 'ollama' | 'fallback';
   model: string;
   configured: boolean;
   reachable: boolean;
@@ -26,7 +34,7 @@ type ChatHealthStatus = {
   latencyMs: number | null;
 };
 
-let openAiHealthCache: { checkedAt: number; status: ChatHealthStatus } | null = null;
+let inferenceHealthCache: { checkedAt: number; status: ChatHealthStatus } | null = null;
 
 export function startBackgroundJobs(app: FastifyInstance): void {
   startHeartbeatMonitor();
@@ -40,6 +48,58 @@ export function startBackgroundJobs(app: FastifyInstance): void {
       );
     });
   }
+}
+
+export async function runConfiguredMigrations(app: FastifyInstance): Promise<void> {
+  if (process.env[AUTO_MIGRATE_ENV] !== 'true') {
+    return;
+  }
+
+  const result = await applyMigrations();
+  app.log.info(
+    {
+      applied: result.applied,
+      skipped: result.skipped,
+    },
+    'Configured local database migrations completed'
+  );
+}
+
+async function waitForDemoWorkspaceProvisioning(
+  logger: Pick<FastifyBaseLogger, 'info' | 'warn' | 'error'>
+): Promise<void> {
+  if (process.env.CIG_AUTH_MODE !== 'managed' && process.env.CIG_DEMO_MODE !== 'true') {
+    return;
+  }
+
+  let lastError: unknown = null;
+
+  for (let attempt = 1; attempt <= DEMO_WORKSPACE_RETRY_ATTEMPTS; attempt += 1) {
+    try {
+      await ensureDemoWorkspaceProvisioned(logger);
+      return;
+    } catch (error) {
+      lastError = error;
+      logger.warn(
+        {
+          err: error,
+          attempt,
+          maxAttempts: DEMO_WORKSPACE_RETRY_ATTEMPTS,
+        },
+        'Demo workspace provisioning not ready yet; retrying'
+      );
+
+      if (attempt < DEMO_WORKSPACE_RETRY_ATTEMPTS) {
+        await new Promise<void>((resolve) =>
+          setTimeout(resolve, DEMO_WORKSPACE_RETRY_DELAY_MS * attempt)
+        );
+      }
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('Demo workspace provisioning failed');
 }
 
 function resolveCorsOrigins(): true | string[] {
@@ -69,69 +129,15 @@ function resolveCorsOrigins(): true | string[] {
 }
 
 async function resolveChatHealth(endpointReady: boolean): Promise<ChatHealthStatus> {
-  const model = process.env.OPENAI_CHAT_MODEL?.trim() || OPENAI_MODEL_DEFAULT;
-  const apiKey = process.env.OPENAI_API_KEY?.trim() || '';
   const now = Date.now();
 
-  if (openAiHealthCache && now - openAiHealthCache.checkedAt < OPENAI_HEALTH_CACHE_MS) {
-    return openAiHealthCache.status;
+  if (inferenceHealthCache && now - inferenceHealthCache.checkedAt < OPENAI_HEALTH_CACHE_MS) {
+    return inferenceHealthCache.status;
   }
 
-  const checkedAt = new Date().toISOString();
-
-  if (!apiKey) {
-    const status: ChatHealthStatus = {
-      provider: 'fallback',
-      model,
-      configured: false,
-      reachable: endpointReady,
-      providerReachable: false,
-      checkedAt,
-      latencyMs: null,
-    };
-    openAiHealthCache = { checkedAt: now, status };
-    return status;
-  }
-
-  const controller = new AbortController();
-  const startedAt = Date.now();
-  const timeout = setTimeout(() => controller.abort(), OPENAI_HEALTH_TIMEOUT_MS);
-
-  try {
-    const response = await fetch(`https://api.openai.com/v1/models/${encodeURIComponent(model)}`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
-      signal: controller.signal,
-    });
-
-    const status: ChatHealthStatus = {
-      provider: 'openai',
-      model,
-      configured: true,
-      reachable: endpointReady,
-      providerReachable: response.ok,
-      checkedAt,
-      latencyMs: Date.now() - startedAt,
-    };
-    openAiHealthCache = { checkedAt: now, status };
-    return status;
-  } catch (_error) {
-    const status: ChatHealthStatus = {
-      provider: 'openai',
-      model,
-      configured: true,
-      reachable: endpointReady,
-      providerReachable: false,
-      checkedAt,
-      latencyMs: Date.now() - startedAt,
-    };
-    openAiHealthCache = { checkedAt: now, status };
-    return status;
-  } finally {
-    clearTimeout(timeout);
-  }
+  const status = await probeInferenceHealth(endpointReady);
+  inferenceHealthCache = { checkedAt: now, status };
+  return status;
 }
 
 export async function createServer(): Promise<FastifyInstance> {
@@ -233,6 +239,8 @@ export async function start(): Promise<void> {
   const app = await createServer();
 
   try {
+    await runConfiguredMigrations(app);
+    await waitForDemoWorkspaceProvisioning(app.log);
     await app.listen({ port, host });
     app.log.info(`Server listening on ${host}:${port}`);
     // Start background jobs after the server is listening so startup remains responsive.

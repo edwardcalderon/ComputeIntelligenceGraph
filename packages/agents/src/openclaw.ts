@@ -1,6 +1,5 @@
-import { ChatOpenAI } from '@langchain/openai';
-import { HumanMessage, SystemMessage, AIMessage } from '@langchain/core/messages';
 import { ActionExecutor, ActionType, DESTRUCTIVE_ACTIONS } from './openfang.js';
+import { runChatCompletion, type ChatCompletionMessage } from '@cig/chatbot';
 
 const API_URL = process.env['API_URL'] ?? 'http://localhost:8080';
 
@@ -90,6 +89,13 @@ export interface OpenClawResponse {
   needsClarification: boolean;
   clarifyingQuestion?: string;
   action?: ActionIntent;
+}
+
+interface CompletionInvoker {
+  invoke(
+    messages: ChatCompletionMessage[],
+    options?: { model?: string; temperature?: number; jsonMode?: boolean }
+  ): Promise<{ content: string }>;
 }
 
 const SYSTEM_PROMPT = `You are OpenClaw, an AI assistant specialized in infrastructure resource analysis and graph traversal.
@@ -297,7 +303,7 @@ export class ConversationContext {
 }
 
 export class OpenClawAgent {
-  private llm: ChatOpenAI;
+  private llm: CompletionInvoker;
   private sessions = new Map<string, ConversationContext>();
 
   constructor(
@@ -305,11 +311,17 @@ export class OpenClawAgent {
     private actionExecutor: ActionExecutor | null = null,
     private userId = 'system',
   ) {
-    this.llm = new ChatOpenAI({
-      model: 'gpt-4o-mini',
-      temperature: 0.1,
-      apiKey: process.env['OPENAI_API_KEY'],
-    });
+    this.llm = {
+      invoke: async (messages, options) => {
+        const content = await runChatCompletion({
+          model: options?.model,
+          temperature: options?.temperature ?? 0.1,
+          jsonMode: options?.jsonMode ?? true,
+          messages,
+        });
+        return { content: content ?? '' };
+      },
+    };
   }
 
   private async fetchCostContext(): Promise<string> {
@@ -453,15 +465,16 @@ export class OpenClawAgent {
       ? `${SYSTEM_PROMPT}\n\n${contextBlock}`
       : SYSTEM_PROMPT;
 
-    const langchainMessages = [
-      new SystemMessage(systemContent),
-      ...history.map((m) =>
-        m.role === 'user' ? new HumanMessage(m.content) : new AIMessage(m.content),
-      ),
-      new HumanMessage(input),
+    const messages: ChatCompletionMessage[] = [
+      { role: 'system', content: systemContent },
+      ...history.map((m) => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.content,
+      })),
+      { role: 'user', content: input },
     ];
 
-    const response = await this.llm.invoke(langchainMessages);
+    const response = await this.llm.invoke(messages);
     const raw = typeof response.content === 'string'
       ? response.content
       : JSON.stringify(response.content);
@@ -511,11 +524,13 @@ export class OpenClawAgent {
   }
 
   async generateCypher(naturalLanguage: string): Promise<string> {
-    const messages = [
-      new SystemMessage(
-        "You are a Neo4j Cypher expert. Convert the user's natural language request into a valid Cypher query. Return ONLY the Cypher query, no explanation.",
-      ),
-      new HumanMessage(naturalLanguage),
+    const messages: ChatCompletionMessage[] = [
+      {
+        role: 'system',
+        content:
+          "You are a Neo4j Cypher expert. Convert the user's natural language request into a valid Cypher query. Return ONLY the Cypher query, no explanation.",
+      },
+      { role: 'user', content: naturalLanguage },
     ];
 
     const response = await this.llm.invoke(messages);
@@ -526,17 +541,18 @@ export class OpenClawAgent {
   }
 
   async refineGraph(goal: string, snapshot: GraphRefinementSnapshot): Promise<GraphRefinementProposal> {
-    const messages = [
-      new SystemMessage(GRAPH_REFINEMENT_SYSTEM_PROMPT),
-      new HumanMessage(
-        [
+    const messages: ChatCompletionMessage[] = [
+      { role: 'system', content: GRAPH_REFINEMENT_SYSTEM_PROMPT },
+      {
+        role: 'user',
+        content: [
           `User goal: ${goal.trim()}`,
           '',
           serializeGraphRefinementSnapshot(snapshot),
           '',
           'Return only the JSON object.',
-        ].join('\n')
-      ),
+        ].join('\n'),
+      },
     ];
 
     const response = await this.llm.invoke(messages);

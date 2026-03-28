@@ -2,7 +2,14 @@ import crypto from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import { GraphEngine, GraphQueryEngine, type Resource_Model, type GraphScope } from '@cig/graph';
 import type { GraphDelta, GraphNode, GraphNodeUpdate } from '@cig/sdk';
-import { EmbeddingService, RAGPipeline, VectorStore, type ResourceDoc, type VectorDocument } from '@cig/chatbot';
+import {
+  EmbeddingService,
+  RAGPipeline,
+  VectorStore,
+  resolveInferenceProvider,
+  type ResourceDoc,
+  type VectorDocument,
+} from '@cig/chatbot';
 
 type SemanticLogger = Pick<FastifyBaseLogger, 'info' | 'warn' | 'error'>;
 
@@ -20,8 +27,8 @@ const pipelinePromises = new Map<string, Promise<RAGPipeline | null>>();
 const observedScopes = new Map<string, SemanticScope>();
 const initializedCollections = new Set<string>();
 
-function hasOpenAiKey(): boolean {
-  return Boolean(process.env.OPENAI_API_KEY?.trim());
+function hasEmbeddingProvider(): boolean {
+  return resolveInferenceProvider() !== 'fallback';
 }
 
 function uniqueStrings(values: Array<string | null | undefined>): string[] {
@@ -136,7 +143,7 @@ function rememberSemanticScope(collectionName: string, scope?: SemanticScope): v
 }
 
 async function getPipeline(scope?: SemanticScope, logger?: SemanticLogger): Promise<RAGPipeline | null> {
-  if (!hasOpenAiKey()) {
+  if (!hasEmbeddingProvider()) {
     return null;
   }
 

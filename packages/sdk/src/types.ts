@@ -34,7 +34,7 @@ export interface GraphSourceState {
 }
 
 export interface ChatHealthStatus {
-  provider: "openai" | "fallback";
+  provider: "openai" | "ollama" | "fallback";
   model: string;
   configured: boolean;
   reachable: boolean;

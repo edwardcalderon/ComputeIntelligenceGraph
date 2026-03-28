@@ -41,6 +41,8 @@ let _driver: DatabaseDriver | null = null;
 
 type DatabaseMode = 'postgres' | 'sqlite';
 
+const SELF_HOSTED_SQLITE_FALLBACK_URL = 'sqlite:///var/lib/cig-node/cig.db';
+
 function normalizeQueryResult<T extends QueryResultRow = QueryResultRow>(
   rows: T[],
   rowCount?: number | null
@@ -57,6 +59,10 @@ function getDatabaseUrl(): string {
   const poolerUrl = process.env['SUPABASE_DIRECT_URL_POOLER']?.trim();
   if (poolerUrl) {
     return poolerUrl;
+  }
+
+  if (process.env['CIG_AUTH_MODE'] === 'self-hosted' || process.env['CIG_DEMO_MODE'] === 'true') {
+    return process.env['CIG_SELF_HOSTED_DATABASE_URL']?.trim() || SELF_HOSTED_SQLITE_FALLBACK_URL;
   }
 
   if (isProductionEnvironment()) {
@@ -97,7 +103,8 @@ function resolveDatabaseMode(databaseUrl: string): DatabaseMode {
   if (!databaseUrl) {
     throw new Error(
       'No database URL configured. Set DATABASE_URL or SUPABASE_DIRECT_URL_POOLER for production, ' +
-        'SUPABASE_DIRECT_URL or SUPABASE_DIRECT_URL_POOLER for local Supabase development, or an explicit sqlite:// URL for offline relay mode.'
+        'SUPABASE_DIRECT_URL or SUPABASE_DIRECT_URL_POOLER for local Supabase development, or an explicit sqlite:// URL for offline relay mode. ' +
+        'Self-hosted and demo installs default to sqlite:///var/lib/cig-node/cig.db when no database URL is supplied.'
     );
   }
 

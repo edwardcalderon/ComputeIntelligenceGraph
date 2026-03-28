@@ -1,6 +1,6 @@
-import { OpenAIEmbeddings } from '@langchain/openai';
 import { VectorStore, VectorDocument } from './vectordb';
 import { ChatMessage } from './types';
+import { runEmbedding } from './inference';
 
 export interface ResourceDoc {
   id: string;
@@ -24,17 +24,13 @@ function buildResourceText(resource: ResourceDoc): string {
 }
 
 export class EmbeddingService {
-  private embeddings: OpenAIEmbeddings;
-
-  constructor() {
-    this.embeddings = new OpenAIEmbeddings({
-      model: 'text-embedding-3-small',
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-  }
-
   async embedText(text: string): Promise<number[]> {
-    return this.embeddings.embedQuery(text);
+    const embedding = await runEmbedding({ input: text });
+    if (!embedding) {
+      throw new Error('No embedding provider is configured.');
+    }
+
+    return embedding;
   }
 
   async embedResource(resource: ResourceDoc): Promise<number[]> {

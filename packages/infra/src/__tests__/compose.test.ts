@@ -50,6 +50,11 @@ const SELF_HOSTED_MANIFEST: SetupManifest = {
   controlPlaneEndpoint: 'http://localhost:3003',
 };
 
+const SELF_HOSTED_DEMO_MANIFEST: SetupManifest = {
+  ...SELF_HOSTED_MANIFEST,
+  isDemo: true,
+};
+
 const NODE_IDENTITY: NodeIdentity = {
   nodeId: 'node-uuid-5678',
   privateKey: 'priv-key-base64',
@@ -129,14 +134,31 @@ describe('generateComposeFile — full profile', () => {
 describe('generateComposeFile — self-hosted', () => {
   it('includes api and dashboard services', () => {
     const yaml = generateComposeFile(SELF_HOSTED_MANIFEST, 'core');
+    expect(yaml).toContain('  chroma:');
     expect(yaml).toContain('  api:');
     expect(yaml).toContain('  dashboard:');
   });
 
   it('exposes expected ports for api and dashboard', () => {
     const yaml = generateComposeFile(SELF_HOSTED_MANIFEST, 'core');
+    expect(yaml).toContain('"8000:8000"');
     expect(yaml).toContain('"3003:3003"');
     expect(yaml).toContain('"3000:3000"');
+  });
+
+  it('mounts a local sqlite data volume and configures the local database URL', () => {
+    const yaml = generateComposeFile(SELF_HOSTED_MANIFEST, 'core');
+    expect(yaml).toContain('api-data:/var/lib/cig-node');
+    expect(yaml).toContain('chroma-data:/chroma/chroma');
+    expect(yaml).toContain('DATABASE_URL=${DATABASE_URL:-sqlite:///var/lib/cig-node/cig.db}');
+    expect(yaml).toContain('CHROMA_URL=${CHROMA_URL:-http://chroma:8000}');
+    expect(yaml).toContain('CIG_AUTO_MIGRATE=${CIG_AUTO_MIGRATE:-true}');
+  });
+
+  it('mounts demo mock databases into cartography when demo mode is enabled', () => {
+    const yaml = generateComposeFile(SELF_HOSTED_DEMO_MANIFEST, 'core');
+    expect(yaml).toContain('./mock-dbs:/opt/cig-node/mock-dbs:ro');
+    expect(yaml).toContain('cartography:');
   });
 });
 
@@ -195,5 +217,25 @@ describe('generateEnvFile — GCP manifest', () => {
   it('sets cloud provider to gcp', () => {
     const env = generateEnvFile(GCP_MANIFEST, NODE_IDENTITY);
     expect(env).toContain('CIG_CLOUD_PROVIDER=gcp');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// generateEnvFile — self-hosted
+// ---------------------------------------------------------------------------
+
+describe('generateEnvFile — self-hosted manifest', () => {
+  it('includes local database and demo-ready runtime configuration', () => {
+    const env = generateEnvFile(SELF_HOSTED_MANIFEST, NODE_IDENTITY);
+    expect(env).toContain('CIG_AUTH_MODE=self-hosted');
+    expect(env).toContain('DATABASE_URL=sqlite:///var/lib/cig-node/cig.db');
+    expect(env).toContain('CHROMA_URL=http://chroma:8000');
+    expect(env).toContain('CIG_AUTO_MIGRATE=true');
+  });
+
+  it('enables demo mode when requested', () => {
+    const env = generateEnvFile(SELF_HOSTED_DEMO_MANIFEST, NODE_IDENTITY);
+    expect(env).toContain('CIG_DEMO_MODE=true');
+    expect(env).toContain('CIG_CLOUD_PROVIDER=mock');
   });
 });

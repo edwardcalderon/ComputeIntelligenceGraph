@@ -106,6 +106,10 @@ const FULL_EXTRA_SERVICES = `
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_PASSWORD=\${NEO4J_PASSWORD}
       - CIG_CONTROL_PLANE=\${CIG_CONTROL_PLANE_ENDPOINT}
+      - CIG_INFERENCE_PROVIDER=\${CIG_INFERENCE_PROVIDER:-}
+      - OLLAMA_BASE_URL=\${OLLAMA_BASE_URL:-}
+      - OLLAMA_CHAT_MODEL=\${OLLAMA_CHAT_MODEL:-llama3.2:3b}
+      - OLLAMA_EMBEDDING_MODEL=\${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text-v2-moe}
 
   chroma:
     image: ghcr.io/cig/chroma:\${CIG_VERSION}
@@ -120,11 +124,35 @@ const FULL_EXTRA_SERVICES = `
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_PASSWORD=\${NEO4J_PASSWORD}
       - CHROMA_URI=http://chroma:8000
-      - CIG_CONTROL_PLANE=\${CIG_CONTROL_PLANE_ENDPOINT}`;
+      - CIG_CONTROL_PLANE=\${CIG_CONTROL_PLANE_ENDPOINT}
+      - CIG_INFERENCE_PROVIDER=\${CIG_INFERENCE_PROVIDER:-}
+      - OLLAMA_BASE_URL=\${OLLAMA_BASE_URL:-}
+      - OLLAMA_CHAT_MODEL=\${OLLAMA_CHAT_MODEL:-llama3.2:3b}
+      - OLLAMA_EMBEDDING_MODEL=\${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text-v2-moe}`;
 
 // ---------------------------------------------------------------------------
 // Additional services for self-hosted profile
 // ---------------------------------------------------------------------------
+
+const SELF_HOSTED_CHROMA_SERVICE = `
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+
+  chroma:
+    image: chromadb/chroma:0.5.0
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma-data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE`;
 
 const SELF_HOSTED_EXTRA_SERVICES = `
   api:
@@ -132,13 +160,24 @@ const SELF_HOSTED_EXTRA_SERVICES = `
     restart: unless-stopped
     ports:
       - "3003:3003"
+    volumes:
+      - api-data:/var/lib/cig-node
     environment:
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_PASSWORD=\${NEO4J_PASSWORD}
-      - DATABASE_URL=\${DATABASE_URL}
+      - DATABASE_URL=\${DATABASE_URL:-sqlite:///var/lib/cig-node/cig.db}
+      - CHROMA_URL=\${CHROMA_URL:-http://chroma:8000}
+      - CIG_INFERENCE_PROVIDER=\${CIG_INFERENCE_PROVIDER:-ollama}
+      - OLLAMA_BASE_URL=\${OLLAMA_BASE_URL:-http://ollama:11434/v1}
+      - OLLAMA_CHAT_MODEL=\${OLLAMA_CHAT_MODEL:-llama3.2:3b}
+      - OLLAMA_EMBEDDING_MODEL=\${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text-v2-moe}
+      - CIG_AUTH_MODE=self-hosted
+      - CIG_AUTO_MIGRATE=\${CIG_AUTO_MIGRATE:-true}
       - CHROMA_URI=http://chroma:8000
     depends_on:
+      - ollama
       - neo4j
+      - chroma
 
   dashboard:
     image: ghcr.io/cig/dashboard:\${CIG_VERSION}
@@ -156,11 +195,12 @@ const SELF_HOSTED_EXTRA_SERVICES = `
 
 function buildVolumes(profile: 'core' | 'discovery' | 'full', selfHosted: boolean): string {
   const volumes: string[] = ['  neo4j-data:'];
-  if (profile === 'full') {
+  if (profile === 'full' || selfHosted) {
     volumes.push('  chroma-data:');
   }
   if (selfHosted) {
-    volumes.push('  postgres-data:');
+    volumes.push('  api-data:');
+    volumes.push('  ollama-data:');
   }
   return volumes.join('\n');
 }
@@ -193,15 +233,14 @@ export function generateComposeFile(
   }
 
   if (selfHosted) {
+    if (profile !== 'full') {
+      services += SELF_HOSTED_CHROMA_SERVICE;
+    }
     services += SELF_HOSTED_EXTRA_SERVICES;
   }
 
   if (manifest.isDemo) {
-    // Inject mock-dbs mount into discovery-worker and graph-writer
-    services = services.replace(
-      '    depends_on:',
-      '    volumes:\n      - ./mock-dbs:/opt/cig-node/mock-dbs:ro\n    depends_on:'
-    );
+    services = injectDemoMockDbMount(services);
   }
 
   const volumes = buildVolumes(profile, selfHosted);
@@ -215,6 +254,13 @@ export function generateComposeFile(
     volumes,
     '',
   ].join('\n');
+}
+
+function injectDemoMockDbMount(services: string): string {
+  return services.replace(
+    /(  cartography:\n[\s\S]*?    environment:\n[\s\S]*?      - NEO4J_PASSWORD=\$\{NEO4J_PASSWORD\}\n)/,
+    '$1    volumes:\n      - ./mock-dbs:/opt/cig-node/mock-dbs:ro\n'
+  );
 }
 
 /**
@@ -254,6 +300,19 @@ export function generateEnvFile(
     lines.push('# Demo mode configuration');
     lines.push('CIG_DEMO_MODE=true');
     lines.push('CIG_CLOUD_PROVIDER=mock');
+    lines.push('');
+  }
+
+  if (manifest.targetMode === 'host') {
+    lines.push('# Self-hosted local database configuration');
+    lines.push('CIG_AUTH_MODE=self-hosted');
+    lines.push('DATABASE_URL=sqlite:///var/lib/cig-node/cig.db');
+    lines.push('CHROMA_URL=http://chroma:8000');
+    lines.push('CIG_INFERENCE_PROVIDER=ollama');
+    lines.push('OLLAMA_BASE_URL=http://ollama:11434/v1');
+    lines.push('OLLAMA_CHAT_MODEL=llama3.2:3b');
+    lines.push('OLLAMA_EMBEDDING_MODEL=nomic-embed-text-v2-moe');
+    lines.push('CIG_AUTO_MIGRATE=true');
     lines.push('');
   }
 
