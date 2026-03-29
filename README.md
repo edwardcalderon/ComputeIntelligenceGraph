@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="package.json"><img src="https://img.shields.io/badge/version-0.3.1-blue.svg" alt="Version" /></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/version-0.3.2-blue.svg" alt="Version" /></a>
   <a href="package.json"><img src="https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen.svg" alt="Node" /></a>
   <a href="package.json"><img src="https://img.shields.io/badge/pnpm-%3E%3D9.0.0-orange.svg" alt="pnpm" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /></a>
@@ -35,15 +35,12 @@
 - Deployment: [docs/deployment/README.md](docs/deployment/README.md)
 - Authentication: [docs/authentication/README.md](docs/authentication/README.md)
 
-## 📋 Latest Changes (v0.3.1)
+## 📋 Latest Changes (v0.3.2)
 
 ### Detected changes
-- packages: 5 changed file(s)
-  - packages/api/src/__tests__/bootstrap-node.test.ts
-  - packages/api/src/__tests__/bootstrap.test.ts
-  - packages/api/src/bootstrap/request-context.ts
-  - packages/api/src/routes/bootstrap-node.ts
-  - packages/api/src/routes/bootstrap.ts
+- packages: 2 changed file(s)
+  - packages/cli/src/__tests__/install-env.test.ts
+  - packages/cli/src/commands/install.ts
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 

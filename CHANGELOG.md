@@ -1,3 +1,17 @@
+## [0.3.2](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.3.1...v0.3.2) (2026-03-29)
+
+### Detected changes
+- packages: 2 changed file(s)
+  - packages/cli/src/__tests__/install-env.test.ts
+  - packages/cli/src/commands/install.ts
+
+
+## [0.3.2](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.3.1...v0.3.2) (2026-03-29)
+
+
+
+
+
 ## [0.3.1](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.3.0...v0.3.1) (2026-03-29)
 
 ### Detected changes
