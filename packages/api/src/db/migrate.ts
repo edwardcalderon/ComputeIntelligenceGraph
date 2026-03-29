@@ -21,6 +21,11 @@ const DEFAULT_MIGRATIONS_DIR = path.join(__dirname, 'migrations');
 // The newsletter table stays Supabase/Postgres-backed, so self-hosted SQLite
 // skips the policy migration instead of trying to replay a server-only feature.
 const SQLITE_INCOMPATIBLE_MIGRATIONS = new Set(['007_newsletter_unsubscribe.sql']);
+// 004 was republished with managed_nodes.updated_at after v0.2.99. Allow the
+// original checksum to keep older databases on the upgrade path.
+const LEGACY_COMPATIBLE_MIGRATION_CHECKSUMS = new Map<string, Set<string>>([
+  ['004_cig_node_onboarding.sql', new Set(['799a1b3f'])],
+]);
 
 export function resolveMigrationsDirectory(directory?: string): string {
   return directory ? path.resolve(directory) : DEFAULT_MIGRATIONS_DIR;
@@ -52,6 +57,32 @@ function buildChecksum(sql: string): string {
     hash = (hash * 31 + sql.charCodeAt(index)) >>> 0;
   }
   return hash.toString(16).padStart(8, '0');
+}
+
+function isLegacyCompatibleMigration(fileName: string, checksum: string): boolean {
+  return LEGACY_COMPATIBLE_MIGRATION_CHECKSUMS.get(fileName)?.has(checksum) ?? false;
+}
+
+async function columnExists(tableName: string, columnName: string): Promise<boolean> {
+  if (isPostgresDatabase()) {
+    const result = await query<{ column_exists: boolean }>(
+      `
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = $1
+          AND column_name = $2
+      ) AS column_exists
+      `,
+      [tableName, columnName]
+    );
+
+    return result.rows[0]?.column_exists ?? false;
+  }
+
+  const result = await query<{ name: string }>(`PRAGMA table_info(${tableName})`);
+  return result.rows.some((row) => row.name === columnName);
 }
 
 async function prepareLegacyUsersTableIfNeeded(
@@ -106,10 +137,22 @@ export async function applyMigrations(
     if (existing.rowCount > 0) {
       const appliedMigration = existing.rows[0]!;
       if (appliedMigration.checksum !== checksum) {
+        if (isLegacyCompatibleMigration(fileName, appliedMigration.checksum)) {
+          skipped.push(fileName);
+          continue;
+        }
         throw new Error(
           `Migration checksum mismatch for ${fileName}. Existing checksum ${appliedMigration.checksum} does not match ${checksum}.`
         );
       }
+      skipped.push(fileName);
+      continue;
+    }
+
+    if (
+      fileName === '008_managed_nodes_updated_at.sql' &&
+      (await columnExists('managed_nodes', 'updated_at'))
+    ) {
       skipped.push(fileName);
       continue;
     }

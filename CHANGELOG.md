@@ -1,3 +1,18 @@
+## [0.2.101](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.100...v0.2.101) (2026-03-29)
+
+### Detected changes
+- packages: 3 changed file(s)
+  - packages/api/src/db/migrate.test.ts
+  - packages/api/src/db/migrate.ts
+  - packages/api/src/db/migrations/008_managed_nodes_updated_at.sql
+
+
+## [0.2.101](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.100...v0.2.101) (2026-03-29)
+
+
+
+
+
 ## [0.2.100](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.99...v0.2.100) (2026-03-29)
 
 ### Detected changes

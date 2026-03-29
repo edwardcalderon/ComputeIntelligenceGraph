@@ -1,6 +1,6 @@
 {
   "name": "@cig/discovery",
-  "version": "0.2.100",
+  "version": "0.2.101",
   "description": "CIG infrastructure discovery orchestrator",
   "files": [
     "dist"

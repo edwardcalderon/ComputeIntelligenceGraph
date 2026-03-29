@@ -180,4 +180,67 @@ describe('db migration runner', () => {
     expect(widgets.rows[0]?.payload).toBe('{}');
     expect(widgets.rows[0]?.created_at).toBeTruthy();
   });
+
+  it('allows legacy node onboarding checksums to upgrade through the new managed_nodes timestamp migration', async () => {
+    process.env.DATABASE_URL = `sqlite://${databasePath}`;
+    await import('node:fs/promises').then(({ mkdir }) =>
+      mkdir(migrationsDir, { recursive: true })
+    );
+
+    await writeFile(
+      path.join(migrationsDir, '004_cig_node_onboarding.sql'),
+      `
+      CREATE TABLE managed_nodes (
+        id TEXT PRIMARY KEY
+      );
+      `,
+      'utf8'
+    );
+
+    await writeFile(
+      path.join(migrationsDir, '008_managed_nodes_updated_at.sql'),
+      `
+      ALTER TABLE managed_nodes ADD COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+      `,
+      'utf8'
+    );
+
+    vi.resetModules();
+
+    const [{ applyMigrations }, { query }] = await Promise.all([
+      import('./migrate.js'),
+      import('./client.js'),
+    ]);
+
+    await query(`
+      CREATE TABLE schema_migrations (
+        name TEXT PRIMARY KEY,
+        checksum TEXT NOT NULL,
+        applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await query('CREATE TABLE managed_nodes (id TEXT PRIMARY KEY)');
+    await query('INSERT INTO schema_migrations (name, checksum) VALUES (?, ?)', [
+      '004_cig_node_onboarding.sql',
+      '799a1b3f',
+    ]);
+
+    const result = await applyMigrations({ directory: migrationsDir });
+
+    expect(result.applied).toEqual(['008_managed_nodes_updated_at.sql']);
+    expect(result.skipped).toEqual(['004_cig_node_onboarding.sql']);
+
+    await query('INSERT INTO managed_nodes (id) VALUES (?)', ['node-1']);
+
+    const nodes = await query<{ id: string; updated_at: string }>(
+      'SELECT id, updated_at FROM managed_nodes'
+    );
+
+    expect(nodes.rows).toEqual([
+      {
+        id: 'node-1',
+        updated_at: expect.any(String),
+      },
+    ]);
+  });
 });
