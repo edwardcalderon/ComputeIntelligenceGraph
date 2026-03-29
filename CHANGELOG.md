@@ -1,3 +1,18 @@
+## [0.2.102](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.101...v0.2.102) (2026-03-29)
+
+### Detected changes
+- packages: 3 changed file(s)
+  - packages/graph/src/engine.test.ts
+  - packages/graph/src/queries.ts
+  - packages/graph/src/transitive-deps.property.test.ts
+
+
+## [0.2.102](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.101...v0.2.102) (2026-03-29)
+
+
+
+
+
 ## [0.2.101](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.100...v0.2.101) (2026-03-29)
 
 ### Detected changes

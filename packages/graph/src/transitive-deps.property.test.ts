@@ -52,7 +52,7 @@ function makeChainSession(nodeIds: [string, string, string, string]) {
 
   return {
     run: vi.fn().mockImplementation((_query: string, params: { depth: number }) => {
-      const depth = params.depth;
+      const depth = Number(params.depth);
       const results: ReturnType<typeof makeRecord>[] = [];
       if (depth >= 1) results.push(makeRecord(b));
       if (depth >= 2) results.push(makeRecord(c));
@@ -176,7 +176,7 @@ describe('Property 8: Transitive Dependency Resolution', () => {
 
           // Verify the session was called with capped depth of 3
           const [, params] = mockSession.run.mock.calls[0];
-          expect(params.depth).toBe(3);
+          expect(params.depth.toNumber()).toBe(3);
         }
       ),
       { numRuns: 50 }

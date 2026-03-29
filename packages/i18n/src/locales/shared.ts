@@ -136,7 +136,7 @@ const en: TranslationCatalog = {
   "legal.privacy.sections.use.body": "We use data to sign users in, render the dashboard, remember preferences, and improve reliability and safety.",
   "legal.privacy.sections.share.title": "Sharing and retention",
   "legal.privacy.sections.share.body": "We do not sell personal data. We only share data with the services required to run CIG and retain it only as long as needed.",
-  "legal.privacy.note": "If you have a privacy question, open an issue or contact the team through the deployment channel.",
+  "legal.privacy.note": "For the complete Privacy Policy including data retention, your rights, and contact details, read the full policy linked above.",
   "legal.terms.eyebrow": "Terms of Service",
   "legal.terms.title": "Terms",
   "legal.terms.description": "Basic rules for using CIG.",
@@ -146,12 +146,13 @@ const en: TranslationCatalog = {
   "legal.terms.sections.use.body": "Do not use CIG to compromise systems, bypass controls, or violate applicable laws and policies.",
   "legal.terms.sections.changes.title": "Changes",
   "legal.terms.sections.changes.body": "We may update these terms when the product or its legal requirements change. Continued use means you accept the updated terms.",
-  "legal.terms.note": "These pages are intentionally minimal. Please review the source repository or deployment notes for the current legal owner.",
+  "legal.terms.note": "For the complete Terms of Service including liability, indemnification, and dispute resolution, read the full policy linked above.",
   "theme.switchToLight": "Switch to light mode",
   "theme.switchToDark": "Switch to dark mode",
   "locale.en": "English",
   "locale.es": "Español",
-  "locale.zh": "中文"
+  "locale.zh": "中文",
+  "legal.fullPolicy": "Full policy →"
 };
 
 const es: TranslationCatalog = {
@@ -289,7 +290,7 @@ const es: TranslationCatalog = {
   "legal.privacy.sections.use.body": "Usamos los datos para iniciar sesión, mostrar el panel, recordar preferencias y mejorar la confiabilidad y la seguridad.",
   "legal.privacy.sections.share.title": "Compartición y retención",
   "legal.privacy.sections.share.body": "No vendemos datos personales. Solo compartimos datos con los servicios necesarios para ejecutar CIG y los conservamos solo el tiempo necesario.",
-  "legal.privacy.note": "Si tienes una pregunta de privacidad, abre un issue o contacta al equipo por el canal de despliegue.",
+  "legal.privacy.note": "Para la Política de Privacidad completa, incluyendo retención de datos, tus derechos y datos de contacto, lee la política completa en el enlace de arriba.",
   "legal.terms.eyebrow": "Términos del servicio",
   "legal.terms.title": "Términos",
   "legal.terms.description": "Reglas básicas para usar CIG.",
@@ -299,12 +300,13 @@ const es: TranslationCatalog = {
   "legal.terms.sections.use.body": "No uses CIG para comprometer sistemas, evadir controles ni violar leyes o políticas aplicables.",
   "legal.terms.sections.changes.title": "Cambios",
   "legal.terms.sections.changes.body": "Podemos actualizar estos términos cuando cambie el producto o sus requisitos legales. El uso continuado implica la aceptación de los términos actualizados.",
-  "legal.terms.note": "Estas páginas son deliberadamente mínimas. Revisa el repositorio o las notas de despliegue para conocer al responsable legal actual.",
+  "legal.terms.note": "Para los Términos de Servicio completos, incluyendo responsabilidad, indemnización y resolución de disputas, lee la política completa en el enlace de arriba.",
   "theme.switchToLight": "Cambiar a modo claro",
   "theme.switchToDark": "Cambiar a modo oscuro",
   "locale.en": "English",
   "locale.es": "Español",
-  "locale.zh": "中文"
+  "locale.zh": "中文",
+  "legal.fullPolicy": "Política completa →"
 };
 
 const zh: TranslationCatalog = {
@@ -442,7 +444,7 @@ const zh: TranslationCatalog = {
   "legal.privacy.sections.use.body": "我们使用数据来完成登录、渲染仪表盘、记住偏好，并提升可靠性与安全性。",
   "legal.privacy.sections.share.title": "共享与保留",
   "legal.privacy.sections.share.body": "我们不会出售个人数据。只会与运行 CIG 所必需的服务共享数据，并且仅在必要期间保留。",
-  "legal.privacy.note": "如果你有隐私问题，请提交 issue 或通过部署渠道联系团队。",
+  "legal.privacy.note": "如果你有隐私问题，请提交 issue 或通过部署渠道联系团队。 如需完整隐私政策，请点击上方链接。",
   "legal.terms.eyebrow": "服务条款",
   "legal.terms.title": "条款",
   "legal.terms.description": "使用 CIG 的基本规则。",
@@ -452,12 +454,13 @@ const zh: TranslationCatalog = {
   "legal.terms.sections.use.body": "不要使用 CIG 破坏系统、绕过控制或违反适用的法律和政策。",
   "legal.terms.sections.changes.title": "变更",
   "legal.terms.sections.changes.body": "当产品或法律要求发生变化时，我们可能会更新这些条款。继续使用即表示你接受更新后的条款。",
-  "legal.terms.note": "这些页面保持极简。请查看源码仓库或部署说明以了解当前法律责任方。",
+  "legal.terms.note": "这些页面保持极简。请查看源码仓库或部署说明以了解当前法律责任方。 如需完整服务条款，请点击上方链接。",
   "theme.switchToLight": "切换到浅色模式",
   "theme.switchToDark": "切换到深色模式",
   "locale.en": "English",
   "locale.es": "Español",
-  "locale.zh": "中文"
+  "locale.zh": "中文",
+  "legal.fullPolicy": "完整政策 →"
 };
 
 const catalogs: Record<SupportedLocale, TranslationCatalog> = { en, es, zh };

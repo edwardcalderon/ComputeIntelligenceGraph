@@ -436,6 +436,7 @@ export type TranslationKey =
   | "install.webInstall.versionBadge"
   | "install.webInstall.versionLoading"
   | "install.webInstall.versionUnavailable"
+  | "legal.fullPolicy"
   | "legal.privacy.description"
   | "legal.privacy.eyebrow"
   | "legal.privacy.note"
