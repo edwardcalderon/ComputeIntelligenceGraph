@@ -81,6 +81,27 @@ describe('GET /api/v1/bootstrap/node/status', () => {
   });
 });
 
+describe('POST /api/v1/bootstrap/node/init', () => {
+  it('allows localhost browser origins even when the forwarded IP is a Docker bridge address', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/bootstrap/node/init',
+      headers: {
+        'x-forwarded-for': '172.17.0.1',
+        origin: 'http://localhost:3000',
+        host: 'localhost:3003',
+        referer: 'http://localhost:3000/bootstrap',
+      },
+    });
+
+    expect(res.statusCode).toBe(201);
+    const body = res.json<{ token: string; expiresAt: string; message: string }>();
+    expect(body.token).toHaveLength(32);
+    expect(body.expiresAt).toBeTruthy();
+    expect(body.message).toContain('Bootstrap token generated');
+  });
+});
+
 describe('POST /api/v1/bootstrap/node/complete', () => {
   it('creates an admin account and returns an access token', async () => {
     const token = 'node-bootstrap-token-0000000000000001';

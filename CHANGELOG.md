@@ -1,3 +1,20 @@
+## [0.3.1](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.3.0...v0.3.1) (2026-03-29)
+
+### Detected changes
+- packages: 5 changed file(s)
+  - packages/api/src/__tests__/bootstrap-node.test.ts
+  - packages/api/src/__tests__/bootstrap.test.ts
+  - packages/api/src/bootstrap/request-context.ts
+  - packages/api/src/routes/bootstrap-node.ts
+  - packages/api/src/routes/bootstrap.ts
+
+
+## [0.3.1](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.3.0...v0.3.1) (2026-03-29)
+
+
+
+
+
 # [0.3.0](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.102...v0.3.0) (2026-03-29)
 
 

@@ -16,6 +16,7 @@ import { query } from '../db/client';
 import { generateJwt, Permission } from '../auth';
 import { writeAuditEvent } from '../audit';
 import { getAuthMode, hasAdminAccounts } from '../bootstrap/state';
+import { getClientIp, isLocalBootstrapRequest } from '../bootstrap/request-context';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -23,24 +24,6 @@ import { getAuthMode, hasAdminAccounts } from '../bootstrap/state';
 
 const BCRYPT_ROUNDS = 12;
 const MIN_PASSWORD_LENGTH = 12;
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/** Return the client IP from the Fastify request. */
-function getClientIp(request: FastifyRequest): string {
-  const forwarded = request.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string') {
-    return forwarded.split(',')[0]?.trim() ?? request.ip;
-  }
-  return request.ip;
-}
-
-/** Returns true when the request originates from localhost. */
-function isLocalhost(ip: string): boolean {
-  return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
-}
 
 // ---------------------------------------------------------------------------
 // Localhost-only guard (Task 8.2)
@@ -58,8 +41,7 @@ async function localhostGuard(
     return; // Guard only applies in self-hosted mode
   }
 
-  const ip = getClientIp(request);
-  if (!isLocalhost(ip)) {
+  if (!isLocalBootstrapRequest(request)) {
     reply.status(403).send({
       error: 'Bootstrap endpoints are only accessible from localhost in self-hosted mode',
       code: 'forbidden_origin',

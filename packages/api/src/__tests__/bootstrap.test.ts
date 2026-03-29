@@ -218,6 +218,26 @@ describe('POST /api/v1/bootstrap/validate', () => {
     expect(res.json()).toMatchObject({ valid: true });
   });
 
+  it('allows localhost browser origins even when the forwarded IP is a Docker bridge address', async () => {
+    const token = 'local-browser-origin-token-000000000000';
+    await insertToken(token);
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/bootstrap/validate',
+      headers: {
+        'x-forwarded-for': '172.17.0.1',
+        origin: 'http://localhost:3000',
+        host: 'localhost:3003',
+        referer: 'http://localhost:3000/bootstrap',
+      },
+      payload: { bootstrap_token: token },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ valid: true });
+  });
+
   it('returns 401 for an unknown token', async () => {
     const res = await app.inject({
       method: 'POST',
@@ -412,6 +432,9 @@ describe('Localhost-only guard (self-hosted mode)', () => {
       url: '/api/v1/bootstrap/status',
       headers: {
         'x-forwarded-for': '203.0.113.42',
+        origin: 'https://example.com',
+        referer: 'https://example.com/app',
+        host: 'example.com',
       },
     });
 

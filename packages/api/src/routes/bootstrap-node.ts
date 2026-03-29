@@ -18,6 +18,7 @@ import { query } from '../db/client';
 import { generateJwt, Permission } from '../auth';
 import { requireBootstrapToken } from '../middleware/auth';
 import { getAuthMode, hasAdminAccounts } from '../bootstrap/state';
+import { isLocalBootstrapRequest } from '../bootstrap/request-context';
 import type { BootstrapTokenRecord } from '../db/schema';
 
 // ---------------------------------------------------------------------------
@@ -28,26 +29,9 @@ const BCRYPT_ROUNDS = 10;
 const MIN_PASSWORD_LENGTH = 12;
 const BOOTSTRAP_TTL_MS = 30 * 60 * 1000; // 30 minutes from first Dashboard access
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function getClientIp(request: FastifyRequest): string {
-  const forwarded = request.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string') {
-    return forwarded.split(',')[0]?.trim() ?? request.ip;
-  }
-  return request.ip;
-}
-
-function isLocalhost(ip: string): boolean {
-  return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
-}
-
 /** localhost-only guard for the init endpoint */
 async function localhostOnly(request: FastifyRequest, reply: FastifyReply): Promise<void> {
-  const ip = getClientIp(request);
-  if (!isLocalhost(ip)) {
+  if (!isLocalBootstrapRequest(request)) {
     return reply.status(403).send({
       error: 'This endpoint is only accessible from localhost',
       code: 'forbidden_origin',
