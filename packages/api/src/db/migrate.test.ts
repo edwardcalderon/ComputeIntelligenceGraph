@@ -134,4 +134,50 @@ describe('db migration runner', () => {
     );
     expect(widgetCount.rows[0]?.count).toBe(2);
   });
+
+  it('normalizes postgres-only migration syntax for sqlite installs', async () => {
+    process.env.DATABASE_URL = `sqlite://${databasePath}`;
+    await import('node:fs/promises').then(({ mkdir }) =>
+      mkdir(migrationsDir, { recursive: true })
+    );
+
+    await writeFile(
+      path.join(migrationsDir, '001_sqlite_compat.sql'),
+      `
+      CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+      CREATE TABLE widgets (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+
+      CREATE POLICY "widgets_select" ON widgets FOR SELECT USING (true);
+      `,
+      'utf8'
+    );
+
+    vi.resetModules();
+
+    const [{ applyMigrations }, { query }] = await Promise.all([
+      import('./migrate.js'),
+      import('./client.js'),
+    ]);
+
+    const result = await applyMigrations({ directory: migrationsDir });
+
+    expect(result.applied).toEqual(['001_sqlite_compat.sql']);
+    expect(result.skipped).toEqual([]);
+
+    await query('INSERT INTO widgets DEFAULT VALUES');
+
+    const widgets = await query<{ id: string; payload: string; created_at: string }>(
+      'SELECT id, payload, created_at FROM widgets'
+    );
+
+    expect(widgets.rows).toHaveLength(1);
+    expect(widgets.rows[0]?.id).toMatch(/^[0-9a-f-]{36}$/i);
+    expect(widgets.rows[0]?.payload).toBe('{}');
+    expect(widgets.rows[0]?.created_at).toBeTruthy();
+  });
 });

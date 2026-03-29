@@ -1,3 +1,20 @@
+## [0.2.100](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.99...v0.2.100) (2026-03-29)
+
+### Detected changes
+- packages: 5 changed file(s)
+  - packages/api/src/db/client.ts
+  - packages/api/src/db/migrate.test.ts
+  - packages/api/src/db/migrate.ts
+  - packages/api/src/db/migrations/004_cig_node_onboarding.sql
+  - packages/api/src/db/schema.ts
+
+
+## [0.2.100](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.99...v0.2.100) (2026-03-29)
+
+
+
+
+
 ## [0.2.99](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.98...v0.2.99) (2026-03-28)
 
 ### Detected changes

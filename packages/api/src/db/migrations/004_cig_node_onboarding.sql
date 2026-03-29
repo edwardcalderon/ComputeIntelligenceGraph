@@ -65,7 +65,8 @@ CREATE TABLE IF NOT EXISTS managed_nodes (
   last_seen_at    TIMESTAMPTZ,
   permission_tier INTEGER NOT NULL DEFAULT 0
                     CHECK (permission_tier BETWEEN 0 AND 4),
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX IF NOT EXISTS managed_nodes_user_id_idx   ON managed_nodes (user_id);

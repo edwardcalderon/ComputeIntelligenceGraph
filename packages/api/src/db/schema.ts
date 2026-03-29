@@ -232,6 +232,7 @@ export interface ManagedNode {
   last_seen_at: Date | null;
   permission_tier: 0 | 1 | 2 | 3 | 4;
   created_at: Date;
+  updated_at: Date;
 }
 
 // node_identity_records
@@ -304,7 +305,7 @@ export interface OnboardingAuditEvent {
 export type NewOnboardingIntent = Omit<OnboardingIntent, 'created_at' | 'updated_at' | 'status'>;
 export type NewSetupManifestRecord = Omit<SetupManifestRecord, 'created_at'>;
 export type NewEnrollmentTokenRecord = Omit<EnrollmentTokenRecord, 'created_at' | 'used_at'>;
-export type NewManagedNode = Omit<ManagedNode, 'created_at' | 'status' | 'last_seen_at'>;
+export type NewManagedNode = Omit<ManagedNode, 'created_at' | 'updated_at' | 'status' | 'last_seen_at'>;
 export type NewNodeIdentityRecord = Omit<NodeIdentityRecord, 'created_at' | 'revoked_at'>;
 export type NewBootstrapTokenRecord = Omit<BootstrapTokenRecord, 'created_at' | 'first_accessed_at' | 'used_at'>;
 export type NewHeartbeatRecord = Omit<HeartbeatRecord, 'received_at'>;

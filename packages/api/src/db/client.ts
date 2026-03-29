@@ -12,7 +12,8 @@
  * Exports a single `query(sql, params?)` function that works for both.
  */
 
-import type { QueryResultRow } from "pg";
+import { randomUUID } from 'node:crypto';
+import type { QueryResultRow } from 'pg';
 
 // ---------------------------------------------------------------------------
 // Shared query result type
@@ -265,6 +266,8 @@ function buildSqliteDriver(databaseUrl: string): DatabaseDriver {
   const Database = require('better-sqlite3') as typeof import('better-sqlite3');
   const dbPath = databaseUrl.replace(/^sqlite:\/\//, '') || ':memory:';
   const db = new Database(dbPath);
+  // Match the pgcrypto default used by the shared migrations.
+  db.function('gen_random_uuid', () => randomUUID());
 
   // Enable WAL mode for better concurrent read performance
   db.pragma('journal_mode = WAL');
@@ -405,11 +408,37 @@ function splitStatements(sql: string): string[] {
   return statements;
 }
 
+function normalizeSqliteMigrationStatement(sql: string): string | null {
+  const trimmed = sql.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (/^CREATE\s+EXTENSION\b/i.test(trimmed)) {
+    return null;
+  }
+
+  if (/^CREATE\s+POLICY\b/i.test(trimmed)) {
+    return null;
+  }
+
+  return trimmed
+    .replace(/\bDEFAULT\s+gen_random_uuid\(\)/gi, 'DEFAULT (gen_random_uuid())')
+    .replace(/\bDEFAULT\s+now\(\)/gi, 'DEFAULT CURRENT_TIMESTAMP')
+    .replace(/::jsonb\b/gi, '');
+}
+
 export async function runMigration(sql: string, executor: QueryFn = query): Promise<void> {
   // Split on statement boundaries and run each non-empty statement
   const statements = splitStatements(sql);
+  const usesPostgres = isPostgresDatabase();
 
   for (const stmt of statements) {
-    await executor(stmt);
+    const normalizedStatement = usesPostgres ? stmt : normalizeSqliteMigrationStatement(stmt);
+    if (!normalizedStatement) {
+      continue;
+    }
+
+    await executor(normalizedStatement);
   }
 }

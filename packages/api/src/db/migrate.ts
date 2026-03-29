@@ -18,6 +18,9 @@ export interface ApplyMigrationsOptions {
 }
 
 const DEFAULT_MIGRATIONS_DIR = path.join(__dirname, 'migrations');
+// The newsletter table stays Supabase/Postgres-backed, so self-hosted SQLite
+// skips the policy migration instead of trying to replay a server-only feature.
+const SQLITE_INCOMPATIBLE_MIGRATIONS = new Set(['007_newsletter_unsubscribe.sql']);
 
 export function resolveMigrationsDirectory(directory?: string): string {
   return directory ? path.resolve(directory) : DEFAULT_MIGRATIONS_DIR;
@@ -90,6 +93,10 @@ export async function applyMigrations(
   await ensureSchemaMigrationsTable();
 
   for (const fileName of migrationFiles) {
+    if (!usesPostgres && SQLITE_INCOMPATIBLE_MIGRATIONS.has(fileName)) {
+      continue;
+    }
+
     const fullPath = path.join(migrationsDir, fileName);
     const sql = await readFile(fullPath, 'utf8');
     const checksum = buildChecksum(sql);

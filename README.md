@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="package.json"><img src="https://img.shields.io/badge/version-0.2.99-blue.svg" alt="Version" /></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/version-0.2.100-blue.svg" alt="Version" /></a>
   <a href="package.json"><img src="https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen.svg" alt="Node" /></a>
   <a href="package.json"><img src="https://img.shields.io/badge/pnpm-%3E%3D9.0.0-orange.svg" alt="pnpm" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /></a>
@@ -35,15 +35,15 @@
 - Deployment: [docs/deployment/README.md](docs/deployment/README.md)
 - Authentication: [docs/authentication/README.md](docs/authentication/README.md)
 
-## 📋 Latest Changes (v0.2.99)
+## 📋 Latest Changes (v0.2.100)
 
 ### Detected changes
-- infra: infra/docker/Dockerfile.api
-- packages: 4 changed file(s)
-  - packages/cli/src/commands/install.ts
-  - packages/cli/src/commands/uninstall.ts
-  - packages/infra/src/__tests__/compose.test.ts
-  - packages/infra/src/compose.ts
+- packages: 5 changed file(s)
+  - packages/api/src/db/client.ts
+  - packages/api/src/db/migrate.test.ts
+  - packages/api/src/db/migrate.ts
+  - packages/api/src/db/migrations/004_cig_node_onboarding.sql
+  - packages/api/src/db/schema.ts
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 
