@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { authenticate, authorize, Permission } from '../auth';
+import { getAuthMode } from '../bootstrap/state';
 import {
   buildDemoWorkspaceGraphSnapshot,
   getDemoWorkspaceStatus,
@@ -9,14 +10,20 @@ import {
 const readResources = [authenticate, authorize([Permission.READ_RESOURCES])];
 const manageDemo = [authenticate, authorize([Permission.ADMIN])];
 
+function resolveDemoReadOptions() {
+  return getAuthMode() === 'self-hosted' ? {} : { preHandler: readResources };
+}
+
 interface ProvisionDemoBody {
   force?: boolean;
 }
 
 export async function demoRoutes(app: FastifyInstance): Promise<void> {
+  const demoReadOptions = resolveDemoReadOptions();
+
   app.get(
     '/api/v1/demo/status',
-    { preHandler: readResources },
+    demoReadOptions,
     async (_request: FastifyRequest, reply: FastifyReply) => {
       const state = await getDemoWorkspaceStatus();
       return reply.send({
@@ -29,7 +36,7 @@ export async function demoRoutes(app: FastifyInstance): Promise<void> {
 
   app.get(
     '/api/v1/demo/snapshot',
-    { preHandler: readResources },
+    demoReadOptions,
     async (_request: FastifyRequest, reply: FastifyReply) => {
       const snapshot = await buildDemoWorkspaceGraphSnapshot();
       return reply.send(snapshot);

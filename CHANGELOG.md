@@ -1,3 +1,18 @@
+## [0.3.3](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.3.2...v0.3.3) (2026-03-29)
+
+### Detected changes
+- packages: 3 changed file(s)
+  - packages/api/src/routes/demo.test.ts
+  - packages/api/src/routes/demo.ts
+  - packages/api/src/security-testing.test.ts
+
+
+## [0.3.3](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.3.2...v0.3.3) (2026-03-29)
+
+
+
+
+
 ## [0.3.2](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.3.1...v0.3.2) (2026-03-29)
 
 ### Detected changes

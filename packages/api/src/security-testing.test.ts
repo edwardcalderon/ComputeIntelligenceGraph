@@ -93,6 +93,7 @@ const PROTECTED_ENDPOINTS: Array<{ method: 'GET' | 'POST'; url: string; body?: u
   { method: 'GET', url: '/api/v1/costs/breakdown' },
   { method: 'GET', url: '/api/v1/security/findings' },
   { method: 'GET', url: '/api/v1/security/score' },
+  { method: 'POST', url: '/api/v1/demo/provision', body: { force: true } },
   { method: 'POST', url: '/api/v1/actions/execute', body: { action: 'stop', resourceId: 'r1' } },
 ];
 
