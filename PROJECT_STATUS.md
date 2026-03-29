@@ -1,23 +1,23 @@
 # CIG Project Status
 
 Last updated: 2026-03-29
-Version: 0.2.102
-Latest released tag: `v0.2.102`
+Version: 0.3.0
+Latest released tag: `v0.3.0`
 Status: Active development
 
 ## Current Snapshot
 
-Compute Intelligence Graph is a monorepo for a self-hosted and managed infrastructure intelligence platform covering discovery, graph modeling, querying, cost analysis, security review, dashboard workflows, CLI-driven deployment/setup, and live/demo graph exploration.
+Compute Intelligence Graph is a monorepo for a self-hosted and managed infrastructure intelligence platform covering discovery, graph modeling, querying, cost analysis, security review, dashboard workflows, CLI-driven deployment/setup, self-hosted bootstrap, and live/demo graph exploration.
 
 The current repository state is aligned around these primary surfaces:
 
 - `apps/landing` is the public landing site and authentication entrypoint at `https://cig.lat`
-- `apps/dashboard` is the main protected application at `https://app.cig.lat` with graph source switching, 2D/3D graph visualization, and chat workflows
-- `packages/api` is the Fastify API layer for REST, GraphQL, WebSocket, auth, metrics, chat, and graph snapshots
+- `apps/dashboard` is the main protected application at `https://app.cig.lat` with graph source switching, 2D/3D graph visualization, chat workflows, and the self-hosted bootstrap shell
+- `packages/api` is the Fastify API layer for REST, GraphQL, WebSocket, auth, metrics, chat, graph snapshots, and bootstrap completion endpoints
 - `packages/graph` is the Neo4j graph engine
 - `packages/discovery` plus `services/cartography` provide discovery orchestration and inventory collection
 - `packages/chatbot` plus `packages/agents` provide retrieval, reasoning, and action workflows
-- `packages/cli` is the operator and install surface, including demo-data provisioning
+- `packages/cli` is the operator and install surface, including demo-data provisioning and self-hosted bootstrap token seeding
 
 The architecture foundation now explicitly treats:
 
@@ -29,14 +29,7 @@ The architecture foundation now explicitly treats:
 
 ## Release State
 
-The `v0.2.89` patch release completed successfully on 2026-03-27.
-
-Release verification completed during the release workflow:
-
-- `pnpm test`
-- `pnpm --filter @cig/landing build`
-- dashboard container build via `infra/docker/Dockerfile.dashboard`
-- `pnpm --filter @cig/wizard-ui build`
+The current release line is maintained by the version metadata above. The release workflow verifies the repo test suite, landing build, dashboard container build, and wizard-ui build before tagging a new version.
 
 ## Implemented Areas
 
@@ -45,7 +38,7 @@ Release verification completed during the release workflow:
 - Neo4j graph engine with traversal and dependency handling
 - Discovery orchestration and Python Cartography service
 - Chatbot and agent packages for retrieval, query reasoning, semantic indexing, and actions
-- CLI flows for login, install, bootstrap, enroll, connect, demo provisioning, and local state management
+- CLI flows for login, install, bootstrap, enroll, connect, demo provisioning, bootstrap handoff, and local state management
 - Authentication helpers and shared auth/session utilities
 - Infrastructure wrapper and Terraform-backed deployment assets
 - Shared packages for config, i18n, UI primitives, node runtime, and runtime contracts

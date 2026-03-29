@@ -1,6 +1,6 @@
 # Architecture Notes
 
-Last synchronized with the root README and release state on `2026-03-23`.
+Last synchronized with the root README and release state on `2026-03-29`.
 
 ## Foundation Decisions
 

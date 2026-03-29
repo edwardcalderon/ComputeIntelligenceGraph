@@ -36,6 +36,10 @@ Docker Hub becomes the source of truth for the install. It then launches the wiz
 `curl | bash` path and `npm install -g` path use the same binaries and pinned
 container provenance data.
 
+The self-hosted install flow now hands off to the dashboard bootstrap page
+inside the protected app shell, where the first administrator account is
+created after the API seeds the bootstrap token state.
+
 ### Quick links
 
 - Install guide: https://cig.lat/install
@@ -207,6 +211,7 @@ What this does today:
 - starts the local stack with `docker compose up -d`
 - waits for local health endpoints
 - stores installation metadata and a self-hosted connection profile
+- routes the operator through the dashboard bootstrap flow to finish the first-admin setup
 
 Then print the dashboard URL:
 

@@ -2,9 +2,9 @@
  * CIG Node Onboarding — Self-Hosted Bootstrap API Endpoints
  *
  * Routes:
- *   GET  /api/v1/bootstrap/status    — { bootstrapRequired: boolean } based on admin_accounts count
- *   POST /api/v1/bootstrap/init      — localhost-only; generate BootstrapTokenRecord (bcrypt-hashed, 30-min TTL)
- *   POST /api/v1/bootstrap/complete  — requireBootstrapToken; create admin account, invalidate token, return session
+ *   GET  /api/v1/bootstrap/node/status   — { requires_bootstrap: boolean, mode: "managed" | "self-hosted" }
+ *   POST /api/v1/bootstrap/node/init     — localhost-only; generate BootstrapTokenRecord (bcrypt-hashed, 30-min TTL)
+ *   POST /api/v1/bootstrap/node/complete — requireBootstrapToken; create admin account, invalidate token, return session
  *
  * No Authentik dependency — local API handles admin account creation and session management.
  *
@@ -17,6 +17,7 @@ import crypto from 'crypto';
 import { query } from '../db/client';
 import { generateJwt, Permission } from '../auth';
 import { requireBootstrapToken } from '../middleware/auth';
+import { getAuthMode, hasAdminAccounts } from '../bootstrap/state';
 import type { BootstrapTokenRecord } from '../db/schema';
 
 // ---------------------------------------------------------------------------
@@ -61,17 +62,17 @@ async function localhostOnly(request: FastifyRequest, reply: FastifyReply): Prom
 
 export async function bootstrapNodeRoutes(app: FastifyInstance): Promise<void> {
   // ── GET /api/v1/bootstrap/node/status ──────────────────────────────────────
-  // Returns { bootstrapRequired: boolean } based on whether any admin accounts exist.
+  // Returns { requires_bootstrap: boolean, mode } based on whether any admin accounts exist.
   // No auth required — called by Dashboard on first access.
   // Requirements: 13.4, 17.10
   app.get(
     '/api/v1/bootstrap/node/status',
     async (_request: FastifyRequest, reply: FastifyReply) => {
-      const result = await query<{ count: string }>(
-        `SELECT COUNT(*) AS count FROM admin_accounts`
-      );
-      const count = Number(result.rows[0]?.count ?? 0);
-      return reply.send({ bootstrapRequired: count === 0 });
+      const mode = getAuthMode();
+      return reply.send({
+        requires_bootstrap: mode === 'self-hosted' && !(await hasAdminAccounts()),
+        mode,
+      });
     }
   );
 
@@ -85,11 +86,7 @@ export async function bootstrapNodeRoutes(app: FastifyInstance): Promise<void> {
     { preHandler: [localhostOnly] },
     async (_request: FastifyRequest, reply: FastifyReply) => {
       // Check if bootstrap is still required
-      const adminResult = await query<{ count: string }>(
-        `SELECT COUNT(*) AS count FROM admin_accounts`
-      );
-      const adminCount = Number(adminResult.rows[0]?.count ?? 0);
-      if (adminCount > 0) {
+      if (await hasAdminAccounts()) {
         return reply.status(409).send({
           error: 'Bootstrap already completed — admin accounts exist',
           code: 'bootstrap_already_complete',
@@ -137,6 +134,14 @@ export async function bootstrapNodeRoutes(app: FastifyInstance): Promise<void> {
       };
 
       const { username, email, password } = body ?? {};
+
+      if (await hasAdminAccounts()) {
+        return reply.status(409).send({
+          error: 'Bootstrap already completed — admin accounts exist',
+          code: 'bootstrap_already_complete',
+          statusCode: 409,
+        });
+      }
 
       // Password length check first (consistent with existing bootstrap route)
       if (typeof password === 'string' && password.length < MIN_PASSWORD_LENGTH) {

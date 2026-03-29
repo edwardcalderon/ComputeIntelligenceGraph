@@ -13,6 +13,7 @@ import { getMetrics, recordHttpRequest } from './metrics';
 import { startHeartbeatMonitor, stopHeartbeatMonitor } from './jobs/heartbeat-monitor';
 import { startSemanticIndexSync, stopSemanticIndexSync } from './jobs/semantic-index-sync';
 import { ensureDemoWorkspaceProvisioned } from './demo-workspace';
+import { seedSelfHostedBootstrapTokens } from './bootstrap/self-hosted-bootstrap';
 import { applyMigrations } from './db/migrate';
 import { closeDatabase } from './db/client';
 import { resolveCorsOrigins } from './cors';
@@ -215,6 +216,7 @@ export async function start(): Promise<void> {
 
   try {
     await runConfiguredMigrations(app);
+    await seedSelfHostedBootstrapTokens(app.log);
     await waitForDemoWorkspaceProvisioning(app.log);
     await app.listen({ port, host });
     app.log.info(`Server listening on ${host}:${port}`);

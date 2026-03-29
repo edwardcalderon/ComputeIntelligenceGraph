@@ -2,7 +2,7 @@
 
 This document describes the current authentication setup used by CIG and the Authentik resources that make it work. It also calls out the provider-agnostic pattern to follow when adding another social identity source or another relying party.
 
-Repository paths, linked docs, and production-origin references were rechecked against the codebase on `2026-03-23`.
+Repository paths, linked docs, and production-origin references were rechecked against the codebase on `2026-03-29`.
 
 Last audited against the live Authentik tenant on `2026-03-22`.
 

@@ -19,23 +19,26 @@ This page is the implementation snapshot for the CLI and runtime work as it exis
 - Package-local versioning and README guard workflow
 - Command surface for auth, setup, install, enroll, connect, status, open, upgrade, and uninstall
 - Root `install.sh` onboarding wrapper for Linux and macOS
+- Dashboard-hosted self-hosted bootstrap flow for first-admin setup
 
 ### Runtime-oriented groundwork
 
 - `packages/runtime-contracts` defines shared node/profile/permission contracts
 - `packages/node-runtime` exists as a Linux-first runtime skeleton
 - the CLI can stage a runtime bundle with config, identity, and a rendered `systemd` unit file
+- the API now seeds and hashes bootstrap tokens for the dashboard bootstrap handoff
 
 ### API compatibility work
 
 - enrollment accepts client-generated public keys
 - CLI enrollment generates Ed25519 keys locally
+- bootstrap status and completion routes gate the first-admin setup flow
 
 ## What Works End-to-End Today
 
 - publishable CLI package build/test/pack flow
 - local credential and state persistence
-- self-hosted compose generation
+- self-hosted compose generation, bootstrap token seeding, and dashboard bootstrap handoff
 - self-hosted local stack startup attempt via Docker Compose
 - managed login and enrollment request flow
 - interactive `cig setup` onboarding flow
@@ -46,6 +49,7 @@ This page is the implementation snapshot for the CLI and runtime work as it exis
 - managed installs produce a local runtime bundle, but do not install it on a host
 - `status`, `upgrade`, and `uninstall` operate on local saved state, not on a fully managed remote runtime
 - `connect aws` and `connect gcp` store references only; they do not validate real cloud access
+- the CLI still depends on the dashboard and API bootstrap endpoints for first-run self-hosted admin creation
 
 ## What Does Not Exist Yet
 

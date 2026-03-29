@@ -1,10 +1,10 @@
 # Development Notes
 
-Last synchronized with the root README and workspace scripts on `2026-03-23`.
+Last synchronized with the root README and workspace scripts on `2026-03-29`.
 
 ## Prerequisites
 
-- Node.js 20+
+- Node.js 22+
 - pnpm 9+
 - Docker Engine or Docker Desktop
 - Docker Compose
@@ -61,6 +61,8 @@ For scalable and maintainable API work, follow this order:
 4. Only add a dashboard internal route when the browser needs a server-side bridge for cookies, auth state, or protected secrets
 
 Avoid adding new raw `fetch("${NEXT_PUBLIC_API_URL}/api/v1/...")` calls directly in dashboard pages and components when the same call can be represented once in the shared SDK.
+
+The self-hosted bootstrap flow now lives in the dashboard shell. When you touch bootstrap or onboarding code, keep the SDK bootstrap methods and the `/bootstrap` page aligned so the first-run experience continues to work end to end.
 
 ## Validation
 

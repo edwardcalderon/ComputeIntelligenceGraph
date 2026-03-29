@@ -33,4 +33,4 @@ Overview of the current CIG feature set.
 
 - Costs and security summary endpoints
 - Actions, newsletter, and node-management workflows
-- CLI install, enrollment, and demo provisioning
+- CLI install, enrollment, bootstrap, demo provisioning, and dashboard handoff

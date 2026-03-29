@@ -11,16 +11,16 @@ This page mirrors the current repository snapshot so the Docusaurus site stays a
 
 ## Current Release
 
-- Version: `0.2.102`
-- Latest released tag: `v0.2.102`
+- Version: `0.3.0`
+- Latest released tag: `v0.3.0`
 - Status: active development
 
 ## Current Product Surface
 
 - `apps/landing` is the public entrypoint and authentication handoff surface at `https://cig.lat`
-- `apps/dashboard` is the protected application at `https://app.cig.lat`
-- `packages/api` is the canonical Fastify API for REST, GraphQL, WebSocket, chat, graph snapshots, semantic retrieval, and auth bridges
-- `packages/cli` is the operator and install surface, including interactive demo-data provisioning for new installs
+- `apps/dashboard` is the protected application at `https://app.cig.lat` with live/demo graph source switching, 2D/3D graph visualization, chat workflows, and the self-hosted bootstrap shell that shows demo data directly during first-run setup
+- `packages/api` is the canonical Fastify API for REST, GraphQL, WebSocket, chat, graph snapshots, semantic retrieval, auth bridges, and bootstrap completion endpoints
+- `packages/cli` is the operator and install surface, including interactive demo-data provisioning, self-hosted bootstrap token generation, and dashboard handoff for new installs
 - `packages/discovery`, `services/cartography`, `packages/graph`, `packages/chatbot`, and `packages/agents` power discovery, graph indexing, retrieval, and refinement workflows
 
 ## Operating Modes
@@ -30,10 +30,10 @@ This page mirrors the current repository snapshot so the Docusaurus site stays a
 
 ## What Is Implemented
 
-- dashboard resources, graph source switching, 2D/3D graph visualization, costs, security, auth, and chat
-- Fastify API routes for resources, graph snapshots, graph refinement, chat, discovery, costs, security, actions, sessions, newsletter, and node management
+- dashboard resources, graph source switching, 2D/3D graph visualization, costs, security, auth, chat, and the self-hosted bootstrap shell
+- Fastify API routes for resources, graph snapshots, graph refinement, chat, discovery, costs, security, actions, sessions, newsletter, node management, and bootstrap completion
 - Neo4j graph engine and Chroma-backed semantic retrieval
-- CLI login, install, bootstrap, enrollment, connect, demo provisioning, and local state management
+- CLI login, install, bootstrap, enrollment, connect, demo provisioning, dashboard handoff, and local state management
 - discovery orchestration plus Python Cartography ingestion
 - authentication helpers and shared auth/session utilities
 

@@ -1,3 +1,15 @@
+# [0.3.0](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.102...v0.3.0) (2026-03-29)
+
+
+
+
+
+# [0.3.0](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.102...v0.3.0) (2026-03-29)
+
+
+
+
+
 ## [0.2.102](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.2.101...v0.2.102) (2026-03-29)
 
 ### Detected changes

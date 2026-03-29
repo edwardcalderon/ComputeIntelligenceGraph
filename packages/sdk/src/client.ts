@@ -339,7 +339,7 @@ export class CigClient {
   }
 
   getBootstrapStatus(): Promise<BootstrapStatus> {
-    return this.request<BootstrapStatus>("/api/v1/bootstrap/status");
+    return this.request<BootstrapStatus>("/api/v1/bootstrap/node/status");
   }
 
   validateBootstrapToken(token: string): Promise<{ valid: boolean }> {

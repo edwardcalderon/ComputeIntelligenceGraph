@@ -39,17 +39,18 @@ Not supported today:
 
 Supported today:
 
-- bootstrap token generation
+- bootstrap token generation and API seeding
 - compose manifest generation
 - local `docker compose up -d`
 - health polling against the local stack
 - local install-state persistence
+- dashboard bootstrap handoff for first-admin setup
 - initial graph snapshot capture during install, with queued upload once local auth exists
 
 Not supported today:
 
-- hashed bootstrap-token persistence on the API side
 - node-to-local-API runtime sync
+- remote SSH bootstrap or fully managed remote install lifecycle
 - complete separation between stack manifest and node config manifest
 
 ## Install and Run
@@ -204,11 +205,12 @@ Managed mode today:
 
 Self-hosted mode today:
 
-- generates bootstrap token
+- generates bootstrap token and seeds it into the API bootstrap state
 - writes compose files into the install directory
 - starts the compose stack locally
 - waits for health endpoints
 - stores local install state
+- routes the operator through the dashboard bootstrap flow to create the first admin account
 - seeds the initial graph snapshot locally and queues upload until auth is available
 
 ### `cig setup`

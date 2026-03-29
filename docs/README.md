@@ -2,7 +2,7 @@
 
 This directory contains the current project documentation linked from the root README and the supporting references that go with it.
 
-Last synchronized with the root documentation links on `2026-03-27` for `v0.2.89`.
+Last synchronized with the root documentation links on `2026-03-29`.
 
 ## Canonical Entry Points
 

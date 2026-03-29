@@ -15,6 +15,7 @@ import crypto from 'crypto';
 import { query } from '../db/client';
 import { generateJwt, Permission } from '../auth';
 import { writeAuditEvent } from '../audit';
+import { getAuthMode, hasAdminAccounts } from '../bootstrap/state';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -22,7 +23,6 @@ import { writeAuditEvent } from '../audit';
 
 const BCRYPT_ROUNDS = 12;
 const MIN_PASSWORD_LENGTH = 12;
-type AuthMode = 'managed' | 'self-hosted';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -40,10 +40,6 @@ function getClientIp(request: FastifyRequest): string {
 /** Returns true when the request originates from localhost. */
 function isLocalhost(ip: string): boolean {
   return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
-}
-
-function getAuthMode(): AuthMode {
-  return process.env['CIG_AUTH_MODE'] === 'managed' ? 'managed' : 'self-hosted';
 }
 
 // ---------------------------------------------------------------------------
@@ -84,11 +80,10 @@ export async function bootstrapRoutes(app: FastifyInstance): Promise<void> {
     { preHandler: [localhostGuard] },
     async (_request: FastifyRequest, reply: FastifyReply) => {
       const mode = getAuthMode();
-      const result = await query<{ count: number }>(
-        `SELECT COUNT(*) AS count FROM admin_accounts`
-      );
-      const count = Number(result.rows[0]?.count ?? 0);
-      return reply.send({ requires_bootstrap: mode === 'self-hosted' && count === 0, mode });
+      return reply.send({
+        requires_bootstrap: mode === 'self-hosted' && !(await hasAdminAccounts()),
+        mode,
+      });
     }
   );
 
@@ -106,6 +101,14 @@ export async function bootstrapRoutes(app: FastifyInstance): Promise<void> {
           error: 'Missing required field: bootstrap_token',
           code: 'missing_bootstrap_token',
           statusCode: 400,
+        });
+      }
+
+      if (await hasAdminAccounts()) {
+        return reply.status(409).send({
+          error: 'Bootstrap has already been completed',
+          code: 'bootstrap_already_complete',
+          statusCode: 409,
         });
       }
 
@@ -181,6 +184,14 @@ export async function bootstrapRoutes(app: FastifyInstance): Promise<void> {
           error: 'Missing required fields: bootstrap_token, username, email, password',
           code: 'missing_fields',
           statusCode: 400,
+        });
+      }
+
+      if (await hasAdminAccounts()) {
+        return reply.status(409).send({
+          error: 'Bootstrap has already been completed',
+          code: 'bootstrap_already_complete',
+          statusCode: 409,
         });
       }
 

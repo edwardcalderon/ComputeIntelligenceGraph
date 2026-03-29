@@ -1,7 +1,7 @@
 {
-  "version": "0.2.102",
-  "releaseTag": "v0.2.102",
-  "releaseType": "patch",
+  "version": "0.3.0",
+  "releaseTag": "v0.3.0",
+  "releaseType": "minor",
   "buildNumber": null,
-  "releasedAt": "2026-03-29T21:19:00.977Z"
+  "releasedAt": "2026-03-29T22:31:06.233Z"
 }

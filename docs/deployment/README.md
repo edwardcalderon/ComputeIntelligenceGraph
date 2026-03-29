@@ -1,6 +1,6 @@
 # Deployment Notes
 
-Last synchronized with the current release workflow on `2026-03-23`.
+Last synchronized with the current release workflow on `2026-03-29`.
 
 ## Canonical Domains
 

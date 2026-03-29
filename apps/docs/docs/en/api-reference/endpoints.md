@@ -34,6 +34,15 @@ The current API surface is organized around graph, chat, discovery, node-managem
 - `PATCH /api/v1/chat/sessions/:id`
 - `DELETE /api/v1/chat/sessions/:id`
 
+## Bootstrap
+
+- `GET /api/v1/bootstrap/status`
+- `POST /api/v1/bootstrap/validate`
+- `POST /api/v1/bootstrap/complete`
+- `GET /api/v1/bootstrap/node/status`
+- `POST /api/v1/bootstrap/node/init`
+- `POST /api/v1/bootstrap/node/complete`
+
 ## Demo Workspace
 
 - `GET /api/v1/demo/status`

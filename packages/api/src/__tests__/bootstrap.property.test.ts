@@ -87,9 +87,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-  await dbQuery('DELETE FROM bootstrap_tokens');
-  await dbQuery('DELETE FROM admin_accounts');
-  await dbQuery('DELETE FROM audit_events');
+  await resetBootstrapState();
 });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -101,6 +99,12 @@ async function insertToken(token: string): Promise<void> {
     `INSERT INTO bootstrap_tokens (token, expires_at, consumed) VALUES (?, ?, 0)`,
     [token, expiresAt]
   );
+}
+
+async function resetBootstrapState(): Promise<void> {
+  await dbQuery('DELETE FROM bootstrap_tokens');
+  await dbQuery('DELETE FROM admin_accounts');
+  await dbQuery('DELETE FROM audit_events');
 }
 
 /** Build a valid complete payload using the given token and unique identifiers. */
@@ -125,35 +129,41 @@ describe('Property 10: Bootstrap token single-use invariant', () => {
         // Generate a unique run ID to avoid username/email collisions across runs
         fc.uuid(),
         async (runId) => {
-          const token = crypto.randomBytes(16).toString('hex'); // 32-char hex
-          await insertToken(token);
+          await resetBootstrapState();
 
-          const suffix = runId.replace(/-/g, '').slice(0, 12);
-          const payload = completePayload(token, suffix);
+          try {
+            const token = crypto.randomBytes(16).toString('hex'); // 32-char hex
+            await insertToken(token);
 
-          // First call — must succeed with 201 and return tokens
-          const firstRes = await app.inject({
-            method: 'POST',
-            url: '/api/v1/bootstrap/complete',
-            payload,
-          });
-          expect(firstRes.statusCode).toBe(201);
-          const firstBody = firstRes.json<{
-            access_token: string;
-            refresh_token: string;
-          }>();
-          expect(firstBody.access_token).toBeTruthy();
-          expect(firstBody.refresh_token).toBeTruthy();
+            const suffix = runId.replace(/-/g, '').slice(0, 12);
+            const payload = completePayload(token, suffix);
 
-          // Second call with the same token — must return 409 bootstrap_already_complete
-          const secondRes = await app.inject({
-            method: 'POST',
-            url: '/api/v1/bootstrap/complete',
-            payload,
-          });
-          expect(secondRes.statusCode).toBe(409);
-          const secondBody = secondRes.json<{ code: string }>();
-          expect(secondBody.code).toBe('bootstrap_already_complete');
+            // First call — must succeed with 201 and return tokens
+            const firstRes = await app.inject({
+              method: 'POST',
+              url: '/api/v1/bootstrap/complete',
+              payload,
+            });
+            expect(firstRes.statusCode).toBe(201);
+            const firstBody = firstRes.json<{
+              access_token: string;
+              refresh_token: string;
+            }>();
+            expect(firstBody.access_token).toBeTruthy();
+            expect(firstBody.refresh_token).toBeTruthy();
+
+            // Second call with the same token — must return 409 bootstrap_already_complete
+            const secondRes = await app.inject({
+              method: 'POST',
+              url: '/api/v1/bootstrap/complete',
+              payload,
+            });
+            expect(secondRes.statusCode).toBe(409);
+            const secondBody = secondRes.json<{ code: string }>();
+            expect(secondBody.code).toBe('bootstrap_already_complete');
+          } finally {
+            await resetBootstrapState();
+          }
         }
       ),
       { numRuns: 20 } // Reduced — each run makes real DB calls
@@ -165,24 +175,30 @@ describe('Property 10: Bootstrap token single-use invariant', () => {
       fc.asyncProperty(
         fc.uuid(),
         async (runId) => {
-          const token = crypto.randomBytes(16).toString('hex');
-          const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+          await resetBootstrapState();
 
-          // Insert already-consumed token
-          await dbQuery(
-            `INSERT INTO bootstrap_tokens (token, expires_at, consumed) VALUES (?, ?, 1)`,
-            [token, expiresAt]
-          );
+          try {
+            const token = crypto.randomBytes(16).toString('hex');
+            const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
-          const suffix = runId.replace(/-/g, '').slice(0, 12);
-          const res = await app.inject({
-            method: 'POST',
-            url: '/api/v1/bootstrap/complete',
-            payload: completePayload(token, suffix),
-          });
+            // Insert already-consumed token
+            await dbQuery(
+              `INSERT INTO bootstrap_tokens (token, expires_at, consumed) VALUES (?, ?, 1)`,
+              [token, expiresAt]
+            );
 
-          expect(res.statusCode).toBe(409);
-          expect(res.json<{ code: string }>().code).toBe('bootstrap_already_complete');
+            const suffix = runId.replace(/-/g, '').slice(0, 12);
+            const res = await app.inject({
+              method: 'POST',
+              url: '/api/v1/bootstrap/complete',
+              payload: completePayload(token, suffix),
+            });
+
+            expect(res.statusCode).toBe(409);
+            expect(res.json<{ code: string }>().code).toBe('bootstrap_already_complete');
+          } finally {
+            await resetBootstrapState();
+          }
         }
       ),
       { numRuns: 20 }
@@ -202,26 +218,32 @@ describe('Property 11: Password length validation', () => {
         ),
         fc.uuid(),
         async (shortPassword, runId) => {
-          const token = crypto.randomBytes(16).toString('hex');
-          await insertToken(token);
+          await resetBootstrapState();
 
-          const suffix = runId.replace(/-/g, '').slice(0, 12);
+          try {
+            const token = crypto.randomBytes(16).toString('hex');
+            await insertToken(token);
 
-          const res = await app.inject({
-            method: 'POST',
-            url: '/api/v1/bootstrap/complete',
-            // Use unique API key per run to avoid rate limiter (100 req/min per client)
-            headers: { 'x-api-key': `test-key-${runId}` },
-            payload: {
-              bootstrap_token: token,
-              username: `admin_${suffix}`,
-              email: `admin_${suffix}@example.com`,
-              password: shortPassword,
-            },
-          });
+            const suffix = runId.replace(/-/g, '').slice(0, 12);
 
-          expect(res.statusCode).toBe(422);
-          expect(res.json<{ code: string }>().code).toBe('password_too_short');
+            const res = await app.inject({
+              method: 'POST',
+              url: '/api/v1/bootstrap/complete',
+              // Use unique API key per run to avoid rate limiter (100 req/min per client)
+              headers: { 'x-api-key': `test-key-${runId}` },
+              payload: {
+                bootstrap_token: token,
+                username: `admin_${suffix}`,
+                email: `admin_${suffix}@example.com`,
+                password: shortPassword,
+              },
+            });
+
+            expect(res.statusCode).toBe(422);
+            expect(res.json<{ code: string }>().code).toBe('password_too_short');
+          } finally {
+            await resetBootstrapState();
+          }
         }
       ),
       { numRuns: 100 }
@@ -235,29 +257,35 @@ describe('Property 11: Password length validation', () => {
         fc.string({ minLength: 12, maxLength: 12 }),
         fc.uuid(),
         async (exactPassword, runId) => {
-          const token = crypto.randomBytes(16).toString('hex');
-          await insertToken(token);
+          await resetBootstrapState();
 
-          const suffix = runId.replace(/-/g, '').slice(0, 12);
+          try {
+            const token = crypto.randomBytes(16).toString('hex');
+            await insertToken(token);
 
-          const res = await app.inject({
-            method: 'POST',
-            url: '/api/v1/bootstrap/complete',
-            // Use unique API key per run to avoid rate limiter
-            headers: { 'x-api-key': `test-key-${runId}` },
-            payload: {
-              bootstrap_token: token,
-              username: `admin_${suffix}`,
-              email: `admin_${suffix}@example.com`,
-              password: exactPassword,
-            },
-          });
+            const suffix = runId.replace(/-/g, '').slice(0, 12);
 
-          // Must NOT return 422 password_too_short
-          expect(res.statusCode).not.toBe(422);
-          if (res.statusCode === 422) {
-            const body = res.json<{ code: string }>();
-            expect(body.code).not.toBe('password_too_short');
+            const res = await app.inject({
+              method: 'POST',
+              url: '/api/v1/bootstrap/complete',
+              // Use unique API key per run to avoid rate limiter
+              headers: { 'x-api-key': `test-key-${runId}` },
+              payload: {
+                bootstrap_token: token,
+                username: `admin_${suffix}`,
+                email: `admin_${suffix}@example.com`,
+                password: exactPassword,
+              },
+            });
+
+            // Must NOT return 422 password_too_short
+            expect(res.statusCode).not.toBe(422);
+            if (res.statusCode === 422) {
+              const body = res.json<{ code: string }>();
+              expect(body.code).not.toBe('password_too_short');
+            }
+          } finally {
+            await resetBootstrapState();
           }
         }
       ),

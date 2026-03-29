@@ -5,6 +5,7 @@
  *   - GET /bootstrap/status returns requires_bootstrap + mode in self-hosted and managed modes
  *   - GET /bootstrap/status returns requires_bootstrap: true with empty admin table
  *   - GET /bootstrap/status returns requires_bootstrap: false when admin exists
+ *   - GET /bootstrap/node/status returns the same shape for the dashboard redirect
  *   - POST /bootstrap/validate: valid token, expired token, consumed token
  *   - POST /bootstrap/complete: success, password too short, token expired, token consumed
  *   - Localhost-only guard in self-hosted mode
@@ -138,6 +139,56 @@ describe('GET /api/v1/bootstrap/status', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/api/v1/bootstrap/status',
+      });
+
+      expect(res.statusCode).toBe(200);
+      const body = res.json<{ requires_bootstrap: boolean; mode: 'managed' | 'self-hosted' }>();
+      expect(body.mode).toBe('managed');
+      expect(body.requires_bootstrap).toBe(false);
+    } finally {
+      process.env['CIG_AUTH_MODE'] = 'self-hosted';
+    }
+  });
+});
+
+describe('GET /api/v1/bootstrap/node/status', () => {
+  it('returns requires_bootstrap: true and mode: self-hosted when no admin exists', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/bootstrap/node/status',
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = res.json<{ requires_bootstrap: boolean; mode: 'managed' | 'self-hosted' }>();
+    expect(body.requires_bootstrap).toBe(true);
+    expect(body.mode).toBe('self-hosted');
+  });
+
+  it('returns requires_bootstrap: false when an admin account already exists', async () => {
+    await dbQuery(
+      `INSERT INTO admin_accounts (id, username, email, password_hash, created_at)
+       VALUES (?, ?, ?, ?, ?)`,
+      ['admin-id-node', 'admin-node', 'admin-node@example.com', 'hashed', new Date().toISOString()]
+    );
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/bootstrap/node/status',
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = res.json<{ requires_bootstrap: boolean; mode: 'managed' | 'self-hosted' }>();
+    expect(body.requires_bootstrap).toBe(false);
+    expect(body.mode).toBe('self-hosted');
+  });
+
+  it('returns mode: managed and requires_bootstrap: false in managed deployments', async () => {
+    process.env['CIG_AUTH_MODE'] = 'managed';
+
+    try {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/v1/bootstrap/node/status',
       });
 
       expect(res.statusCode).toBe(200);

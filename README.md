@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="package.json"><img src="https://img.shields.io/badge/version-0.2.102-blue.svg" alt="Version" /></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/version-0.3.0-blue.svg" alt="Version" /></a>
   <a href="package.json"><img src="https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen.svg" alt="Node" /></a>
   <a href="package.json"><img src="https://img.shields.io/badge/pnpm-%3E%3D9.0.0-orange.svg" alt="pnpm" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /></a>
@@ -48,9 +48,9 @@ For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub release
 ## Current Product State
 
 - `apps/landing` is the public entrypoint and authentication handoff surface at `https://cig.lat`
-- `apps/dashboard` is the protected application at `https://app.cig.lat` with live/demo graph source switching, 2D/3D graph visualization, and chat workflows
-- `packages/api` is the canonical Fastify API for REST, GraphQL, WebSocket, chat, graph snapshots, semantic retrieval, and auth bridges
-- `packages/cli` is the operator and install surface, including interactive demo-data provisioning for new installs
+- `apps/dashboard` is the protected application at `https://app.cig.lat` with live/demo graph source switching, 2D/3D graph visualization, chat workflows, and the self-hosted bootstrap shell that shows demo data directly during first-run setup
+- `packages/api` is the canonical Fastify API for REST, GraphQL, WebSocket, chat, graph snapshots, semantic retrieval, auth bridges, and bootstrap completion workflows
+- `packages/cli` is the operator and install surface, including interactive demo-data provisioning, self-hosted bootstrap token generation, and dashboard handoff for new installs
 - `packages/discovery`, `services/cartography`, `packages/graph`, `packages/chatbot`, and `packages/agents` power discovery, graph indexing, retrieval, and refinement workflows
 
 ### Operating Modes

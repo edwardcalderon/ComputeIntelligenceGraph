@@ -52,7 +52,7 @@ docker-compose -f docker-compose.dev.yml up -d
 
 ### 5. Demo or Self-Hosted Install
 
-Use the public installer for a guided setup:
+Use the public installer for a guided setup. In self-hosted mode, the dashboard now hosts the bootstrap flow and the first-admin creation screen directly:
 
 ```bash
 curl -fsSL https://cig.lat/install.sh | bash
@@ -65,6 +65,8 @@ cig install
 cig install --demo
 cig install --mode self-hosted --profile discovery
 ```
+
+After a self-hosted install, open the dashboard bootstrap page to complete the first administrator setup and inspect the seeded demo data directly in the shell.
 
 ### 6. Workspace Build (Optional but Recommended)
 For a better initial experience, build all packages once:
