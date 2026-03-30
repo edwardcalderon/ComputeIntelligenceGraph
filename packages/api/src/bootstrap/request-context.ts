@@ -59,12 +59,13 @@ export function getClientIp(request: FastifyRequest): string {
 }
 
 /**
- * Returns true when the request is local enough for self-hosted bootstrap.
+ * Returns true when the request is local enough for localhost-only browser
+ * flows.
  *
  * Docker port mapping can make `request.ip` look non-local even when the
  * browser is on localhost, so we also accept a localhost origin or referer.
  */
-export function isLocalBootstrapRequest(request: FastifyRequest): boolean {
+export function isLocalBrowserRequest(request: FastifyRequest): boolean {
   const ip = getClientIp(request);
   if (isLoopbackIp(ip)) {
     return true;
@@ -76,4 +77,11 @@ export function isLocalBootstrapRequest(request: FastifyRequest): boolean {
   ].filter(Boolean) as string[];
 
   return originCandidates.some(isLocalhostHostname);
+}
+
+/**
+ * Backwards-compatible alias for bootstrap routes.
+ */
+export function isLocalBootstrapRequest(request: FastifyRequest): boolean {
+  return isLocalBrowserRequest(request);
 }

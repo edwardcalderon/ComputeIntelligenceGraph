@@ -4,6 +4,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import crypto from 'crypto';
 import { verifyIdToken } from './middleware/oidc-verify';
 import { verifySupabaseAccessToken } from './middleware/supabase-verify';
+import { isLocalBrowserRequest } from './bootstrap/request-context';
 
 // Permission model (Requirements 16.8, 17.8)
 export enum Permission {
@@ -26,6 +27,18 @@ export interface ApiKeyEntry {
 }
 
 const MANAGED_ADMIN_GROUPS = new Set(['admin', 'admins', 'cig-admin', 'cig-admins']);
+const LOCAL_SELF_HOSTED_SUBJECT = 'local-self-hosted';
+const LOCAL_SELF_HOSTED_ROUTE_PREFIXES = [
+  '/api/v1/chat',
+  '/api/v1/resources',
+  '/api/v1/relationships',
+  '/api/v1/graph/snapshot',
+  '/api/v1/costs',
+  '/api/v1/security',
+  '/api/v1/discovery/status',
+  '/api/v1/demo/status',
+  '/api/v1/demo/snapshot',
+];
 
 // In-memory API key store: hashedKey -> entry
 const apiKeyStore = new Map<string, ApiKeyEntry>();
@@ -116,6 +129,23 @@ function permissionsFromSupabaseClaims(claims: {
   return [...new Set(permissions)];
 }
 
+function resolveRoutePath(request: FastifyRequest): string {
+  const routeOptions = request.routeOptions as { url?: string } | undefined;
+  const routerPath = (request as FastifyRequest & { routerPath?: string }).routerPath;
+  return routeOptions?.url ?? routerPath ?? request.url ?? '';
+}
+
+function isLocalSelfHostedBypassRoute(request: FastifyRequest): boolean {
+  const routePath = resolveRoutePath(request);
+  if (!routePath) {
+    return false;
+  }
+
+  return LOCAL_SELF_HOSTED_ROUTE_PREFIXES.some(
+    (prefix) => routePath === prefix || routePath.startsWith(`${prefix}/`)
+  );
+}
+
 export async function verifyBearerToken(token: string): Promise<JwtPayload> {
   try {
     return verifyJwt(token);
@@ -183,6 +213,18 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
       }
     }
     reply.status(401).send({ error: 'Invalid API key', statusCode: 401 });
+    return;
+  }
+
+  if (
+    process.env.CIG_AUTH_MODE === 'self-hosted' &&
+    isLocalBrowserRequest(request) &&
+    isLocalSelfHostedBypassRoute(request)
+  ) {
+    (request as any).user = {
+      sub: LOCAL_SELF_HOSTED_SUBJECT,
+      permissions: [Permission.READ_RESOURCES],
+    };
     return;
   }
 

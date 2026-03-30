@@ -1,3 +1,18 @@
+## [0.3.4](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.3.3...v0.3.4) (2026-03-30)
+
+### Detected changes
+- packages: 3 changed file(s)
+  - packages/api/src/auth.ts
+  - packages/api/src/bootstrap/request-context.ts
+  - packages/api/src/security-testing.test.ts
+
+
+## [0.3.4](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.3.3...v0.3.4) (2026-03-30)
+
+
+
+
+
 ## [0.3.3](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.3.2...v0.3.3) (2026-03-29)
 
 ### Detected changes

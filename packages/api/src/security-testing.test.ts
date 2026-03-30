@@ -125,6 +125,30 @@ describe('Security Tests', () => {
         expect(response.statusCode).toBe(401);
       });
     }
+
+    it('allows localhost browser requests in self-hosted mode without a bearer token', async () => {
+      const originalAuthMode = process.env['CIG_AUTH_MODE'];
+      process.env['CIG_AUTH_MODE'] = 'self-hosted';
+
+      try {
+        const response = await app.inject({
+          method: 'GET',
+          url: '/api/v1/resources',
+          headers: {
+            origin: 'http://localhost:3000',
+          },
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(response.json()).toEqual({ items: [], total: 0, hasMore: false });
+      } finally {
+        if (originalAuthMode === undefined) {
+          delete process.env['CIG_AUTH_MODE'];
+        } else {
+          process.env['CIG_AUTH_MODE'] = originalAuthMode;
+        }
+      }
+    });
   });
 
   // ── 2. Malformed / Missing Authorization Header ──────────────────────────────
