@@ -1,4 +1,4 @@
-import { Resource_Model, Relationship } from './types';
+import { Resource_Model, Relationship, type GraphScope } from './types';
 import { ResourceFilters } from './engine';
 export interface PaginationOptions {
     limit?: number;
@@ -18,42 +18,42 @@ export declare class GraphQueryEngine {
      * Returns all resources that the given resource depends on, up to `depth` levels.
      * Depth is capped at 3. Requirements: 8.3, 8.4
      */
-    getDependencies(resourceId: string, depth?: number): Promise<Resource_Model[]>;
+    getDependencies(resourceId: string, depth?: number, scope?: GraphScope): Promise<Resource_Model[]>;
     /**
      * Returns all resources that depend on the given resource, up to `depth` levels.
      * Requirements: 8.5
      */
-    getDependents(resourceId: string, depth?: number): Promise<Resource_Model[]>;
+    getDependents(resourceId: string, depth?: number, scope?: GraphScope): Promise<Resource_Model[]>;
     /**
      * Returns resources that no other resource depends on (leaf/orphan resources).
      * Requirements: 8.6
      */
-    findUnusedResources(): Promise<Resource_Model[]>;
+    findUnusedResources(scope?: GraphScope): Promise<Resource_Model[]>;
     /**
      * Detects circular dependency cycles in the graph.
      * Uses manual Cypher cycle detection via path matching.
      * Requirements: 8.7
      */
-    findCircularDependencies(): Promise<Cycle[]>;
+    findCircularDependencies(scope?: GraphScope): Promise<Cycle[]>;
     /**
      * Full-text search across resource names and metadata.
      * Requirements: 8.8
      */
-    searchResources(query: string): Promise<Resource_Model[]>;
+    searchResources(query: string, scope?: GraphScope): Promise<Resource_Model[]>;
     /**
      * Lists resources with optional filters and pagination.
      * Requirements: 8.9, 8.10, 24.8
      */
-    listResourcesPaged(filters?: ResourceFilters, pagination?: PaginationOptions): Promise<PagedResult<Resource_Model>>;
+    listResourcesPaged(filters?: ResourceFilters, pagination?: PaginationOptions, scope?: GraphScope): Promise<PagedResult<Resource_Model>>;
     /**
      * Returns resource counts grouped by type.
      * Requirements: 8.9
      */
-    getResourceCounts(): Promise<Record<string, number>>;
+    getResourceCounts(scope?: GraphScope): Promise<Record<string, number>>;
     /**
      * Returns all relationships in the graph, capped by `limit`.
      * Requirements: 8.9, 24.8
      */
-    listRelationships(limit?: number): Promise<Relationship[]>;
+    listRelationships(limit?: number, scope?: GraphScope): Promise<Relationship[]>;
 }
 //# sourceMappingURL=queries.d.ts.map

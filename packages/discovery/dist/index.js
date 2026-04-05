@@ -14,10 +14,12 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DiscoveryScheduler = exports.CartographyClient = void 0;
+exports.withExponentialBackoff = exports.DiscoveryScheduler = exports.CartographyClient = void 0;
 __exportStar(require("./types.js"), exports);
 var client_js_1 = require("./client.js");
 Object.defineProperty(exports, "CartographyClient", { enumerable: true, get: function () { return client_js_1.CartographyClient; } });
 var scheduler_js_1 = require("./scheduler.js");
 Object.defineProperty(exports, "DiscoveryScheduler", { enumerable: true, get: function () { return scheduler_js_1.DiscoveryScheduler; } });
+var retry_js_1 = require("./retry.js");
+Object.defineProperty(exports, "withExponentialBackoff", { enumerable: true, get: function () { return retry_js_1.withExponentialBackoff; } });
 //# sourceMappingURL=index.js.map

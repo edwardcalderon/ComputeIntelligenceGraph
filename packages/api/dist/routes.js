@@ -17,7 +17,16 @@ const sessions_1 = require("./routes/sessions");
 const scans_1 = require("./routes/scans");
 const auth_email_1 = require("./routes/auth-email");
 const chat_1 = require("./routes/chat");
+const demo_1 = require("./routes/demo");
 const onboarding_1 = require("./routes/onboarding");
+const enroll_1 = require("./routes/nodes/enroll");
+const heartbeat_2 = require("./routes/nodes/heartbeat");
+const revoke_1 = require("./routes/nodes/revoke");
+const graphDelta_1 = require("./routes/nodes/graphDelta");
+const list_1 = require("./routes/nodes/list");
+const bootstrap_node_1 = require("./routes/bootstrap-node");
+const nodeStatus_1 = require("./sse/nodeStatus");
+const graph_2 = require("./routes/graph");
 // Shared instances
 const graphEngine = new graph_1.GraphEngine();
 const queryEngine = new graph_1.GraphQueryEngine();
@@ -79,8 +88,26 @@ async function registerRoutes(app) {
     await app.register(auth_email_1.authEmailRoutes);
     // ─── Chat (RAG + OpenAI) ─────────────────────────────────────────────────────
     await app.register(chat_1.chatRoutes);
+    // ─── Demo workspace (shared seeded graph snapshot) ──────────────────────────
+    await app.register(demo_1.demoRoutes);
+    // ─── Graph snapshot, relationships, and refinement ────────────────────────
+    await app.register(graph_2.graphRoutes);
     // ─── CIG Node Onboarding (Phase 1, Requirements 3.1–3.9, 17.1–17.3) ─────────
     await app.register(onboarding_1.onboardingRoutes);
+    // ─── CIG Node Enrollment (Phase 3, Requirements 7.1–7.3, 7.10, 3.4, 3.5, 22.4) ─
+    await app.register(enroll_1.nodeEnrollmentRoutes);
+    // ─── CIG Node Heartbeat (Phase 3, Requirements 16.1–16.10, 17.5) ─────────────
+    await app.register(heartbeat_2.nodeHeartbeatRoutes);
+    // ─── CIG Node Revocation (Phase 3, Requirements 7.8, 14.9) ──────────────────
+    await app.register(revoke_1.nodeRevocationRoutes);
+    // ─── CIG Node Graph Delta (Phase 3, Requirements 8.9, 8.10, 17.6) ────────────
+    await app.register(graphDelta_1.nodeGraphDeltaRoutes);
+    // ─── CIG Node List (Phase 3, Requirements 12.7, 16.7, 17.7) ─────────────────
+    await app.register(list_1.nodeListRoutes);
+    // ─── CIG Node Self-Hosted Bootstrap (Phase 6, Requirements 13.4–13.7) ────────
+    await app.register(bootstrap_node_1.bootstrapNodeRoutes);
+    // ─── CIG Node SSE (Phase 3, Requirements 12.8, 16.10) ────────────────────────
+    await app.register(nodeStatus_1.nodeSSERoutes);
     // ─── Resources ──────────────────────────────────────────────────────────────
     // GET /api/v1/resources — list all resources with optional filtering
     app.get('/api/v1/resources', { preHandler: readResources }, async (request, reply) => {
@@ -161,27 +188,6 @@ async function registerRoutes(app) {
         const result = await cartographyClient.triggerRun();
         return reply.status(202).send(result);
     });
-    // ─── Graph ──────────────────────────────────────────────────────────────────
-    // POST /api/v1/graph/query — execute a custom Cypher query (read-only)
-    app.post('/api/v1/graph/query', { preHandler: readResources }, async (request, reply) => {
-        const body = request.body;
-        if (!body?.query) {
-            return reply.status(400).send({ error: 'Missing required field: query', statusCode: 400 });
-        }
-        // Delegate to searchResources as a simple passthrough for now;
-        // full custom Cypher execution is handled by the graph package's Neo4j session.
-        // For safety, only allow read queries (MATCH/CALL/WITH) and block write keywords anywhere in the query.
-        const q = body.query.trim().toUpperCase();
-        if (!q.startsWith('MATCH') && !q.startsWith('CALL') && !q.startsWith('WITH')) {
-            return reply.status(400).send({ error: 'Only read queries (MATCH/CALL/WITH) are allowed', statusCode: 400 });
-        }
-        const WRITE_KEYWORDS = /\b(CREATE|MERGE|DELETE|DETACH|SET|REMOVE|DROP|FOREACH)\b/;
-        if (WRITE_KEYWORDS.test(q)) {
-            return reply.status(400).send({ error: 'Only read queries (MATCH/CALL/WITH) are allowed', statusCode: 400 });
-        }
-        // Return stub — full Cypher passthrough requires direct Neo4j session exposure
-        return reply.send({ query: body.query, parameters: body.parameters ?? {}, results: [] });
-    });
     // ─── Costs (stub — implemented in later phases) ─────────────────────────────
     // GET /api/v1/costs — get cost summary
     app.get('/api/v1/costs', { preHandler: readResources }, async (_request, reply) => {
@@ -233,7 +239,7 @@ async function registerRoutes(app) {
             return reply.status(400).send({ error: 'Missing required field: email', statusCode: 400 });
         }
         try {
-            const result = await newsletter_1.newsletterManager.subscribe(body.email, body.source ?? 'landing');
+            const result = await newsletter_1.newsletterManager.subscribe(body.email, body.source ?? 'landing', body.locale ?? 'en');
             if (!result.success) {
                 const status = result.duplicate ? 409 : 400;
                 return reply.status(status).send({ error: result.message, statusCode: status });
@@ -242,6 +248,24 @@ async function registerRoutes(app) {
         }
         catch (err) {
             app.log.error({ err }, 'Newsletter subscription error');
+            return reply.status(500).send({ error: 'Internal server error', statusCode: 500 });
+        }
+    });
+    // POST /api/v1/newsletter/unsubscribe — public, token-based unsubscription
+    app.post('/api/v1/newsletter/unsubscribe', async (request, reply) => {
+        const body = request.body;
+        if (!body?.token || typeof body.token !== 'string') {
+            return reply.status(400).send({ error: 'Missing required field: token', statusCode: 400 });
+        }
+        try {
+            const result = await newsletter_1.newsletterManager.unsubscribe(body.token);
+            if (!result.success) {
+                return reply.status(404).send({ error: 'Invalid or expired unsubscribe token', statusCode: 404 });
+            }
+            return reply.send({ message: 'Successfully unsubscribed' });
+        }
+        catch (err) {
+            app.log.error({ err }, 'Newsletter unsubscribe error');
             return reply.status(500).send({ error: 'Internal server error', statusCode: 500 });
         }
     });

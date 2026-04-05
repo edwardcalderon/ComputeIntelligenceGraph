@@ -23,6 +23,11 @@ export declare enum ResourceState {
     PENDING = "pending",
     FAILED = "failed"
 }
+export interface GraphScope {
+    ownerId?: string;
+    tenant?: string;
+    workspace?: string;
+}
 export declare enum RelationshipType {
     DEPENDS_ON = "DEPENDS_ON",
     CONNECTS_TO = "CONNECTS_TO",
@@ -43,6 +48,9 @@ export interface Resource_Model {
     tags: Record<string, string>;
     metadata: Record<string, unknown>;
     cost?: number;
+    ownerId?: string;
+    tenant?: string;
+    workspace?: string;
     createdAt: Date;
     updatedAt: Date;
     discoveredAt: Date;

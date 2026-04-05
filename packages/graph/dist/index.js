@@ -19,4 +19,5 @@ __exportStar(require("./neo4j"), exports);
 __exportStar(require("./schema"), exports);
 __exportStar(require("./engine"), exports);
 __exportStar(require("./queries"), exports);
+__exportStar(require("./scope"), exports);
 //# sourceMappingURL=index.js.map

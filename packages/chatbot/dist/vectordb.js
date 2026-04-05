@@ -14,12 +14,12 @@ function normalizeCloudHost(host) {
     }
     return `https://${trimmed}`;
 }
-function resolveChromaConnectionConfig() {
+function resolveChromaConnectionConfig(collectionNameOverride) {
     const cloudApiKey = process.env.CHROMA_API_KEY?.trim();
     const cloudTenant = process.env.CHROMA_TENANT?.trim();
     const cloudDatabase = process.env.CHROMA_DATABASE?.trim();
     const cloudHost = process.env.CHROMA_HOST?.trim();
-    const collectionName = process.env.CHROMA_COLLECTION?.trim() || DEFAULT_COLLECTION_NAME;
+    const collectionName = collectionNameOverride?.trim() || process.env.CHROMA_COLLECTION?.trim() || DEFAULT_COLLECTION_NAME;
     if (cloudApiKey) {
         if (!cloudTenant || !cloudDatabase) {
             throw new Error('CHROMA_TENANT and CHROMA_DATABASE are required when CHROMA_API_KEY is set.');
@@ -55,14 +55,16 @@ function createClient() {
 class VectorStore {
     client;
     collection = null;
-    constructor() {
+    collectionNameOverride;
+    constructor(options = {}) {
         if (!clientInstance) {
             clientInstance = createClient();
         }
         this.client = clientInstance;
+        this.collectionNameOverride = options.collectionName?.trim() || undefined;
     }
     async connect() {
-        const { collectionName } = resolveChromaConnectionConfig();
+        const { collectionName } = resolveChromaConnectionConfig(this.collectionNameOverride);
         const cachedCollection = collectionCache.get(collectionName);
         if (cachedCollection) {
             this.collection = cachedCollection;

@@ -12,11 +12,15 @@ export interface ChromaConnectionConfig {
     cloudHost?: string;
     collectionName: string;
 }
-export declare function resolveChromaConnectionConfig(): ChromaConnectionConfig;
+export interface VectorStoreOptions {
+    collectionName?: string;
+}
+export declare function resolveChromaConnectionConfig(collectionNameOverride?: string): ChromaConnectionConfig;
 export declare class VectorStore {
     private client;
     private collection;
-    constructor();
+    private readonly collectionNameOverride?;
+    constructor(options?: VectorStoreOptions);
     connect(): Promise<void>;
     private ensureConnected;
     addDocuments(docs: VectorDocument[]): Promise<void>;

@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.startBackgroundJobs = startBackgroundJobs;
 exports.createServer = createServer;
 exports.start = start;
 const fastify_1 = __importDefault(require("fastify"));
@@ -13,6 +14,8 @@ const graphql_1 = require("./graphql");
 const websocket_1 = require("./websocket");
 const metrics_1 = require("./metrics");
 const heartbeat_monitor_1 = require("./jobs/heartbeat-monitor");
+const semantic_index_sync_1 = require("./jobs/semantic-index-sync");
+const demo_workspace_1 = require("./demo-workspace");
 const client_1 = require("./db/client");
 const VERSION = '0.1.0';
 const RATE_LIMIT_EXEMPT_ROUTES = new Set(['GET /api/v1/health', 'GET /metrics']);
@@ -20,6 +23,15 @@ const OPENAI_MODEL_DEFAULT = 'gpt-4o-mini';
 const OPENAI_HEALTH_CACHE_MS = 30_000;
 const OPENAI_HEALTH_TIMEOUT_MS = 2_500;
 let openAiHealthCache = null;
+function startBackgroundJobs(app) {
+    (0, heartbeat_monitor_1.startHeartbeatMonitor)();
+    (0, semantic_index_sync_1.startSemanticIndexSync)(app.log);
+    if (process.env.CIG_AUTH_MODE === 'managed' || process.env.CIG_DEMO_MODE === 'true') {
+        void (0, demo_workspace_1.ensureDemoWorkspaceProvisioned)(app.log).catch((error) => {
+            app.log.warn({ err: error }, 'Demo workspace auto-provision failed; falling back to seeded demo snapshot');
+        });
+    }
+}
 function resolveCorsOrigins() {
     const configuredOrigins = process.env.CORS_ORIGINS?.trim();
     if (configuredOrigins === '*') {
@@ -103,6 +115,7 @@ async function resolveChatHealth(endpointReady) {
     }
 }
 async function createServer() {
+    const multipart = require('@fastify/multipart');
     const app = (0, fastify_1.default)({
         logger: {
             level: process.env.LOG_LEVEL ?? 'info',
@@ -115,6 +128,11 @@ async function createServer() {
     // CORS
     await app.register(cors_1.default, {
         origin: resolveCorsOrigins(),
+    });
+    await app.register(multipart, {
+        limits: {
+            files: 1,
+        },
     });
     // Rate limiting (100 req/min per client, Requirement 16.9)
     // Operational endpoints stay exempt so health checks and metrics scraping
@@ -165,6 +183,8 @@ async function createServer() {
     // Register WebSocket server (Requirement 9.10)
     await (0, websocket_1.registerWebSocket)(app);
     app.addHook('onClose', async () => {
+        (0, heartbeat_monitor_1.stopHeartbeatMonitor)();
+        (0, semantic_index_sync_1.stopSemanticIndexSync)();
         await (0, client_1.closeDatabase)();
     });
     return app;
@@ -176,8 +196,8 @@ async function start() {
     try {
         await app.listen({ port, host });
         app.log.info(`Server listening on ${host}:${port}`);
-        // Start background job for heartbeat status monitoring (Requirement 14.7)
-        (0, heartbeat_monitor_1.startHeartbeatMonitor)();
+        // Start background jobs after the server is listening so startup remains responsive.
+        startBackgroundJobs(app);
     }
     catch (err) {
         app.log.error(err);

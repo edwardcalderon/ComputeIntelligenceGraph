@@ -3,4 +3,5 @@ export * from './neo4j';
 export * from './schema';
 export * from './engine';
 export * from './queries';
+export * from './scope';
 //# sourceMappingURL=index.d.ts.map
