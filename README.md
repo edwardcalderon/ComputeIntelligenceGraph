@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="package.json"><img src="https://img.shields.io/badge/version-0.3.8-blue.svg" alt="Version" /></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/version-0.3.9-blue.svg" alt="Version" /></a>
   <a href="package.json"><img src="https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen.svg" alt="Node" /></a>
   <a href="package.json"><img src="https://img.shields.io/badge/pnpm-%3E%3D9.0.0-orange.svg" alt="pnpm" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /></a>
@@ -35,37 +35,10 @@
 - Deployment: [docs/deployment/README.md](docs/deployment/README.md)
 - Authentication: [docs/authentication/README.md](docs/authentication/README.md)
 
-## 📋 Latest Changes (v0.3.8)
+## 📋 Latest Changes (v0.3.9)
 
 ### Detected changes
-- .github: 2 changed file(s)
-  - .github/workflows/deploy-dashboard.yml
-  - .github/workflows/publish-images.yml
-- root: 3 changed file(s)
-  - CHANGELOG.md
-  - package.json
-  - release-metadata.json
-- apps: 10 changed file(s)
-  - apps/dashboard/app/auth/callback/page.tsx
-  - apps/dashboard/app/auth/login-callback/route.ts
-  - apps/dashboard/components/ChatWidget.tsx
-  - apps/dashboard/next.config.js
-  - apps/dashboard/package.json
-  - apps/docs/package.json
-  - apps/landing/components/AuthButton.tsx
-  - apps/landing/next.config.js
-  - apps/landing/package.json
-  - apps/wizard-ui/package.json
-- packages: 8 changed file(s)
-  - packages/agents/package.json
-  - packages/api/package.json
-  - packages/auth/README.md
-  - packages/chatbot/package.json
-  - packages/config/package.json
-  - packages/discovery/package.json
-  - packages/graph/package.json
-  - packages/sdk/package.json
-- scripts: scripts/release.sh
+- .github: .github/workflows/deploy-pages.yml
 
 For full version history, see [CHANGELOG.md](./CHANGELOG.md) and [GitHub releases](https://github.com/edwardcalderon/ComputeIntelligenceGraph/releases)
 
