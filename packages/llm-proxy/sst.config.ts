@@ -22,7 +22,7 @@ function loadInfraEnv(): void {
 }
 
 function resolveAwsRegion(): string {
-  const region = process.env.AWS_REGION ?? process.env.API_REGION;
+  const region = process.env.AWS_REGION ?? process.env.LLM_PROXY_REGION;
   if (!region || region.trim() === '') {
     throw new Error('AWS_REGION is required');
   }
@@ -46,7 +46,7 @@ export default $config({
     };
   },
   async run() {
-    const { createInfrastructure } = await import('./infra/index.js');
+    const { createInfrastructure } = await import('./infra.config.js');
     return createInfrastructure();
   },
 });
