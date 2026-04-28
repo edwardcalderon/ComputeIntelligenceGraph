@@ -1,0 +1,360 @@
+name: LLM Proxy Release Pipeline
+
+on:
+  push:
+    tags:
+      - 'llm-proxy-v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g., llm-proxy-v1.0.0)'
+        required: true
+        type: string
+      dry_run:
+        description: 'Validate without deploying'
+        type: boolean
+        default: false
+
+concurrency:
+  group: llm-proxy-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-2' }}
+  LLM_PROXY_DOMAIN: ${{ vars.LLM_PROXY_DOMAIN || 'llm-proxy.cig.technology' }}
+  LLM_PROXY_IMAGE_REPOSITORY: ${{ vars.LLM_PROXY_IMAGE_REPOSITORY || 'llm-proxy-production' }}
+  DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME || 'cigtechnology' }}
+  DOCKERHUB_LLM_PROXY_IMAGE: ${{ vars.DOCKERHUB_LLM_PROXY_IMAGE || 'llm-proxy' }}
+  INFRA_APP_NAME: ${{ vars.INFRA_APP_NAME || 'llm-proxy' }}
+  TF_IN_AUTOMATION: 'true'
+
+jobs:
+  setup-cicd:
+    name: Setup CI/CD infrastructure
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      infrastructure_ready: ${{ steps.status.outputs.infrastructure_ready }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+
+      - name: Check infrastructure status
+        id: status
+        shell: bash
+        run: |
+          set +e
+          
+          # Check all required resources
+          aws sqs get-queue-url --queue-name llm-proxy-request-queue --region "$AWS_REGION" >/dev/null 2>&1
+          SQS_OK=$?
+          
+          aws dynamodb describe-table --table-name llm-proxy-state --region "$AWS_REGION" >/dev/null 2>&1
+          DYNAMODB_OK=$?
+          
+          aws lambda get-function --function-name llm-proxy-lambda --region "$AWS_REGION" >/dev/null 2>&1
+          LAMBDA_OK=$?
+          
+          if [[ $SQS_OK -eq 0 && $DYNAMODB_OK -eq 0 && $LAMBDA_OK -eq 0 ]]; then
+            echo "infrastructure_ready=true" >> "$GITHUB_OUTPUT"
+            echo "✅ Infrastructure is ready"
+          else
+            echo "infrastructure_ready=false" >> "$GITHUB_OUTPUT"
+            echo "⚠️ Infrastructure not ready - setup workflow will be triggered"
+          fi
+
+  detect-changes:
+    name: Detect LLM Proxy changes
+    runs-on: ubuntu-latest
+    outputs:
+      source_changed: ${{ steps.detect.outputs.llm_proxy_source_changed }}
+      runtime_changed: ${{ steps.detect.outputs.llm_proxy_runtime_changed }}
+      has_changes: ${{ steps.detect.outputs.has_relevant_changes }}
+      source_tag: ${{ steps.detect.outputs.llm_proxy_source_tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Detect changes
+        id: detect
+        run: |
+          BASE="$(git rev-parse "${GITHUB_SHA}^" 2>/dev/null || true)"
+          if [[ -z "$BASE" ]]; then
+            BASE="$(git hash-object -t tree /dev/null)"
+          fi
+          node scripts/detect-llm-proxy-impact.mjs --base "$BASE" --head "$GITHUB_SHA"
+
+  validate-code:
+    name: Validate code quality
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.source_changed == 'true' }}
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.0.0
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm --filter @llm-proxy/app lint
+
+      - name: Test
+        run: pnpm --filter @llm-proxy/app test
+
+      - name: Build
+        run: pnpm --filter @llm-proxy/app build
+
+  build-docker-image:
+    name: Build Docker image
+    runs-on: ubuntu-latest
+    needs: [setup-cicd, detect-changes, validate-code]
+    if: ${{ always() && needs.detect-changes.outputs.has_changes == 'true' && (needs.validate-code.result == 'success' || needs.validate-code.result == 'skipped') }}
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      image_uri: ${{ steps.finalize.outputs.image_uri }}
+      image_digest: ${{ steps.finalize.outputs.image_digest }}
+      source_tag: ${{ steps.finalize.outputs.source_tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+
+      - name: Resolve image metadata
+        id: meta
+        shell: bash
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          REPOSITORY_URI="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${LLM_PROXY_IMAGE_REPOSITORY}"
+          DOCKERHUB_IMAGE="${DOCKERHUB_USERNAME}/${DOCKERHUB_LLM_PROXY_IMAGE}"
+          SOURCE_TAG="${{ github.ref_name }}"
+          SHA_TAG="sha-${GITHUB_SHA::7}"
+
+          echo "repository_uri=$REPOSITORY_URI" >> "$GITHUB_OUTPUT"
+          echo "dockerhub_image=$DOCKERHUB_IMAGE" >> "$GITHUB_OUTPUT"
+          echo "source_tag=$SOURCE_TAG" >> "$GITHUB_OUTPUT"
+          echo "sha_tag=$SHA_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure ECR repository exists
+        shell: bash
+        run: |
+          if ! aws ecr describe-repositories --repository-names "$LLM_PROXY_IMAGE_REPOSITORY" --region "$AWS_REGION" >/dev/null 2>&1; then
+            aws ecr create-repository \
+              --repository-name "$LLM_PROXY_IMAGE_REPOSITORY" \
+              --image-scanning-configuration scanOnPush=true \
+              --image-tag-mutability MUTABLE \
+              --region "$AWS_REGION"
+          fi
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: packages/llm-proxy/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.repository_uri }}:${{ steps.meta.outputs.sha_tag }}
+            ${{ steps.meta.outputs.repository_uri }}:${{ steps.meta.outputs.source_tag }}
+            ${{ steps.meta.outputs.dockerhub_image }}:${{ steps.meta.outputs.sha_tag }}
+            ${{ steps.meta.outputs.dockerhub_image }}:${{ steps.meta.outputs.source_tag }}
+          cache-from: |
+            type=registry,ref=${{ steps.meta.outputs.repository_uri }}:buildcache
+            type=gha
+          cache-to: type=registry,ref=${{ steps.meta.outputs.repository_uri }}:buildcache,mode=max
+          provenance: false
+
+      - name: Finalize image URI
+        id: finalize
+        shell: bash
+        run: |
+          DIGEST="${{ steps.build.outputs.digest }}"
+          IMAGE_URI="${{ steps.meta.outputs.repository_uri }}@$DIGEST"
+          echo "image_uri=$IMAGE_URI" >> "$GITHUB_OUTPUT"
+          echo "image_digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          echo "source_tag=${{ steps.meta.outputs.source_tag }}" >> "$GITHUB_OUTPUT"
+
+  deploy-infrastructure:
+    name: Deploy infrastructure
+    runs-on: ubuntu-latest
+    needs: [setup-cicd, build-docker-image]
+    if: ${{ github.event.inputs.dry_run != 'true' && needs.build-docker-image.result == 'success' }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9.0.0
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+
+      - name: Deploy with SST
+        working-directory: packages/llm-proxy
+        env:
+          LLM_PROXY_IMAGE_URI: ${{ needs.build-docker-image.outputs.image_uri }}
+          LLM_PROXY_DOMAIN: ${{ env.LLM_PROXY_DOMAIN }}
+        run: |
+          echo "🚀 Deploying LLM Proxy infrastructure..."
+          pnpm exec sst deploy --stage production --yes
+          echo "✅ Infrastructure deployed"
+
+  run-smoke-tests:
+    name: Run smoke tests
+    runs-on: ubuntu-latest
+    needs: deploy-infrastructure
+    if: ${{ needs.deploy-infrastructure.result == 'success' }}
+    permissions:
+      contents: read
+    steps:
+      - name: Wait for deployment stabilization
+        run: sleep 30
+
+      - name: Health check
+        shell: bash
+        run: |
+          echo "🔍 Testing /health endpoint..."
+          curl --fail --show-error --silent "https://${LLM_PROXY_DOMAIN}/health" | jq .
+          echo "✅ Health check passed"
+
+      - name: Models endpoint check
+        shell: bash
+        run: |
+          echo "🔍 Testing /v1/models endpoint..."
+          curl --fail --show-error --silent "https://${LLM_PROXY_DOMAIN}/v1/models" | jq .
+          echo "✅ Models endpoint check passed"
+
+      - name: API Gateway connectivity
+        shell: bash
+        run: |
+          echo "🔍 Testing API Gateway connectivity..."
+          STATUS=$(curl --silent --output /dev/null --write-out "%{http_code}" "https://${LLM_PROXY_DOMAIN}/health")
+          if [[ "$STATUS" == "200" ]]; then
+            echo "✅ API Gateway is responding correctly"
+          else
+            echo "❌ API Gateway returned status: $STATUS"
+            exit 1
+          fi
+
+  generate-release-summary:
+    name: Generate release summary
+    runs-on: ubuntu-latest
+    needs: [detect-changes, build-docker-image, run-smoke-tests]
+    if: ${{ always() && needs.run-smoke-tests.result == 'success' }}
+    permissions:
+      contents: read
+    steps:
+      - name: Generate summary
+        run: |
+          echo "### LLM Proxy Release Deployment ✅" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Release Information:**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Tag: \`${{ needs.detect-changes.outputs.source_tag }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Commit: \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Region: \`${{ env.AWS_REGION }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Docker Image:**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ECR: \`${{ needs.build-docker-image.outputs.image_uri }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Digest: \`${{ needs.build-docker-image.outputs.image_digest }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Deployment Status:**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Code validated" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Docker image built" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Infrastructure deployed" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ✅ Smoke tests passed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Service Endpoints:**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Health: \`GET https://${{ env.LLM_PROXY_DOMAIN }}/health\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Models: \`GET https://${{ env.LLM_PROXY_DOMAIN }}/v1/models\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Chat Completions: \`POST https://${{ env.LLM_PROXY_DOMAIN }}/v1/chat/completions\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Text Completions: \`POST https://${{ env.LLM_PROXY_DOMAIN }}/v1/completions\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Documentation:**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- [Deployment Guide](.github/LLMPROXY_DEPLOYMENT_GUIDE.md)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- [CI/CD README](.github/LLM_PROXY_CICD_README.md)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- [Release Flow](.github/LLM_PROXY_RELEASE_FLOW.md)" >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,369 @@
+#!/bin/bash
+set -euo pipefail
+
+REGION="${region}"
+DOMAIN="${domain}"
+TLS_ALT_DOMAIN="${tls_alt_domain}"
+AUTHENTIK_IMAGE_TAG="${authentik_image_tag}"
+SMTP_HOST="${smtp_host}"
+SMTP_PORT="${smtp_port}"
+SMTP_USERNAME="${smtp_username}"
+SMTP_PASSWORD="${smtp_password}"
+SMTP_FROM="${smtp_from}"
+
+dnf update -y
+dnf install -y awscli docker jq
+systemctl enable --now docker
+
+mkdir -p /usr/local/lib/docker/cli-plugins
+curl -fsSL "https://github.com/docker/compose/releases/download/v2.27.1/docker-compose-linux-x86_64" \
+  -o /usr/local/lib/docker/cli-plugins/docker-compose
+chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+mkdir -p /opt/authentik/{media,certs,custom-templates,blueprints}
+BASE_DOMAIN="$${DOMAIN#*.}"
+
+cat > /opt/authentik/Caddyfile <<CADDY
+*.$BASE_DOMAIN {
+  tls {
+    dns route53
+  }
+  encode zstd gzip
+  reverse_proxy server:9000
+}
+CADDY
+
+mkdir -p /opt/authentik/caddy-image
+cat > /opt/authentik/caddy-image/Dockerfile <<'DOCKERFILE'
+FROM caddy:2.11.2-builder-alpine AS builder
+RUN xcaddy build --with github.com/caddy-dns/route53@v1.6.0
+
+FROM caddy:2.11.2-alpine
+COPY --from=builder /usr/bin/caddy /usr/bin/caddy
+DOCKERFILE
+
+docker build -t cig-authentik-caddy-route53:latest /opt/authentik/caddy-image
+
+cat > /usr/local/bin/authentik-refresh <<'REFRESH'
+#!/bin/bash
+set -euo pipefail
+
+REGION="${region}"
+DOMAIN="${domain}"
+AUTHENTIK_IMAGE_TAG="${authentik_image_tag}"
+OIDC_CLIENT_ID="${oidc_client_id}"
+GOOGLE_AUTH_CLIENT_ID="${google_auth_client_id}"
+GOOGLE_AUTH_CLIENT_SECRET="${google_auth_client_secret}"
+GITHUB_AUTH_CLIENT_ID="${github_auth_client_id}"
+GITHUB_AUTH_CLIENT_SECRET="${github_auth_client_secret}"
+SMTP_HOST="${smtp_host}"
+SMTP_PORT="${smtp_port}"
+SMTP_USERNAME="${smtp_username}"
+SMTP_PASSWORD="${smtp_password}"
+SMTP_FROM="${smtp_from}"
+SECRET_KEY_ID="${authentik_secret_key_id}"
+ADMIN_PASSWORD_ID="${authentik_admin_password_id}"
+DB_PASSWORD_ID="${db_password_id}"
+COMPOSE_FILE="/opt/authentik/docker-compose.yml"
+ENV_FILE="/opt/authentik/.env"
+
+secret() {
+  aws secretsmanager get-secret-value \
+    --secret-id "$1" \
+    --region "$REGION" \
+    --query SecretString \
+    --output text
+}
+
+SECRET_KEY="$(secret "$SECRET_KEY_ID")"
+ADMIN_PASS="$(secret "$ADMIN_PASSWORD_ID")"
+DB_PASS="$(secret "$DB_PASSWORD_ID")"
+
+cat > /opt/authentik/blueprints/cig-dashboard.yaml <<BLUEPRINT
+# yaml-language-server: \$schema=https://goauthentik.io/blueprints/schema.json
+version: 1
+metadata:
+  name: cig-authentik-bootstrap
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+entries:
+  - model: authentik_sources_oauth.oauthsource
+    identifiers:
+      slug: google
+    id: google_source
+    attrs:
+      name: Google
+      slug: google
+      provider_type: google
+      consumer_key: "$${GOOGLE_AUTH_CLIENT_ID}"
+      consumer_secret: "$${GOOGLE_AUTH_CLIENT_SECRET}"
+      additional_scopes: openid email profile
+      user_matching_mode: identifier
+      group_matching_mode: identifier
+  - model: authentik_sources_oauth.oauthsource
+    identifiers:
+      slug: github
+    id: github_source
+    attrs:
+      name: GitHub
+      slug: github
+      provider_type: github
+      consumer_key: "$${GITHUB_AUTH_CLIENT_ID}"
+      consumer_secret: "$${GITHUB_AUTH_CLIENT_SECRET}"
+      additional_scopes: read:user user:email
+      user_matching_mode: identifier
+      group_matching_mode: identifier
+  - model: authentik_flows.flow
+    identifiers:
+      slug: cig-google-login
+    id: cig_google_login_flow
+    attrs:
+      designation: authentication
+      name: CIG Google Login
+      title: Continue with Google
+  - model: authentik_stages_identification.identificationstage
+    identifiers:
+      name: cig-google-login-identification
+    id: cig_google_login_identification
+    attrs:
+      user_fields: []
+      show_source_labels: true
+      sources:
+        - !KeyOf google_source
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      order: 10
+      stage: !KeyOf cig_google_login_identification
+      target: !KeyOf cig_google_login_flow
+  - model: authentik_flows.flow
+    identifiers:
+      slug: cig-github-login
+    id: cig_github_login_flow
+    attrs:
+      designation: authentication
+      name: CIG GitHub Login
+      title: Continue with GitHub
+  - model: authentik_stages_identification.identificationstage
+    identifiers:
+      name: cig-github-login-identification
+    id: cig_github_login_identification
+    attrs:
+      user_fields: []
+      show_source_labels: true
+      sources:
+        - !KeyOf github_source
+  - model: authentik_flows.flowstagebinding
+    identifiers:
+      order: 10
+      stage: !KeyOf cig_github_login_identification
+      target: !KeyOf cig_github_login_flow
+  - model: authentik_stages_identification.identificationstage
+    identifiers:
+      name: default-authentication-identification
+    attrs:
+      user_fields: []
+      sources:
+        - !KeyOf google_source
+        - !KeyOf github_source
+      show_source_labels: true
+  - model: authentik_flows.flow
+    identifiers:
+      slug: cig-dashboard-authorization
+    id: cig_dashboard_authorization_flow
+    attrs:
+      designation: authorization
+      name: CIG Dashboard Authorization
+      title: Continue to CIG Dashboard
+  - model: authentik_providers_oauth2.oauth2provider
+    id: cig_dashboard_provider
+    identifiers:
+      client_id: ${oidc_client_id}
+    attrs:
+      name: CIG Dashboard
+      client_id: ${oidc_client_id}
+      client_secret: ${oidc_client_secret}
+      client_type: confidential
+      authorization_flow: !KeyOf cig_dashboard_authorization_flow
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+      redirect_uris: ${redirect_uris}
+  - model: authentik_core.application
+    identifiers:
+      slug: cig-dashboard
+    attrs:
+      name: CIG Dashboard
+      slug: cig-dashboard
+      provider: !KeyOf cig_dashboard_provider
+      meta_launch_url: ${dashboard_url}
+BLUEPRINT
+
+cat > "$ENV_FILE" <<ENV
+PG_PASS=$${DB_PASS}
+AUTHENTIK_BOOTSTRAP_PASSWORD=$${ADMIN_PASS}
+AUTHENTIK_SECRET_KEY=$${SECRET_KEY}
+AUTHENTIK_ERROR_REPORTING__ENABLED=false
+AUTHENTIK_EMAIL__HOST=$SMTP_HOST
+AUTHENTIK_EMAIL__PORT=$SMTP_PORT
+AUTHENTIK_EMAIL__USERNAME=$SMTP_USERNAME
+AUTHENTIK_EMAIL__PASSWORD=$SMTP_PASSWORD
+AUTHENTIK_EMAIL__USE_TLS=true
+AUTHENTIK_EMAIL__FROM=$SMTP_FROM
+COMPOSE_PROJECT_NAME=authentik
+ENV
+chmod 600 "$ENV_FILE"
+
+cat > "$COMPOSE_FILE" <<'COMPOSE'
+services:
+  postgresql:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d authentik -U authentik"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: $${PG_PASS}
+      POSTGRES_USER: authentik
+      POSTGRES_DB: authentik
+    env_file: /opt/authentik/.env
+
+  server:
+    image: ghcr.io/goauthentik/server:${authentik_image_tag}
+    restart: unless-stopped
+    command: server
+    environment:
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: $${PG_PASS}
+    volumes:
+      - /opt/authentik/media:/media
+      - /opt/authentik/custom-templates:/templates
+    env_file: /opt/authentik/.env
+    ports:
+      - "9000:9000"
+      - "9443:9443"
+    depends_on:
+      postgresql:
+        condition: service_healthy
+
+  worker:
+    image: ghcr.io/goauthentik/server:${authentik_image_tag}
+    restart: unless-stopped
+    command: worker
+    user: root
+    environment:
+      AUTHENTIK_BOOTSTRAP_EMAIL: "${admin_email}"
+      AUTHENTIK_BOOTSTRAP_PASSWORD: "$${AUTHENTIK_BOOTSTRAP_PASSWORD}"
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: $${PG_PASS}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/authentik/media:/media
+      - /opt/authentik/certs:/certs
+      - /opt/authentik/custom-templates:/templates
+      - /opt/authentik/blueprints:/blueprints
+    env_file: /opt/authentik/.env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+
+  caddy:
+    image: cig-authentik-caddy-route53:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      AWS_REGION: ${region}
+      AWS_DEFAULT_REGION: ${region}
+    volumes:
+      - /opt/authentik/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - server
+
+volumes:
+  pg_data:
+  caddy_data:
+  caddy_config:
+COMPOSE
+
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" down --remove-orphans >/dev/null 2>&1 || true
+docker volume rm authentik_pg_data >/dev/null 2>&1 || true
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --remove-orphans
+sleep 180
+if ! docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T worker ak apply_blueprint /blueprints/cig-dashboard.yaml >/dev/console 2>&1; then
+  exit 1
+fi
+sleep 10
+
+wait_for_url() {
+  local label="$1"
+  local url="$2"
+  local attempts="$${3:-60}"
+  local delay_seconds="$${4:-10}"
+
+  for attempt in $(seq 1 "$attempts"); do
+    if curl -fsS -H "Host: $DOMAIN" "$url" >/dev/null; then
+      echo "$label ready"
+      return 0
+    fi
+
+    echo "Waiting for $label ($attempt/$attempts)"
+    sleep "$delay_seconds"
+  done
+
+  echo "$label did not become ready in time" >&2
+  docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" ps >&2 || true
+  docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" logs --no-color --tail 200 >&2 || true
+  exit 1
+}
+
+wait_for_url \
+  "Authentik Google login flow" \
+  "http://127.0.0.1:9000/if/flow/cig-google-login/?next=/"
+
+wait_for_url \
+  "Authentik GitHub login flow" \
+  "http://127.0.0.1:9000/if/flow/cig-github-login/?next=/"
+
+wait_for_url \
+  "Authentik discovery endpoint" \
+  "http://127.0.0.1:9000/application/o/$${OIDC_CLIENT_ID}/.well-known/openid-configuration"
+
+docker image prune -f >/dev/null
+REFRESH
+
+chmod +x /usr/local/bin/authentik-refresh
+
+cat > /etc/systemd/system/authentik.service <<'SERVICE'
+[Unit]
+Description=CIG Authentik host stack
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/authentik-refresh
+ExecStop=/usr/bin/docker compose -f /opt/authentik/docker-compose.yml --env-file /opt/authentik/.env down
+TimeoutStartSec=1200
+
+[Install]
+WantedBy=multi-user.target
+SERVICE
+
+echo "$AUTHENTIK_IMAGE_TAG" > /opt/authentik/authentik-image-tag
+chmod 600 /opt/authentik/authentik-image-tag
+
+systemctl daemon-reload
+systemctl enable --now authentik
+
+echo "Authentik host bootstrap complete"
