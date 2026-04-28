@@ -58,7 +58,7 @@ interface AuthentikConfig {
 | --------------------------------- | ------------------------------ | ---------------------------------------- |
 | `NEXT_PUBLIC_AUTH_PROVIDER`       | `"authentik"`                  | Auth backend: `"authentik"` or `"supabase"` |
 | `NEXT_PUBLIC_AUTHENTIK_URL`       | `"https://auth.cig.technology"` | Authentik issuer URL                     |
-| `NEXT_PUBLIC_AUTHENTIK_CLIENT_ID` | (hardcoded fallback)           | OIDC client ID                           |
+| `NEXT_PUBLIC_AUTHENTIK_CLIENT_ID` | required                       | OIDC client ID                           |
 | `NEXT_PUBLIC_DASHBOARD_URL`       | `"http://localhost:3001"`      | Dashboard origin (for relay route)       |
 | `NEXT_PUBLIC_SITE_URL`            | `"http://localhost:3000"`      | Landing page origin                      |
 | `NEXT_PUBLIC_SUPABASE_URL`        | —                              | Supabase URL (fallback mode only)        |

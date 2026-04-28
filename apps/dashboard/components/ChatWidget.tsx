@@ -1,7 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   AudioLines,
@@ -296,7 +296,7 @@ export function ChatWidget() {
     }
   }
 
-  async function loadSessionMessages(sessionId: string | null) {
+  const loadSessionMessages = useCallback(async (sessionId: string | null) => {
     const requestId = sessionMessagesRequestRef.current + 1;
     sessionMessagesRequestRef.current = requestId;
 
@@ -324,7 +324,7 @@ export function ChatWidget() {
         setIsLoadingMessages(false);
       }
     }
-  }
+  }, [t]);
 
   useEffect(() => {
     if (!isOpen || hasHydratedSessions) {
@@ -384,7 +384,7 @@ export function ChatWidget() {
     return () => {
       cancelled = true;
     };
-  }, [hasHydratedSessions, isOpen, t]);
+  }, [hasHydratedSessions, isOpen, loadSessionMessages, t]);
 
   useEffect(() => {
     if (!isOpen) {

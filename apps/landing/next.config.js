@@ -63,6 +63,13 @@ function resolveReleaseMetadata() {
 const { releaseTag, buildNumber } = resolveReleaseMetadata();
 // Local builds should stay on localhost; the deploy workflow sets production explicitly.
 const defaultSiteUrl = 'http://localhost:3000';
+const authentikClientIdFallback = 'G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v';
+const authentikClientId = process.env.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID?.trim();
+const resolvedAuthentikClientId = authentikClientId || authentikClientIdFallback;
+
+if (process.env.CI === 'true' && !authentikClientId) {
+  throw new Error('NEXT_PUBLIC_AUTHENTIK_CLIENT_ID is required to build the landing app');
+}
 
 function writeRuntimeVersionAsset() {
   const payload = {
@@ -121,7 +128,7 @@ const nextConfig = {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
     NEXT_PUBLIC_DOCS_URL: process.env.NEXT_PUBLIC_DOCS_URL || 'https://cig.lat/documentation',
     NEXT_PUBLIC_AUTHENTIK_URL: process.env.NEXT_PUBLIC_AUTHENTIK_URL || 'https://auth.cig.technology',
-    NEXT_PUBLIC_AUTHENTIK_CLIENT_ID: process.env.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID || 'G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v',
+    NEXT_PUBLIC_AUTHENTIK_CLIENT_ID: resolvedAuthentikClientId,
   },
 };
 

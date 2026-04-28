@@ -1,3 +1,54 @@
+## [0.3.8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.3.7...v0.3.8) (2026-04-28)
+
+### Detected changes
+- .github: 2 changed file(s)
+  - .github/workflows/deploy-dashboard.yml
+  - .github/workflows/publish-images.yml
+- root: 3 changed file(s)
+  - CHANGELOG.md
+  - package.json
+  - release-metadata.json
+- apps: 10 changed file(s)
+  - apps/dashboard/app/auth/callback/page.tsx
+  - apps/dashboard/app/auth/login-callback/route.ts
+  - apps/dashboard/components/ChatWidget.tsx
+  - apps/dashboard/next.config.js
+  - apps/dashboard/package.json
+  - apps/docs/package.json
+  - apps/landing/components/AuthButton.tsx
+  - apps/landing/next.config.js
+  - apps/landing/package.json
+  - apps/wizard-ui/package.json
+- packages: 8 changed file(s)
+  - packages/agents/package.json
+  - packages/api/package.json
+  - packages/auth/README.md
+  - packages/chatbot/package.json
+  - packages/config/package.json
+  - packages/discovery/package.json
+  - packages/graph/package.json
+  - packages/sdk/package.json
+- scripts: scripts/release.sh
+
+
+## [0.3.8](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.3.5...v0.3.8) (2026-04-28)
+
+
+
+
+
+## [0.3.7](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.3.5...v0.3.7) (2026-04-28)
+
+
+
+
+
+## [0.3.6](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.3.5...v0.3.6) (2026-04-28)
+
+
+
+
+
 ## [0.3.5](https://github.com/edwardcalderon/ComputeIntelligenceGraph/compare/v0.3.4...v0.3.5) (2026-04-05)
 
 ### Detected changes

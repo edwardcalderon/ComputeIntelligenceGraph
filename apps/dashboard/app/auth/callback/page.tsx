@@ -199,8 +199,11 @@ function getAuthentikIssuer(): string {
 }
 
 function getAuthentikClientId(): string {
-  return process.env.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID ??
-    "G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v";
+  const clientId = process.env.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID?.trim();
+  if (!clientId) {
+    throw new Error("NEXT_PUBLIC_AUTHENTIK_CLIENT_ID is required for Authentik social login");
+  }
+  return clientId;
 }
 
 function resolveAuthentikEndpoints(issuer: string): Promise<{ token: string; userinfo: string }> {

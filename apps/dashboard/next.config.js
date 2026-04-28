@@ -13,6 +13,13 @@ const buildNumber = process.env.NEXT_PUBLIC_APP_BUILD
   || (metaOk && meta.buildNumber != null ? String(meta.buildNumber) : '');
 const releaseTag = process.env.NEXT_PUBLIC_RELEASE_TAG
   || (metaOk ? meta.releaseTag : `v${version}`);
+const authentikClientIdFallback = 'G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v';
+const authentikClientId = process.env.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID?.trim();
+const resolvedAuthentikClientId = authentikClientId || authentikClientIdFallback;
+
+if (process.env.CI === 'true' && !authentikClientId) {
+  throw new Error('NEXT_PUBLIC_AUTHENTIK_CLIENT_ID is required to build the dashboard app');
+}
 
 function writeRuntimeVersionAsset() {
   const payload = {
@@ -63,7 +70,7 @@ const nextConfig = {
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
     NEXT_PUBLIC_DASHBOARD_URL: process.env.NEXT_PUBLIC_DASHBOARD_URL || 'http://localhost:3001',
     NEXT_PUBLIC_AUTHENTIK_URL: process.env.NEXT_PUBLIC_AUTHENTIK_URL || 'https://auth.cig.technology',
-    NEXT_PUBLIC_AUTHENTIK_CLIENT_ID: process.env.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID || 'G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v',
+    NEXT_PUBLIC_AUTHENTIK_CLIENT_ID: resolvedAuthentikClientId,
     NEXT_PUBLIC_DOCS_URL: process.env.NEXT_PUBLIC_DOCS_URL || 'https://cig.lat/documentation',
   },
 };

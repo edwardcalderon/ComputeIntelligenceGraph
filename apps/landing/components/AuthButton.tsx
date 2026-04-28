@@ -437,7 +437,10 @@ type ModalView = "methods" | "cli-code" | "ssh-info" | "email-menu" | "email-otp
 
 function getAuthentikConfig() {
   const issuerUrl = process.env.NEXT_PUBLIC_AUTHENTIK_URL ?? "https://auth.cig.technology";
-  const clientId  = process.env.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID ?? "G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v";
+  const clientId = process.env.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID?.trim();
+  if (!clientId) {
+    throw new Error("NEXT_PUBLIC_AUTHENTIK_CLIENT_ID is required for Authentik social login");
+  }
   const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "http://localhost:3001";
   return {
     issuerUrl,

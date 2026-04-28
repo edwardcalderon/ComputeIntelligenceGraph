@@ -273,7 +273,7 @@ jobs:
                 echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}"
                 echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}"
                 echo "NEXT_PUBLIC_AUTHENTIK_URL=${{ vars.NEXT_PUBLIC_AUTHENTIK_URL || 'https://auth.cig.technology' }}"
-                echo "NEXT_PUBLIC_AUTHENTIK_CLIENT_ID=${{ vars.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID || 'G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v' }}"
+                echo "NEXT_PUBLIC_AUTHENTIK_CLIENT_ID=${{ vars.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID }}"
                 echo "NEXT_PUBLIC_APP_VERSION=${{ needs.prepare.outputs.version }}"
                 echo 'EOF'
               } >> "$GITHUB_OUTPUT"
@@ -288,7 +288,7 @@ jobs:
                 echo "NEXT_PUBLIC_SITE_URL=http://localhost:3000"
                 echo "NEXT_PUBLIC_DASHBOARD_URL=http://localhost:3001"
                 echo "NEXT_PUBLIC_AUTHENTIK_URL=${{ vars.NEXT_PUBLIC_AUTHENTIK_URL || 'https://auth.cig.technology' }}"
-                echo "NEXT_PUBLIC_AUTHENTIK_CLIENT_ID=${{ vars.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID || 'G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v' }}"
+                echo "NEXT_PUBLIC_AUTHENTIK_CLIENT_ID=${{ vars.NEXT_PUBLIC_AUTHENTIK_CLIENT_ID }}"
                 echo "NEXT_PUBLIC_APP_VERSION=${{ needs.prepare.outputs.version }}"
                 echo 'EOF'
               } >> "$GITHUB_OUTPUT"

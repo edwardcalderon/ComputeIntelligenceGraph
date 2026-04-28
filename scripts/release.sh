@@ -233,7 +233,6 @@ NODE
 verify_dashboard_container_build() {
   local app_version="$1"
   local image_tag="cig-dashboard-release-check:${app_version}"
-  local authentik_client_id_default="G4D6S7WXUoCNZxY7uZSbD08zO3cuXEZwSyUATw2v"
 
   command -v docker >/dev/null 2>&1 || {
     error "docker is required to verify the dashboard container build. Install Docker or use --no-build."
@@ -254,7 +253,7 @@ verify_dashboard_container_build() {
     --build-arg "NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-}" \
     --build-arg "NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}" \
     --build-arg "NEXT_PUBLIC_AUTHENTIK_URL=${NEXT_PUBLIC_AUTHENTIK_URL:-https://auth.cig.technology}" \
-    --build-arg "NEXT_PUBLIC_AUTHENTIK_CLIENT_ID=${NEXT_PUBLIC_AUTHENTIK_CLIENT_ID:-$authentik_client_id_default}" \
+    --build-arg "NEXT_PUBLIC_AUTHENTIK_CLIENT_ID=${NEXT_PUBLIC_AUTHENTIK_CLIENT_ID:-}" \
     --build-arg "NEXT_PUBLIC_APP_VERSION=${app_version}" \
     . 2>&1
 
