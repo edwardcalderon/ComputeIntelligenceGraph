@@ -1,0 +1,45 @@
+{
+  "name": "@llm-proxy/app",
+  "version": "0.2.2",
+  "description": "AWS-native LLM proxy with SQS-based request/response pattern",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --build --force",
+    "dev": "tsc --build --watch --preserveWatchOutput --force",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "diff:prod": "pnpm exec sst diff --stage production",
+    "deploy:prod": "pnpm exec sst deploy --stage production --yes",
+    "bootstrap:prod": "INFRA_LLM_PROXY_BOOTSTRAP_ONLY=true bash scripts/bootstrap-llm-proxy.sh",
+    "bootstrap:pipelines": "INFRA_LLM_PROXY_BOOTSTRAP_ONLY=true INFRA_CREATE_PIPELINES=true bash scripts/bootstrap-llm-proxy.sh"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.600.0",
+    "@aws-sdk/client-sqs": "^3.600.0",
+    "@aws-sdk/lib-dynamodb": "^3.600.0",
+    "@hono/zod-validator": "^0.2.2",
+    "hono": "^4.4.0",
+    "uuid": "^9.0.1",
+    "zod": "^3.25.8"
+  },
+  "devDependencies": {
+    "@pulumi/aws": "^6.83.3",
+    "@pulumi/pulumi": "^3.232.0",
+    "@types/node": "^20.14.0",
+    "@types/uuid": "^9.0.8",
+    "fast-check": "^3.23.2",
+    "sst": "^2.49.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.4.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
