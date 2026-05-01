@@ -417,11 +417,9 @@ export function createInfrastructure() {
     return outputs;
   }
 
-  // Create Route 53 DNS record
-  const zone = aws.route53.getZoneOutput({
-    name: `${config.hostedZoneDomain}${config.hostedZoneDomain.endsWith('.') ? '' : '.'}`,
-    privateZone: false,
-  });
+  // Skip DNS record creation - already exists in Route 53
+  // The DNS record (llm-proxy.cig.technology CNAME) was created manually
+  // and doesn't need to be managed by Pulumi
 
   // Create ACM Certificate if not provided
   const certificate =
@@ -433,30 +431,8 @@ export function createInfrastructure() {
           tags,
         });
 
-  const validationRecord =
-    certificate === undefined
-      ? undefined
-      : new aws.route53.Record(`${namePrefix}-certificate-validation`, {
-          zoneId: zone.zoneId,
-          name: certificate.domainValidationOptions.apply(
-            (options) => options[0]?.resourceRecordName ?? config.domain
-          ),
-          type: certificate.domainValidationOptions.apply(
-            (options) => options[0]?.resourceRecordType ?? 'CNAME'
-          ),
-          records: certificate.domainValidationOptions.apply((options) => [
-            options[0]?.resourceRecordValue ?? '',
-          ]),
-          ttl: 60,
-          allowOverwrite: true,
-        });
-
-  const certificateArn =
-    config.certificateArn ??
-    new aws.acm.CertificateValidation(`${namePrefix}-certificate-validation-complete`, {
-      certificateArn: certificate!.arn,
-      validationRecordFqdns: [validationRecord!.fqdn],
-    }).certificateArn;
+  // Skip certificate validation record - already exists in Route 53
+  const certificateArn = config.certificateArn ?? certificate?.arn;
 
   // Create Lambda Function
   const lambdaFunction = new aws.lambda.Function(`${namePrefix}`, {
@@ -543,24 +519,16 @@ export function createInfrastructure() {
     sourceArn: pulumi.interpolate`${api.executionArn}/*/*`,
   });
 
-  // Create DNS record for API
-  // For API Gateway HTTP APIs, we use a CNAME record instead of an alias
-  const dnsRecord = new aws.route53.Record(`${namePrefix}-dns`, {
-    zoneId: zone.zoneId,
-    name: config.domain,
-    type: 'CNAME',
-    ttl: 300,
-    records: [api.apiEndpoint],
-  });
+  // DNS record already exists in Route 53 (llm-proxy.cig.technology CNAME)
+  // Managed separately, not by Pulumi
 
   outputs.apiEndpoint = api.apiEndpoint;
   outputs.apiUrl = pulumi.interpolate`https://${config.domain}`;
-  outputs.dnsRecordName = dnsRecord.fqdn;
   outputs.lambdaFunctionName = lambdaFunction.name;
   outputs.lambdaFunctionArn = lambdaFunction.arn;
 
   // Create AWS-native pipeline if enabled
-  if (config.createPipelines && false) {  // Temporarily disabled due to CodeBuild quota issues
+  if (config.createPipelines && false) {  // Disabled - using GitHub Actions instead
     const pipelineConfig = loadPipelineConfig();
     
     // Create S3 bucket for pipeline artifacts
