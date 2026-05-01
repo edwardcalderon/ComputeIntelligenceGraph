@@ -841,23 +841,6 @@ env:
             ],
           },
           {
-            name: 'Validate',
-            actions: [
-              {
-                name: 'ValidateCode',
-                category: 'Build',
-                owner: 'AWS',
-                provider: 'CodeBuild',
-                version: '1',
-                configuration: {
-                  ProjectName: validateProject.name,
-                },
-                inputArtifacts: ['SourceOutput'],
-                outputArtifacts: ['ValidateOutput'],
-              },
-            ],
-          },
-          {
             name: 'Build',
             actions: [
               {
@@ -869,7 +852,7 @@ env:
                 configuration: {
                   ProjectName: buildProject.name,
                 },
-                inputArtifacts: ['ValidateOutput'],
+                inputArtifacts: ['SourceOutput'],
                 outputArtifacts: ['BuildOutput'],
               },
             ],
