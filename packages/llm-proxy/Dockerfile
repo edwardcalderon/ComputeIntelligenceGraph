@@ -14,7 +14,7 @@ COPY packages/config ./packages/config
 COPY tsconfig.base.json ./
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile --prod
+RUN pnpm install --no-frozen-lockfile
 
 # Build LLM Proxy
 RUN pnpm --filter @llm-proxy/app build
