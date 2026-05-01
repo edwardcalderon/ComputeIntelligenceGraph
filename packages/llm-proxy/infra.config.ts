@@ -695,29 +695,27 @@ phases:
   pre_build:
     commands:
       - echo "Logging in to Amazon ECR..."
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${config.imageRepository}
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - REPOSITORY_URI=$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${config.imageRepository}
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=\${COMMIT_HASH:=latest}
   build:
     commands:
-      - echo "Building Docker image on \`date\`"
+      - echo "Building Docker image..."
       - docker build -f packages/llm-proxy/Dockerfile -t $REPOSITORY_URI:$IMAGE_TAG .
       - docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:latest
   post_build:
     commands:
-      - echo "Pushing Docker image to ECR on \`date\`"
+      - echo "Pushing Docker image to ECR..."
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - docker push $REPOSITORY_URI:latest
-      - echo "Writing image definitions file..."
       - printf '[{"name":"llm-proxy","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
 artifacts:
   files:
     - imagedefinitions.json
-  name: BuildArtifact
 env:
   variables:
-    AWS_ACCOUNT_ID: ${aws.getCallerIdentityOutput().accountId}
     AWS_DEFAULT_REGION: ${config.region}
 `,
         },
@@ -757,7 +755,7 @@ phases:
       - pnpm install --frozen-lockfile
       - echo "Reading image definitions..."
       - IMAGE_URI=$(cat imagedefinitions.json | jq -r '.[0].imageUri')
-      - echo "Image URI: $IMAGE_URI"
+      - echo "Image URI $IMAGE_URI"
   build:
     commands:
       - echo "Deploying LLM Proxy via SST..."
@@ -765,7 +763,9 @@ phases:
       - export LLM_PROXY_LAMBDA_MEMORY_MB=256
       - export LLM_PROXY_LAMBDA_TIMEOUT_SECONDS=90
       - export LLM_PROXY_DOMAIN=${config.domain}
+      - export LLM_PROXY_HOSTED_ZONE_DOMAIN=cig.technology
       - export LLM_PROXY_IMAGE_REPOSITORY=${config.imageRepository}
+      - export AWS_PROFILE=aws-cig
       - pnpm --filter @llm-proxy/app deploy:production
       - echo "Deployment completed"
 env:
