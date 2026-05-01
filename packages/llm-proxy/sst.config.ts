@@ -18,6 +18,8 @@ function loadInfraEnv(): void {
     `${cwd}/.env`,
     `${cwd}/../../.env.local`,
     `${cwd}/../../.env`,
+    `${cwd}/../../../.env.local`,
+    `${cwd}/../../../.env`,
   ]);
 }
 
@@ -29,19 +31,29 @@ function resolveAwsRegion(): string {
   return region;
 }
 
+function resolveAwsProfile(): string | undefined {
+  return process.env.AWS_PROFILE ?? undefined;
+}
+
 loadInfraEnv();
 
 export default $config({
   app(input: { stage?: string }) {
+    const profile = resolveAwsProfile();
+    const providerConfig: Record<string, unknown> = {
+      region: resolveAwsRegion(),
+    };
+    if (profile) {
+      providerConfig.profile = profile;
+    }
+
     return {
-      name: 'llm-proxy',
+      name: process.env.INFRA_APP_NAME ?? 'llm-proxy',
       removal: input?.stage === 'production' ? 'retain' : 'remove',
       protect: ['production'].includes(input?.stage ?? ''),
       home: 'aws',
       providers: {
-        aws: {
-          region: resolveAwsRegion(),
-        },
+        aws: providerConfig,
       },
     };
   },

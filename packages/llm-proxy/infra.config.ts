@@ -528,12 +528,12 @@ export function createInfrastructure() {
   outputs.lambdaFunctionArn = lambdaFunction.arn;
 
   // Create AWS-native pipeline if enabled
-  if (config.createPipelines && false) {  // Disabled - using GitHub Actions instead
+  if (config.createPipelines) {
     const pipelineConfig = loadPipelineConfig();
     
     // Create S3 bucket for pipeline artifacts
     const artifactBucket = new aws.s3.Bucket(`${namePrefix}-pipeline-artifacts`, {
-      bucket: pulumi.interpolate`${namePrefix}-pipeline-artifacts-${aws.getCallerIdentityOutput().accountId}`,
+      bucket: `${namePrefix}-pipeline-artifacts-${config.region}`,
       acl: 'private',
       versioning: {
         enabled: true,
