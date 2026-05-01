@@ -25,15 +25,15 @@
 - **ARN**: `arn:aws:codepipeline:us-east-2:520900722378:llm-proxy-production-pipeline`
 
 **Pipeline Stages**:
-1. Source (GitHub via CodeStar Connection)
-2. Validate (CodeBuild: lint, test, build)
-3. Build (CodeBuild: Docker build & ECR push)
-4. Deploy (CodeBuild: SST deployment)
+1. Source (GitHub via CodeStar Connection) ✅ Working
+2. Validate (CodeBuild: lint, test, build) ⏳ Blocked by quota
+3. Build (CodeBuild: Docker build & ECR push) ⏳ Blocked by quota
+4. Deploy (CodeBuild: SST deployment) ⏳ Blocked by quota
 
 **CodeBuild Projects**:
-- `llm-proxy-production-validate`
-- `llm-proxy-production-build-docker`
-- `llm-proxy-production-deploy`
+- `llm-proxy-production-validate` (with concurrent build limit: 1)
+- `llm-proxy-production-build-docker` (with concurrent build limit: 1)
+- `llm-proxy-production-deploy` (with concurrent build limit: 1)
 
 ### 3. GitHub CodeStar Connection
 - **Status**: ✅ Fixed & Verified
@@ -43,9 +43,16 @@
 - **Branch**: main
 
 **Latest Pipeline Execution**:
-- Execution ID: d516de8d-345a-4e6a-ba30-713e9cb134fa
+- Execution ID: 677b8f0e-3685-407f-95ab-d52feb90da6d
 - Source Stage: ✅ Succeeded
-- Commit: 335cbb8 (chore(llm-proxy): release v0.2.2)
+- Commit: 2d192b1 (fix: add concurrent build limits to CodeBuild projects)
+
+## ⚠️ Current Blocker
+
+**CodeBuild Quota Limit**: The account has a service quota limit preventing CodeBuild from starting builds.
+- Error: "Cannot have more than 0 builds in queue for the account"
+- Solution: Contact AWS Support to increase CodeBuild concurrent build quota
+- See: `.github/CODEBUILD_QUOTA_ISSUE.md` for detailed resolution guide
 
 ## 🔧 Configuration
 
