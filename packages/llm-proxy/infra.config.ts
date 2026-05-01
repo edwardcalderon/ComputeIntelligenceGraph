@@ -560,7 +560,7 @@ export function createInfrastructure() {
   outputs.lambdaFunctionArn = lambdaFunction.arn;
 
   // Create AWS-native pipeline if enabled
-  if (config.createPipelines) {
+  if (config.createPipelines && false) {  // Temporarily disabled due to CodeBuild quota issues
     const pipelineConfig = loadPipelineConfig();
     
     // Create S3 bucket for pipeline artifacts
