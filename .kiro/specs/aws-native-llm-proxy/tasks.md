@@ -6,7 +6,7 @@ Incremental implementation of a fully standalone `packages/llm-proxy/` package t
 
 ## Tasks
 
-- [~] 1. Scaffold package structure and core configuration
+- [x] 1. Scaffold package structure and core configuration
   - [x] 1.1 Initialize `packages/llm-proxy/` with `package.json` (`@llm-proxy/app`), `tsconfig.json`, `vitest.config.ts`, and `sst-env.d.ts`
     - Zero `@cig/*` dependencies — add hono, zod, @hono/zod-validator, @aws-sdk/client-sqs, @aws-sdk/client-dynamodb, @aws-sdk/lib-dynamodb, uuid as dependencies
     - Add fast-check, vitest, @types/node, typescript, sst, @pulumi/aws, @pulumi/pulumi as devDependencies
@@ -19,7 +19,7 @@ Incremental implementation of a fully standalone `packages/llm-proxy/` package t
     - Import infrastructure definitions from `./infra/index.ts`
     - _Requirements: 6.7_
 
-- [~] 2. Define TypeScript types, Zod schemas, and error schema
+- [ ] 2. Define TypeScript types, Zod schemas, and error schema
   - [x] 2.1 Create `src/types.ts` with `InferenceRequest`, `InferenceResponse`, `WorkerSession`, `ChatMessage`, and `OpenAICompletionResponse` interfaces
     - Include all fields from the design: correlationId, model, messages, prompt, temperature, max_tokens, stream, timestamp, status, body, error, processingTimeMs
     - Include WorkerSession with sessionId, recordType, startedAt, lastHeartbeatAt, status, ollamaModels, ttl
@@ -48,7 +48,7 @@ Incremental implementation of a fully standalone `packages/llm-proxy/` package t
     - Test file: `src/__tests__/error-handling.property.test.ts`
     - **Validates: Requirements 9.1, 9.4**
 
-- [~] 3. Implement core library modules
+- [ ] 3. Implement core library modules
   - [x] 3.1 Create `src/lib/correlation.ts` — Correlation_ID generation and response matching
     - `generateCorrelationId()`: returns UUIDv4 string
     - `buildRequestMessage(correlationId, payload)`: builds SQS message body + MessageAttributes for Request_Queue
@@ -96,7 +96,7 @@ Incremental implementation of a fully standalone `packages/llm-proxy/` package t
 - [x] 4. Checkpoint — Ensure all core library tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [~] 5. Implement Hono routes and middleware
+- [ ] 5. Implement Hono routes and middleware
   - [x] 5.1 Create `src/lib/auth.ts` — API key authentication middleware for Hono
     - Validate API key from Authorization header or x-api-key header
     - Return 401 with consistent error schema on failure
@@ -162,7 +162,7 @@ Incremental implementation of a fully standalone `packages/llm-proxy/` package t
 - [x] 6. Checkpoint — Ensure all route and middleware tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [~] 7. Define SST infrastructure
+- [ ] 7. Define SST infrastructure
   - [x] 7.1 Create `packages/llm-proxy/infra/index.ts` — SQS queues, DynamoDB table, Lambda, API Gateway, IAM, SNS, CloudWatch
     - Define `llm-proxy-request-queue` (SQS Standard, VisibilityTimeout=120s, MessageRetention=300s, encryption at rest with AWS-managed KMS)
     - Define `llm-proxy-response-queue` (SQS Standard, VisibilityTimeout=30s, MessageRetention=300s, encryption at rest)
@@ -180,7 +180,7 @@ Incremental implementation of a fully standalone `packages/llm-proxy/` package t
     - Total CloudWatch alarms ≤ 10 (within free tier)
     - _Requirements: 1.4, 1.5, 2.5, 4.1, 4.4, 4.5, 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 7.1, 7.6, 8.1, 8.2, 8.4, 8.5, 10.1, 10.2, 10.3, 10.4, 10.5_
 
-- [~] 8. Implement Colab Worker (Python)
+- [ ] 8. Implement Colab Worker (Python)
   - [x] 8.1 Create `packages/llm-proxy/colab/requirements.txt` with boto3 and requests dependencies
     - _Requirements: 7.2_
 

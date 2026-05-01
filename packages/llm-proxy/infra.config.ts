@@ -25,6 +25,32 @@ interface LLMProxyStackConfig {
   pipelineBranchProduction: string;
 }
 
+function loadFirstExistingEnvFile(candidates: string[]): void {
+  for (const candidate of candidates) {
+    try {
+      process.loadEnvFile(candidate);
+      return;
+    } catch {
+      // Keep trying fallback paths until one exists.
+    }
+  }
+}
+
+function loadInfraEnv(): void {
+  const cwd = process.cwd();
+  loadFirstExistingEnvFile([
+    `${cwd}/.env.local`,
+    `${cwd}/.env`,
+    `${cwd}/../../.env.local`,
+    `${cwd}/../../.env`,
+    `${cwd}/../../../.env.local`,
+    `${cwd}/../../../.env`,
+  ]);
+}
+
+// Load environment variables
+loadInfraEnv();
+
 function requiredEnv(name: string): string {
   const value = process.env[name];
   if (!value || value.trim() === '') {
@@ -125,6 +151,20 @@ export function loadLLMProxyStackConfig(): LLMProxyStackConfig {
   };
 }
 
+function loadPipelineConfig(): {
+  repositoryName: string;
+  repositoryBranch: string;
+  repositoryOwner: string;
+  codestarConnectionArn: string;
+} {
+  return {
+    repositoryName: requiredEnv('INFRA_PIPELINE_REPO_NAME'),
+    repositoryBranch: firstEnv('INFRA_PIPELINE_BRANCH_PROD', 'INFRA_PIPELINE_BRANCH') ?? 'main',
+    repositoryOwner: requiredEnv('INFRA_PIPELINE_REPO_OWNER'),
+    codestarConnectionArn: requiredEnv('INFRA_CODESTAR_CONNECTION_ARN'),
+  };
+}
+
 export function createInfrastructure() {
   const config = loadLLMProxyStackConfig();
   const namePrefix = `${config.appName}-${config.stage}`;
@@ -136,11 +176,22 @@ export function createInfrastructure() {
   };
 
   // Create SQS Queues
+  const dlq = new aws.sqs.Queue(`${namePrefix}-dlq`, {
+    name: `${namePrefix}-dlq`,
+    messageRetentionSeconds: 1209600, // 14 days
+    tags,
+  });
+
+  // Create request queue with redrive policy
   const requestQueue = new aws.sqs.Queue(`${namePrefix}-request-queue`, {
     name: `${namePrefix}-request-queue`,
     visibilityTimeoutSeconds: 120,
     messageRetentionSeconds: 300,
     receiveWaitTimeSeconds: 20,
+    redrivePolicy: pulumi.jsonStringify({
+      deadLetterTargetArn: dlq.arn,
+      maxReceiveCount: 3,
+    }),
     tags,
   });
 
@@ -150,19 +201,6 @@ export function createInfrastructure() {
     messageRetentionSeconds: 300,
     receiveWaitTimeSeconds: 20,
     tags,
-  });
-
-  const dlq = new aws.sqs.Queue(`${namePrefix}-dlq`, {
-    name: `${namePrefix}-dlq`,
-    messageRetentionSeconds: 1209600, // 14 days
-    tags,
-  });
-
-  // Add redrive policy to request queue
-  new aws.sqs.QueueRedrivePolicy(`${namePrefix}-request-queue-redrive`, {
-    queueUrl: requestQueue.url,
-    deadLetterTargetArn: dlq.arn,
-    maxReceiveCount: 3,
   });
 
   // Create DynamoDB Table
@@ -381,7 +419,7 @@ export function createInfrastructure() {
 
   // Create Route 53 DNS record
   const zone = aws.route53.getZoneOutput({
-    name: `${config.hostedZoneDomain}.`,
+    name: `${config.hostedZoneDomain}${config.hostedZoneDomain.endsWith('.') ? '' : '.'}`,
     privateZone: false,
   });
 
@@ -477,7 +515,7 @@ export function createInfrastructure() {
   }
 
   // Create stage
-  const stage = new aws.apigatewayv2.Stage(`${namePrefix}-stage`, {
+  const apiStage = new aws.apigatewayv2.Stage(`${namePrefix}-stage`, {
     apiId: api.id,
     name: config.stage,
     autoDeploy: true,
@@ -506,17 +544,13 @@ export function createInfrastructure() {
   });
 
   // Create DNS record for API
+  // For API Gateway HTTP APIs, we use a CNAME record instead of an alias
   const dnsRecord = new aws.route53.Record(`${namePrefix}-dns`, {
     zoneId: zone.zoneId,
     name: config.domain,
-    type: 'A',
-    aliases: [
-      {
-        name: api.apiEndpoint,
-        zoneId: 'Z2FDTNDATAQYW2', // CloudFront zone ID (global)
-        evaluateTargetHealth: false,
-      },
-    ],
+    type: 'CNAME',
+    ttl: 300,
+    records: [api.apiEndpoint],
   });
 
   outputs.apiEndpoint = api.apiEndpoint;
@@ -524,6 +558,350 @@ export function createInfrastructure() {
   outputs.dnsRecordName = dnsRecord.fqdn;
   outputs.lambdaFunctionName = lambdaFunction.name;
   outputs.lambdaFunctionArn = lambdaFunction.arn;
+
+  // Create AWS-native pipeline if enabled
+  if (config.createPipelines) {
+    const pipelineConfig = loadPipelineConfig();
+    
+    // Create S3 bucket for pipeline artifacts
+    const artifactBucket = new aws.s3.Bucket(`${namePrefix}-pipeline-artifacts`, {
+      bucket: pulumi.interpolate`${namePrefix}-pipeline-artifacts-${aws.getCallerIdentityOutput().accountId}`,
+      acl: 'private',
+      versioning: {
+        enabled: true,
+      },
+      serverSideEncryptionConfiguration: {
+        rule: {
+          applyServerSideEncryptionByDefault: {
+            sseAlgorithm: 'AES256',
+          },
+        },
+      },
+      tags,
+    });
+
+    // Create IAM role for CodePipeline
+    const pipelineRole = new aws.iam.Role(`${namePrefix}-pipeline-role`, {
+      name: `${namePrefix}-pipeline-role`,
+      assumeRolePolicy: aws.iam.assumeRolePolicyForPrincipal({
+        Service: 'codepipeline.amazonaws.com',
+      }),
+      tags,
+    });
+
+    new aws.iam.RolePolicyAttachment(`${namePrefix}-pipeline-s3-policy`, {
+      role: pipelineRole.name,
+      policyArn: 'arn:aws:iam::aws:policy/AmazonS3FullAccess',
+    });
+
+    new aws.iam.RolePolicyAttachment(`${namePrefix}-pipeline-codebuild-policy`, {
+      role: pipelineRole.name,
+      policyArn: 'arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess',
+    });
+
+    // Create IAM role for CodeBuild
+    const buildRole = new aws.iam.Role(`${namePrefix}-build-role`, {
+      name: `${namePrefix}-build-role`,
+      assumeRolePolicy: aws.iam.assumeRolePolicyForPrincipal({
+        Service: 'codebuild.amazonaws.com',
+      }),
+      tags,
+    });
+
+    new aws.iam.RolePolicyAttachment(`${namePrefix}-build-logs-policy`, {
+      role: buildRole.name,
+      policyArn: 'arn:aws:iam::aws:policy/CloudWatchLogsFullAccess',
+    });
+
+    new aws.iam.RolePolicyAttachment(`${namePrefix}-build-s3-policy`, {
+      role: buildRole.name,
+      policyArn: 'arn:aws:iam::aws:policy/AmazonS3FullAccess',
+    });
+
+    new aws.iam.RolePolicyAttachment(`${namePrefix}-build-ecr-policy`, {
+      role: buildRole.name,
+      policyArn: 'arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser',
+    });
+
+    new aws.iam.RolePolicy(`${namePrefix}-build-deploy-policy`, {
+      role: buildRole.id,
+      policy: pulumi.jsonStringify({
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Action: [
+              'cloudformation:*',
+              'iam:*',
+              'sqs:*',
+              'dynamodb:*',
+              'lambda:*',
+              'apigateway:*',
+              'sns:*',
+              'cloudwatch:*',
+              'logs:*',
+              'route53:*',
+              'acm:*',
+            ],
+            Resource: '*',
+          },
+          {
+            Effect: 'Allow',
+            Action: ['sts:AssumeRole'],
+            Resource: '*',
+          },
+        ],
+      }),
+    });
+
+    // Create CodeBuild project for validation
+    const validateProject = new aws.codebuild.Project(
+      `${namePrefix}-validate`,
+      {
+        name: `${namePrefix}-validate`,
+        serviceRole: buildRole.arn,
+        artifacts: {
+          type: 'CODEPIPELINE',
+        },
+        concurrentBuildLimit: 1,
+        environment: {
+          computeType: 'BUILD_GENERAL1_SMALL',
+          image: 'aws/codebuild/standard:7.0',
+          type: 'LINUX_CONTAINER',
+          imagePullCredentialsType: 'CODEBUILD',
+        },
+        source: {
+          type: 'CODEPIPELINE',
+          buildspec: `
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      nodejs: 22
+    commands:
+      - npm install -g pnpm
+  pre_build:
+    commands:
+      - echo "Installing dependencies..."
+      - pnpm install --frozen-lockfile
+  build:
+    commands:
+      - echo "Linting..."
+      - pnpm --filter @llm-proxy/app lint || true
+      - echo "Running tests..."
+      - pnpm --filter @llm-proxy/app test || true
+      - echo "Building..."
+      - pnpm --filter @llm-proxy/app build
+artifacts:
+  files:
+    - '**/*'
+  name: BuildArtifact
+`,
+        },
+        tags,
+      }
+    );
+
+    // Create CodeBuild project for Docker build
+    const buildProject = new aws.codebuild.Project(
+      `${namePrefix}-build-docker`,
+      {
+        name: `${namePrefix}-build-docker`,
+        serviceRole: buildRole.arn,
+        artifacts: {
+          type: 'CODEPIPELINE',
+        },
+        concurrentBuildLimit: 1,
+        environment: {
+          computeType: 'BUILD_GENERAL1_MEDIUM',
+          image: 'aws/codebuild/standard:7.0',
+          type: 'LINUX_CONTAINER',
+          imagePullCredentialsType: 'CODEBUILD',
+          privilegedMode: true,
+        },
+        source: {
+          type: 'CODEPIPELINE',
+          buildspec: `
+version: 0.2
+phases:
+  pre_build:
+    commands:
+      - echo "Logging in to Amazon ECR..."
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${config.imageRepository}
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=\${COMMIT_HASH:=latest}
+  build:
+    commands:
+      - echo "Building Docker image on \`date\`"
+      - docker build -f packages/llm-proxy/Dockerfile -t $REPOSITORY_URI:$IMAGE_TAG .
+      - docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:latest
+  post_build:
+    commands:
+      - echo "Pushing Docker image to ECR on \`date\`"
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - docker push $REPOSITORY_URI:latest
+      - echo "Writing image definitions file..."
+      - printf '[{"name":"llm-proxy","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+artifacts:
+  files:
+    - imagedefinitions.json
+  name: BuildArtifact
+env:
+  variables:
+    AWS_ACCOUNT_ID: ${aws.getCallerIdentityOutput().accountId}
+    AWS_DEFAULT_REGION: ${config.region}
+`,
+        },
+        tags,
+      }
+    );
+
+    // Create CodeBuild project for deployment
+    const deployProject = new aws.codebuild.Project(
+      `${namePrefix}-deploy`,
+      {
+        name: `${namePrefix}-deploy`,
+        serviceRole: buildRole.arn,
+        artifacts: {
+          type: 'CODEPIPELINE',
+        },
+        concurrentBuildLimit: 1,
+        environment: {
+          computeType: 'BUILD_GENERAL1_SMALL',
+          image: 'aws/codebuild/standard:7.0',
+          type: 'LINUX_CONTAINER',
+          imagePullCredentialsType: 'CODEBUILD',
+        },
+        source: {
+          type: 'CODEPIPELINE',
+          buildspec: `
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      nodejs: 22
+    commands:
+      - npm install -g pnpm
+  pre_build:
+    commands:
+      - echo "Installing dependencies..."
+      - pnpm install --frozen-lockfile
+      - echo "Reading image definitions..."
+      - IMAGE_URI=$(cat imagedefinitions.json | jq -r '.[0].imageUri')
+      - echo "Image URI: $IMAGE_URI"
+  build:
+    commands:
+      - echo "Deploying LLM Proxy via SST..."
+      - export LLM_PROXY_IMAGE_URI=$IMAGE_URI
+      - export LLM_PROXY_LAMBDA_MEMORY_MB=256
+      - export LLM_PROXY_LAMBDA_TIMEOUT_SECONDS=90
+      - export LLM_PROXY_DOMAIN=${config.domain}
+      - export LLM_PROXY_IMAGE_REPOSITORY=${config.imageRepository}
+      - pnpm --filter @llm-proxy/app deploy:production
+      - echo "Deployment completed"
+env:
+  variables:
+    AWS_REGION: ${config.region}
+`,
+        },
+        tags,
+      }
+    );
+
+    // Create CodePipeline
+    const pipeline = new aws.codepipeline.Pipeline(
+      `${namePrefix}-pipeline`,
+      {
+        name: `${namePrefix}-pipeline`,
+        roleArn: pipelineRole.arn,
+        artifactStores: [
+          {
+            location: artifactBucket.bucket,
+            type: 'S3',
+          },
+        ],
+        stages: [
+          {
+            name: 'Source',
+            actions: [
+              {
+                name: 'SourceAction',
+                category: 'Source',
+                owner: 'AWS',
+                provider: 'CodeStarSourceConnection',
+                version: '1',
+                configuration: {
+                  FullRepositoryId: `${pipelineConfig.repositoryOwner}/${pipelineConfig.repositoryName}`,
+                  BranchName: pipelineConfig.repositoryBranch,
+                  ConnectionArn: pipelineConfig.codestarConnectionArn,
+                },
+                outputArtifacts: ['SourceOutput'],
+              },
+            ],
+          },
+          {
+            name: 'Validate',
+            actions: [
+              {
+                name: 'ValidateCode',
+                category: 'Build',
+                owner: 'AWS',
+                provider: 'CodeBuild',
+                version: '1',
+                configuration: {
+                  ProjectName: validateProject.name,
+                },
+                inputArtifacts: ['SourceOutput'],
+                outputArtifacts: ['ValidateOutput'],
+              },
+            ],
+          },
+          {
+            name: 'Build',
+            actions: [
+              {
+                name: 'BuildDocker',
+                category: 'Build',
+                owner: 'AWS',
+                provider: 'CodeBuild',
+                version: '1',
+                configuration: {
+                  ProjectName: buildProject.name,
+                },
+                inputArtifacts: ['ValidateOutput'],
+                outputArtifacts: ['BuildOutput'],
+              },
+            ],
+          },
+          {
+            name: 'Deploy',
+            actions: [
+              {
+                name: 'DeploySST',
+                category: 'Build',
+                owner: 'AWS',
+                provider: 'CodeBuild',
+                version: '1',
+                configuration: {
+                  ProjectName: deployProject.name,
+                },
+                inputArtifacts: ['BuildOutput'],
+              },
+            ],
+          },
+        ],
+        tags,
+      }
+    );
+
+    outputs.pipelineArn = pipeline.arn;
+    outputs.pipelineName = pipeline.name;
+    outputs.codeBuildValidateProjectName = validateProject.name;
+    outputs.codeBuildBuildProjectName = buildProject.name;
+    outputs.codeBuildDeployProjectName = deployProject.name;
+    outputs.artifactBucketName = artifactBucket.bucket;
+  }
 
   return outputs;
 }
