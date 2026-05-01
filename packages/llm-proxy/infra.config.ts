@@ -651,6 +651,7 @@ phases:
   pre_build:
     commands:
       - echo "Installing dependencies..."
+      - find . -name node_modules -type d -prune -exec rm -rf {} + 2>/dev/null || true
       - pnpm install --filter @llm-proxy/app... --no-frozen-lockfile
   build:
     commands:
@@ -752,6 +753,7 @@ phases:
   pre_build:
     commands:
       - echo "Installing dependencies..."
+      - find . -name node_modules -type d -prune -exec rm -rf {} + 2>/dev/null || true
       - pnpm install --filter @llm-proxy/app... --no-frozen-lockfile
       - echo "Reading image definitions..."
       - IMAGE_URI=$(cat $CODEBUILD_SRC_DIR_BuildOutput/imagedefinitions.json | jq -r '.[0].imageUri')
