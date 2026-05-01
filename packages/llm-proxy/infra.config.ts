@@ -651,7 +651,7 @@ phases:
   pre_build:
     commands:
       - echo "Installing dependencies..."
-      - pnpm install --no-frozen-lockfile
+      - pnpm install --filter @llm-proxy/app... --no-frozen-lockfile
   build:
     commands:
       - echo "Linting..."
@@ -752,7 +752,7 @@ phases:
   pre_build:
     commands:
       - echo "Installing dependencies..."
-      - pnpm install --no-frozen-lockfile
+      - pnpm install --filter @llm-proxy/app... --no-frozen-lockfile
       - echo "Reading image definitions..."
       - IMAGE_URI=$(cat $CODEBUILD_SRC_DIR_BuildOutput/imagedefinitions.json | jq -r '.[0].imageUri')
       - echo "Image URI $IMAGE_URI"
