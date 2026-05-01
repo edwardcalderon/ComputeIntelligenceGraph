@@ -754,7 +754,7 @@ phases:
       - echo "Installing dependencies..."
       - pnpm install --no-frozen-lockfile
       - echo "Reading image definitions..."
-      - IMAGE_URI=$(cat imagedefinitions.json | jq -r '.[0].imageUri')
+      - IMAGE_URI=$(cat $CODEBUILD_SRC_DIR_BuildOutput/imagedefinitions.json | jq -r '.[0].imageUri')
       - echo "Image URI $IMAGE_URI"
   build:
     commands:
@@ -836,8 +836,9 @@ env:
                 version: '1',
                 configuration: {
                   ProjectName: deployProject.name,
+                  PrimarySource: 'SourceOutput',
                 },
-                inputArtifacts: ['BuildOutput'],
+                inputArtifacts: ['SourceOutput', 'BuildOutput'],
               },
             ],
           },
