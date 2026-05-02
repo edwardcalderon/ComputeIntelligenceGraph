@@ -71,5 +71,5 @@ venv/
 ENV/
 
 #gcloud
-config/env/private-gcloud.json
+config/env/private.gcloud.json
 *.tsbuildinfo

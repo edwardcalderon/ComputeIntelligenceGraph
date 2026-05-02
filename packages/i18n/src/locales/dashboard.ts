@@ -9,6 +9,7 @@ const en: TranslationCatalog = {
   "sidebar.platform": "Platform",
   "sidebar.operations": "Operations",
   "sidebar.account": "Account",
+  "sidebar.gpuCompute": "GPU Compute",
   "nav.overview": "Overview",
   "nav.resources": "Resources",
   "nav.graph": "Graph",
@@ -20,6 +21,11 @@ const en: TranslationCatalog = {
   "nav.bootstrap": "Bootstrap",
   "nav.profile": "Profile",
   "nav.settings": "Settings",
+  "nav.gpu.sessions": "Sessions",
+  "nav.gpu.health": "Health",
+  "nav.gpu.logs": "Logs",
+  "nav.gpu.config": "Config",
+  "nav.gpu.activity": "Activity",
   "header.toggleSidebar": "Toggle sidebar",
   "header.pendingDeviceApprovals": "Pending device approvals",
   "header.toggleDarkMode": "Toggle dark mode",
@@ -297,7 +303,17 @@ const en: TranslationCatalog = {
   "welcome.featureDiscoveryLabel": "Auto Discovery",
   "welcome.featureDiscoveryDesc": "Automated multi-cloud resource cartography",
   "welcome.actionExplore": "Explore Graph",
-  "welcome.actionDismiss": "Don't show again"
+  "welcome.actionDismiss": "Don't show again",
+  "gpu.sessions.title": "GPU Sessions",
+  "gpu.sessions.subtitle": "Monitor and manage GPU compute sessions",
+  "gpu.health.title": "GPU Health",
+  "gpu.logs.title": "GPU Logs",
+  "gpu.config.title": "GPU Configuration",
+  "gpu.activity.title": "GPU Activity",
+  "gpu.error.loadFailed": "Failed to load GPU data. Check API connectivity.",
+  "gpu.empty.noSessions": "No GPU sessions found. Start a new session to get started.",
+  "gpu.empty.noLogs": "No log entries match the current filters.",
+  "gpu.empty.noEvents": "No activity events found."
 };
 
 const es: TranslationCatalog = {
@@ -308,6 +324,7 @@ const es: TranslationCatalog = {
   "sidebar.platform": "Plataforma",
   "sidebar.operations": "Operaciones",
   "sidebar.account": "Cuenta",
+  "sidebar.gpuCompute": "GPU Compute",
   "nav.overview": "Resumen",
   "nav.resources": "Recursos",
   "nav.graph": "Grafo",
@@ -319,6 +336,11 @@ const es: TranslationCatalog = {
   "nav.bootstrap": "Inicialización",
   "nav.profile": "Perfil",
   "nav.settings": "Configuración",
+  "nav.gpu.sessions": "Sesiones",
+  "nav.gpu.health": "Salud",
+  "nav.gpu.logs": "Registros",
+  "nav.gpu.config": "Configuración",
+  "nav.gpu.activity": "Actividad",
   "header.toggleSidebar": "Alternar barra lateral",
   "header.pendingDeviceApprovals": "Aprobaciones de dispositivos pendientes",
   "header.toggleDarkMode": "Alternar modo oscuro",
@@ -596,7 +618,17 @@ const es: TranslationCatalog = {
   "welcome.featureDiscoveryLabel": "Auto Descubrimiento",
   "welcome.featureDiscoveryDesc": "Cartografía automatizada multi-cloud",
   "welcome.actionExplore": "Explorar Grafo",
-  "welcome.actionDismiss": "No mostrar de nuevo"
+  "welcome.actionDismiss": "No mostrar de nuevo",
+  "gpu.sessions.title": "Sesiones GPU",
+  "gpu.sessions.subtitle": "Monitorear y gestionar sesiones de cómputo GPU",
+  "gpu.health.title": "Salud GPU",
+  "gpu.logs.title": "Registros GPU",
+  "gpu.config.title": "Configuración GPU",
+  "gpu.activity.title": "Actividad GPU",
+  "gpu.error.loadFailed": "Error al cargar datos de GPU. Verifique la conectividad de la API.",
+  "gpu.empty.noSessions": "No se encontraron sesiones GPU. Inicia una nueva sesión para comenzar.",
+  "gpu.empty.noLogs": "Ningún registro coincide con los filtros actuales.",
+  "gpu.empty.noEvents": "No se encontraron eventos de actividad."
 };
 
 const zh: TranslationCatalog = {
@@ -607,6 +639,7 @@ const zh: TranslationCatalog = {
   "sidebar.platform": "平台",
   "sidebar.operations": "运维",
   "sidebar.account": "账户",
+  "sidebar.gpuCompute": "GPU 计算",
   "nav.overview": "概览",
   "nav.resources": "资源",
   "nav.graph": "图谱",
@@ -618,6 +651,11 @@ const zh: TranslationCatalog = {
   "nav.bootstrap": "初始化",
   "nav.profile": "个人资料",
   "nav.settings": "设置",
+  "nav.gpu.sessions": "会话",
+  "nav.gpu.health": "健康状态",
+  "nav.gpu.logs": "日志",
+  "nav.gpu.config": "配置",
+  "nav.gpu.activity": "活动",
   "header.toggleSidebar": "切换侧边栏",
   "header.pendingDeviceApprovals": "待审批设备",
   "header.toggleDarkMode": "切换深色模式",
@@ -895,7 +933,17 @@ const zh: TranslationCatalog = {
   "welcome.featureDiscoveryLabel": "自动发现",
   "welcome.featureDiscoveryDesc": "自动化多云资源制图",
   "welcome.actionExplore": "探索图谱",
-  "welcome.actionDismiss": "不再显示"
+  "welcome.actionDismiss": "不再显示",
+  "gpu.sessions.title": "GPU 会话",
+  "gpu.sessions.subtitle": "监控和管理 GPU 计算会话",
+  "gpu.health.title": "GPU 健康状态",
+  "gpu.logs.title": "GPU 日志",
+  "gpu.config.title": "GPU 配置",
+  "gpu.activity.title": "GPU 活动",
+  "gpu.error.loadFailed": "加载 GPU 数据失败。请检查 API 连接。",
+  "gpu.empty.noSessions": "未找到 GPU 会话。启动新会话以开始使用。",
+  "gpu.empty.noLogs": "没有日志条目匹配当前筛选条件。",
+  "gpu.empty.noEvents": "未找到活动事件。"
 };
 
 const catalogs: Record<SupportedLocale, TranslationCatalog> = { en, es, zh };

@@ -136,6 +136,14 @@ deploy_base_infrastructure() {
   export INFRA_CREATE_PIPELINES="$CREATE_PIPELINES"
   export AWS_REGION="$AWS_REGION"
 
+  # Load environment variables from root .env
+  if [ -f "$PROJECT_ROOT/.env" ]; then
+    log_info "Loading environment variables from $PROJECT_ROOT/.env"
+    set -a
+    source "$PROJECT_ROOT/.env"
+    set +a
+  fi
+
   if [ "$BOOTSTRAP_ONLY" = "true" ]; then
     log_info "Running in bootstrap-only mode"
   fi

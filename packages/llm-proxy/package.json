@@ -17,6 +17,7 @@
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "diff:prod": "pnpm exec sst diff --stage production",
     "deploy:prod": "pnpm exec sst deploy --stage production --yes",
+    "deploy:production": "pnpm exec sst deploy --stage production --yes",
     "bootstrap:prod": "INFRA_LLM_PROXY_BOOTSTRAP_ONLY=true bash scripts/bootstrap-llm-proxy.sh",
     "bootstrap:pipelines": "INFRA_LLM_PROXY_BOOTSTRAP_ONLY=true INFRA_CREATE_PIPELINES=true bash scripts/bootstrap-llm-proxy.sh"
   },
@@ -35,7 +36,7 @@
     "@types/node": "^20.14.0",
     "@types/uuid": "^9.0.8",
     "fast-check": "^3.23.2",
-    "sst": "^2.49.0",
+    "sst": "^3.19.3",
     "typescript": "^5.4.0",
     "vitest": "^1.4.0"
   },

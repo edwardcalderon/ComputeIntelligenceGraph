@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "@cig-technology/i18n/react";
+import { Cpu, HeartPulse, ScrollText, Settings, Activity } from "lucide-react";
 import { useAppStore } from "../lib/store";
 import { useResolvedLandingUrl, useResolvedDocsUrl } from "@cig/ui/siteUrl.client";
 import { UserMenu } from "./UserMenu";
@@ -22,6 +23,14 @@ const platformItems: NavItem[] = [
   { labelKey: "nav.graph",     href: "/graph",     icon: <GraphIcon />,     color: "#8b5cf6" },
   { labelKey: "nav.costs",     href: "/costs",     icon: <CostsIcon />,     color: "#a855f7" },
   { labelKey: "nav.security",  href: "/security",  icon: <SecurityIcon />,  color: "#10b981" },
+];
+
+const gpuComputeItems: NavItem[] = [
+  { labelKey: "nav.gpu.sessions",  href: "/gpu",            icon: <Cpu className="size-4" />,         color: "#f59e0b" },
+  { labelKey: "nav.gpu.health",    href: "/gpu/health",     icon: <HeartPulse className="size-4" />,  color: "#10b981" },
+  { labelKey: "nav.gpu.logs",      href: "/gpu/logs",       icon: <ScrollText className="size-4" />,  color: "#8b5cf6" },
+  { labelKey: "nav.gpu.config",    href: "/gpu/config",     icon: <Settings className="size-4" />,    color: "#06b6d4" },
+  { labelKey: "nav.gpu.activity",  href: "/gpu/activity",   icon: <Activity className="size-4" />,    color: "#a855f7" },
 ];
 
 const operationsItems: NavItem[] = [
@@ -148,6 +157,7 @@ export function Sidebar() {
 
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
+    if (href === "/gpu") return pathname === "/gpu" || pathname.startsWith("/gpu/sessions");
     return pathname.startsWith(href);
   }
 
@@ -190,6 +200,12 @@ export function Sidebar() {
           <NavSection
             titleKey="sidebar.platform"
             items={platformItems}
+            isActive={isActive}
+            onNavClick={() => setSidebarOpen(false)}
+          />
+          <NavSection
+            titleKey="sidebar.gpuCompute"
+            items={gpuComputeItems}
             isActive={isActive}
             onNavClick={() => setSidebarOpen(false)}
           />

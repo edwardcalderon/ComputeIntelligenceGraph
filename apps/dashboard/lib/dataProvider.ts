@@ -10,10 +10,15 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
  * resource → /api/v1/{resource}
  */
 const resourcePath: Record<string, string> = {
-  resources:  "/api/v1/resources",
-  costs:      "/api/v1/costs",
-  security:   "/api/v1/security/findings",
-  discovery:  "/api/v1/discovery",
+  resources:      "/api/v1/resources",
+  costs:          "/api/v1/costs",
+  security:       "/api/v1/security/findings",
+  discovery:      "/api/v1/discovery",
+  "gpu-sessions": "/api/v1/gpu/sessions",
+  "gpu-health":   "/api/v1/gpu/health",
+  "gpu-logs":     "/api/v1/gpu/logs",
+  "gpu-config":   "/api/v1/gpu/config",
+  "gpu-activity": "/api/v1/gpu/activity",
 };
 
 function pathFor(resource: string): string {

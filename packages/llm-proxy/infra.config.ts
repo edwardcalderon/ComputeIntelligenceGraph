@@ -417,11 +417,17 @@ export function createInfrastructure() {
     return outputs;
   }
 
-  // Skip DNS record creation - already exists in Route 53
-  // The DNS record (llm-proxy.cig.technology CNAME) was created manually
-  // and doesn't need to be managed by Pulumi
+  // ---------------------------------------------------------------------------
+  // Route 53 Hosted Zone lookup
+  // ---------------------------------------------------------------------------
+  const zone = aws.route53.getZoneOutput({
+    name: `${config.hostedZoneDomain}.`,
+    privateZone: false,
+  });
 
-  // Create ACM Certificate if not provided
+  // ---------------------------------------------------------------------------
+  // ACM Certificate — create if no ARN was provided, with full DNS validation
+  // ---------------------------------------------------------------------------
   const certificate =
     config.certificateArn !== undefined
       ? undefined
@@ -431,10 +437,36 @@ export function createInfrastructure() {
           tags,
         });
 
-  // Skip certificate validation record - already exists in Route 53
-  const certificateArn = config.certificateArn ?? certificate?.arn;
+  // Create the DNS validation CNAME so ACM can auto-validate the certificate
+  const validationRecord =
+    certificate === undefined
+      ? undefined
+      : new aws.route53.Record(`${namePrefix}-certificate-validation`, {
+          zoneId: zone.zoneId,
+          name: certificate.domainValidationOptions.apply(
+            (options) => options[0]?.resourceRecordName ?? config.domain
+          ),
+          type: certificate.domainValidationOptions.apply(
+            (options) => options[0]?.resourceRecordType ?? 'CNAME'
+          ),
+          records: certificate.domainValidationOptions.apply((options) => [
+            options[0]?.resourceRecordValue ?? '',
+          ]),
+          ttl: 60,
+          allowOverwrite: true,
+        });
 
-  // Create Lambda Function
+  // Wait for the certificate to be validated before using it
+  const certificateArn =
+    config.certificateArn ??
+    new aws.acm.CertificateValidation(`${namePrefix}-certificate-validation-complete`, {
+      certificateArn: certificate!.arn,
+      validationRecordFqdns: [validationRecord!.fqdn],
+    }).certificateArn;
+
+  // ---------------------------------------------------------------------------
+  // Lambda Function
+  // ---------------------------------------------------------------------------
   const lambdaFunction = new aws.lambda.Function(`${namePrefix}`, {
     name: `${namePrefix}`,
     role: lambdaRole.arn,
@@ -456,7 +488,9 @@ export function createInfrastructure() {
     tags,
   });
 
-  // Create API Gateway HTTP API
+  // ---------------------------------------------------------------------------
+  // API Gateway HTTP API
+  // ---------------------------------------------------------------------------
   const api = new aws.apigatewayv2.Api(`${namePrefix}-api`, {
     name: `${namePrefix}-api`,
     protocolType: 'HTTP',
@@ -519,11 +553,43 @@ export function createInfrastructure() {
     sourceArn: pulumi.interpolate`${api.executionArn}/*/*`,
   });
 
-  // DNS record already exists in Route 53 (llm-proxy.cig.technology CNAME)
-  // Managed separately, not by Pulumi
+  // ---------------------------------------------------------------------------
+  // Custom Domain — maps llm-proxy.cig.technology → API Gateway HTTP API
+  // ---------------------------------------------------------------------------
+  const customDomain = new aws.apigatewayv2.DomainName(`${namePrefix}-custom-domain`, {
+    domainName: config.domain,
+    domainNameConfiguration: {
+      certificateArn: certificateArn,
+      endpointType: 'REGIONAL',
+      securityPolicy: 'TLS_1_2',
+    },
+    tags,
+  });
+
+  // Map the custom domain to the API stage
+  new aws.apigatewayv2.ApiMapping(`${namePrefix}-api-mapping`, {
+    apiId: api.id,
+    domainName: customDomain.domainName,
+    stage: apiStage.id,
+  });
+
+  // Create Route 53 alias record pointing to the API Gateway custom domain
+  new aws.route53.Record(`${namePrefix}-dns`, {
+    zoneId: zone.zoneId,
+    name: config.domain,
+    type: 'A',
+    aliases: [
+      {
+        name: customDomain.domainNameConfiguration.apply((c) => c.targetDomainName),
+        zoneId: customDomain.domainNameConfiguration.apply((c) => c.hostedZoneId),
+        evaluateTargetHealth: true,
+      },
+    ],
+  });
 
   outputs.apiEndpoint = api.apiEndpoint;
   outputs.apiUrl = pulumi.interpolate`https://${config.domain}`;
+  outputs.customDomainName = customDomain.domainName;
   outputs.lambdaFunctionName = lambdaFunction.name;
   outputs.lambdaFunctionArn = lambdaFunction.arn;
 
@@ -767,7 +833,6 @@ phases:
       - export LLM_PROXY_DOMAIN=${config.domain}
       - export LLM_PROXY_HOSTED_ZONE_DOMAIN=cig.technology
       - export LLM_PROXY_IMAGE_REPOSITORY=${config.imageRepository}
-      - export AWS_PROFILE=aws-cig
       - pnpm --filter @llm-proxy/app deploy:production
       - echo "Deployment completed"
 env:

@@ -11,8 +11,8 @@ This page mirrors the current repository snapshot so the Docusaurus site stays a
 
 ## Current Release
 
-- Version: `0.3.9`
-- Latest released tag: `v0.3.9`
+- Version: `0.3.11`
+- Latest released tag: `v0.3.11`
 - Status: active development
 
 ## Current Product Surface

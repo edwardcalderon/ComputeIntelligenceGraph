@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const jobMocks = vi.hoisted(() => ({
-  refreshSummary: vi.fn().mockResolvedValue({
+  getSummary: vi.fn().mockResolvedValue({
     totalMonthlyCost: 123.45,
     currency: 'USD',
     breakdown: { byProvider: {}, byType: {}, byRegion: {}, byTag: {} },
@@ -17,7 +17,7 @@ const jobMocks = vi.hoisted(() => ({
 
 vi.mock('../costs.js', () => ({
   costAnalyzer: {
-    refreshSummary: jobMocks.refreshSummary,
+    getSummary: jobMocks.getSummary,
   },
 }));
 
@@ -30,7 +30,7 @@ describe('runCostRefresh', () => {
   };
 
   beforeEach(() => {
-    jobMocks.refreshSummary.mockClear();
+    jobMocks.getSummary.mockClear();
     logger.info.mockClear();
     logger.warn.mockClear();
   });
@@ -38,7 +38,7 @@ describe('runCostRefresh', () => {
   it('refreshes the cached infra cost summary and logs the result', async () => {
     await runCostRefresh(logger);
 
-    expect(jobMocks.refreshSummary).toHaveBeenCalledTimes(1);
+    expect(jobMocks.getSummary).toHaveBeenCalledTimes(1);
     expect(logger.info).toHaveBeenCalledWith(
       expect.objectContaining({
         totalMonthlyCost: 123.45,

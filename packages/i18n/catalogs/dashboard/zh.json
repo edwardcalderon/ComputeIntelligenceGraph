@@ -7,6 +7,7 @@
   "sidebar.platform": "平台",
   "sidebar.operations": "运维",
   "sidebar.account": "账户",
+  "sidebar.gpuCompute": "GPU 计算",
 
   "nav.overview": "概览",
   "nav.resources": "资源",
@@ -19,6 +20,11 @@
   "nav.bootstrap": "初始化",
   "nav.profile": "个人资料",
   "nav.settings": "设置",
+  "nav.gpu.sessions": "会话",
+  "nav.gpu.health": "健康状态",
+  "nav.gpu.logs": "日志",
+  "nav.gpu.config": "配置",
+  "nav.gpu.activity": "活动",
 
   "header.toggleSidebar": "切换侧边栏",
   "header.pendingDeviceApprovals": "待审批设备",
@@ -313,5 +319,16 @@
   "welcome.featureDiscoveryLabel": "自动发现",
   "welcome.featureDiscoveryDesc": "自动化多云资源制图",
   "welcome.actionExplore": "探索图谱",
-  "welcome.actionDismiss": "不再显示"
+  "welcome.actionDismiss": "不再显示",
+
+  "gpu.sessions.title": "GPU 会话",
+  "gpu.sessions.subtitle": "监控和管理 GPU 计算会话",
+  "gpu.health.title": "GPU 健康状态",
+  "gpu.logs.title": "GPU 日志",
+  "gpu.config.title": "GPU 配置",
+  "gpu.activity.title": "GPU 活动",
+  "gpu.error.loadFailed": "加载 GPU 数据失败。请检查 API 连接。",
+  "gpu.empty.noSessions": "未找到 GPU 会话。启动新会话以开始使用。",
+  "gpu.empty.noLogs": "没有日志条目匹配当前筛选条件。",
+  "gpu.empty.noEvents": "未找到活动事件。"
 }

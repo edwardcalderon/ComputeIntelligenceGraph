@@ -7,6 +7,7 @@
   "sidebar.platform": "Plataforma",
   "sidebar.operations": "Operaciones",
   "sidebar.account": "Cuenta",
+  "sidebar.gpuCompute": "GPU Compute",
 
   "nav.overview": "Resumen",
   "nav.resources": "Recursos",
@@ -19,6 +20,11 @@
   "nav.bootstrap": "Inicialización",
   "nav.profile": "Perfil",
   "nav.settings": "Configuración",
+  "nav.gpu.sessions": "Sesiones",
+  "nav.gpu.health": "Salud",
+  "nav.gpu.logs": "Registros",
+  "nav.gpu.config": "Configuración",
+  "nav.gpu.activity": "Actividad",
 
   "header.toggleSidebar": "Alternar barra lateral",
   "header.pendingDeviceApprovals": "Aprobaciones de dispositivos pendientes",
@@ -313,5 +319,16 @@
   "welcome.featureDiscoveryLabel": "Auto Descubrimiento",
   "welcome.featureDiscoveryDesc": "Cartografía automatizada multi-cloud",
   "welcome.actionExplore": "Explorar Grafo",
-  "welcome.actionDismiss": "No mostrar de nuevo"
+  "welcome.actionDismiss": "No mostrar de nuevo",
+
+  "gpu.sessions.title": "Sesiones GPU",
+  "gpu.sessions.subtitle": "Monitorear y gestionar sesiones de cómputo GPU",
+  "gpu.health.title": "Salud GPU",
+  "gpu.logs.title": "Registros GPU",
+  "gpu.config.title": "Configuración GPU",
+  "gpu.activity.title": "Actividad GPU",
+  "gpu.error.loadFailed": "Error al cargar datos de GPU. Verifique la conectividad de la API.",
+  "gpu.empty.noSessions": "No se encontraron sesiones GPU. Inicia una nueva sesión para comenzar.",
+  "gpu.empty.noLogs": "Ningún registro coincide con los filtros actuales.",
+  "gpu.empty.noEvents": "No se encontraron eventos de actividad."
 }

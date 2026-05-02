@@ -7,6 +7,7 @@
   "sidebar.platform": "Platform",
   "sidebar.operations": "Operations",
   "sidebar.account": "Account",
+  "sidebar.gpuCompute": "GPU Compute",
 
   "nav.overview": "Overview",
   "nav.resources": "Resources",
@@ -19,6 +20,11 @@
   "nav.bootstrap": "Bootstrap",
   "nav.profile": "Profile",
   "nav.settings": "Settings",
+  "nav.gpu.sessions": "Sessions",
+  "nav.gpu.health": "Health",
+  "nav.gpu.logs": "Logs",
+  "nav.gpu.config": "Config",
+  "nav.gpu.activity": "Activity",
 
   "header.toggleSidebar": "Toggle sidebar",
   "header.pendingDeviceApprovals": "Pending device approvals",
@@ -313,5 +319,16 @@
   "welcome.featureDiscoveryLabel": "Auto Discovery",
   "welcome.featureDiscoveryDesc": "Automated multi-cloud resource cartography",
   "welcome.actionExplore": "Explore Graph",
-  "welcome.actionDismiss": "Don't show again"
+  "welcome.actionDismiss": "Don't show again",
+
+  "gpu.sessions.title": "GPU Sessions",
+  "gpu.sessions.subtitle": "Monitor and manage GPU compute sessions",
+  "gpu.health.title": "GPU Health",
+  "gpu.logs.title": "GPU Logs",
+  "gpu.config.title": "GPU Configuration",
+  "gpu.activity.title": "GPU Activity",
+  "gpu.error.loadFailed": "Failed to load GPU data. Check API connectivity.",
+  "gpu.empty.noSessions": "No GPU sessions found. Start a new session to get started.",
+  "gpu.empty.noLogs": "No log entries match the current filters.",
+  "gpu.empty.noEvents": "No activity events found."
 }

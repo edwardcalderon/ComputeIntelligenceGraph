@@ -95,7 +95,7 @@ export const createInferenceRouter = () => {
           temperature: validatedRequest.temperature,
           max_tokens: validatedRequest.max_tokens,
           stream: validatedRequest.stream,
-          timestamp: new Date().toISOString(),
+          timestamp: Date.now(),
         };
 
         const requestMessage = buildRequestMessage(
@@ -326,7 +326,7 @@ export const createInferenceRouter = () => {
           temperature: validatedRequest.temperature,
           max_tokens: validatedRequest.max_tokens,
           stream: validatedRequest.stream,
-          timestamp: new Date().toISOString(),
+          timestamp: Date.now(),
         };
 
         const requestMessage = buildRequestMessage(

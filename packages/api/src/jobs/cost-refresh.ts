@@ -8,7 +8,7 @@ type CostRefreshLogger = Pick<FastifyBaseLogger, 'info' | 'warn'>;
 let intervalHandle: ReturnType<typeof setInterval> | null = null;
 
 export async function runCostRefresh(logger?: CostRefreshLogger): Promise<void> {
-  const summary = await costAnalyzer.refreshSummary();
+  const summary = await costAnalyzer.getSummary();
 
   logger?.info?.(
     {

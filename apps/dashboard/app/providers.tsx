@@ -21,6 +21,12 @@ const resources = [
   { name: "security",  list: "/security" },
   { name: "settings",  list: "/settings" },
   { name: "profile",   list: "/profile" },
+  // GPU Compute resources
+  { name: "gpu-sessions", list: "/gpu", show: "/gpu/sessions/:id" },
+  { name: "gpu-health",   list: "/gpu/health" },
+  { name: "gpu-logs",     list: "/gpu/logs" },
+  { name: "gpu-config",   list: "/gpu/config" },
+  { name: "gpu-activity", list: "/gpu/activity" },
 ];
 
 function LocaleSync() {
